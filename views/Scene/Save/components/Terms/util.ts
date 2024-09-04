@@ -1,0 +1,36 @@
+import { BranchesThen } from '../../../typings'
+
+export const ContextKey = 'columnOptions'
+export const arrayParamsKey = ['nbtw', 'btw', 'in', 'nin', 'contains_all', 'contains_any', 'not_contains']
+export const doubleParamsKey= ['nbtw','btw']
+export const timeTypeKeys = ['time_gt_now', 'time_lt_now']
+
+
+export const handleParamsData = (data: any[], key: string = 'column', parentId?: string): any[] => {
+  return data?.map((item, index) => {
+    const hasChildren = !!item.children?.length
+
+    let keyValue = item[key]
+
+    if (hasChildren && key === 'column') {
+      keyValue = item[key] + index
+    }
+
+    return {
+      ...item,
+      key: keyValue,
+      disabled: hasChildren,
+      children: handleParamsData(item.children, key, item[key])
+    }
+  }) || []
+}
+
+export const thenRules = [{
+  validator(_: string, value: BranchesThen[]) {
+    if (!value || (value && !value.length) || !value.some(item => item.actions && item.actions.length)) {
+      return Promise.reject('至少配置一个执行动作')
+    }
+    return Promise.resolve();
+  }
+}]
+

@@ -5,7 +5,7 @@ const getAsyncRoutesMap = () => {
     const modules = {}
     Object.keys(routerModules).forEach(item => {
         const code = item.replace('./views/', '').replace('/index.vue', '')
-        const key = `${code}`
+        const key = `rule-engine/${code}`
         modules[key] = routerModules[item]
     })
 
@@ -14,16 +14,16 @@ const getAsyncRoutesMap = () => {
 
 const getExtraRoutesMap = () => {
     return {
-        // [`${MODULE_CODE}/Product`]: {
-        //     children: [
-        //         {
-        //             code: 'Detail',
-        //             url: '/detail:id',
-        //             name: '详情信息',
-        //             component: () => import('./views/Product/Detail/index.vue')
-        //         }
-        //     ]
-        // }
+        'rule-engine/Scene': {
+            children: [
+                {
+                    code: 'Save',
+                    url: '/Save',
+                    name: '详情信息',
+                    component: () => import('./views/Scene/Save/index.vue')
+                }
+            ]
+        }
     }
 }
 
