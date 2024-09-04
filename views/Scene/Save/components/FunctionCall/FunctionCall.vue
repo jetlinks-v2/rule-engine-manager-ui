@@ -32,7 +32,7 @@
       </template>
       <template v-if='column.dataIndex === "value"'>
         <div style='max-width: 260px'>
-          <ValueItem
+          <j-value-item
             v-model:modelValue='record.value'
             :itemType="record.type === 'date'? 'time' : record.type"
             :options="record.options"

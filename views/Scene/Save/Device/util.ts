@@ -1,4 +1,4 @@
-import { getImage } from '@jetlinks-web/utils'
+import { sceneImages } from "../../data";
 
 export const TypeName = {
   online: '设备上线',
@@ -14,31 +14,31 @@ export const TypeEnum = {
   reportProperty: {
     label: '属性上报',
     value: 'reportProperty',
-    img: getImage('/scene/reportProperty.png'),
+    img: sceneImages.reportProperty,
     disabled: true
   },
   reportEvent: {
     label: '事件上报',
     value: 'reportEvent',
-    img: getImage('/scene/reportProperty.png'),
+    img: sceneImages.reportProperty,
     disabled: true
   },
   readProperty: {
     label: '读取属性',
     value: 'readProperty',
-    img: getImage('/scene/readProperty.png'),
+    img: sceneImages.readProperty,
     disabled: true
   },
   writeProperty: {
     label: '修改属性',
     value: 'writeProperty',
-    img: getImage('/scene/writeProperty.png'),
+    img: sceneImages.writeProperty,
     disabled: true
   },
   invokeFunction: {
     label: '功能调用',
     value: 'invokeFunction',
-    img: getImage('/scene/invokeFunction.png'),
+    img: sceneImages.invokeFunction,
     disabled: true
   },
 };

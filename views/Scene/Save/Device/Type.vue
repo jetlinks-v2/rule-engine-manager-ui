@@ -57,7 +57,6 @@
 <script setup lang="ts">
 import { filterSelectNode } from "../../../../utils/comm";
 import { TopCard, Timer } from "../components";
-import { getImage } from "@jetlinks-web/utils";
 import type { metadataType, TriggerDeviceOptions } from "../../typings";
 import type { PropType } from "vue";
 import { TypeEnum } from "./util";
@@ -66,6 +65,7 @@ import WriteProperty from "./WriteProperty.vue";
 import InvokeFunction from "./InvokeFunction.vue";
 import { defineExpose } from "vue";
 import { cloneDeep, omit } from "lodash-es";
+import { sceneImages } from "../../data";
 
 const props = defineProps({
   metadata: {
@@ -110,12 +110,12 @@ const topOptions = computed(() => {
     {
       label: "设备上线",
       value: "online",
-      img: getImage("/scene/online.png"),
+      img: sceneImages.online,
     },
     {
       label: "设备离线",
       value: "offline",
-      img: getImage("/scene/offline.png"),
+      img: sceneImages.offline,
     },
     cloneTypeEnum.reportEvent,
     cloneTypeEnum.readProperty,

@@ -23,7 +23,33 @@ const getExtraRoutesMap = () => {
                     component: () => import('./views/Scene/Save/index.vue')
                 }
             ]
-        }
+        },
+        'rule-engine/Alarm/Configuration': {
+            children: [
+                {
+                    code: 'Save',
+                    url: '/Save',
+                    name: '详情',
+                    component: () => import('./views/Alarm/Configuration/Save/index.vue')
+                }
+            ]
+        },
+        'rule-engine/Alarm/Log': {
+            children: [
+                {
+                    code: 'Record',
+                    url: '/Record',
+                    name: '处理记录',
+                    component: () => import('./views/Alarm/Log/Record/index.vue')
+                },
+                {
+                    code: 'Detail',
+                    url: '/Detail/:id',
+                    name: '详情',
+                    component: () => import('./views/Alarm/Log/Detail/index.vue')
+                }
+            ]
+        },
     }
 }
 

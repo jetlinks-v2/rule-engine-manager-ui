@@ -1,4 +1,4 @@
-import { getImage } from '@/utils/comm'
+import { sceneImages } from '../../../data';
 import { getPlatformUsers , getRelationUsers } from '../../../../../api/others'
 import { getParams } from '../../util'
 import { getOption } from '../../components/DropdownButton/util'
@@ -14,15 +14,15 @@ iconMap.set('delay', 'icon-yanchizhihang');
 export const itemNotifyIconMap = new Map();
 itemNotifyIconMap.set(
   'dingTalk',
-  getImage('/scene/notify-item-img/dingtalk.png'),
+  sceneImages.dingTalk,
 );
-itemNotifyIconMap.set('weixin', getImage('/scene/notify-item-img/weixin.png'));
-itemNotifyIconMap.set('email', getImage('/scene/notify-item-img/email.png'));
-itemNotifyIconMap.set('voice', getImage('/scene/notify-item-img/voice.png'));
-itemNotifyIconMap.set('sms', getImage('/scene/notify-item-img/sms.png'));
+itemNotifyIconMap.set('weixin', sceneImages.weixin);
+itemNotifyIconMap.set('email',sceneImages.email);
+itemNotifyIconMap.set('voice', sceneImages.voice);
+itemNotifyIconMap.set('sms', sceneImages.sms);
 itemNotifyIconMap.set(
   'webhook',
-  getImage('/scene/notify-item-img/webhook.png'),
+  sceneImages.webhook,
 );
 
 export const typeIconMap = {

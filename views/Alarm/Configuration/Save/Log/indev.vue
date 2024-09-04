@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts" setup>
-import TabComponent from '../Log/TabComponent/index.vue'
+import TabComponent from '../../../Log/TabComponent/index.vue'
 import { useRoute } from 'vue-router';
 const route = useRoute();
 const id = route.query?.id

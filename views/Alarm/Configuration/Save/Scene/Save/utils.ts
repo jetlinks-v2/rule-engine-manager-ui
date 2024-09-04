@@ -1,5 +1,6 @@
 import {isArray, isBoolean, isObject} from "lodash-es";
 import {randomString} from "@jetlinks-web/utils";
+import { ConfigurationImages } from "../../../data";
 
 export const TermTypeMap = {
     'and': '并且',
@@ -242,20 +243,20 @@ export const handleSceneBranches = (data: any): any[] => {
 export const typeMap = new Map();
 typeMap.set('manual', {
     text: '手动触发',
-    img: '../../../../../../public/images/scene/scene-hand.png',
-    icon: '../../../../../../public/images/scene/trigger-type-icon/manual.png',
+    img: ConfigurationImages.sceneHand,
+    icon: ConfigurationImages.manualIcon,
     tip: '适用于第三方平台向物联网平台下发指令控制设备',
 });
 typeMap.set('timer', {
     text: '定时触发',
-    img: '../../../../../../public/images/scene/scene-timer.png',
-    icon: '../../../../../../public/images/scene/trigger-type-icon/timing.png',
+    img: ConfigurationImages.sceneTimer,
+    icon: ConfigurationImages.TimingIcon,
     tip: '适用于定期执行固定任务',
 });
 typeMap.set('device', {
     text: '设备触发',
-    img: '../../../../../../public/images/scene/scene-device.png',
-    icon: '../../../../../../public/images/scene/trigger-type-icon/device.png',
+    img: ConfigurationImages.sceneDevice,
+    icon: ConfigurationImages.deviceIcon,
     tip: '适用于设备数据或行为满足触发条件时，执行指定的动作',
 });
 

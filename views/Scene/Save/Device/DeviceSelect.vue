@@ -10,10 +10,10 @@
 import TopCard from '../components/TopCard.vue'
 import DeviceList from './DeviceList.vue'
 import OrgList from './OrgList.vue'
-import { getImage } from '@jetlinks-web/utils'
 import type { PropType } from 'vue'
 import { SelectorValuesItem } from '../../typings'
 import { isNoCommunity } from '@/utils/utils'
+import { sceneImages } from '../../data'
 
 type Emit = {
   (e: 'update:selector', data: string): void
@@ -52,12 +52,12 @@ const devices = ref(props.deviceKeys)
 const orgIds = ref(props.orgId)
 
 const typeList = ref([
-  { label: '自定义', value: 'fixed', tip: '自定义选择当前产品下的任意设备', img: getImage('/scene/device-custom.png')},
-  { label: '全部', value: 'all', tip: '产品下的所有设备', img: getImage('/scene/trigger-device-all.png')},
+  { label: '自定义', value: 'fixed', tip: '自定义选择当前产品下的任意设备', img: sceneImages.deviceCustom},
+  { label: '全部', value: 'all', tip: '产品下的所有设备', img: sceneImages.triggerDeviceAll},
 ])
 
 if (isNoCommunity) {
-  typeList.value.push({ label: '按组织', value: 'org', tip: '选择产品下归属于具体组织的设备', img: getImage('/scene/trigger-device-org.png')},)
+  typeList.value.push({ label: '按组织', value: 'org', tip: '选择产品下归属于具体组织的设备', img: sceneImages.triggerDeviceOrg},)
 }
 
 const select = (s: string) => {

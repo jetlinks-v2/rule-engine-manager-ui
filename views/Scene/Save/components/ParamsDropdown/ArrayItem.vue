@@ -20,7 +20,7 @@
                 <a-empty />
             </div>
         </template>
-        <ValueItem
+        <j-value-item
             v-else
             v-model:modelValue="myValue"
             :itemType="props.component"

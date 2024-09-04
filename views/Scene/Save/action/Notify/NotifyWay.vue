@@ -18,16 +18,16 @@
 </template>
 
 <script lang="ts" setup>
-import { getImage } from '@jetlinks-web/utils';
+import { sceneImages } from '../../../data';
 import { queryMessageType } from '../../../../../api/others'
 
 const iconMap = new Map();
-iconMap.set('dingTalk', getImage('/notice/dingtalk.png'));
-iconMap.set('weixin', getImage('/notice/weixin-corp.png'));
-iconMap.set('email', getImage('/notice/email.png'));
-iconMap.set('voice', getImage('/notice/voice.png'));
-iconMap.set('sms', getImage('/notice/sms.png'));
-iconMap.set('webhook', getImage('/notice/webhook.png'));
+iconMap.set('dingTalk', sceneImages.noticeDingtalk);
+iconMap.set('weixin', sceneImages.noticeWeixin);
+iconMap.set('email', sceneImages.noticeEmail);
+iconMap.set('voice', sceneImages.noticeVoice);
+iconMap.set('sms', sceneImages.noticeSms);
+iconMap.set('webhook', sceneImages.noticeWebhook);
 
 const props = defineProps({
     value: {

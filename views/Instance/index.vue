@@ -16,7 +16,7 @@
                     }"
                     :params="params"
                 >
-                    <template #headerTitle>
+                    <template #headerLeftRender>
                         <j-space>
                             <j-permission-button
                                 type="primary"
@@ -46,7 +46,7 @@
                             <template #img>
                                 <slot name="img">
                                     <img
-                                        :src="getImage('/scene/trigger-type/scene.png')"
+                                        :src="InstanceImages.scene"
                                     />
                                 </slot>
                             </template>
@@ -156,10 +156,11 @@ import {
     stopRule,
     deleteRule,
 } from '../../api/instance';
-import { getImage, onlyMessage } from '@jetlinks-web/utils';
+import { onlyMessage } from '@jetlinks-web/utils';
 import Save from './Save/index.vue';
 import { useRouterParams } from '@jetlinks-web/hooks';
-export const BASE_API_PATH = import.meta.env.VITE_APP_BASE_API
+import { InstanceImages } from './data';
+import { BASE_API } from '@jetlinks-web/constants';
 const params = ref<Record<string, any>>({});
 let visible = ref(false);
 const tableRef = ref<Record<string, any>>({});
@@ -337,7 +338,7 @@ const handleSearch = (e: any) => {
 };
 const openRuleEditor = (item: any) => {
     window.open(
-        `/${BASE_API_PATH}/rule-editor/index.html#flow/${item.id}`,
+        `/${BASE_API}/rule-editor/index.html#flow/${item.id}`,
     );
 };
 const closeSave = () => {

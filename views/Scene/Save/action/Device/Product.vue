@@ -35,7 +35,7 @@
                             :height="80"
                             :src="
                                 slotProps.photoUrl ||
-                                getImage('/device-product.png')
+                                sceneImages.deviceProduct
                             "
                         />
                     </slot>
@@ -76,9 +76,9 @@ import {
     productDetail,
     getTreeData_api
 } from '../../../../../api/others';
-import { queryProductSortTree } from '@/api/device/category';
-import { getImage } from '@/utils/comm';
+import { queryProductSortTree } from '../../../../../api/others';
 import { accessConfigTypeFilter } from '../../../../../utils/setting';
+import { sceneImages } from '../../../data';
 
 type Emit = {
     (e: 'update:rowKey', data: string): void;

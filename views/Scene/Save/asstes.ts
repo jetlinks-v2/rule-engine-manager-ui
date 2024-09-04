@@ -1,14 +1,14 @@
-import { getImage } from '@jetlinks-web/utils'
+import { sceneImages } from "../data"
 
 export const TriggerHeaderIcon = {
-  timer: getImage('/scene/trigger-type-icon/timing.png'),
-  manual: getImage('/scene/trigger-type-icon/manual.png'),
-  device: getImage('/scene/trigger-type-icon/device.png')
+  timer: sceneImages.TriggerHeaderIconTiming,
+  manual: sceneImages.TriggerHeaderIconManual,
+  device: sceneImages.TriggerHeaderIconDevice
 }
 
 export const TriggerListIcon = {
-  timer: getImage('/scene/scene-timer.png'),
-  manual: getImage('/scene/scene-hand.png'),
-  device: getImage('/scene/scene-device.png')
+  timer: sceneImages.TriggerListIconTimer,
+  manual: sceneImages.TriggerListIconHand,
+  device: sceneImages.TriggerListIconDevice
 }
 

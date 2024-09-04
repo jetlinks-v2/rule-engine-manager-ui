@@ -97,6 +97,7 @@ import { query } from "../../../../api/scene";
 import { queryBindScene , _execute} from "../../../../api/configuration.ts";
 import SceneCardBox from "./components/CardBox.vue";
 import { useRequest } from "@jetlinks-web/hooks";
+import { ConfigurationImages } from "../data";
 
 const columns = [
   {
@@ -205,8 +206,8 @@ const params = ref();
 const typeMap = new Map();
 typeMap.set("manual", {
   text: "手动触发",
-  img: "../../../../public/images/",
-  icon: "../../../../public/images/scene/trigger-type-icon/manual.png",
+  img: ConfigurationImages.sceneHand,
+  icon: ConfigurationImages.manualIcon,
   tip: "适用于第三方平台向物联网平台下发指令控制设备",
 });
 

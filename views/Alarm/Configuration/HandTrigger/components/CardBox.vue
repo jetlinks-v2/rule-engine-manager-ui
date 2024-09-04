@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="ts" name="SceneCardBox">
-import { colorMap ,getHexColor } from "@jetlinks-web/components";
+import  colorMap ,{ getHexColor } from "@jetlinks-web/components/es/BadgeStatus/color";
 import BranchesTabs from "./BranchesTabs.vue";
 import { PropType } from "vue";
 import {

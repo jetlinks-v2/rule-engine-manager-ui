@@ -139,7 +139,7 @@
 </template>
 
 <script setup lang="ts" name="SceneCardBox">
-import { colorMap, getHexColor } from "@jetlinks-web/components";
+import  colorMap ,{ getHexColor } from "@jetlinks-web/components/es/BadgeStatus/color";
 import DeviceTitle from "../../../../../Scene/Save/components/Title.vue";
 import TimerTitle from "../../../../../Scene/Save/Timer/Title.vue";
 import AddButton from "../../../../../Scene/Save/components/AddButton.vue";

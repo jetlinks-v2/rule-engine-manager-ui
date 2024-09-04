@@ -61,9 +61,7 @@
                 "
               >
                 <img
-                  :src="`../../../../../public/images/alarm/alarm${
-                    index + 1
-                  }.png`"
+                  :src="configImages.alarm[index]"
                   style="height: 40px"
                   alt=""
                 />{{ item.label }}
@@ -107,6 +105,7 @@ import { useMenuStore } from "@/store/menu";
 import { useRoute } from "vue-router";
 import { useAlarmConfigurationStore } from "../../../../../store/alarm";
 import { storeToRefs } from "pinia";
+import { configImages } from "../../../Config/data";
 const route = useRoute();
 let selectDisable = ref(false);
 const alarmConfigurationStore = useAlarmConfigurationStore();

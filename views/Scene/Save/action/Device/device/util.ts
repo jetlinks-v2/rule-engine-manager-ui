@@ -1,31 +1,31 @@
-import {getImage} from "@/utils/comm";
+import { sceneImages } from "../../../../data"
 
 export const TypeMap = {
     fixed: {
         label: '自定义',
         value: 'fixed',
-        image: getImage('/scene/device-custom.png'),
+        image: sceneImages.deviceCustom,
         tip: '自定义选择当前产品下的任意设备',
         disabled: false
     },
     relation: {
         label: '按关系',
         value: 'relation',
-        image: getImage('/scene/device-relation.png'),
+        image: sceneImages.deviceRelation,
         tip: '选择与触发设备具有相同关系的设备',
         disabled: false
     },
     tag: {
         label: '按标签',
         value: 'tag',
-        image: getImage('/scene/device-tag.png'),
+        image: sceneImages.deviceTag,
         tip: '按标签选择产品下具有特定标签的设备',
         disabled: false
     },
     context: {
         label: '按变量',
         value: 'context',
-        image: getImage('/scene/device-variable.png'),
+        image: sceneImages.deviceVariable,
         tip: '选择设备ID为上游变量值的设备',
         disabled: false
     },

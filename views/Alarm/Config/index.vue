@@ -22,7 +22,7 @@
                   class="alarmInputItem"
                 >
                   <div>
-                    <img :src="`../../../public/imgaes/alarm/alarm${i + 1}.png`" alt="" />
+                    <img :src="configImages.alarm[i]" alt="" />
                     <span>{{ `级别${i + 1}` }}</span>
                   </div>
                   <div>
@@ -63,10 +63,12 @@
 </template>
 
 <script lang="ts" setup>
-import { onlyMessage, isNoCommunity } from "@jetlinks-web/utils";
+import { onlyMessage } from "@jetlinks-web/utils";
+import { isNoCommunity } from '@/utils/utils'
 import { queryLevel, saveLevel } from "../../../api/config";
 import { LevelItem } from "./typing";
 import Io from "./Io/index.vue";
+import { configImages } from "./data";
 const list = isNoCommunity
   ? [
       {

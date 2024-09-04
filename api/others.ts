@@ -25,7 +25,7 @@ export const query = (data?: Record<string, any>) => request.post('/device-insta
 export const getRelationUsers = (data: any) => request.post<any>(`/relation/_query/no-paging`, data)
 
 // 获取所有平台用户
-export const getPlatformUsers = (data: any) => request.post<any>(`/user/_query/no-paging`, data),
+export const getPlatformUsers = (data: any) => request.post<any>(`/user/_query/no-paging`, data)
 
 /**
  * 获取网关类型

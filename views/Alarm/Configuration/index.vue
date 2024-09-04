@@ -52,7 +52,7 @@
             >
               <template #img>
                 <slot name="img">
-                  <img src="../.././../public/images/alarm/alarm-config.png" />
+                  <img :src="ConfigurationImages.alarmConfig" />
                 </slot>
               </template>
               <template #content>
@@ -171,6 +171,7 @@ import { useMenuStore } from "@/store/menu";
 import HandTrigger from "./HandTrigger/index.vue";
 import { Modal } from "ant-design-vue";
 import { useAlarmLevel } from "../../../hook";
+import { ConfigurationImages } from "./data";
 
 const params = ref<Record<string, any>>({});
 const tableRef = ref<Record<string, any>>({});

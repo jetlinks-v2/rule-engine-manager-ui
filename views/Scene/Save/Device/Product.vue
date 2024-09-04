@@ -34,7 +34,7 @@
             <img
               width="80"
               height="80"
-              :src="slotProps.photoUrl || getImage('/device-product.png')"
+              :src="slotProps.photoUrl || sceneImages.deviceProduct"
             />
           </slot>
         </template>
@@ -66,7 +66,7 @@ import {
   queryProductSortTree,
 } from "../../../../api/others";
 import { getTreeData_api } from "@/api/system/department";
-import { getImage } from "@jetlinks-web/utils";
+import { sceneImages } from "../../data";
 import { accessConfigTypeFilter } from "../../../../utils/setting";
 
 type Emit = {

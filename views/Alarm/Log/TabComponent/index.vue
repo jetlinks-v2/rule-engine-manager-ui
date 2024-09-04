@@ -182,6 +182,7 @@ import { useMenuStore } from "@/store/menu";
 import LogDrawer from "./components/DetailDrawer.vue";
 import Duration from "../components/Duration.vue";
 import { useAlarmLevel } from "../../../../hook";
+import { logImages } from "../data";
 const menuStory = useMenuStore();
 const tableRef = ref();
 const { levelMap, levelList } = useAlarmLevel();
@@ -195,10 +196,10 @@ const props = defineProps<{
 }>();
 
 const imgMap = new Map();
-imgMap.set("product", "../../../../public/images/alarm/product.png");
-imgMap.set("device", "../../../../public/images//alarm/device.png");
-imgMap.set("other", "../../../../public/images/alarm/other.png");
-imgMap.set("org", "../../../../public/images//alarm/org.png");
+imgMap.set("product", logImages.product);
+imgMap.set("device", logImages.device);
+imgMap.set("other", logImages.other);
+imgMap.set("org", logImages.org);
 
 const titleMap = new Map();
 titleMap.set("product", "产品");

@@ -32,7 +32,7 @@
                             />
                         </a-col>
                         <a-col flex="auto">
-                            <ValueItem
+                            <j-value-item
                                 v-model:modelValue="item.value"
                                 :itemType="item.valueType"
                                 @change="onValueChange"

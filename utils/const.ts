@@ -1,4 +1,4 @@
-import { getImage } from '@jetlinks-web/utils';
+import { sceneImages } from "../views/Scene/data";
 
 interface INoticeMethod {
     label: string;
@@ -39,19 +39,19 @@ export const MSG_TYPE = {
         {
             label: '钉钉消息',
             value: 'dingTalkMessage',
-            logo: getImage('/notice/dingtalk.png'),
+            logo: sceneImages.dingTalk,
         },
         {
             label: '群机器人消息',
             value: 'dingTalkRobotWebHook',
-            logo: getImage('/notice/dingTalk-rebot.png'),
+            logo: sceneImages.noticeRebot,
         },
     ],
     weixin: [
         {
             label: '企业消息',
             value: 'corpMessage',
-            logo: getImage('/notice/weixin-corp.png'),
+            logo: sceneImages.weixin,
         },
         // {
         //   label: '服务号消息',
@@ -63,28 +63,28 @@ export const MSG_TYPE = {
         {
             label: '阿里云语音',
             value: 'aliyun',
-            logo: getImage('/notice/voice.png'),
+            logo: sceneImages.voice,
         },
     ],
     sms: [
         {
             label: '阿里云短信',
             value: 'aliyunSms',
-            logo: getImage('/notice/sms.png'),
+            logo: sceneImages.sms,
         },
     ],
     webhook: [
         {
             label: 'WebHook',
             value: 'http',
-            logo: getImage('/notice/webhook.png'),
+            logo: sceneImages.webhook,
         },
     ],
     email: [
         {
             label: '邮件',
             value: 'embedded',
-            logo: getImage('/notice/email.png'),
+            logo: sceneImages.email,
         },
     ],
 }

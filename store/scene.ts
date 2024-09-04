@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import type { FormModelType } from '../views/Scene/typings'
 import { detail } from '../api/scene'
 import {cloneDeep, isArray, isObject} from 'lodash-es'
-import {randomNumber, randomString} from '@jetlinks-web/utils
+import {randomNumber, randomString} from '@jetlinks-web/utils'
 
 type DataType = {
   data: FormModelType | any

@@ -16,7 +16,7 @@
             title="告警配置"
             :value="state.config"
             :footer="alarmState"
-            :img="getImage('/device/device-number.png')"
+            :img="dashBoardImg.deviceNumber"
           ></TopCard>
         </a-col>
         <a-col :span="12">
@@ -62,12 +62,7 @@
                     style="cursor: pointer"
                     @click="jumpToDetail(item.targetId)"
                   >
-                    <img
-                      :src="
-                        getImage(`/rule-engine/dashboard/ranking/${i + 1}.png`)
-                      "
-                      alt=""
-                    />
+                    <img :src="dashBoardImg.rank[i]" alt="" />
                     <span class="rankingItemTitle" :title="item.targetName">{{
                       item.targetName
                     }}</span>
@@ -88,7 +83,8 @@
 
 <script lang="ts" setup>
 import { Empty } from "ant-design-vue";
-import { onlyMessage, isNoCommunity } from "@jetlinks-web/utils";
+import { onlyMessage } from "@jetlinks-web/utils";
+import { isNoCommunity } from "@/utils/utils";
 import Charts from "./components/Charts.vue";
 import TopCard from "./components/TopCard.vue";
 import NewAlarm from "./components/NewAlarm.vue";
@@ -104,6 +100,7 @@ import {
 import dayjs from "dayjs";
 import { useMenuStore } from "@/store/menu";
 import { query } from "../../api/scene";
+import { dashBoardImg } from "./data";
 
 const menuStory = useMenuStore();
 let currentMonAlarm = ref<any[]>([

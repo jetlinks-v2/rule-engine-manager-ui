@@ -18,17 +18,15 @@
 </template>
 
 <script lang='ts' setup name='TriggerWay'>
-
-import { getImage } from '@jetlinks-web/utils'
-
+import { sceneImages } from '../../data';
 type Emit = {
   (e: 'update:modelValue', data: string): void
 }
 
 const options = [
-  { value: 'device', label: '设备触发', tip: '适用于设备数据或行为满足触发条件时，执行指定的动作', image: getImage('/device-trigger.png') },
-  { value: 'manual', label: '手动触发', tip: '适用于第三方平台向物联网平台下发指令控制设备', image: getImage('/manual-trigger.png') },
-  { value: 'timer', label: '定时触发', tip: '适用于定期执行固定任务', image: getImage('/timing-trigger.png') },
+  { value: 'device', label: '设备触发', tip: '适用于设备数据或行为满足触发条件时，执行指定的动作', image: sceneImages.deviceTrigger },
+  { value: 'manual', label: '手动触发', tip: '适用于第三方平台向物联网平台下发指令控制设备', image: sceneImages.manualTrigger },
+  { value: 'timer', label: '定时触发', tip: '适用于定期执行固定任务', image: sceneImages.timingTrigger },
 ]
 
 const props = defineProps({

@@ -68,7 +68,7 @@
           >
             <template #img>
               <slot name="img">
-                <img src="/images/alarm/alarm-config.png" />
+                <img :src="ConfigurationImages.alarmConfig" />
               </slot>
             </template>
             <template #content>
@@ -97,10 +97,11 @@
 
 <script setup name="AlarmModal">
 import { queryAlarmPage } from "../../../../../api/scene";
-import { useRequest } from '@jetlinks-web/hooks'
+import { useRequest } from "@jetlinks-web/hooks";
 import { useAlarmLevel } from "../../../../../hook";
 import { bindScene, getTargetTypes } from "../../../../../api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
+import { ConfigurationImages } from "@/modules/rule-engine-manager-ui/views/Alarm/Configuration/data";
 
 const props = defineProps({
   id: {

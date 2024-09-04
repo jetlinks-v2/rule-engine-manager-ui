@@ -85,7 +85,6 @@
 </template>
 
 <script lang="ts" setup name="ActionDeviceActions">
-import { getImage } from '@/utils/comm';
 import TopCard from '../device/TopCard.vue';
 import { detail } from '../../../../../../api/others';
 import EditTable from './EditTable.vue';
@@ -93,6 +92,7 @@ import WriteProperty from './WriteProperty.vue';
 import { useSceneStore } from '../../../../../../store/scene';
 import { storeToRefs } from 'pinia';
 import { getParams } from '../../../util';
+import { sceneImages } from '../../../../data';
 
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
@@ -101,21 +101,21 @@ const TypeList = [
     {
         label: '功能调用',
         value: 'INVOKE_FUNCTION',
-        image: getImage('/scene/invoke-function.png'),
+        image: sceneImages.invokeFunction,
         tip: '',
         disabled: false,
     },
     {
         label: '读取属性',
         value: 'READ_PROPERTY',
-        image: getImage('/scene/read-property.png'),
+        image: sceneImages.readProperty,
         tip: '',
         disabled: false,
     },
     {
         label: '设置属性',
         value: 'WRITE_PROPERTY',
-        image: getImage('/scene/write-property.png'),
+        image: sceneImages.writeProperty,
         tip: '',
         disabled: false,
     },

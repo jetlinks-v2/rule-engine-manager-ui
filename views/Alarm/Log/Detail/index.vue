@@ -62,7 +62,6 @@
 
 <script lang="ts" setup>
 import { detail, queryLogList } from "../../../../api/log";
-import { detail as configurationDetail } from "../../../../api/configuration";
 import { useRoute } from "vue-router";
 import dayjs from "dayjs";
 import { useAlarmStore } from "../../../../store/alarm";
@@ -145,34 +144,9 @@ const terms = [
  */
 const queryList = async (params: any) => {
   if (data.current?.alarmConfigId) {
-    const res: any = await queryLogList(data.current?.alarmConfigId, {
+    return  queryLogList(data.current?.alarmConfigId, {
       ...params,
-      // sorts: [{ name: 'alarmTime', order: 'desc' }],
-    });
-    if (res.status === 200 && res.result?.data) {
-      details.value = res.result.data[0];
-      return {
-        code: res.message,
-        result: {
-          data: res.result.data,
-          pageIndex: res.result.pageIndex,
-          pageSize: res.result.pageSize,
-          total: res.result.total,
-        },
-        status: res.status,
-      };
-    }
-  } else {
-    return {
-      code: 200,
-      result: {
-        data: [],
-        pageIndex: 0,
-        pageSize: 0,
-        total: 0,
-      },
-      status: 200,
-    };
+    })
   }
 };
 const gotoDevice = (id) => {

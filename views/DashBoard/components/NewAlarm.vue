@@ -6,7 +6,7 @@
         <li v-for="item in alarmList.slice(0, 3)" :key="item">
           <div class="new-alarm-item">
             <div class="new-alarm-item-time">
-              <img :src="getImage('/alarm/bashboard.png')" alt="" />{{
+              <img :src="dashBoardImg.dashboard" alt="" />{{
                 dayjs(item.alarmTime).format("YYYY-MM-DD HH:mm:ss")
               }}
             </div>
@@ -51,8 +51,8 @@
 
 <script lang="ts" setup>
 import { Empty } from "ant-design-vue";
-import { getImage } from "@/utils/comm";
 import { useMenuStore } from "@/store/menu";
+import { dashBoardImg } from "../data";
 import dayjs from "dayjs";
 const props = defineProps({
   alarmList: {

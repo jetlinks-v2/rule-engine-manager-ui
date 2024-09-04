@@ -40,7 +40,7 @@
 
 <script lang="ts" setup>
 import { saveRule, modify } from '../../../api/instance';
-import { getImage, onlyMessage } from '@jetlinks-web/utils';
+import { onlyMessage } from '@jetlinks-web/utils';
 
 const emit = defineEmits(['success', 'closeSave']);
 const props = defineProps({

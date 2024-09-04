@@ -129,8 +129,9 @@ import SaveModal from "./Save/save.vue";
 import { useMenuStore } from "@/store/menu";
 import { query, _delete, _action, _execute } from "../../api/scene";
 import { queryList } from "../../api/configuration";
-import { getImage, onlyMessage } from "@jetlinks-web/utils";
+import { onlyMessage } from "@jetlinks-web/utils";
 import { Modal } from "ant-design-vue";
+import { sceneImages } from "./data";
 
 const menuStory = useMenuStore();
 const visible = ref<boolean>(false);
@@ -146,20 +147,20 @@ const sceneRef = ref<Record<string, any>>({});
 const typeMap = new Map();
 typeMap.set("manual", {
   text: "手动触发",
-  img: getImage("/scene/scene-hand.png"),
-  icon: getImage("/scene/trigger-type-icon/manual.png"),
+  img: sceneImages.TriggerListIconHand,
+  icon: sceneImages.TriggerHeaderIconManual,
   tip: "适用于第三方平台向物联网平台下发指令控制设备",
 });
 typeMap.set("timer", {
   text: "定时触发",
-  img: getImage("/scene/scene-timer.png"),
-  icon: getImage("/scene/trigger-type-icon/timing.png"),
+  img: sceneImages.TriggerListIconTimer,
+  icon: sceneImages.TriggerHeaderIconTiming,
   tip: "适用于定期执行固定任务",
 });
 typeMap.set("device", {
   text: "设备触发",
-  img: getImage("/scene/scene-device.png"),
-  icon: getImage("/scene/trigger-type-icon/device.png"),
+  img: sceneImages.TriggerListIconDevice,
+  icon: sceneImages.TriggerHeaderIconDevice,
   tip: "适用于设备数据或行为满足触发条件时，执行指定的动作",
 });
 

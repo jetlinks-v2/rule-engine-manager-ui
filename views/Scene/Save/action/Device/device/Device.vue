@@ -35,7 +35,7 @@
                 <template #img>
                     <slot name="img">
                         <img
-                            :src="getImage('/device/instance/device-card.png')"
+                            :src="sceneImages.deviceCard"
                         />
                     </slot>
                 </template>
@@ -67,7 +67,7 @@
   
   <script setup lang='ts' name='Product'>
 import { query, detail } from '../../../../../../api/others';
-import { getImage } from '@/utils/comm';
+import { sceneImages } from '../../../../data';
 import { PropType } from 'vue';
 
 type Emit = {

@@ -5,7 +5,6 @@
 </template>
 
 <script lang="ts" setup>
-// import { isNoCommunity } from '@jetlinks-web/utils';
 import { useAlarmStore } from '../../../store/alarm';
 import { storeToRefs } from 'pinia';
 import  TableComponents  from './TabComponent/index.vue';
