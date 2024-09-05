@@ -159,7 +159,7 @@ import {
 import { onlyMessage } from '@jetlinks-web/utils';
 import Save from './Save/index.vue';
 import { useRouterParams } from '@jetlinks-web/hooks';
-import { InstanceImages } from './data';
+import { InstanceImages } from '../../assets/index';
 import { BASE_API } from '@jetlinks-web/constants';
 const params = ref<Record<string, any>>({});
 let visible = ref(false);

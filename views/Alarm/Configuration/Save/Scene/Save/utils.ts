@@ -1,6 +1,6 @@
 import {isArray, isBoolean, isObject} from "lodash-es";
 import {randomString} from "@jetlinks-web/utils";
-import { ConfigurationImages } from "../../../data";
+import { ConfigurationImages } from "../../../../../../assets/index";
 
 export const TermTypeMap = {
     'and': '并且',

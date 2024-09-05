@@ -165,7 +165,7 @@ import InputSave from "./Save/input.vue";
 import OutputSave from "./Save/output.vue";
 import { getDataExchange } from "../../../../api/config";
 import { marked } from "marked";
-import { configImages } from "../data";
+import { configImages } from "../../../../assets/index";
 let input = ref<any>();
 let output = ref<any>();
 const outputData = [

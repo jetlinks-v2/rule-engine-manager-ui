@@ -65,7 +65,7 @@
 
 <script setup lang="ts" name="DeviceSelectList">
 import type { PropType } from "vue";
-import { sceneImages } from "../../data";
+import { sceneImages } from "../../../../assets/index";
 import { query } from "../../../../api/others";
 import { cloneDeep } from "lodash-es";
 import type { SelectorValuesItem } from "../../typings";

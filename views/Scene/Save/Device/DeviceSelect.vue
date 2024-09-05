@@ -13,7 +13,7 @@ import OrgList from './OrgList.vue'
 import type { PropType } from 'vue'
 import { SelectorValuesItem } from '../../typings'
 import { isNoCommunity } from '@/utils/utils'
-import { sceneImages } from '../../data'
+import { sceneImages } from '../../../../assets/index'
 
 type Emit = {
   (e: 'update:selector', data: string): void

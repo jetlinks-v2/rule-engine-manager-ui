@@ -66,7 +66,7 @@ import {
   queryProductSortTree,
 } from "../../../../api/others";
 import { getTreeData_api } from "@/api/system/department";
-import { sceneImages } from "../../data";
+import { sceneImages } from "../../../../assets/index";
 import { accessConfigTypeFilter } from "../../../../utils/setting";
 
 type Emit = {

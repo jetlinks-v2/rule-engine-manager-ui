@@ -97,7 +97,7 @@ import { query } from "../../../../api/scene";
 import { queryBindScene , _execute} from "../../../../api/configuration.ts";
 import SceneCardBox from "./components/CardBox.vue";
 import { useRequest } from "@jetlinks-web/hooks";
-import { ConfigurationImages } from "../data";
+import { ConfigurationImages } from "../../../../assets/index";
 
 const columns = [
   {

@@ -65,7 +65,7 @@ import WriteProperty from "./WriteProperty.vue";
 import InvokeFunction from "./InvokeFunction.vue";
 import { defineExpose } from "vue";
 import { cloneDeep, omit } from "lodash-es";
-import { sceneImages } from "../../data";
+import { sceneImages } from "../../../../assets/index";
 
 const props = defineProps({
   metadata: {

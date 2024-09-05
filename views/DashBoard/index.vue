@@ -100,7 +100,7 @@ import {
 import dayjs from "dayjs";
 import { useMenuStore } from "@/store/menu";
 import { query } from "../../api/scene";
-import { dashBoardImg } from "./data";
+import { dashBoardImg } from "../../assets/index";
 
 const menuStory = useMenuStore();
 let currentMonAlarm = ref<any[]>([
