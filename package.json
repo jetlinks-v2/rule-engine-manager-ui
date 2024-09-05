@@ -18,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/jetlinks-v2/rule-engine-manager-ui/issues"
   },
-  "homepage": "https://github.com/jetlinks-v2/rule-engine-manager-ui#readme"
+  "homepage": "https://github.com/jetlinks-v2/rule-engine-manager-ui#readme",
+  "dependencies": {
+    "cronstrue": "^2.50.0",
+    "marked": "^14.1.1"
+  }
 }

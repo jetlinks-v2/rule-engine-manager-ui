@@ -1,0 +1,104 @@
+<template>
+    <a-modal
+        :maskClosable="false"
+        width="650px"
+        destroyOnClose
+        visible
+        :title="props.data?.id ? '编辑' : '新增'"
+        @ok="handleSave"
+        @cancel="handleCancel"
+        okText="确定"
+        cancelText="取消"
+        :confirmLoading="loading"
+    >
+        <div style="margin-top: 10px">
+            <a-form
+                :layout="'vertical'"
+                ref="formRef"
+                :rules="rules"
+                :model="modelRef"
+            >
+                <a-form-item label="名称" name="name">
+                    <a-input
+                        v-model:value="modelRef.name"
+                        placeholder="请输入名称"
+                    />
+                </a-form-item>
+                <a-form-item label="说明" name="describe">
+                    <a-textarea
+                        v-model:value="modelRef.description"
+                        placeholder="请输入说明"
+                        showCount
+                        :maxlength="200"
+                        :rows="4"
+                    />
+                </a-form-item>
+            </a-form>
+        </div>
+    </a-modal>
+</template>
+
+<script lang="ts" setup>
+import { saveRule, modify } from '../../../api/instance';
+import { onlyMessage } from '@jetlinks-web/utils';
+
+const emit = defineEmits(['success', 'closeSave']);
+const props = defineProps({
+    data: {
+        type: Object,
+    },
+});
+
+const productList = ref<Record<string, any>[]>([]);
+const loading = ref<boolean>(false);
+const formRef = ref();
+const modelRef = ref();
+modelRef.value = {...props.data};
+const rules = {
+    name: [
+        {
+            required: true,
+            message: '请输入名称',
+        },
+        {
+            max: 64,
+            message: '最多输入64个字符',
+        },
+    ],
+};
+const handleCancel = () => {
+    emit('closeSave');
+};
+
+const handleSave = () => {
+    formRef.value
+        .validate()
+        .then(async () => {
+            loading.value = true;
+            if (!modelRef.value?.id) {
+                let resp = await saveRule(modelRef.value);
+                loading.value = false;
+                if (resp.status === 200) {
+                    onlyMessage('操作成功！');
+                    emit('closeSave');
+                    emit('success');
+                } else {
+                    onlyMessage('操作失败', 'error');
+                }
+            } else {
+                let resp = await modify(modelRef.value?.id, modelRef.value);
+                loading.value = false;
+                if (resp.status === 200) {
+                    onlyMessage('操作成功！');
+                    emit('closeSave');
+                    emit('success');
+                } else {
+                    onlyMessage('操作失败！', 'error');
+                }
+            }
+        })
+        .catch((err: any) => {
+            console.log('error', err);
+        });
+};
+</script>
