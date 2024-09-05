@@ -78,7 +78,7 @@ import {
 } from '../../../../../api/others';
 import { queryProductSortTree } from '../../../../../api/others';
 import { accessConfigTypeFilter } from '../../../../../utils/setting';
-import { sceneImages } from '../../../data';
+import { sceneImages } from '../../../../../assets/index';
 
 type Emit = {
     (e: 'update:rowKey', data: string): void;

@@ -18,7 +18,7 @@
 </template>
 
 <script lang='ts' setup name='TriggerWay'>
-import { sceneImages } from '../../data';
+import { sceneImages } from '../../../../assets/index';
 type Emit = {
   (e: 'update:modelValue', data: string): void
 }

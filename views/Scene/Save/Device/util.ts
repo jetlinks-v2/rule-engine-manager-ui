@@ -1,4 +1,4 @@
-import { sceneImages } from "../../data";
+import { sceneImages } from "../../../../assets/index";
 
 export const TypeName = {
   online: '设备上线',

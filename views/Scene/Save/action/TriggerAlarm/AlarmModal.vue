@@ -101,7 +101,7 @@ import { useRequest } from "@jetlinks-web/hooks";
 import { useAlarmLevel } from "../../../../../hook";
 import { bindScene, getTargetTypes } from "../../../../../api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
-import { ConfigurationImages } from "@/modules/rule-engine-manager-ui/views/Alarm/Configuration/data";
+import { ConfigurationImages } from "../../../../../assets/index";
 
 const props = defineProps({
   id: {

@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts" setup>
-import { sceneImages } from '../../../data';
+import { sceneImages } from '../../../../../assets/index';
 import { queryMessageType } from '../../../../../api/others'
 
 const iconMap = new Map();

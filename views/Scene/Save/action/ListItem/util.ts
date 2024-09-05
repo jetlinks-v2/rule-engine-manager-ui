@@ -1,4 +1,4 @@
-import { sceneImages } from '../../../data';
+import { sceneImages } from '../../../../../assets/index';
 import { getPlatformUsers , getRelationUsers } from '../../../../../api/others'
 import { getParams } from '../../util'
 import { getOption } from '../../components/DropdownButton/util'

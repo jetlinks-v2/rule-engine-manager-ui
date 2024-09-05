@@ -182,7 +182,7 @@ import { useMenuStore } from "@/store/menu";
 import LogDrawer from "./components/DetailDrawer.vue";
 import Duration from "../components/Duration.vue";
 import { useAlarmLevel } from "../../../../hook";
-import { logImages } from "../data";
+import { logImages } from "../../../../assets/index";
 const menuStory = useMenuStore();
 const tableRef = ref();
 const { levelMap, levelList } = useAlarmLevel();

@@ -105,7 +105,7 @@ import { useMenuStore } from "@/store/menu";
 import { useRoute } from "vue-router";
 import { useAlarmConfigurationStore } from "../../../../../store/alarm";
 import { storeToRefs } from "pinia";
-import { configImages } from "../../../Config/data";
+import { configImages } from "../../../../../assets/index";
 const route = useRoute();
 let selectDisable = ref(false);
 const alarmConfigurationStore = useAlarmConfigurationStore();

@@ -171,7 +171,7 @@ import { useMenuStore } from "@/store/menu";
 import HandTrigger from "./HandTrigger/index.vue";
 import { Modal } from "ant-design-vue";
 import { useAlarmLevel } from "../../../hook";
-import { ConfigurationImages } from "./data";
+import { ConfigurationImages } from "../../../assets/index";
 
 const params = ref<Record<string, any>>({});
 const tableRef = ref<Record<string, any>>({});

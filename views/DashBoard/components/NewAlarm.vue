@@ -52,7 +52,7 @@
 <script lang="ts" setup>
 import { Empty } from "ant-design-vue";
 import { useMenuStore } from "@/store/menu";
-import { dashBoardImg } from "../data";
+import { dashBoardImg } from "../../../assets/index";
 import dayjs from "dayjs";
 const props = defineProps({
   alarmList: {

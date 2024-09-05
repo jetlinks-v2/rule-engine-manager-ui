@@ -131,7 +131,7 @@ import { query, _delete, _action, _execute } from "../../api/scene";
 import { queryList } from "../../api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { Modal } from "ant-design-vue";
-import { sceneImages } from "./data";
+import { sceneImages } from "../../assets/index";
 
 const menuStory = useMenuStore();
 const visible = ref<boolean>(false);

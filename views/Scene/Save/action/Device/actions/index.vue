@@ -92,7 +92,7 @@ import WriteProperty from './WriteProperty.vue';
 import { useSceneStore } from '../../../../../../store/scene';
 import { storeToRefs } from 'pinia';
 import { getParams } from '../../../util';
-import { sceneImages } from '../../../../data';
+import { sceneImages } from '../../../../../../assets/index';
 
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);

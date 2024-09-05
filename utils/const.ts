@@ -1,4 +1,4 @@
-import { sceneImages } from "../views/Scene/data";
+import { sceneImages } from "../assets/index";
 
 interface INoticeMethod {
     label: string;

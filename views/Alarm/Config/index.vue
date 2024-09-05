@@ -68,7 +68,7 @@ import { isNoCommunity } from '@/utils/utils'
 import { queryLevel, saveLevel } from "../../../api/config";
 import { LevelItem } from "./typing";
 import Io from "./Io/index.vue";
-import { configImages } from "./data";
+import { configImages } from "../../../assets/index";
 const list = isNoCommunity
   ? [
       {

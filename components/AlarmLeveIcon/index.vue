@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { configImages } from '../../views/Alarm/Config/data';
+import { configImages } from '../../assets/index';
 defineOptions({
   name: 'LevelIcon'
 })

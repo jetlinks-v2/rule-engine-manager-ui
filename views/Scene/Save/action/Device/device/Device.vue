@@ -67,7 +67,7 @@
   
   <script setup lang='ts' name='Product'>
 import { query, detail } from '../../../../../../api/others';
-import { sceneImages } from '../../../../data';
+import { sceneImages } from '../../../../../../assets/index';
 import { PropType } from 'vue';
 
 type Emit = {
