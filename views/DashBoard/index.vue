@@ -90,7 +90,7 @@ import TopCard from "./components/TopCard.vue";
 import NewAlarm from "./components/NewAlarm.vue";
 import TimeSelect from "./components/TimeSelect.vue";
 import Guide from "./components/Guide.vue";
-import encodeQuery from "@/utils/encodeQuery";
+import { encodeQuery } from "@/utils/";
 import {
   dashboard,
   getAlarm,
