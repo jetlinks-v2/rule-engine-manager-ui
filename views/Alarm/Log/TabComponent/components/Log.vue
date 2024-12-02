@@ -11,12 +11,15 @@
         ><span>{{ dayjs(text).format("YYYY-MM-DD HH:mm:ss") }}</span></template
       >
       <template v-if="column.dataIndex === 'sourceName'">
-        <j-ellipsis>
+        <j-ellipsis
+          v-if="record.targetType === 'device'"
+        >
           设备名称：
-          <span class="deviceId" @click="() => gotoDevice(text)">{{
+          <span class="deviceId" @click="() => gotoDevice(record.targetId)">{{
             text
           }}</span></j-ellipsis
         >
+        <j-ellipsis v-else>场景联动名称：<span class="deviceId" @click="() => gotoRule(record)">{{text}}</span></j-ellipsis>
       </template>
       <template
         v-if="
@@ -135,6 +138,16 @@ const gotoDevice = (id) => {
     params: { id, tab: "Running" },
   });
 };
+
+const gotoRule = (record) => {
+  menuStory.jumpPage(
+    'rule-engine/Scene/Save',
+    {
+      query: { triggerType:record.sourceName==='定时触发'?'timer':'manual', id:record.sourceId, type: 'view' }
+    },
+  );
+}
+
 const showDetail = (data) => {
   visibleDetail.value = true;
   current.value = data;

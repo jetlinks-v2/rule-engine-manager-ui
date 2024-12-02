@@ -23,7 +23,7 @@
                       <div>
                         设备：以设备维度告警，任何设备异常即发送一条告警。
                       </div>
-                      <div>
+                      <div v-if="isNoCommunity">
                         组织：以组织维度告警，某组织下的多个设备异常仅发送一条告警。
                       </div>
                       <div>
@@ -106,6 +106,7 @@ import { useRoute } from "vue-router";
 import { useAlarmConfigurationStore } from "../../../../../store/alarm";
 import { storeToRefs } from "pinia";
 import { configImages } from "../../../../../assets/index";
+import { isNoCommunity } from '@/utils/utils';
 const route = useRoute();
 let selectDisable = ref(false);
 const alarmConfigurationStore = useAlarmConfigurationStore();

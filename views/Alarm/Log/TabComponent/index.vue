@@ -67,11 +67,7 @@
               </div>
               <a-row :gutter="24">
                 <a-col
-                  :span="
-                    props.type === 'device' || slotProps.targetType === 'device'
-                      ? 6
-                      : 8
-                  "
+                  :span="6"
                   class="content-left"
                 >
                   <div class="content-title">告警维度</div>
@@ -82,11 +78,7 @@
                   >
                 </a-col>
                 <a-col
-                  :span="
-                    props.type === 'device' || slotProps.targetType === 'device'
-                      ? 6
-                      : 8
-                  "
+                  :span="6"
                 >
                   <div class="content-title">最近告警时间</div>
                   <j-ellipsis>
@@ -106,11 +98,7 @@
                   </j-ellipsis>
                 </a-col>
                 <a-col
-                  :span="
-                    props.type === 'device' || slotProps.targetType === 'device'
-                      ? 6
-                      : 8
-                  "
+                  :span="6"
                 >
                   <div class="content-title">告警持续时长</div>
                   <j-ellipsis
@@ -119,9 +107,6 @@
                 </a-col>
                 <a-col
                   :span="6"
-                  v-if="
-                    props.type === 'device' || slotProps.targetType === 'device'
-                  "
                 >
                   <div class="content-title">告警原因</div>
                   <j-ellipsis
@@ -132,25 +117,25 @@
                 </a-col>
               </a-row>
             </template>
-            <template #actions="item">
-              <j-permission-button
-                :disabled="
-                  item.key === 'solve' && slotProps.state.value === 'normal'
-                "
-                :tooltip="{
-                  ...item.tooltip,
-                }"
-                @click="item.onClick"
-                :hasPermission="
-                  item.key == 'solve'
-                    ? 'rule-engine/Alarm/Log:action'
-                    : 'rule-engine/Alarm/Log:view'
-                "
-              >
-                <AIcon :type="item.icon" />
-                <span>{{ item?.text }}</span>
-              </j-permission-button>
-            </template>
+<!--            <template #actions="item">-->
+<!--              <j-permission-button-->
+<!--                :disabled="-->
+<!--                  item.key === 'solve' && slotProps.state.value === 'normal'-->
+<!--                "-->
+<!--                :tooltip="{-->
+<!--                  ...item.tooltip,-->
+<!--                }"-->
+<!--                @click="item.onClick"-->
+<!--                :hasPermission="-->
+<!--                  item.key == 'solve'-->
+<!--                    ? 'rule-engine/Alarm/Log:action'-->
+<!--                    : 'rule-engine/Alarm/Log:view'-->
+<!--                "-->
+<!--              >-->
+<!--                <AIcon :type="item.icon" />-->
+<!--                <span>{{ item?.text }}</span>-->
+<!--              </j-permission-button>-->
+<!--            </template>-->
           </CardBox>
         </template>
       </JProTable>
@@ -204,7 +189,7 @@ imgMap.set("org", logImages.org);
 const titleMap = new Map();
 titleMap.set("product", "产品");
 titleMap.set("device", "设备");
-titleMap.set("other", "其他");
+titleMap.set("other", "场景");
 titleMap.set("org", "组织");
 
 const columns = [
@@ -316,13 +301,14 @@ const newColumns = computed(() => {
             },
           ];
           const resp: any = await getAlarmProduct({
+            paging: false,
             sorts: [{ name: "alarmTime", order: "desc" }],
             terms: termType,
           });
           const listMap: Map<string, any> = new Map();
 
           if (resp.status === 200) {
-            resp.result.data.forEach((item) => {
+            resp.result.forEach((item) => {
               if (item.productId) {
                 listMap.set(item.productId, {
                   label: item.productName,
@@ -465,10 +451,8 @@ const refreshTable = () => {
   tableRef.value.reload(params.value);
 };
 const showDrawer = (data: any) => {
-  if (data.targetType === "device") {
-    drawerData.value = data;
-    visibleDrawer.value = true;
-  }
+  drawerData.value = data;
+  visibleDrawer.value = true;
 };
 onMounted(() => {
   if (props.type !== "all" && !props.id) {

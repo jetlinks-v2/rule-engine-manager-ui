@@ -172,6 +172,7 @@ import HandTrigger from "./HandTrigger/index.vue";
 import { Modal } from "ant-design-vue";
 import { useAlarmLevel } from "../../../hook";
 import { ConfigurationImages } from "../../../assets/index";
+import { isNoCommunity } from '@/utils/utils';
 
 const params = ref<Record<string, any>>({});
 const tableRef = ref<Record<string, any>>({});
@@ -199,24 +200,39 @@ const columns = [
     scopedSlots: true,
     search: {
       type: "select",
-      options: [
-        {
-          label: "产品",
-          value: "product",
-        },
-        {
-          label: "设备",
-          value: "device",
-        },
-        {
-          label: "组织",
-          value: "org",
-        },
-        {
-          label: "其他",
-          value: "other",
-        },
-      ],
+      options: isNoCommunity
+        ? [
+          {
+            label: '产品',
+            value: 'product',
+          },
+          {
+            label: '设备',
+            value: 'device',
+          },
+          {
+            label: '组织',
+            value: 'org',
+          },
+          {
+            label: '其他',
+            value: 'other',
+          },
+        ]
+        : [
+          {
+            label: '产品',
+            value: 'product',
+          },
+          {
+            label: '设备',
+            value: 'device',
+          },
+          {
+            label: '其他',
+            value: 'other',
+          },
+        ],
     },
     width: 150,
   },

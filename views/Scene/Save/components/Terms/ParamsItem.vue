@@ -505,7 +505,7 @@ const termAdd = () => {
     props.whenName
   ]?.terms?.push(termsData);
 
-  formModel.value.options!.when[props.branchName].terms[
+  formModel.value.options!.when[props.branchName / 2].terms[
     props.whenName
   ].terms.push(["", "", "", "并且"]);
 };
@@ -514,7 +514,7 @@ const onDelete = () => {
   formModel.value.branches?.[props.branchName]?.when?.[
     props.whenName
   ]?.terms?.splice(props.termsName, 1);
-  formModel.value.options!.when[props.branchName].terms[
+  formModel.value.options!.when[props.branches_Index].terms[
     props.whenName
   ].terms.splice(props.termsName, 1);
 };

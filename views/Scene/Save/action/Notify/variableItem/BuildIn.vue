@@ -1,14 +1,19 @@
 <template>
     <a-input-group compact>
         <a-select
-            :options="[
-                { label: '手动输入', value: 'fixed' },
-                { label: '内置参数', value: 'upper' },
-            ]"
             style="width: 120px"
             :value="value?.source"
             @change="sourceChange"
-        />
+        >
+            <a-select-option value="fixed">手动输入</a-select-option>
+            <a-select-option value="upper">
+                <span style="margin-right: 4px;">内置参数</span>
+                <a-tooltip>
+                    <template #title>可选择物模型类型需同内置参数数据类型一致</template>
+                    <AIcon type="QuestionCircleOutlined"></AIcon>
+                </a-tooltip>
+            </a-select-option>
+        </a-select>
         <template v-if="source === 'upper'">
             <a-tree-select
                 v-model:value="upperKey"
@@ -16,7 +21,10 @@
                 placeholder="请选择参数"
                 style="width: calc(100% - 120px)"
                 :fieldNames="{ label: 'name', value: 'id' }"
-                @change="(val, label, extra) => itemOnChange(undefined, val, label, extra)"
+                @change="
+                    (val, label, extra) =>
+                        itemOnChange(undefined, val, label, extra)
+                "
             >
                 <template #title="{ fullName, description }">
                     <a-space>
@@ -32,7 +40,7 @@
             <a-date-picker
                 :value="value.value"
                 allowClear
-                valueFormat='YYYY-MM-DD HH:mm:ss'
+                valueFormat="YYYY-MM-DD HH:mm:ss"
                 format="YYYY-MM-DD HH:mm:ss"
                 style="width: calc(100% - 120px)"
                 v-if="item.type === 'date'"
@@ -58,7 +66,7 @@
     </a-input-group>
 </template>
 
-<script lang="ts" setup name='NotifyBuildIn'>
+<script lang="ts" setup name="NotifyBuildIn">
 import { queryBuiltInParams } from '../../../../../../api/scene';
 import { useSceneStore } from '../../../../../../store/scene';
 import { storeToRefs } from 'pinia';
@@ -104,11 +112,16 @@ const sourceChange = (val: any) => {
     });
 };
 
-const itemOnChange = (val: any, _upperKey?: string, label?: any, extra?: any) => {
-    const item = extra?.triggerNode?.props
-    let othersColumns = ''
+const itemOnChange = (
+    val: any,
+    _upperKey?: string,
+    label?: any,
+    extra?: any,
+) => {
+    const item = extra?.triggerNode?.props;
+    let othersColumns = '';
     if (item && item.metadata) {
-      othersColumns = item.column
+        othersColumns = item.column;
     }
 
     emit('update:value', {
@@ -117,9 +130,13 @@ const itemOnChange = (val: any, _upperKey?: string, label?: any, extra?: any) =>
         upperKey: _upperKey,
     });
 
-    emit('change', {
-        sendTo: label?.[0] || val,
-    }, othersColumns);
+    emit(
+        'change',
+        {
+            sendTo: label?.[0] || val,
+        },
+        othersColumns,
+    );
 };
 
 const treeDataFilter = (arr: any[], type: string) => {
@@ -183,5 +200,4 @@ watch(
 );
 </script>
 
-<style lang="less" scoped>
-</style>
+<style lang="less" scoped></style>

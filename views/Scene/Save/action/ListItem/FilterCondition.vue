@@ -385,9 +385,10 @@ const columnSelect = (e: any) => {
   emit("update:value", handleFilterTerms({ ...paramsValue }));
   termTypeOptions.value = e.termTypes;
   valueChangeAfter();
+
   formModel.value.branches![props.branchName].then[props.thenName].actions[
     props.actionName
-  ].options!.terms[props.termsName].terms[props.name][0] = e.name;
+  ].options!.terms[props.termsName].terms[props.name][0] = e.name || e.fullName;
 };
 
 const termsTypeSelect = (e: { key: string; name: string }) => {
@@ -505,7 +506,7 @@ const onDelete = () => {
 const getAlarmOptions = () => {
   const actionId =
     formModel.value.branches![props.branchName].then[props.thenName].actions[
-      props.name
+      props.actionName
     ].actionId;
   const branchId = formModel.value.branches![props.branchName].branchId;
   const _id = formModel.value.id;
@@ -542,7 +543,7 @@ const getAlarmOptions = () => {
 const subscribe = () => {
   const actionId =
     formModel.value.branches![props.branchName].then[props.thenName].actions[
-      props.name
+      props.actionName
     ].actionId;
   const _key = actionId || formModel.value.branches![props.branchName].branchId;
   EventEmitter.subscribe([`${_key}_alarm`], () => {

@@ -49,7 +49,7 @@
           <a-row>
             <a-col :span="12">
               <div class="card-item-content-text">设备类型</div>
-              <div>{{ slotProps.deviceType.text }}</div>
+              <div>{{ slotProps.deviceType?.text }}</div>
             </a-col>
           </a-row>
         </template>
