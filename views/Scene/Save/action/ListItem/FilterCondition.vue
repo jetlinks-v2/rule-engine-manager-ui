@@ -41,7 +41,7 @@
         @select="termsTypeSelect"
       />
       <DoubleParamsDropdown
-        v-if="showDouble"
+        v-if="!['notnull', 'isnull'].includes(paramsValue.termType) && showDouble"
         icon="icon-canshu"
         placeholder="参数值"
         value-name="id"
@@ -388,7 +388,7 @@ const columnSelect = (e: any) => {
 
   formModel.value.branches![props.branchName].then[props.thenName].actions[
     props.actionName
-  ].options!.terms[props.termsName].terms[props.name][0] = e.name || e.fullName;
+  ].options!.terms[props.termsName].terms[props.name][0] = e.fullName || e.name;
 };
 
 const termsTypeSelect = (e: { key: string; name: string }) => {
@@ -413,10 +413,18 @@ const termsTypeSelect = (e: { key: string; name: string }) => {
     }
   }
 
-  paramsValue.value = {
-    source: paramsValue.value?.source || tabsOptions.value[0].key,
-    value: value,
-  };
+  if(['isnull', 'notnull'].includes(e.key)){
+    paramsValue.value = {
+      source: tabsOptions.value[0].key,
+      value: 1
+    }
+  }else{
+    paramsValue.value = {
+      source: paramsValue.value?.source || tabsOptions.value[0].key,
+      value: value,
+    };
+  }
+
   const updateValue = omit(
     paramsValue,
     !showAlarm.value ? ["alarm", "terms"] : []
