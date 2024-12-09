@@ -1,0 +1,26 @@
+{
+	"zh": {
+		"Save.output.945943-0": "编辑",
+		"Save.output.945943-1": "取消",
+		"Save.output.945943-2": "确定",
+		"Save.output.945943-3": "状态",
+		"Save.output.945943-4": "启用",
+		"Save.output.945943-5": "kafka地址",
+		"Save.output.945943-6": "请输入kafka地址",
+		"Save.output.945943-7": "最多输入64个字符",
+		"Save.output.945943-8": "请输入topic",
+		"Save.output.945943-9": "操作成功"
+	},
+	"en": {
+		"Save.output.945943-0": "",
+		"Save.output.945943-1": "",
+		"Save.output.945943-2": "",
+		"Save.output.945943-3": "",
+		"Save.output.945943-4": "",
+		"Save.output.945943-5": "",
+		"Save.output.945943-6": "",
+		"Save.output.945943-7": "",
+		"Save.output.945943-8": "",
+		"Save.output.945943-9": ""
+	}
+}

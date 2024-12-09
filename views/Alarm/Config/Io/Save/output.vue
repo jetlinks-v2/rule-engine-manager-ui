@@ -2,39 +2,39 @@
   <a-modal
     :maskClosable="false"
     width="45vw"
-    title="编辑"
+    :title="$t('Save.output.945943-0')"
     @cancel="close"
     @ok="save"
     visible
-    cancelText="取消"
-    okText="确定"
+    :cancelText="$t('Save.output.945943-1')"
+    :okText="$t('Save.output.945943-2')"
   >
     <a-form layout="vertical" :model="outputData" ref="formRef">
-      <a-form-item label="状态">
+      <a-form-item :label="$t('Save.output.945943-3')">
         <a-switch
-          checked-children="启用"
-          un-checked-children="启用"
+          :checked-children="$t('Save.output.945943-4')"
+          :un-checked-children="$t('Save.output.945943-4')"
           v-model:checked="outputData.status"
         ></a-switch>
       </a-form-item>
       <a-form-item
         v-if="outputData.status"
-        label="kafka地址"
+        :label="$t('Save.output.945943-5')"
         name="address"
         :rules="[
           {
             required: true,
-            message: '请输入kafka地址',
+            message: $t('Save.output.945943-6'),
           },
           {
             max: 64,
-            message: '最多输入64个字符',
+            message: $t('Save.output.945943-7'),
           },
         ]"
       >
         <a-input
           v-model:value="outputData.address"
-          placeholder="请输入kafka地址"
+          :placeholder="$t('Save.output.945943-6')"
         ></a-input>
       </a-form-item>
       <a-form-item
@@ -44,11 +44,11 @@
         :rules="[
           {
             required: true,
-            message: '请输入topic',
+            message: $t('Save.output.945943-8'),
           },
           {
             max: 64,
-            message: '最多输入64个字符',
+            message: $t('Save.output.945943-7'),
           },
         ]"
       >
@@ -98,7 +98,7 @@ const save = () => {
       exchangeType: "producer",
     }).then((res) => {
       if (res.status === 200) {
-        onlyMessage("操作成功");
+        onlyMessage($t('Save.output.945943-9'));
         emit("saveSuc");
       }
     });
