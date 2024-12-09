@@ -269,19 +269,32 @@ const onSelectorChange = (val: string) => {
  * @param _detail
  */
 const onDeviceChange = (_detail: any) => {
-  if (_detail) {
-    if (_detail.id) {
-      modelRef.deviceId = _detail?.id;
-      modelRef.selectorValues = [
-        { value: _detail.id, name: _detail.name },
-      ] as any;
-    } else {
-      modelRef.deviceId = "";
-      modelRef.selectorValues = [] as any;
+    // if (_detail) {
+    //     if (_detail.id) {
+    //         modelRef.deviceId = _detail?.id;
+    //         modelRef.selectorValues = [
+    //             { value: _detail.id, name: _detail.name },
+    //         ] as any;
+    //     } else {
+    //         modelRef.deviceId = '';
+    //         modelRef.selectorValues = [] as any;
+    //     }
+    //     modelRef.upperKey = '';
+    //     emits('save', unref(modelRef), { name: _detail.name });
+    // }
+    if(_detail){
+        if(_detail.length){
+            modelRef.selectorValues = _detail;
+        }else{
+            modelRef.deviceId = '';
+            modelRef.selectorValues = [] as any;
+        }
+        modelRef.upperKey = '';
+        const nameArr = _detail?.map((i:any)=>{
+            return i.name
+        })
+        emits('save', unref(modelRef), { name: nameArr })
     }
-    modelRef.upperKey = "";
-    emits("save", unref(modelRef), { name: _detail.name });
-  }
 };
 
 /**

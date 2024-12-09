@@ -7,7 +7,11 @@
           <div class="new-alarm-item">
             <div class="new-alarm-item-time">
               <img :src="dashBoardImg.dashboard" alt="" />{{
-                dayjs(item.alarmTime).format("YYYY-MM-DD HH:mm:ss")
+                item.lastAlarmTime ? dayjs(item.lastAlarmTime).format(
+                                    'YYYY-MM-DD HH:mm:ss',
+                                ) : dayjs(item.alarmTime).format(
+                                    'YYYY-MM-DD HH:mm:ss',
+                                )
               }}
             </div>
             <div class="new-alarm-item-content">
@@ -78,6 +82,10 @@ const jumpDetail = (item: any) => {
   border: 1px solid #e0e4e8;
   border-radius: 2px;
   height: 100%;
+  .title {
+        color: rgba(0, 0, 0, 0.64);
+        font-size: 14px;
+    }
 }
 .new-alarm-items {
   ul {

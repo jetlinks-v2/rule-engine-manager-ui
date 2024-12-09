@@ -209,7 +209,7 @@
                   }}</span>
                   <AIcon type="icon-mubiao" style="padding: 0 4px" />
                   <j-ellipsis style="max-width: 200px; margin-right: 12px">
-                    {{ data?.options?.name }}
+                    {{ Array.isArray(data?.options?.name) ? data?.options?.name?.join(',') : data?.options?.name }}
                   </j-ellipsis>
                   <j-ellipsis style="max-width: 400px">
                     {{ data?.options?.propertiesName }}

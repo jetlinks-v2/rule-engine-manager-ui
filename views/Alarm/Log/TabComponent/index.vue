@@ -84,7 +84,7 @@
                   <j-ellipsis>
                     <div>
                       {{
-                        dayjs(slotProps?.alarmTime).format(
+                        dayjs(slotProps?.lastAlarmTime || slotProps?.alarmTime).format(
                           "YYYY-MM-DD HH:mm:ss"
                         ) +
                         "至" +
