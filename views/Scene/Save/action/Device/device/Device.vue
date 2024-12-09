@@ -187,6 +187,7 @@ const handleClick = (_detail: any) => {
         emit('update:value', selectedDevices);
         emit('change', selectedDevices);
     }
+};
 
 // onMounted(() => {
 //     if(props.value?.[0]?.value){
