@@ -1,4 +1,4 @@
-import i18n from '@/i18n'
+import i18n from '@/locales/index'
 import { isArray } from 'lodash-es'
 import type { OperationTimer } from '../../../typings';
 

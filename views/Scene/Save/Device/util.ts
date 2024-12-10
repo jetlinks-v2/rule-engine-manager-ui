@@ -1,4 +1,4 @@
-import i18n from '@/i18n'
+import i18n from '@/locales/index'
 import { sceneImages } from "../../../../assets/index";
 
 const $t = i18n.global.t

@@ -1,4 +1,4 @@
-import i18n from '@/i18n'
+import i18n from '@/locales/index'
 import { BranchesThen } from '../../../typings'
 const $t = i18n.global.t
 export const ContextKey = 'columnOptions'

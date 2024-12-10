@@ -1,10 +1,10 @@
-import i18n from '@/i18n'
+import i18n from '@/locales/index'
 import { sceneImages } from '../../../../../assets/index';
 import { getPlatformUsers , getRelationUsers } from '../../../../../api/others'
 import { getParams } from '../../util'
 import { getOption } from '../../components/DropdownButton/util'
 import {cloneDeep, isArray, omit} from "lodash-es";
-
+const $t = i18n.global.t
 export const iconMap = new Map();
 iconMap.set('trigger', 'icon-chufagaojing');
 iconMap.set('notify', 'icon-xiaoxitongzhi');

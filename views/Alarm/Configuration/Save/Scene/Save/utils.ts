@@ -1,14 +1,14 @@
-import i18n from '@/i18n'
+import i18n from '@/locales/index'
 import {isArray, isBoolean, isObject} from "lodash-es";
 import {randomString} from "@jetlinks-web/utils";
 import { ConfigurationImages } from "../../../../../../assets/index";
-
+const $t = i18n.global.t
 export const TermTypeMap = {
     'and': $t('Save.utils.021456-0'),
     'or': $t('Save.utils.021456-1')
 }
 
-const $t = i18n.global.t
+
 const DoubleFilter = ['nbtw', 'btw', 'in', 'nin'];
 
 const TermsTypeMap = {

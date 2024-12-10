@@ -166,7 +166,7 @@ const props = defineProps({
   },
   statusText: {
     type: String,
-    default: $t('Save.CardBox.483900-6'),
+    default: "正常",
   },
   status: {
     type: [String, Number] as PropType<string | number>,
