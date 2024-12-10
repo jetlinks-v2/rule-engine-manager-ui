@@ -1,9 +1,9 @@
 <template>
   <j-modal
     visible
-    title="选择触发场景"
-    okText="确定"
-    cancelText="取消"
+    :title="$t('HandTrigger.index.0214513-0')"
+    :okText="$t('HandTrigger.index.0214513-1')"
+    :cancelText="$t('HandTrigger.index.0214513-2')"
     :width="1000"
     @cancel="closeModal"
     @ok="saveCorrelation"
@@ -98,10 +98,12 @@ import { queryBindScene , _execute} from "../../../../api/configuration.ts";
 import SceneCardBox from "./components/CardBox.vue";
 import { useRequest } from "@jetlinks-web/hooks";
 import { ConfigurationImages } from "../../../../assets/index";
+import { useI18n } from 'vue-i18n';
 
+const { t: $t } = useI18n();
 const columns = [
   {
-    title: "场景名称",
+    title: $t('HandTrigger.index.0214513-3'),
     dataIndex: "name",
     key: "name",
     search: {
@@ -138,23 +140,23 @@ const columns = [
     },
   },
   {
-    title: "触发方式",
+    title: $t('HandTrigger.index.0214513-4'),
     dataIndex: "triggerType",
     key: "triggerType",
   },
   {
-    title: "状态",
+    title: $t('HandTrigger.index.0214513-5'),
     dataIndex: "state",
     key: "state",
     search: {
       type: "select",
       options: [
         {
-          label: "正常",
+          label: $t('HandTrigger.index.0214513-6'),
           value: "started",
         },
         {
-          label: "禁用",
+          label: $t('HandTrigger.index.0214513-7'),
           value: "disable",
         },
       ],
@@ -205,17 +207,17 @@ const params = ref();
 
 const typeMap = new Map();
 typeMap.set("manual", {
-  text: "手动触发",
+  text: $t('HandTrigger.index.0214513-8'),
   img: ConfigurationImages.sceneHand,
   icon: ConfigurationImages.manualIcon,
-  tip: "适用于第三方平台向物联网平台下发指令控制设备",
+  tip: $t('HandTrigger.index.0214513-9'),
 });
 
 const _selectedRowKeys = ref([]);
 
 const handleClick = (dt) => {
   if (dt.state?.value === "disable") {
-    onlyMessage("该场景为禁用状态，无法触发告警", "error");
+    onlyMessage($t('HandTrigger.index.0214513-10'), "error");
     return;
   }
   if (_selectedRowKeys.value.includes(dt.id)) {
@@ -246,14 +248,14 @@ const saveCorrelation = async () => {
     });
     _execute(scene).then((res) => {
       if (res.status === 200) {
-        onlyMessage("操作成功");
+        onlyMessage($t('HandTrigger.index.0214513-11'));
         emit("save");
       } else {
-        onlyMessage("操作失败", "error");
+        onlyMessage($t('HandTrigger.index.0214513-12'), "error");
       }
     });
   } else {
-    onlyMessage("请选择至少一条数据", "error");
+    onlyMessage($t('HandTrigger.index.0214513-13'), "error");
   }
 };
 const closeModal = () => {

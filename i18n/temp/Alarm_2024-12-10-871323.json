@@ -1,0 +1,38 @@
+{
+	"zh": {
+		"Terms.WhenItem.712302-0": "等于",
+		"Terms.WhenItem.712302-1": "不等于",
+		"Terms.WhenItem.712302-2": "大于",
+		"Terms.WhenItem.712302-3": "大于等于",
+		"Terms.WhenItem.712302-4": "小于",
+		"Terms.WhenItem.712302-5": "小于等于",
+		"Terms.WhenItem.712302-6": "在...之间",
+		"Terms.WhenItem.712302-7": "不在...之间",
+		"Terms.WhenItem.712302-8": "距离当前时间大于",
+		"Terms.WhenItem.712302-9": "距离当前时间小于",
+		"Terms.WhenItem.712302-10": "在...之中",
+		"Terms.WhenItem.712302-11": "不在...之中",
+		"Terms.WhenItem.712302-12": "包含",
+		"Terms.WhenItem.712302-13": "不包含",
+		"Terms.WhenItem.712302-14": "不为空",
+		"Terms.WhenItem.712302-15": "为空"
+	},
+	"en": {
+		"Terms.WhenItem.712302-0": "be equal to",
+		"Terms.WhenItem.712302-1": "Not equal to",
+		"Terms.WhenItem.712302-2": "greater than",
+		"Terms.WhenItem.712302-3": "Greater than or equal to",
+		"Terms.WhenItem.712302-4": "less than",
+		"Terms.WhenItem.712302-5": "Less than or equal to",
+		"Terms.WhenItem.712302-6": "In between",
+		"Terms.WhenItem.712302-7": "be not in... between",
+		"Terms.WhenItem.712302-8": "The distance from the current time is greater than",
+		"Terms.WhenItem.712302-9": "The distance from the current time is less than",
+		"Terms.WhenItem.712302-10": "In in",
+		"Terms.WhenItem.712302-11": "be not in... in",
+		"Terms.WhenItem.712302-12": "contain",
+		"Terms.WhenItem.712302-13": "Not included",
+		"Terms.WhenItem.712302-14": "Not empty",
+		"Terms.WhenItem.712302-15": "For empty"
+	}
+}

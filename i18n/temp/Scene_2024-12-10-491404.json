@@ -1,0 +1,40 @@
+{
+	"zh": {
+		"Timer.index.9093537-0": "corn表达式",
+		"Timer.index.9093537-1": "周期执行",
+		"Timer.index.9093537-2": "执行一次",
+		"Timer.index.9093537-3": "每",
+		"Timer.index.9093537-4": "请输入时间",
+		"Timer.index.9093537-5": "秒",
+		"Timer.index.9093537-6": "分",
+		"Timer.index.9093537-7": "小时",
+		"Timer.index.9093537-8": "最多可输入64个字符",
+		"Timer.index.9093537-9": "请输入正确的cron表达式",
+		"Timer.index.9093537-10": "请输入cron表达式",
+		"Timer.index.9093537-11": "请添加自定义日历规则",
+		"Timer.index.9093537-12": "规则【{0}】请选择日期类型",
+		"Timer.index.9093537-13": "按周",
+		"Timer.index.9093537-14": "按月",
+		"Timer.index.9093537-15": "cron表达式",
+		"Timer.index.9093537-16": "自定义日历"
+	},
+	"en": {
+		"Timer.index.9093537-0": "Corn expression",
+		"Timer.index.9093537-1": "Periodic execution",
+		"Timer.index.9093537-2": "Execute once",
+		"Timer.index.9093537-3": "each",
+		"Timer.index.9093537-4": "Please enter the time",
+		"Timer.index.9093537-5": "second",
+		"Timer.index.9093537-6": "branch",
+		"Timer.index.9093537-7": "hour",
+		"Timer.index.9093537-8": "Up to 64 characters can be entered",
+		"Timer.index.9093537-9": "Please enter the correct cron expression",
+		"Timer.index.9093537-10": "Please enter a cron expression",
+		"Timer.index.9093537-11": "Please add custom calendar rules",
+		"Timer.index.9093537-12": "Rule [{0}] Please select a date type",
+		"Timer.index.9093537-13": "By week",
+		"Timer.index.9093537-14": "monthly",
+		"Timer.index.9093537-15": "cron expressions ",
+		"Timer.index.9093537-16": "Customize Calendar"
+	}
+}

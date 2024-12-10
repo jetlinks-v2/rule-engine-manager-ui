@@ -43,7 +43,7 @@
               </div>
               <j-ellipsis v-else>
                 <div class="subTitle">
-                  说明：{{ value?.description || itemType.tip }}
+                  {{ $t('components.CardBox.0214517-0') }}{{ value?.description || itemType.tip }}
                 </div>
               </j-ellipsis>
             </div>
@@ -81,7 +81,7 @@
       >
         <div class="mask-content">
           <slot name="mask">
-            <div>该场景为禁用状态,无法触发告警</div>
+            <div>{{ $t('components.CardBox.0214517-1') }}</div>
           </slot>
         </div>
       </div>
@@ -91,7 +91,7 @@
         style="background-color: rgba(0, 0, 0, 0.2)"
       >
         <a-button style="font-size: 16px" type="link" @click="jumpView"
-          >无效数据，请重新保存场景</a-button
+          >{{ $t('components.CardBox.0214517-2') }}</a-button
         >
       </div>
     </div>
@@ -108,7 +108,9 @@ import {
   typeMap,
 } from "../../Save/Scene/Save/utils";
 import { useMenuStore } from "@/store/menu";
+import { useI18n } from 'vue-i18n';
 
+const { t: $t } = useI18n();
 type EmitProps = {
   (e: "click"): void;
   (e: "change", key: string, selected: boolean): void;
@@ -124,7 +126,7 @@ const props = defineProps({
   },
   statusText: {
     type: String,
-    default: "正常",
+    default: $t('components.CardBox.0214517-3'),
   },
   status: {
     type: [String, Number] as PropType<string | number>,

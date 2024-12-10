@@ -31,7 +31,7 @@
             <template #icon>
               <AIcon type="PlusOutlined" />
             </template>
-            新增
+            {{ $t('Scene.index.021455-0') }}
           </j-permission-button>
         </a-space>
       </template>
@@ -49,7 +49,7 @@
           :showHistory="false"
           @click="handleView(slotProps)"
         >
-          <div class="scene-view">查看详情</div>
+          <div class="scene-view">{{ $t('Scene.index.021455-1') }}</div>
         </SceneCardBox>
       </template>
     </JProTable>
@@ -83,7 +83,9 @@ import { useMenuStore } from "@/store/menu";
 import SceneDrawer from "./SceneDrawer.vue";
 import SceneCardBox from "./Save/CardBox.vue";
 import { useRequest } from "@jetlinks-web/hooks";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const menuStory = useMenuStore();
 const route = useRoute();
 const id = route.query?.id;

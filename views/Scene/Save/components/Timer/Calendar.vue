@@ -2,7 +2,7 @@
   <div class="calendar-form-item-content">
     <div class="header">
       <a-button type="link" @click="onView" style="padding-right: 2px"
-        >预览日历</a-button
+        >{{ $t('Timer.Calendar.9093419-0') }}</a-button
       >
     </div>
     <div class="calendar-items">
@@ -16,10 +16,10 @@
             />
           </div>
           <div class="calendar-item-tags">
-            <div class="calendar-item-name">规则：{{ index + 1 }}</div>
+            <div class="calendar-item-name">{{ $t('Timer.Calendar.9093419-1') }}{{ index + 1 }}</div>
             <div style="flex: 1 1 0; min-width: 0">
               <a-select
-                placeholder="请选择日期类型"
+                :placeholder="$t('Timer.Calendar.9093419-2')"
                 v-model:value="item.scheduleTags"
                 style="width: calc(100% - 30px)"
                 mode="multiple"
@@ -39,8 +39,8 @@
                 <j-radio-group
                   :value="item.mod"
                   :options="[
-                    { label: '周期执行', value: 'period' },
-                    { label: '执行一次', value: 'once' },
+                    { label: $t('Timer.Calendar.9093419-3'), value: 'period' },
+                    { label: $t('Timer.Calendar.9093419-4'), value: 'once' },
                   ]"
                   option-type="button"
                   button-style="solid"
@@ -57,7 +57,7 @@
                   format="HH:mm:ss"
                   @change="updateValue"
                 />
-                <div>执行一次</div>
+                <div>{{ $t('Timer.Calendar.9093419-4') }}</div>
               </template>
               <template v-if="item.mod === 'period'">
                 <a-time-range-picker
@@ -71,9 +71,9 @@
                     }
                   "
                 />
-                <span>每</span>
+                <span>{{ $t('Timer.Calendar.9093419-5') }}</span>
                 <a-input-number
-                  placeholder="请输入时间"
+                  :placeholder="$t('Timer.Calendar.9093419-6')"
                   style="max-width: 170px"
                   :precision="0"
                   :min="1"
@@ -85,9 +85,9 @@
                     <a-select
                       v-model:value="item.period.unit"
                       :options="[
-                        { label: '秒', value: 'seconds' },
-                        { label: '分', value: 'minutes' },
-                        { label: '小时', value: 'hours' },
+                        { label: $t('Timer.Calendar.9093419-7'), value: 'seconds' },
+                        { label: $t('Timer.Calendar.9093419-8'), value: 'minutes' },
+                        { label: $t('Timer.Calendar.9093419-9'), value: 'hours' },
                       ]"
                       @select="(e) => periodUnitChange(e, index)"
                     />
@@ -99,12 +99,12 @@
         </div>
       </j-scrollbar>
     </div>
-    <a-button @click="addItem" style="width: 100%"> 新增规则 </a-button>
-    <a-modal v-model:visible="visible" :width="1000" okText="关闭">
-      <div>正在预览日历</div>
+    <a-button @click="addItem" style="width: 100%"> {{ $t('Timer.Calendar.9093419-10') }} </a-button>
+    <a-modal v-model:visible="visible" :width="1000" :okText="$t('Timer.Calendar.9093419-11')">
+      <div>{{ $t('Timer.Calendar.9093419-12') }}</div>
       <FullCalendar :preview="true" />
       <template #footer>
-        <a-button type="primary" @click="visible = false"> 关闭 </a-button>
+        <a-button type="primary" @click="visible = false"> {{ $t('Timer.Calendar.9093419-11') }} </a-button>
       </template>
     </a-modal>
   </div>
@@ -115,7 +115,9 @@ import dayjs from "dayjs";
 import { useRequest } from "@jetlinks-web/hooks";
 import { queryTags } from "@/api/system/calendar";
 import FullCalendar from "@/views/system/Calendar/FullCalendar/index.vue";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const props = defineProps({
   value: {
     type: Object,

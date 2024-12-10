@@ -26,7 +26,7 @@
               margin-top: 5px;
             "
           >
-            {{ AlarmData?.description || '暂无说明' }}
+            {{ AlarmData?.description || $t('components.DetailDrawer.488913-0') }}
           </div>
         </div>
         <div class="alarmInfoRight">
@@ -46,7 +46,7 @@
               v-if="AlarmData?.state.value === 'warning'"
               type="link"
               @click="dealAlarm"
-              >处理</a-button
+              >{{ $t('components.DetailDrawer.488913-1') }}</a-button
             >
           </div>
         </div>
@@ -58,8 +58,8 @@
       button-style="solid"
       style="margin: 20px 0"
     >
-      <a-radio-button value="record">处理记录</a-radio-button>
-      <a-radio-button value="logs">告警日志</a-radio-button>
+      <a-radio-button value="record">{{ $t('components.DetailDrawer.488913-2') }}</a-radio-button>
+      <a-radio-button value="logs">{{ $t('components.DetailDrawer.488913-3') }}</a-radio-button>
     </a-radio-group>
     <Record
       v-if="activeKey === 'record'"
@@ -86,6 +86,9 @@ import Record from "./Record.vue";
 import Log from "./Log.vue";
 import SolveComponent from "../../SolveComponent/index.vue";
 import LevelIcon from "../../../../../components/AlarmLeveIcon/index.vue";
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const props = defineProps({
   logData: {
     type: Object,

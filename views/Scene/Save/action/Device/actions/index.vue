@@ -3,8 +3,8 @@
         <a-form :layout="'vertical'" ref="formRef" :model="modelRef">
             <a-form-item
                 :name="['message', 'messageType']"
-                label="动作类型"
-                :rules="[{ required: true, message: '请选择动作类型' }]"
+                :label="$t('actions.index.9667837-0')"
+                :rules="[{ required: true, message: $t('actions.index.9667837-1') }]"
             >
                 <TopCard
                     :typeList="TypeList"
@@ -15,12 +15,12 @@
             <template v-if="deviceMessageType === 'INVOKE_FUNCTION'">
                 <a-form-item
                     :name="['message', 'functionId']"
-                    label="功能调用"
-                    :rules="[{ required: true, message: '请选择功能' }]"
+                    :label="$t('actions.index.9667837-2')"
+                    :rules="[{ required: true, message: $t('actions.index.9667837-3') }]"
                 >
                     <a-select
                         showSearch
-                        placeholder="请选择功能"
+                        :placeholder="$t('actions.index.9667837-3')"
                         v-model:value="modelRef.message.functionId"
                         @change="functionSelect"
                     >
@@ -49,12 +49,12 @@
             <template v-else-if="deviceMessageType === 'READ_PROPERTY'">
                 <a-form-item
                     :name="['message', 'properties']"
-                    label="读取属性"
-                    :rules="[{ required: true, message: '请选择读取属性' }]"
+                    :label="$t('actions.index.9667837-4')"
+                    :rules="[{ required: true, message: $t('actions.index.9667837-5') }]"
                 >
                     <a-select
                         showSearch
-                        placeholder="请选择属性"
+                        :placeholder="$t('actions.index.9667837-6')"
                         v-model:value="modelRef.message.properties[0]"
                         @change="propertySelect"
                     >
@@ -93,27 +93,29 @@ import { useSceneStore } from '../../../../../../store/scene';
 import { storeToRefs } from 'pinia';
 import { getParams } from '../../../util';
 import { sceneImages } from '../../../../../../assets/index';
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
 
 const TypeList = [
     {
-        label: '功能调用',
+        label: $t('actions.index.9667837-2'),
         value: 'INVOKE_FUNCTION',
         image: sceneImages.invokeFunction,
         tip: '',
         disabled: false,
     },
     {
-        label: '读取属性',
+        label: $t('actions.index.9667837-4'),
         value: 'READ_PROPERTY',
         image: sceneImages.readProperty,
         tip: '',
         disabled: false,
     },
     {
-        label: '设置属性',
+        label: $t('actions.index.9667837-7'),
         value: 'WRITE_PROPERTY',
         image: sceneImages.writeProperty,
         tip: '',
@@ -189,7 +191,7 @@ const functionRules = [
             });
             if (arr.length) {
                 if (!value?.length) {
-                    return Promise.reject('请输入功能值');
+                    return Promise.reject($t('actions.index.9667837-8'));
                 } else {
                     const hasValue = value?.find(
                         (item: { name: string; value: any }) =>
@@ -201,8 +203,8 @@ const functionRules = [
                         );
                         return Promise.reject(
                             functionItem?.name
-                                ? `请输入${functionItem.name}值`
-                                : '请输入功能值',
+                                ? $t('actions.index.9667837-9', [functionItem.name])
+                                : $t('actions.index.9667837-8'),
                         );
                     }
                 }

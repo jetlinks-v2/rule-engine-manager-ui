@@ -1,0 +1,38 @@
+{
+	"zh": {
+		"Instance.index.020452-0": "新增",
+		"Instance.index.020452-1": "正常",
+		"Instance.index.020452-2": "禁用",
+		"Instance.index.020452-3": "名称",
+		"Instance.index.020452-4": "状态",
+		"Instance.index.020452-5": "说明",
+		"Instance.index.020452-6": "操作",
+		"Instance.index.020452-7": "编辑",
+		"Instance.index.020452-8": "查看",
+		"Instance.index.020452-9": "启用",
+		"Instance.index.020452-10": "确认{0}?",
+		"Instance.index.020452-11": "操作成功！",
+		"Instance.index.020452-12": "操作失败！",
+		"Instance.index.020452-13": "删除",
+		"Instance.index.020452-14": "请先禁用再删除",
+		"Instance.index.020452-15": "确认删除?"
+	},
+	"en": {
+		"Instance.index.020452-0": "newly added",
+		"Instance.index.020452-1": "normal",
+		"Instance.index.020452-2": "Disable",
+		"Instance.index.020452-3": "name",
+		"Instance.index.020452-4": "state",
+		"Instance.index.020452-5": "explain",
+		"Instance.index.020452-6": "operation",
+		"Instance.index.020452-7": "edit",
+		"Instance.index.020452-8": "see",
+		"Instance.index.020452-9": "Enable",
+		"Instance.index.020452-10": "Confirm {0}?",
+		"Instance.index.020452-11": "Operation successful!",
+		"Instance.index.020452-12": "Operation failed!",
+		"Instance.index.020452-13": "delete",
+		"Instance.index.020452-14": "Please disable before deleting",
+		"Instance.index.020452-15": "Are you sure to delete?"
+	}
+}

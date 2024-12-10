@@ -1,0 +1,22 @@
+{
+	"zh": {
+		"Device.DeviceList.372526-0": "设备类型",
+		"Device.DeviceList.372526-1": "产品名称",
+		"Device.DeviceList.372526-2": "设备名称",
+		"Device.DeviceList.372526-3": "创建时间",
+		"Device.DeviceList.372526-4": "状态",
+		"Device.DeviceList.372526-5": "禁用",
+		"Device.DeviceList.372526-6": "离线",
+		"Device.DeviceList.372526-7": "在线"
+	},
+	"en": {
+		"Device.DeviceList.372526-0": "Equipment type",
+		"Device.DeviceList.372526-1": "Product Name",
+		"Device.DeviceList.372526-2": "Equipment name",
+		"Device.DeviceList.372526-3": "Creation time",
+		"Device.DeviceList.372526-4": "state",
+		"Device.DeviceList.372526-5": "Disable",
+		"Device.DeviceList.372526-6": "off-line",
+		"Device.DeviceList.372526-7": "on-line"
+	}
+}

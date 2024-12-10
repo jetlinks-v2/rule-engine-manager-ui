@@ -1,0 +1,20 @@
+{
+	"zh": {
+		"Terms.Branches.9093534-0": "当",
+		"Terms.Branches.9093534-1": "否则",
+		"Terms.Branches.9093534-2": "确认删除？",
+		"Terms.Branches.9093534-3": "该操作将清空过滤条件，确认删除？",
+		"Terms.Branches.9093534-4": "添加过滤条件",
+		"Terms.Branches.9093534-5": "并且",
+		"Terms.Branches.9093534-6": "至少配置一个执行动作"
+	},
+	"en": {
+		"Terms.Branches.9093534-0": "When",
+		"Terms.Branches.9093534-1": "otherwise",
+		"Terms.Branches.9093534-2": "Are you sure to delete?",
+		"Terms.Branches.9093534-3": "This operation will clear the filtering criteria. Are you sure to delete it?",
+		"Terms.Branches.9093534-4": "Add filtering conditions",
+		"Terms.Branches.9093534-5": "also",
+		"Terms.Branches.9093534-6": "Configure at least one execution action"
+	}
+}

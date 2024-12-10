@@ -2,10 +2,10 @@
   <div class="type">
     <div class="alert">
       <AIcon type="InfoCircleOutlined" />
-      <span style="padding-left: 10px">只能依据产品物模型进行配置</span>
+      <span style="padding-left: 10px">{{ $t('Device.Type.372529-0') }}</span>
     </div>
     <a-form ref="typeForm" :model="formModel" layout="vertical" :colon="false">
-      <a-form-item required label="触发类型">
+      <a-form-item required :label="$t('Device.Type.372529-1')">
         <TopCard
           :label-bottom="true"
           :options="topOptions"
@@ -31,13 +31,13 @@
       <a-form-item
         v-if="showReportEvent"
         name="eventId"
-        :rules="[{ required: true, message: '请选择事件' }]"
+        :rules="[{ required: true, message: $t('Device.Type.372529-2') }]"
       >
         <a-select
           v-model:value="formModel.eventId"
           :filter-option="filterSelectNode"
           :options="eventOptions"
-          placeholder="请选择事件"
+          :placeholder="$t('Device.Type.372529-2')"
           style="width: 100%"
           @select="eventSelect"
         />
@@ -66,7 +66,9 @@ import InvokeFunction from "./InvokeFunction.vue";
 import { defineExpose } from "vue";
 import { cloneDeep, omit } from "lodash-es";
 import { sceneImages } from "../../../../assets/index";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const props = defineProps({
   metadata: {
     type: Object as PropType<metadataType>,
@@ -108,12 +110,12 @@ const topOptions = computed(() => {
   const cloneTypeEnum = cloneDeep(TypeEnum);
   const baseOptions = [
     {
-      label: "设备上线",
+      label: $t('Device.Type.372529-3'),
       value: "online",
       img: sceneImages.online,
     },
     {
-      label: "设备离线",
+      label: $t('Device.Type.372529-4'),
       value: "offline",
       img: sceneImages.offline,
     },
@@ -218,7 +220,7 @@ const showTimer = computed(() => {
 });
 
 const eventSelect = (_: string, eventItem: any) => {
-  optionCache.action = `${eventItem.name}上报`;
+  optionCache.action = $t('Device.Type.372529-5', [eventItem.name]);
 };
 
 defineExpose({

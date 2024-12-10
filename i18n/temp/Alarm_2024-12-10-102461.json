@@ -1,0 +1,16 @@
+{
+	"zh": {
+		"Scene.SceneDrawer.021453-0": "关联场景联动详情",
+		"Scene.SceneDrawer.021453-1": "基本信息",
+		"Scene.SceneDrawer.021453-2": "场景名称",
+		"Scene.SceneDrawer.021453-3": "场景类型",
+		"Scene.SceneDrawer.021453-4": "关联详情"
+	},
+	"en": {
+		"Scene.SceneDrawer.021453-0": "Related scene linkage details",
+		"Scene.SceneDrawer.021453-1": "essential information",
+		"Scene.SceneDrawer.021453-2": "Scene name",
+		"Scene.SceneDrawer.021453-3": "Scene type",
+		"Scene.SceneDrawer.021453-4": "Related Details"
+	}
+}

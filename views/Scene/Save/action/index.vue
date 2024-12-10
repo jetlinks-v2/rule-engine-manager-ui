@@ -1,7 +1,7 @@
 <template>
   <div class="actions">
     <div class="actions-title">
-      <span>执行</span>
+      <span>{{ $t('action.index.966779-0') }}</span>
       <ShakeLimit
         v-if="props.openShakeLimit"
         v-model:value="FormModel.branches[name].shakeLimit"
@@ -12,9 +12,9 @@
         <a-collapse-panel key="1">
           <template #header>
             <span>
-              串行
+              {{ $t('action.index.966779-1') }}
               <span class="panel-tip">
-                按顺序依次执行动作，适用于基于动作输出参数，判断是否执行后续动作的场景
+                {{ $t('action.index.966779-2') }}
               </span>
             </span>
           </template>
@@ -32,9 +32,9 @@
         <a-collapse-panel key="2">
           <template #header>
             <span>
-              并行
+              {{ $t('action.index.966779-3') }}
               <span class="panel-tip">
-                同时执行所有动作，适用于不需要关注执行动作先后顺序和结果的场景
+                {{ $t('action.index.966779-4') }}
               </span>
             </span>
           </template>
@@ -69,7 +69,9 @@ import {
   unBindAlarm,
   unBindAlarmMultiple,
 } from "../../../../api/configuration";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data: FormModel } = storeToRefs(sceneStore);
 
@@ -162,7 +164,7 @@ const onDelete = async (_key: string, _parallel: boolean) => {
       });
       if (resp.success && resp.result.total) {
         Modal.confirm({
-          title: `已关联 ${resp.result.total} 条告警，删除该执行动作会同步解除对应的关联告警，确认删除？`,
+          title: $t('action.index.966779-5', [resp.result.total]),
           onOk() {
             const _data = resp.result.data.map((item) => {
               return {

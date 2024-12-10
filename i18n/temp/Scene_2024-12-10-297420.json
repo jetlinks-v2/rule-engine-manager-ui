@@ -1,0 +1,12 @@
+{
+	"zh": {
+		"Notify.NotifyConfig.966770-0": "通知方式",
+		"Notify.NotifyConfig.966770-1": "说明",
+		"Notify.NotifyConfig.966770-2": "名称"
+	},
+	"en": {
+		"Notify.NotifyConfig.966770-0": "Notification method",
+		"Notify.NotifyConfig.966770-1": "explain",
+		"Notify.NotifyConfig.966770-2": "name"
+	}
+}

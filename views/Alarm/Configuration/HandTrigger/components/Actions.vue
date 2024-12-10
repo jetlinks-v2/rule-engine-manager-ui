@@ -16,9 +16,9 @@
             <div class="item-options-content">
               <template v-if="item.executor === 'alarm'">
                 <span>
-                  满足条件后将{{
-                    item.alarm.mode === "trigger" ? "触发" : "解除"
-                  }}当前告警
+                  {{ $t('components.Actions.0214519-0') }}{{
+                    item.alarm.mode === "trigger" ? $t('components.Actions.0214519-1') : $t('components.Actions.0214519-2')
+                  }}{{ $t('components.Actions.0214519-3') }}
                 </span>
               </template>
             </div>
@@ -31,7 +31,9 @@
 
 <script setup name="Actions">
 import { iconMap } from "../../../../Scene/Save/action/ListItem/util";
+import { useI18n } from 'vue-i18n';
 
+const { t: $t } = useI18n();
 const props = defineProps({
   actions: {
     type: Array,

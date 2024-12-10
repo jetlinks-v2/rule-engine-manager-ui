@@ -1,6 +1,6 @@
 <template>
     <a-modal
-        title="类型"
+        :title="$t('Modal.index.966774-0')"
         visible
         :width="860"
         @cancel="onCancel"
@@ -13,16 +13,16 @@
                 :rules="[
                     {
                         required: true,
-                        message: '请选择类型',
+                        message: $t('Modal.index.966774-1'),
                     },
                 ]"
 
             >
                 <template #label>
                   <div style="position: relative">
-                    类型
+                    {{ $t('Modal.index.966774-0') }}
                     <div v-if="optionDisabled" class="action-tip">
-                      告警类型执行动作涉及绑定告警配置，不支持修改为其它类型
+                      {{ $t('Modal.index.966774-2') }}
                     </div>
                   </div>
                 </template>
@@ -46,7 +46,9 @@ import { ActionsType } from '../../../typings';
 import ActionTypeComponent from './ActionTypeComponent.vue';
 import { randomNumber, randomString } from '@jetlinks-web/utils';
 import CardSelect from '../../components/CardSelect.vue'
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const props = defineProps({
     branchesName: {
         type: Number,
@@ -82,37 +84,37 @@ const optionDisabled = Object.keys(props.data).length > 2 && props.data?.executo
 
 const options = [
   {
-    label: '设备输出',
+    label: $t('Modal.index.966774-3'),
     value: 'device',
     iconUrl: 'icon-shebeishuchu',
-    subLabel: '配置设备调用功能、读取属性、设置属性规则',
+    subLabel: $t('Modal.index.966774-4'),
     disabled: optionDisabled
   },
   {
-    label: '消息通知',
+    label: $t('Modal.index.966774-5'),
     value: 'notify',
     iconUrl: 'icon-xiaoxitongzhi',
-    subLabel: '配置向指定用户发邮件、钉钉、微信、短信等通知',
+    subLabel: $t('Modal.index.966774-6'),
     disabled: optionDisabled
   },
   {
-    label: '延迟执行',
+    label: $t('Modal.index.966774-7'),
     value: 'delay',
     iconUrl: 'icon-yanchizhihang',
-    subLabel: '等待一段时间后，再执行后续动作',
+    subLabel: $t('Modal.index.966774-8'),
     disabled: optionDisabled
   },
   {
-    label: '触发告警',
+    label: $t('Modal.index.966774-9'),
     value: 'trigger',
     iconUrl: 'icon-chufagaojing',
-    subLabel: '配置触发告警规则，需配合“告警配置”使用',
+    subLabel: $t('Modal.index.966774-10'),
   },
   {
-    label: '解除告警',
+    label: $t('Modal.index.966774-11'),
     value: 'relieve',
     iconUrl: 'icon-jiechugaojing',
-    subLabel: '配置解除告警规则，需配合“告警配置”使用',
+    subLabel: $t('Modal.index.966774-12'),
   },
 ];
 

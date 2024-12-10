@@ -1,0 +1,14 @@
+{
+	"zh": {
+		"ListItem.util.9667814-0": "请选择参数",
+		"ListItem.util.9667814-1": "请选择操作符",
+		"ListItem.util.9667814-2": "请选择或输入参数值",
+		"ListItem.util.9667814-3": "请选择告警配置"
+	},
+	"en": {
+		"ListItem.util.9667814-0": "Please select parameters",
+		"ListItem.util.9667814-1": "Please select an operator",
+		"ListItem.util.9667814-2": "Please select or enter parameter values",
+		"ListItem.util.9667814-3": "Please select alarm configuration"
+	}
+}

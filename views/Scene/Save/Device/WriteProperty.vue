@@ -4,12 +4,12 @@
       <a-col :span='10'>
         <a-form-item
           name='reportKey'
-          :rules="[{ required: true, message: '请输入修改值' }]"
+          :rules="[{ required: true, message: $t('Device.WriteProperty.372527-0') }]"
         >
           <a-select
             showSearch
             style='width: 100%'
-            placeholder='请选择属性'
+            :placeholder='$t('Device.WriteProperty.372527-1')'
             v-model:value='formModel.reportKey'
             :options='properties'
             :filter-option='filterSelectNode'
@@ -19,7 +19,7 @@
       </a-col>
       <a-col :span='14'>
         <span style='line-height: 32px;padding-left: 24px'>
-          定时调用所选属性
+          {{ $t('Device.WriteProperty.372527-2') }}
         </span>
       </a-col>
       <a-col :span='24' v-if='showTable'>
@@ -43,7 +43,9 @@ import { filterSelectNode } from '../../../../utils/comm'
 import { FunctionCall } from '../components'
 import type { PropType } from 'vue'
 import { defineExpose } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 type Emit = {
   (e: 'update:value', data: Record<string, any>): void
   (e: 'update:action', data: string): void
@@ -130,7 +132,7 @@ const change = (v: string, option: any) => {
   }
   callData.value = [{ id: v, value: undefined }]
   emit('update:value', _data)
-  emit('update:action', `修改${option.name}`)
+  emit('update:action', $t('Device.WriteProperty.372527-3', [option.name]))
 }
 
 const callDataChange = (v: any[]) => {
@@ -142,12 +144,12 @@ const callDataChange = (v: any[]) => {
 const rules = [{
   validator(_: string, value: any) {
     if (!value?.length && callDataOptions.value.length) {
-      return Promise.reject('请选择属性值')
+      return Promise.reject($t('Device.WriteProperty.372527-4'))
     } else {
       let hasValue = value.find((item: { name: string, value: any}) => !item.value)
       if (hasValue) {
         const item = callDataOptions.value.find((item: any) => item.id === hasValue.name)
-        return Promise.reject(item?.name ? `请输入${item?.name}值` : '请输入属性值')
+        return Promise.reject(item?.name ? $t('Device.WriteProperty.372527-5', [item?.name]) : $t('Device.WriteProperty.372527-6'))
       }
     }
     return Promise.resolve();

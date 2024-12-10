@@ -1,23 +1,23 @@
 <template>
   <a-drawer
     visible
-    title="关联场景联动详情"
+    :title="$t('Scene.SceneDrawer.021453-0')"
     :width="600"
     :closable="false"
     :keyboard="false"
     @close="onCancel"
   >
     <div class="scene-warp">
-      <TitleComponent data="基本信息" />
+      <TitleComponent :data="$t('Scene.SceneDrawer.021453-1')" />
       <a-descriptions size="small" :column="2" bordered>
-        <a-descriptions-item label="场景名称">
+        <a-descriptions-item :label="$t('Scene.SceneDrawer.021453-2')">
           <j-ellipsis>{{ detail.name }}</j-ellipsis>
         </a-descriptions-item>
-        <a-descriptions-item label="场景类型">{{
+        <a-descriptions-item :label="$t('Scene.SceneDrawer.021453-3')">{{
           itemType.text
         }}</a-descriptions-item>
       </a-descriptions>
-      <TitleComponent data="关联详情" style="margin: 12px 0" />
+      <TitleComponent :data="$t('Scene.SceneDrawer.021453-4')" style="margin: 12px 0" />
       <div class="branches-warp">
         <BranchesTabs
           :branchesGroup="branchesGroup"
@@ -48,7 +48,9 @@ import {
 } from "../../../../../api/configuration";
 import { handleGroupAndFilter, typeMap } from "./Save/utils";
 import BranchesTabs from "./Save/BranchesTabs.vue";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const props = defineProps({
   id: {
     type: String,

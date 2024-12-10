@@ -1,7 +1,7 @@
 <template>
   <a-modal
     visible
-    title="关联告警"
+    :title="$t('TriggerAlarm.index.966773-0')"
     :width="1000"
     :keyboard="false"
     :maskClosable="false"
@@ -15,14 +15,14 @@
           <template #icon>
             <AIcon type="PlusOutlined" />
           </template>
-          关联告警
+          {{ $t('TriggerAlarm.index.966773-0') }}
         </a-button>
       </div>
       <div class="related-alarms-total" style="margin-bottom: 8px">
-        关联告警数量：<span>{{ count }}</span>
+        {{ $t('TriggerAlarm.index.966773-1') }}<span>{{ count }}</span>
       </div>
       <div class="related-alarms-tip">
-        注意：关联的告警配置处于“禁用”状态时会导致场景联动无法完成执行动作
+        {{ $t('TriggerAlarm.index.966773-2') }}
       </div>
       <JProTable
         ref="tableRef"
@@ -74,13 +74,13 @@
             type="link"
             style="padding: 0"
             :popConfirm="{
-              title: '确认取消关联',
+              title: $t('TriggerAlarm.index.966773-3'),
               onConfirm: () => {
                 unBind(slotProps);
               },
             }"
             :tooltip="{
-              title: '取消关联',
+              title: $t('TriggerAlarm.index.966773-4'),
             }"
           >
             <AIcon type="DisconnectOutlined" />
@@ -109,7 +109,9 @@ import { onlyMessage } from "@jetlinks-web/utils";
 import { EventEmitter } from "../../util";
 import { useRequest } from '@jetlinks-web/hooks';
 import { useAlarmLevel } from "../../../../../hook";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 
 const props = defineProps({
   id: {
@@ -159,10 +161,10 @@ const { data: activeKeys } = useRequest<any, Record<string, any>>(
 );
 
 const map = {
-  product: "产品",
-  device: "设备",
-  org: "组织",
-  other: "其他",
+  product: $t('TriggerAlarm.index.966773-5'),
+  device: $t('TriggerAlarm.index.966773-6'),
+  org: $t('TriggerAlarm.index.966773-7'),
+  other: $t('TriggerAlarm.index.966773-8'),
 };
 
 const columns = [
@@ -170,31 +172,31 @@ const columns = [
     dataIndex: "name",
     fixed: "left",
     ellipsis: true,
-    title: "名称",
+    title: $t('TriggerAlarm.index.966773-9'),
   },
   {
     dataIndex: "targetType",
-    title: "类型",
+    title: $t('TriggerAlarm.index.966773-10'),
     scopedSlots: true,
   },
   {
     dataIndex: "level",
-    title: "告警级别",
+    title: $t('TriggerAlarm.index.966773-11'),
     scopedSlots: true,
   },
   {
     dataIndex: "state",
-    title: "状态",
+    title: $t('TriggerAlarm.index.966773-12'),
     scopedSlots: true,
   },
   {
     dataIndex: "description",
-    title: "说明",
+    title: $t('TriggerAlarm.index.966773-13'),
     ellipsis: true,
   },
   {
     dataIndex: "action",
-    title: "操作",
+    title: $t('TriggerAlarm.index.966773-14'),
     width: 80,
     scopedSlots: true,
   },
@@ -229,7 +231,7 @@ const unBind = async (record: any) => {
         ]);
   if (res.success) {
     tableRef.value.reload();
-    onlyMessage("操作成功！");
+    onlyMessage($t('TriggerAlarm.index.966773-15'));
     eventEmit();
   }
 };

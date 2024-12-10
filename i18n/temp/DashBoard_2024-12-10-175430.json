@@ -1,0 +1,14 @@
+{
+	"zh": {
+		"components.TimeSelect.753514-0": "今日",
+		"components.TimeSelect.753514-1": "近一周",
+		"components.TimeSelect.753514-2": "近一月",
+		"components.TimeSelect.753514-3": "近一年"
+	},
+	"en": {
+		"components.TimeSelect.753514-0": "today",
+		"components.TimeSelect.753514-1": "In the past week",
+		"components.TimeSelect.753514-2": "In the past month",
+		"components.TimeSelect.753514-3": "In the past year"
+	}
+}

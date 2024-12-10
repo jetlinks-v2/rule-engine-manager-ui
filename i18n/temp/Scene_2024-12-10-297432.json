@@ -1,0 +1,32 @@
+{
+	"zh": {
+		"device.index.9667835-0": "选择方式",
+		"device.index.9667835-1": "请选择方式",
+		"device.index.9667835-2": "关系",
+		"device.index.9667835-3": "请选择关系",
+		"device.index.9667835-4": "请选择标签",
+		"device.index.9667835-5": "变量",
+		"device.index.9667835-6": "请选择",
+		"device.index.9667835-7": "请选择参数",
+		"device.index.9667835-8": "设备",
+		"device.index.9667835-9": "并且",
+		"device.index.9667835-10": "或者",
+		"device.index.9667835-11": "为$",
+		"device.index.9667835-12": "请选择设备"
+	},
+	"en": {
+		"device.index.9667835-0": "Selection method",
+		"device.index.9667835-1": "Please choose a method",
+		"device.index.9667835-2": "relationship",
+		"device.index.9667835-3": "Please choose a relationship",
+		"device.index.9667835-4": "Please select a label",
+		"device.index.9667835-5": "variable",
+		"device.index.9667835-6": "Please choose",
+		"device.index.9667835-7": "Please select parameters",
+		"device.index.9667835-8": "equipment",
+		"device.index.9667835-9": "also",
+		"device.index.9667835-10": "perhaps",
+		"device.index.9667835-11": "For$",
+		"device.index.9667835-12": "Please select a device"
+	}
+}

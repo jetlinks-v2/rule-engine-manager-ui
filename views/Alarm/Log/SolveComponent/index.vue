@@ -1,8 +1,8 @@
 <template>
     <a-modal
-        title="告警处理"
-        okText="确定"
-        cancelText="取消"
+        :title="$t('SolveComponent.index.165153-0')"
+        :okText="$t('SolveComponent.index.165153-1')"
+        :cancelText="$t('SolveComponent.index.165153-2')"
         visible
         @cancel="handleCancel"
         @ok="handleSave"
@@ -10,13 +10,13 @@
         :confirmLoading="loading"
     >
         <a-form :rules="rules" layout="vertical" ref="formRef" :model="form">
-            <a-form-item label="处理结果" name="describe">
+            <a-form-item :label="$t('SolveComponent.index.165153-3')" name="describe">
                 <a-textarea
                     :disabled="solveType === 'view'"
                     :rows="8"
                     :maxlength="200"
                     showCount
-                    placeholder="请输入处理结果"
+                    :placeholder="$t('SolveComponent.index.165153-4')"
                     v-model:value="form.describe"
                 ></a-textarea>
             </a-form-item>
@@ -27,6 +27,9 @@
 <script lang="ts" setup>
 import { handleLog, handlePreconditioning } from '../../../../api/log';
 import { onlyMessage } from '@jetlinks-web/utils';
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const props = defineProps({
     data: {
         type: Object,
@@ -50,7 +53,7 @@ const rules = {
     describe: [
         {
             required: true,
-            message: '请输入处理结果',
+            message: $t('SolveComponent.index.165153-4'),
         },
     ],
 };
@@ -82,10 +85,10 @@ const handleSave = () => {
                 ? await handlePreconditioning(params)
                 : await handleLog(params);
             if (res.status === 200) {
-                onlyMessage('操作成功！');
+                onlyMessage($t('SolveComponent.index.165153-5'));
                 emit('refresh');
             } else {
-                onlyMessage('操作失败！', 'error');
+                onlyMessage($t('SolveComponent.index.165153-6'), 'error');
             }
             loading.value = false;
         })

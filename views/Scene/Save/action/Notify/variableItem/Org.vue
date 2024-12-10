@@ -2,7 +2,7 @@
     <a-tree-select
         :listHeight="200"
         v-model:value="keys"
-        placeholder="请选择组织"
+        :placeholder="$t('variableItem.Org.646431-0')"
         :tree-data="departmentTree"
         @change="onChange"
         allowClear
@@ -15,7 +15,9 @@
 
 <script lang="ts" setup>
 import { dingTalkDept , weChatDept } from '../../../../../../api/others'
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const props = defineProps({
     notify: {
         type: Object,

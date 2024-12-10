@@ -25,8 +25,8 @@
   </a-table>
   <div class="tableBottom">
     <a-button v-if="exceed" class="moreBtn" type="link" @click="gotoAlarmRecord"
-      >查看更多 ></a-button
-    ><span v-else-if="dataSource.length">已展示全部数据</span>
+      >{{ $t('components.Record.165159-0') }} ></a-button
+    ><span v-else-if="dataSource.length">{{ $t('components.Record.165159-1') }}</span>
   </div>
 </template>
 
@@ -36,6 +36,9 @@ import dayjs from "dayjs";
 import { useMenuStore } from "@/store/menu";
 import { defineExpose } from "vue";
 import Duration from "../../components/Duration.vue";
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const props = defineProps({
   currentId: {
     type: String,
@@ -47,27 +50,27 @@ const dataSource = ref([]);
 const menuStory = useMenuStore();
 const columns = [
   {
-    title: "告警时间",
+    title: $t('components.Record.165159-2'),
     dataIndex: "alarmTime",
     key: "alarmTime",
   },
   {
-    title: "处理时间",
+    title: $t('components.Record.165159-3'),
     dataIndex: "handleTime",
     key: "handleTime",
   },
   {
-    title: "告警持续时长",
+    title: $t('components.Record.165159-4'),
     dataIndex: "duration",
     key: "duration",
   },
   {
-    title: "处理类型",
+    title: $t('components.Record.165159-5'),
     dataIndex: "handleType",
     key: "handleType",
   },
   {
-    title: "处理结果",
+    title: $t('components.Record.165159-6'),
     dataIndex: "description",
     key: "description",
   },

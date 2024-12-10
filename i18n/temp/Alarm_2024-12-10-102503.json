@@ -1,0 +1,14 @@
+{
+	"zh": {
+		"components.CardBox.0214517-0": "说明：",
+		"components.CardBox.0214517-1": "该场景为禁用状态,无法触发告警",
+		"components.CardBox.0214517-2": "无效数据，请重新保存场景",
+		"components.CardBox.0214517-3": "正常"
+	},
+	"en": {
+		"components.CardBox.0214517-0": "explain:",
+		"components.CardBox.0214517-1": "This scenario is disabled and cannot trigger an alarm",
+		"components.CardBox.0214517-2": "Invalid data, please save the scene again",
+		"components.CardBox.0214517-3": "normal"
+	}
+}

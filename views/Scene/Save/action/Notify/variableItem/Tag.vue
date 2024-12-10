@@ -2,7 +2,7 @@
     <a-select
         style="width: 100%"
         v-model:value="keys"
-        placeholder="请选择标签"
+        :placeholder="$t('variableItem.Tag.9667822-0')"
         :options="tagsList"
         allowClear
         @change="onChange"
@@ -11,7 +11,9 @@
 
 <script lang="ts" setup>
 import { getTags } from '../../../../../../api/others'
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const props = defineProps({
     notify: {
         type: Object,

@@ -1,0 +1,20 @@
+{
+	"zh": {
+		"components.Record.165159-0": "查看更多",
+		"components.Record.165159-1": "已展示全部数据",
+		"components.Record.165159-2": "告警时间",
+		"components.Record.165159-3": "处理时间",
+		"components.Record.165159-4": "告警持续时长",
+		"components.Record.165159-5": "处理类型",
+		"components.Record.165159-6": "处理结果"
+	},
+	"en": {
+		"components.Record.165159-0": "View more",
+		"components.Record.165159-1": "All data has been displayed",
+		"components.Record.165159-2": "Alarm time",
+		"components.Record.165159-3": "processing time ",
+		"components.Record.165159-4": "Alarm duration",
+		"components.Record.165159-5": "Processing type",
+		"components.Record.165159-6": "Processing results"
+	}
+}

@@ -51,14 +51,14 @@
                         <a-row>
                             <a-col :span="12">
                                 <div class="card-item-content-text">
-                                    通知方式
+                                    {{ $t('Notify.NotifyConfig.966770-0') }}
                                 </div>
                                 <div>
                                     {{ getMethodTxt(slotProps.type) }}
                                 </div>
                             </a-col>
                             <a-col :span="12">
-                                <div class="card-item-content-text">说明</div>
+                                <div class="card-item-content-text">{{ $t('Notify.NotifyConfig.966770-1') }}</div>
                                 <j-ellipsis>
                                     {{ slotProps.description }}
                                 </j-ellipsis>
@@ -74,6 +74,9 @@
 <script lang="ts" setup>
 import { queryNoticeList } from '../../../../../api/others'
 import { MSG_TYPE, NOTICE_METHOD } from '../../../../../utils/const';
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const props = defineProps({
     notifyType: {
         type: String,
@@ -100,7 +103,7 @@ const _selectedRowKeys = ref<string[]>([]);
 
 const columns = [
     {
-        title: '名称',
+        title: $t('Notify.NotifyConfig.966770-2'),
         dataIndex: 'name',
         key: 'name',
         search: {
@@ -116,7 +119,7 @@ const columns = [
         },
     },
     {
-        title: '说明',
+        title: $t('Notify.NotifyConfig.966770-1'),
         dataIndex: 'description',
         key: 'description',
         search: {

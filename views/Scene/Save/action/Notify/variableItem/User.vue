@@ -6,38 +6,38 @@
             @change="sourceChange"
         >
             <a-select-option key="5" value="relation">
-                平台用户
+                {{ $t('variableItem.User.9667821-0') }}
             </a-select-option>
             <a-select-option
                 v-if="notifyType === 'dingTalk'"
                 key="1"
                 value="fixed"
             >
-                钉钉用户
+                {{ $t('variableItem.User.9667821-1') }}
             </a-select-option>
             <a-select-option
                 v-else-if="notifyType === 'weixin'"
                 key="2"
                 value="fixed"
             >
-                微信用户
+                {{ $t('variableItem.User.9667821-2') }}
             </a-select-option>
             <a-select-option
                 v-else-if="notifyType === 'email'"
                 key="3"
                 value="fixed"
             >
-                固定邮箱
+                {{ $t('variableItem.User.9667821-3') }}
             </a-select-option>
             <a-select-option v-else key="4" value="fixed">
-                固定号码
+                {{ $t('variableItem.User.9667821-4') }}
             </a-select-option>
         </a-select>
         <template v-if="source === 'relation'">
             <a-tree-select
                 v-if="['email'].includes(notifyType)"
                 style="width: calc(100% - 120px)"
-                placeholder="请选择收信人"
+                :placeholder="$t('variableItem.User.9667821-5')"
                 @change="(key, label) => onChange(source, key, label)"
                 :tree-data="treeData"
                 :multiple="true"
@@ -65,7 +65,7 @@
             <a-tree-select
                 v-else
                 style="width: calc(100% - 120px)"
-                placeholder="请选择收信人"
+                :placeholder="$t('variableItem.User.9667821-5')"
                 @change="
                     (key, label) => onChange(source, key, label)
                 "
@@ -96,7 +96,7 @@
             <a-select
                 style="width: calc(100% - 120px)"
                 v-if="['dingTalk', 'weixin'].includes(notifyType)"
-                placeholder="请选择收信人"
+                :placeholder="$t('variableItem.User.9667821-5')"
                 :value="value?.value"
                 showSearch
                 allowClear
@@ -113,7 +113,7 @@
             <a-select
                 style="width: calc(100% - 120px)"
                 v-else-if="['email'].includes(notifyType)"
-                placeholder="请输入收件人邮箱,多个收件人用换行分隔"
+                :placeholder="$t('variableItem.User.9667821-6')"
                 :value="value?.value"
                 mode="tags"
                 max-tag-count="responsive"
@@ -129,7 +129,7 @@
             <a-input
                 style="width: calc(100% - 120px)"
                 v-else-if="['sms', 'voice'].includes(notifyType)"
-                placeholder="请输入固定号码"
+                :placeholder="$t('variableItem.User.9667821-7')"
                 :value="value?.value"
                 @change="
                     (e) =>
@@ -145,7 +145,9 @@ import { storeToRefs } from 'pinia';
 import { useSceneStore } from '../../../../../../store/scene';
 import {queryDingTalkUsers , queryWechatUsers , getPlatformUsers , getRelationUsers as queryRelationUsers } from '../../../../../../api/others'
 import { unionBy } from 'lodash-es';
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
 
@@ -212,7 +214,7 @@ const relationData = computed(() => {
 const relationList = ref<any[]>([]);
 const treeData = ref<any[]>([
     {
-        title: '平台用户',
+        title: $t('variableItem.User.9667821-0'),
         value: 'p1',
         key: 'p1',
         selectable: false,
@@ -243,7 +245,7 @@ const getRelationUsers = async (notifyType: string, notifierId: string) => {
 const getUser = async (_source: string, _triggerType: string) => {
     const newTree = [
         {
-            title: '平台用户',
+            title: $t('variableItem.User.9667821-0'),
             value: 'p1',
             key: 'p1',
             selectable: false,
@@ -274,7 +276,7 @@ const getUser = async (_source: string, _triggerType: string) => {
     }
     if (relationResp && relationResp.success) {
         newTree.push({
-            title: '关系用户',
+            title: $t('variableItem.User.9667821-8'),
             value: 'p2',
             key: 'p2',
             selectable: false,

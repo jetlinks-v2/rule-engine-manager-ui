@@ -1,0 +1,26 @@
+{
+	"zh": {
+		"components.LogDetail.1651510-0": "确定",
+		"components.LogDetail.1651510-1": "取消",
+		"components.LogDetail.1651510-2": "告警日志",
+		"components.LogDetail.1651510-3": "触发条件",
+		"components.LogDetail.1651510-4": "告警原因",
+		"components.LogDetail.1651510-5": "告警源",
+		"components.LogDetail.1651510-6": "设备ID：",
+		"components.LogDetail.1651510-7": "场景联动ID：",
+		"components.LogDetail.1651510-8": "告警流水",
+		"components.LogDetail.1651510-9": "定时触发"
+	},
+	"en": {
+		"components.LogDetail.1651510-0": "determine",
+		"components.LogDetail.1651510-1": "cancel",
+		"components.LogDetail.1651510-2": "Alarm Log ",
+		"components.LogDetail.1651510-3": "Trigger condition",
+		"components.LogDetail.1651510-4": "Reason for alarm",
+		"components.LogDetail.1651510-5": "Alarm source",
+		"components.LogDetail.1651510-6": "Device ID:",
+		"components.LogDetail.1651510-7": "Scene linkage ID:",
+		"components.LogDetail.1651510-8": "Alarm flow",
+		"components.LogDetail.1651510-9": "Timed trigger"
+	}
+}

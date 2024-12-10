@@ -8,44 +8,47 @@
 import { useAlarmStore } from '../../../store/alarm';
 import { storeToRefs } from 'pinia';
 import  TableComponents  from './TabComponent/index.vue';
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const list = [
     {
         key: 'all',
-        tab: '全部',
+        tab: $t('Log.index.165154-0'),
     },
     {
         key: 'product',
-        tab: '产品',
+        tab: $t('Log.index.165154-1'),
     },
     {
         key: 'device',
-        tab: '设备',
+        tab: $t('Log.index.165154-2'),
     },
     {
         key: 'org',
-        tab: '组织',
+        tab: $t('Log.index.165154-3'),
     },
     {
         key: 'other',
-        tab: '场景',
+        tab: $t('Log.index.165154-4'),
     },
 ];
 const noList = [
     {
         key: 'all',
-        tab: '全部',
+        tab: $t('Log.index.165154-0'),
     },
     {
         key: 'product',
-        tab: '产品',
+        tab: $t('Log.index.165154-1'),
     },
     {
         key: 'device',
-        tab: '设备',
+        tab: $t('Log.index.165154-2'),
     },
     {
         key: 'other',
-        tab: '场景',
+        tab: $t('Log.index.165154-4'),
     },
 ];
 const alarmStore = useAlarmStore();

@@ -1,0 +1,20 @@
+{
+	"zh": {
+		"SolveComponent.index.165153-0": "告警处理",
+		"SolveComponent.index.165153-1": "确定",
+		"SolveComponent.index.165153-2": "取消",
+		"SolveComponent.index.165153-3": "处理结果",
+		"SolveComponent.index.165153-4": "请输入处理结果",
+		"SolveComponent.index.165153-5": "操作成功！",
+		"SolveComponent.index.165153-6": "操作失败！"
+	},
+	"en": {
+		"SolveComponent.index.165153-0": "alarm handling ",
+		"SolveComponent.index.165153-1": "determine",
+		"SolveComponent.index.165153-2": "cancel",
+		"SolveComponent.index.165153-3": "Processing results",
+		"SolveComponent.index.165153-4": "Please enter the processing result",
+		"SolveComponent.index.165153-5": "Operation successful!",
+		"SolveComponent.index.165153-6": "Operation failed!"
+	}
+}

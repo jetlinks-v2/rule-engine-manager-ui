@@ -38,7 +38,7 @@
           :loading="loading"
           @click="save"
         >
-          保存
+          {{ $t('Save.index.766438-0') }}
         </j-permission-button>
       </div>
     </FullPage>
@@ -58,7 +58,9 @@ import { useMenuStore } from "@/store/menu";
 import { onlyMessage } from "@jetlinks-web/utils";
 import Description from "./components/Description.vue";
 import { handleFeatures } from "./util";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const menuStore = useMenuStore();
 const { data } = storeToRefs(sceneStore);
@@ -95,7 +97,7 @@ const save = async () => {
       } else {
         menuStore.jumpPage("rule-engine/Scene", {});
       }
-      onlyMessage("操作成功");
+      onlyMessage($t('Save.index.766438-1'));
     }
   }
 };

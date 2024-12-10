@@ -1,5 +1,6 @@
+import i18n from '@/i18n'
 import { BranchesThen } from '../../../typings'
-
+const $t = i18n.global.t
 export const ContextKey = 'columnOptions'
 export const arrayParamsKey = ['nbtw', 'btw', 'in', 'nin', 'contains_all', 'contains_any', 'not_contains']
 export const doubleParamsKey= ['nbtw','btw']
@@ -28,7 +29,7 @@ export const handleParamsData = (data: any[], key: string = 'column', parentId?:
 export const thenRules = [{
   validator(_: string, value: BranchesThen[]) {
     if (!value || (value && !value.length) || !value.some(item => item.actions && item.actions.length)) {
-      return Promise.reject('至少配置一个执行动作')
+      return Promise.reject($t('Terms.util.9093424-0'))
     }
     return Promise.resolve();
   }

@@ -12,15 +12,15 @@
 		"Config.index.945945-9": "操作成功"
 	},
 	"en": {
-		"Config.index.945945-0": "",
-		"Config.index.945945-1": "",
-		"Config.index.945945-2": "",
-		"Config.index.945945-3": "",
-		"Config.index.945945-4": "",
-		"Config.index.945945-5": "",
-		"Config.index.945945-6": "",
-		"Config.index.945945-7": "",
-		"Config.index.945945-8": "",
-		"Config.index.945945-9": ""
+		"Config.index.945945-0": "Alarm level configuration",
+		"Config.index.945945-1": "Level {0}",
+		"Config.index.945945-2": "preservation",
+		"Config.index.945945-3": "Function Description",
+		"Config.index.945945-4": "1. The alarm level is used to describe the severity of the alarm, please customize it according to the business management method.",
+		"Config.index.945945-5": "2. The alarm level will be referenced in the alarm configuration.",
+		"Config.index.945945-6": "3. Up to 5 levels can be configured.",
+		"Config.index.945945-7": "Alarm level",
+		"Config.index.945945-8": "Data flow",
+		"Config.index.945945-9": "Operation successful"
 	}
 }

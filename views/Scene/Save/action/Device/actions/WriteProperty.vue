@@ -8,12 +8,12 @@
             <a-col :span="12">
                 <a-form-item
                     name="properties"
-                    label="设置属性"
-                    :rules="[{ required: true, message: '请选择设置属性' }]"
+                    :label="$t('actions.WriteProperty.9667836-0')"
+                    :rules="[{ required: true, message: $t('actions.WriteProperty.9667836-1') }]"
                 >
                     <a-select
                         showSearch
-                        placeholder="请选择属性"
+                        :placeholder="$t('actions.WriteProperty.9667836-2')"
                         v-model:value="propertyModelRef.properties"
                         @change="onChange"
                     >
@@ -29,8 +29,8 @@
             <a-col :span="12" v-if="propertyModelRef.properties">
                 <a-form-item
                     name="propertiesValue"
-                    label="属性值"
-                    :rules="[{ required: true, message: '请选择' }]"
+                    :label="$t('actions.WriteProperty.9667836-3')"
+                    :rules="[{ required: true, message: $t('actions.WriteProperty.9667836-4') }]"
                 >
                     <ParamsDropdown
                         :options="handleOptions"
@@ -43,7 +43,7 @@
                         @select="onValueChange"
                     >
                         <template v-slot="{ label }">
-                            <a-input readonly :value="label" placeholder="请选择" />
+                            <a-input readonly :value="label" :placeholder="$t('actions.WriteProperty.9667836-4')" />
                         </template>
                     </ParamsDropdown>
                 </a-form-item>
@@ -56,6 +56,9 @@
 import { cloneDeep, isObject } from 'lodash-es'
 import ParamsDropdown from '../../../components/ParamsDropdown';
 import { handleParamsData } from './index';
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const props = defineProps({
     value: {
         type: Object,
@@ -100,12 +103,12 @@ const getType = computed(() => {
 const tabOptions = computed(() => {
     return [
         {
-            label: '手动输入',
+            label: $t('actions.WriteProperty.9667836-5'),
             component: getType.value?.valueType?.type,
             key: 'fixed',
         },
         {
-            label: '内置参数',
+            label: $t('actions.WriteProperty.9667836-6'),
             component: 'tree',
             key: 'upper',
         },

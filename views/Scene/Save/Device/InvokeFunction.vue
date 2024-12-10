@@ -4,14 +4,14 @@
       <a-col :span='10'>
         <a-form-item
           name='functionId'
-          :rules="[{ required: true, message: '请选择功能' }]"
+          :rules="[{ required: true, message: $t('Device.InvokeFunction.372523-0') }]"
         >
           <a-select
             showSearch
             allowClear
             v-model:value='formModel.functionId'
             style='width: 100%'
-            placeholder='请选择功能'
+            :placeholder='$t('Device.InvokeFunction.372523-0')'
             :options='functions'
             :filterOption='filterSelectNode'
             @select='onSelect'
@@ -19,7 +19,7 @@
         </a-form-item>
       </a-col>
       <a-col :span='14'>
-        <a-form-item>定时调用所选功能</a-form-item>
+        <a-form-item>{{ $t('Device.InvokeFunction.372523-1') }}</a-form-item>
       </a-col>
       <a-col :span='24'>
         <a-form-item
@@ -42,7 +42,9 @@ import { filterSelectNode } from '../../../../utils/comm'
 import { FunctionCall } from '../components'
 import type { PropType } from 'vue'
 import { defineExpose } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 type Emit = {
   (e: 'update:functionParameters', data: Array<Record<string, any>>): void
   (e: 'update:functionId', data: string): void
@@ -79,8 +81,8 @@ const handlePropertiesOptions = (propertiesValueType: any) => {
   const _type = propertiesValueType?.type
   if (_type === 'boolean') {
     return [
-      { label: propertiesValueType?.falseText || '是', value: propertiesValueType?.falseValue || false },
-      { label: propertiesValueType?.trueText || '否', value: propertiesValueType?.trueValue || true },
+      { label: propertiesValueType?.falseText || $t('Device.InvokeFunction.372523-2'), value: propertiesValueType?.falseValue || false },
+      { label: propertiesValueType?.trueText || $t('Device.InvokeFunction.372523-3'), value: propertiesValueType?.trueValue || true },
     ]
   } else if (_type === 'enum') {
     return propertiesValueType?.elements?.map((a: any) => ({ ...a, label: a.text }))
@@ -120,12 +122,12 @@ const rules = [{
     const arr = functionData.value.filter((i: any) => i?.required)
     if(arr.length){
       if (!value?.length) {
-        return Promise.reject('请输入功能值')
+        return Promise.reject($t('Device.InvokeFunction.372523-4'))
       } else {
         let hasValue = value.find((item: { name: string, value: any}) => item.value === undefined)
         if (hasValue) {
           const functionItem = arr.find((item: any) => item.id === hasValue.name)
-          return Promise.reject(functionItem?.name ? `请输入${functionItem?.name}值` : '请输入功能值')
+          return Promise.reject(functionItem?.name ? $t('Device.InvokeFunction.372523-5', [functionItem?.name]) : $t('Device.InvokeFunction.372523-4'))
         }
       }
     }
@@ -135,7 +137,7 @@ const rules = [{
 
 const onSelect = (v: string, item: any) => {
   formModel.functionData = []
-  emit('update:action', `执行${item.name}`)
+  emit('update:action', $t('Device.InvokeFunction.372523-6', [item.name]))
   emit('update:functionId', v)
   emit('update:functionParameters', [])
 }

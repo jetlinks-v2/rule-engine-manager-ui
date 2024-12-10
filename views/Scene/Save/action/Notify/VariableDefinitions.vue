@@ -60,7 +60,7 @@
             />
         </a-form-item>
     </a-form>
-    <a-empty v-else style="margin: 20px 0" description="暂无模板变量" />
+    <a-empty v-else style="margin: 20px 0" :description="$t('Notify.VariableDefinitions.966776-0')" />
 </template>
 
 <script lang="ts" setup>
@@ -71,7 +71,9 @@ import InputFile from './variableItem/InputFile.vue';
 import User from './variableItem/User.vue';
 import { PropType } from 'vue';
 import { onlyMessage } from '@jetlinks-web/utils';
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const props = defineProps({
     variableDefinitions: {
         type: Array as PropType<any>,
@@ -138,34 +140,34 @@ const checkValue = (_rule: any, value: any, item: any) => {
         return Promise.resolve();
     } else if (type === 'link') {
         if (!value) {
-            return Promise.reject(new Error('请输入' + item.name));
+            return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-1') + item.name));
         } else if (value.length > 64) {
-            return Promise.reject(new Error('最多64个字符'));
+            return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-2')));
         }
     } else if (type === 'tag' && !value) {
-        return Promise.reject(new Error('请选择' + item.name));
+        return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-3') + item.name));
     } else if (['date', 'org'].includes(type)) {
         if (!value) {
-            return Promise.reject(new Error('请选择' + item.name));
+            return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-3') + item.name));
         } else {
             if (value?.source === 'upper') {
                 if (!value?.upperKey) {
-                    return Promise.reject(new Error('请选择' + item.name));
+                    return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-3') + item.name));
                 } else {
                     return Promise.resolve();
                 }
             } else {
                 if (!value?.value) {
-                    return Promise.reject(new Error('请选择' + item.name));
+                    return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-3') + item.name));
                 } else {
                     return Promise.resolve();
                 }
             }
         }
     } else if (value?.source === 'fixed' && !value?.value) {
-        let tip = '请输入' + item.name;
+        let tip = $t('Notify.VariableDefinitions.966776-1') + item.name;
         if (props.notify.notifyType === 'email') {
-            tip = '请输入收件人';
+            tip = $t('Notify.VariableDefinitions.966776-4');
         }
         return Promise.reject(new Error(tip));
     } else if (
@@ -173,9 +175,9 @@ const checkValue = (_rule: any, value: any, item: any) => {
         !value?.value &&
         !value?.relation
     ) {
-        return Promise.reject(new Error('请选择' + item.name));
+        return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-3') + item.name));
     } else if (value?.source === 'upper' && !value.upperKey) {
-        return Promise.reject(new Error('请选择' + item.name));
+        return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-3') + item.name));
     } else if (type === 'user') {
         if (
             props.notify.notifyType === 'email' &&
@@ -183,7 +185,7 @@ const checkValue = (_rule: any, value: any, item: any) => {
         ) {
             if (Array.isArray(value?.value)) {
                 if (!value?.value.length) {
-                    return Promise.reject(new Error('请输入收件人'));
+                    return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-4')));
                 }
                 const reg =
                     /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
@@ -191,7 +193,7 @@ const checkValue = (_rule: any, value: any, item: any) => {
                     return reg.test(it);
                 });
                 if (!flag) {
-                    return Promise.reject(new Error('请输入正确的邮箱地址'));
+                    return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-5')));
                 } else {
                     return Promise.resolve();
                 }
@@ -207,7 +209,7 @@ const checkValue = (_rule: any, value: any, item: any) => {
         ) {
             const reg = /^[1][3-9]\d{9}$/;
             if (!reg.test(value?.value)) {
-                return Promise.reject(new Error('请输入正确的手机号码'));
+                return Promise.reject(new Error($t('Notify.VariableDefinitions.966776-6')));
             } else {
                 return Promise.resolve();
             }
@@ -265,13 +267,13 @@ const onSave = () =>
             : true;
         if (!pass && props.notify.notifyType === 'weixin') {
             onlyMessage(
-                '收信人，收信人部门，收信人标签至少填写一个',
+                $t('Notify.VariableDefinitions.966776-7'),
                 'warning',
             );
             return reject(false);
         }
         if (!pass && props.notify.notifyType === 'dingTalk') {
-            onlyMessage('收信人，收信人部门至少填写一个', 'warning');
+            onlyMessage($t('Notify.VariableDefinitions.966776-8'), 'warning');
             return reject(false);
         }
         formRef.value

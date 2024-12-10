@@ -1,9 +1,9 @@
 <template>
   <a-modal
     visible
-    title="新增"
-    okText="确定"
-    cancelText="取消"
+    :title="$t('Save.index.021458-0')"
+    :okText="$t('Save.index.021458-1')"
+    :cancelText="$t('Save.index.021458-2')"
     :maskClosable="false"
     :width="1000"
     :loading="loading"
@@ -73,10 +73,12 @@ import { bindScene, queryBindScene } from "../../../../../../api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
 import SceneCardBox from "./CardBox.vue";
 import { useRequest } from "@jetlinks-web/hooks";
+import { useI18n } from 'vue-i18n';
 
+const { t: $t } = useI18n();
 const columns = [
   {
-    title: "场景名称",
+    title: $t('Save.index.021458-3'),
     dataIndex: "name",
     key: "name",
     search: {
@@ -84,40 +86,40 @@ const columns = [
     },
   },
   {
-    title: "触发方式",
+    title: $t('Save.index.021458-4'),
     dataIndex: "triggerType",
     key: "triggerType",
     search: {
       type: "select",
       options: [
         {
-          label: "手动触发",
+          label: $t('Save.index.021458-5'),
           value: "manual",
         },
         {
-          label: "定时触发",
+          label: $t('Save.index.021458-6'),
           value: "timer",
         },
         {
-          label: "设备触发",
+          label: $t('Save.index.021458-7'),
           value: "device",
         },
       ],
     },
   },
   {
-    title: "状态",
+    title: $t('Save.index.021458-8'),
     dataIndex: "state",
     key: "state",
     search: {
       type: "select",
       options: [
         {
-          label: "正常",
+          label: $t('Save.index.021458-9'),
           value: "started",
         },
         {
-          label: "禁用",
+          label: $t('Save.index.021458-10'),
           value: "disable",
         },
       ],
@@ -198,11 +200,11 @@ const saveCorrelation = async () => {
       loading.value = false;
     });
     if (res.success) {
-      onlyMessage("操作成功");
+      onlyMessage($t('Save.index.021458-11'));
       emit("saveScene");
     }
   } else {
-    onlyMessage("请选择至少一条数据", "error");
+    onlyMessage($t('Save.index.021458-12'), "error");
   }
 };
 const closeModal = () => {

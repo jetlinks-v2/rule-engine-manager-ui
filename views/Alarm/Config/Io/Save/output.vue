@@ -61,6 +61,9 @@
 <script lang="ts" setup>
 import { saveOutputData } from "../../../../../api/config";
 import { onlyMessage } from "@jetlinks-web/utils";
+import { useI18n } from 'vue-i18n';
+
+const { t: $t } = useI18n();
 const formRef = ref();
 const props = defineProps({
   data: {

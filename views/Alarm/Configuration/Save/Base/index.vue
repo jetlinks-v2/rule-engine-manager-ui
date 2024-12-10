@@ -4,9 +4,9 @@
       <a-form layout="vertical" :rules="rule" :model="form" ref="formRef">
         <a-row :gutter="24">
           <a-col :span="12">
-            <a-form-item label="名称" name="name">
+            <a-form-item :label="$t('Base.index.021452-0')" name="name">
               <a-input
-                placeholder="请输入名称"
+                :placeholder="$t('Base.index.021452-1')"
                 v-model:value="form.name"
               ></a-input> </a-form-item
           ></a-col>
@@ -14,20 +14,20 @@
             <a-form-item name="targetType">
               <template #label>
                 <a-space>
-                  类型
+                  {{ $t('Base.index.021452-2') }}
                   <a-tooltip>
                     <template #title>
                       <div>
-                        产品：以产品维度告警，某产品下的多个设备异常仅发送一条告警。
+                        {{ $t('Base.index.021452-3') }}
                       </div>
                       <div>
-                        设备：以设备维度告警，任何设备异常即发送一条告警。
+                        {{ $t('Base.index.021452-4') }}
                       </div>
                       <div v-if="isNoCommunity">
-                        组织：以组织维度告警，某组织下的多个设备异常仅发送一条告警。
+                        {{ $t('Base.index.021452-5') }}
                       </div>
                       <div>
-                        其他：以场景联动维度告警，某场景下的多个设备异常仅发送一条告警。
+                        {{ $t('Base.index.021452-6') }}
                       </div>
                     </template>
                     <AIcon
@@ -45,7 +45,7 @@
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="级别" name="level">
+        <a-form-item :label="$t('Base.index.021452-7')" name="level">
           <a-radio-group v-model:value="form.level" class="levelSelect">
             <a-radio-button
               v-for="(item, index) in levelOption"
@@ -69,7 +69,7 @@
             </a-radio-button>
           </a-radio-group>
         </a-form-item>
-        <a-form-item label="说明" name="description">
+        <a-form-item :label="$t('Base.index.021452-8')" name="description">
           <a-textarea
             v-model:value="form.description"
             showCount
@@ -84,7 +84,7 @@
             'rule-engine/Alarm/Configuration:add',
             'rule-engine/Alarm/Configuration:update',
           ]"
-          >保存</j-permission-button
+          >{{ $t('Base.index.021452-9') }}</j-permission-button
         >
       </a-form>
     </div>
@@ -107,6 +107,9 @@ import { useAlarmConfigurationStore } from "../../../../../store/alarm";
 import { storeToRefs } from "pinia";
 import { configImages } from "../../../../../assets/index";
 import { isNoCommunity } from '@/utils/utils';
+import { useI18n } from 'vue-i18n';
+
+const { t: $t } = useI18n();
 const route = useRoute();
 let selectDisable = ref(false);
 const alarmConfigurationStore = useAlarmConfigurationStore();
@@ -157,29 +160,29 @@ const rule = {
   name: [
     {
       required: true,
-      message: "请输入名称",
+      message: $t('Base.index.021452-1'),
     },
     {
       max: 64,
-      message: "最多输入64个字符",
+      message: $t('Base.index.021452-10'),
     },
   ],
   targetType: [
     {
       required: true,
-      message: "请选择类型",
+      message: $t('Base.index.021452-11'),
     },
   ],
   level: [
     {
       required: true,
-      message: "请选择级别",
+      message: $t('Base.index.021452-12'),
     },
   ],
   description: [
     {
       max: 200,
-      message: "最多可输入200个字符",
+      message: $t('Base.index.021452-13'),
     },
   ],
 };
@@ -226,7 +229,7 @@ const handleSave = async () => {
         ? await update(form.value)
         : await save(form.value);
       if (res.status === 200) {
-        onlyMessage("操作成功,请配置关联的场景联动");
+        onlyMessage($t('Base.index.021452-14'));
         loading.value = false;
         emit("change", form.value.targetType);
         if (res.result?.id) {

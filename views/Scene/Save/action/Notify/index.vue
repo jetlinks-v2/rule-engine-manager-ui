@@ -1,6 +1,6 @@
 <template>
     <a-modal
-        title="执行动作"
+        :title="$t('Notify.index.966771-0')"
         visible
         :width="900"
         @cancel="onCancel"
@@ -9,22 +9,22 @@
     >
         <div class="steps-steps">
             <a-steps :current="current" size="small" @change="onChange">
-                <a-step title="通知方式" key="way" />
-                <a-step title="通知配置" key="config" />
-                <a-step title="通知模板" key="template" />
-                <a-step title="模板变量" key="variable" />
+                <a-step :title="$t('Notify.index.966771-1')" key="way" />
+                <a-step :title="$t('Notify.index.966771-2')" key="config" />
+                <a-step :title="$t('Notify.index.966771-3')" key="template" />
+                <a-step :title="$t('Notify.index.966771-4')" key="variable" />
             </a-steps>
         </div>
         <div class="steps-content">
             <a-form ref="actionForm" :model="formModel" layout="vertical">
                 <template v-if="current === 0">
                     <a-form-item
-                        label="应用"
+                        :label="$t('Notify.index.966771-5')"
                         name="notifyType"
                         :rules="[
                             {
                                 required: true,
-                                message: '请选择通知方式',
+                                message: $t('Notify.index.966771-6'),
                             },
                         ]"
                     >
@@ -71,13 +71,13 @@
         </div>
         <template #footer>
             <a-space>
-                <a-button v-if="current === 0" @click="onCancel">取消</a-button>
-                <a-button v-if="current > 0" @click="prev">上一步</a-button>
+                <a-button v-if="current === 0" @click="onCancel">{{ $t('Notify.index.966771-7') }}</a-button>
+                <a-button v-if="current > 0" @click="prev">{{ $t('Notify.index.966771-8') }}</a-button>
                 <a-button v-if="current < 3" type="primary" @click="next"
-                    >下一步</a-button
+                    >{{ $t('Notify.index.966771-9') }}</a-button
                 >
                 <a-button v-if="current === 3" type="primary" @click="onOk"
-                    >确定</a-button
+                    >{{ $t('Notify.index.966771-10') }}</a-button
                 >
             </a-space>
         </template>
@@ -93,7 +93,9 @@ import { onlyMessage } from '@jetlinks-web/utils';
 import { getTemplateDetail , queryTemplateDetail} from '../../../../../api/others'
 import { PropType } from 'vue';
 import { NotifyProps } from '../../../typings';
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const props = defineProps({
     value: {
         type: Object as PropType<Partial<NotifyProps>>,
@@ -176,13 +178,13 @@ const jumpStep = async (val: number) => {
         if (formModel.notifyType) {
             current.value = val;
         } else {
-            onlyMessage('请选择通知方式', 'error');
+            onlyMessage($t('Notify.index.966771-6'), 'error');
         }
     } else if (val === 2) {
         if (formModel.notifierId) {
             current.value = val;
         } else {
-            onlyMessage('请选择通知配置', 'error');
+            onlyMessage($t('Notify.index.966771-11'), 'error');
         }
     } else if (val === 3) {
         if (formModel.templateId) {
@@ -192,7 +194,7 @@ const jumpStep = async (val: number) => {
                 current.value = val;
             }
         } else {
-            onlyMessage('请选择通知模板', 'error');
+            onlyMessage($t('Notify.index.966771-12'), 'error');
         }
     }
 };

@@ -166,6 +166,9 @@ import OutputSave from "./Save/output.vue";
 import { getDataExchange } from "../../../../api/config";
 import { marked } from "marked";
 import { configImages } from "../../../../assets/index";
+import { useI18n } from 'vue-i18n';
+
+const { t: $t } = useI18n();
 let input = ref<any>();
 let output = ref<any>();
 const outputData = [

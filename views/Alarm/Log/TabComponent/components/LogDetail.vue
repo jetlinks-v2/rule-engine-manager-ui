@@ -1,10 +1,10 @@
 <template>
   <a-modal
     visible
-    okText="确定"
-    cancelText="取消"
+    :okText="$t('components.LogDetail.1651510-0')"
+    :cancelText="$t('components.LogDetail.1651510-1')"
     :width="1000"
-    title="告警日志"
+    :title="$t('components.LogDetail.1651510-2')"
     :closable="true"
     @ok="closeModal"
     @cancel="closeModal"
@@ -16,29 +16,29 @@
       }}</span>
     </div>
     <a-descriptions bordered :column="2">
-      <a-descriptions-item label="触发条件" :span="2">{{
+      <a-descriptions-item :label="$t('components.LogDetail.1651510-3')" :span="2">{{
         data?.triggerDesc
       }}</a-descriptions-item>
-      <a-descriptions-item label="告警原因" :span="2">{{
+      <a-descriptions-item :label="$t('components.LogDetail.1651510-4')" :span="2">{{
         data?.actualDesc
       }}</a-descriptions-item>
-      <a-descriptions-item label="告警源" :span="2">
+      <a-descriptions-item :label="$t('components.LogDetail.1651510-5')" :span="2">
         <div v-if="data.targetType === 'device'">
-          设备ID：<a-button
+          {{ $t('components.LogDetail.1651510-6') }}<a-button
           type="link"
           @click="() => gotoDevice(data?.sourceId)"
         >{{ data?.sourceId }}</a-button
         >
         </div>
         <div v-else>
-          场景联动ID：<a-button
+          {{ $t('components.LogDetail.1651510-7') }}<a-button
           type="link"
           @click="() => gotoRule(data)"
         >{{ data?.sourceId }}</a-button
         >
         </div>
       </a-descriptions-item>
-      <a-descriptions-item label="告警流水" :span="2"
+      <a-descriptions-item :label="$t('components.LogDetail.1651510-8')" :span="2"
         ><div style="max-height: 500px; overflow-y: auto">
           <JsonViewer
             :value="JSON.parse(data?.alarmInfo)"
@@ -54,6 +54,9 @@
 import dayjs from "dayjs";
 import JsonViewer from "vue3-json-viewer";
 import { useMenuStore } from "@/store/menu";
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const props = defineProps({
   data: Object,
 });
@@ -76,7 +79,7 @@ const gotoRule = (record) => {
   menuStory.jumpPage(
     'rule-engine/Scene/Save',
     {
-      query: { triggerType:record.sourceName==='定时触发'?'timer':'manual', id:record.sourceId, type: 'view' },
+      query: { triggerType:record.sourceName===$t('components.LogDetail.1651510-9')?'timer':'manual', id:record.sourceId, type: 'view' },
     }
   );
 }

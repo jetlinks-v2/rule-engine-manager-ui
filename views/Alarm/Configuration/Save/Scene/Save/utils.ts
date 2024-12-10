@@ -1,31 +1,33 @@
+import i18n from '@/i18n'
 import {isArray, isBoolean, isObject} from "lodash-es";
 import {randomString} from "@jetlinks-web/utils";
 import { ConfigurationImages } from "../../../../../../assets/index";
 
 export const TermTypeMap = {
-    'and': '并且',
-    'or': '或者'
+    'and': $t('Save.utils.021456-0'),
+    'or': $t('Save.utils.021456-1')
 }
 
+const $t = i18n.global.t
 const DoubleFilter = ['nbtw', 'btw', 'in', 'nin'];
 
 const TermsTypeMap = {
-    eq: '等于_value',
-    neq: '不等于_value',
-    gt: '大于_value',
-    gte: '大于等于_value',
-    lt: '小于_value',
-    lte: '小于等于_value',
-    btw: '在_value和_value2之间',
-    nbtw: '不在_value和_value2之间',
-    time_gt_now: '距离当前时间大于_value秒',
-    time_lt_now: '距离当前时间小于_value秒',
-    in: '在_value,_value2之中',
-    nin: '不在_value,_value2之中',
-    like: '包含_value',
-    nlike: '不包含_value',
-    notnull: '不为空',
-    isnull: '为空'
+    eq: $t('Save.utils.021456-2'),
+    neq: $t('Save.utils.021456-3'),
+    gt: $t('Save.utils.021456-4'),
+    gte: $t('Save.utils.021456-5'),
+    lt: $t('Save.utils.021456-6'),
+    lte: $t('Save.utils.021456-7'),
+    btw: $t('Save.utils.021456-8'),
+    nbtw: $t('Save.utils.021456-9'),
+    time_gt_now: $t('Save.utils.021456-10'),
+    time_lt_now: $t('Save.utils.021456-11'),
+    in: $t('Save.utils.021456-12'),
+    nin: $t('Save.utils.021456-13'),
+    like: $t('Save.utils.021456-14'),
+    nlike: $t('Save.utils.021456-15'),
+    notnull: $t('Save.utils.021456-16'),
+    isnull: $t('Save.utils.021456-17')
 };
 
 const handleValueString = (t: string, value: any) => {
@@ -45,40 +47,40 @@ const handleNotifyType = (data: any, options: any) => {
     if (data.notifyType === 'dingTalk') {
         const { sendTo, orgName, templateName } = options
         if (options.provider === 'dingTalkRobotWebHook') {
-            return `通过群机器人消息发送 ${templateName || data?.notify?.templateId}`
+            return $t('Save.utils.021456-18', [templateName || data?.notify?.templateId])
         }
-        const move = sendTo || orgName ? '向' : ''
-        return `通过钉钉${move} ${sendTo || ''} ${orgName || ''} 发送 ${templateName || data?.notify?.templateId}`
+        const move = sendTo || orgName ? $t('Save.utils.021456-19') : ''
+        return $t('Save.utils.021456-20', [move,sendTo || '',orgName || '',templateName || data?.notify?.templateId])
     }
 
     if (data.notifyType === 'weixin') {
         const { sendTo, orgName, tagName, templateName } = options
-        const move = sendTo || orgName || tagName ? '向' : ''
+        const move = sendTo || orgName || tagName ? $t('Save.utils.021456-19') : ''
 
-        return `通过微信${move}${sendTo || ''}${orgName || ''}${tagName || ''}发送${templateName || data?.notify?.templateId}`
+        return $t('Save.utils.021456-21', [move,sendTo || '',orgName || '',tagName || '',templateName || data?.notify?.templateId])
     }
 
     if (data.notifyType === 'email') {
         const { sendTo, templateName } = options
-        const move = sendTo ? '向' : ''
-        return `通过邮件${move}${sendTo || ''}发送${templateName || data?.notify?.templateId}`
+        const move = sendTo ? $t('Save.utils.021456-19') : ''
+        return $t('Save.utils.021456-22', [move,sendTo || '',templateName || data?.notify?.templateId])
     }
 
     if (data.notifyType === 'voice') {
         const { sendTo, templateName } = options
-        const move = sendTo ? '向' : ''
-        return `通过语音${move}${sendTo || ''}发送${templateName || data?.notify?.templateId}`
+        const move = sendTo ? $t('Save.utils.021456-19') : ''
+        return $t('Save.utils.021456-23', [move,sendTo || '',templateName || data?.notify?.templateId])
     }
 
     if (data.notifyType === 'sms') {
         const { sendTo, templateName } = options
-        const move = sendTo ? '向' : ''
-        return `通过短信${move}${sendTo || ''}发送${templateName || data?.notify?.templateId}`
+        const move = sendTo ? $t('Save.utils.021456-19') : ''
+        return $t('Save.utils.021456-24', [move,sendTo || '',templateName || data?.notify?.templateId])
     }
 
     if (data.notifyType === 'sms') {
         const { templateName } = options
-        return `通过WebHook发送${templateName || data?.notify?.templateId}`
+        return $t('Save.utils.021456-25', [templateName || data?.notify?.templateId])
     }
 
     return undefined
@@ -91,7 +93,7 @@ const handleDevice = (device: any, options: any) => {
         str += `${type} ${name} ${propertiesName}`
         let isValueBoolean = isBoolean(propertiesValue)
         if (propertiesValue && isValueBoolean) {
-            str += '为'
+            str += $t('Save.utils.021456-26')
         }
         str += isValueBoolean || propertiesValue ? propertiesValue : ''
     } else if (device?.selector === 'tag') {
@@ -111,8 +113,8 @@ const handleActions = (then: any): any[] => {
         if (item.executor === 'alarm') {
             actionsArr.push(
                 item.alarm.mode === 'trigger' ?
-                    '满足条件后将触发关联告警' :
-                    '满足条件后将解除关联告警'
+                    $t('Save.utils.021456-31') :
+                    $t('Save.utils.021456-32')
             )
         }
 
@@ -190,7 +192,7 @@ const handleBranches = (branches: any[], when: any, parentId: string) => {
         const _id = `condition_${index}`
 
         const obj = {
-            title: `条件 ${index + 1}`,
+            title: $t('Save.utils.021456-33', [index + 1]),
             id: _id,
             parentId,
             children: [{
@@ -242,22 +244,22 @@ export const handleSceneBranches = (data: any): any[] => {
 
 export const typeMap = new Map();
 typeMap.set('manual', {
-    text: '手动触发',
+    text: $t('Save.utils.021456-34'),
     img: ConfigurationImages.sceneHand,
     icon: ConfigurationImages.manualIcon,
-    tip: '适用于第三方平台向物联网平台下发指令控制设备',
+    tip: $t('Save.utils.021456-35'),
 });
 typeMap.set('timer', {
-    text: '定时触发',
+    text: $t('Save.utils.021456-36'),
     img: ConfigurationImages.sceneTimer,
     icon: ConfigurationImages.TimingIcon,
-    tip: '适用于定期执行固定任务',
+    tip: $t('Save.utils.021456-37'),
 });
 typeMap.set('device', {
-    text: '设备触发',
+    text: $t('Save.utils.021456-38'),
     img: ConfigurationImages.sceneDevice,
     icon: ConfigurationImages.deviceIcon,
-    tip: '适用于设备数据或行为满足触发条件时，执行指定的动作',
+    tip: $t('Save.utils.021456-39'),
 });
 
 export const handleGroupAndFilter = (branches: any[], when: any[]) =>{
@@ -275,7 +277,7 @@ export const handleGroupAndFilter = (branches: any[], when: any[]) =>{
 
         if (index === 0 || item.executeAnyway) {
             group.push({
-                branchName: item.branchName || item.whenOptions?.branchName || `条件`,
+                branchName: item.branchName || item.whenOptions?.branchName || $t('Save.utils.021456-40'),
                 key: item.key || item.branchId,
                 children: []
             })

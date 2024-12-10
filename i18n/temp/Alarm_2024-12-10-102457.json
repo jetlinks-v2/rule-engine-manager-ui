@@ -1,0 +1,32 @@
+{
+	"zh": {
+		"Save.BranchesTabs.0214510-0": "收起",
+		"Save.BranchesTabs.0214510-1": "点击查看详情",
+		"Save.BranchesTabs.0214510-2": "当",
+		"Save.BranchesTabs.0214510-3": "否则",
+		"Save.BranchesTabs.0214510-4": "执行",
+		"Save.BranchesTabs.0214510-5": "开启防抖",
+		"Save.BranchesTabs.0214510-6": "秒内发送",
+		"Save.BranchesTabs.0214510-7": "次及以上时，处理",
+		"Save.BranchesTabs.0214510-8": "第一次",
+		"Save.BranchesTabs.0214510-9": "最后一次",
+		"Save.BranchesTabs.0214510-10": "关闭防抖",
+		"Save.BranchesTabs.0214510-11": "串行",
+		"Save.BranchesTabs.0214510-12": "并行"
+	},
+	"en": {
+		"Save.BranchesTabs.0214510-0": "Put it away",
+		"Save.BranchesTabs.0214510-1": "Click to view details",
+		"Save.BranchesTabs.0214510-2": "When",
+		"Save.BranchesTabs.0214510-3": "otherwise",
+		"Save.BranchesTabs.0214510-4": "implement",
+		"Save.BranchesTabs.0214510-5": "Enable anti shake function",
+		"Save.BranchesTabs.0214510-6": "Send within seconds",
+		"Save.BranchesTabs.0214510-7": "When dealing with secondary or higher incidents, handle them",
+		"Save.BranchesTabs.0214510-8": "for the first time",
+		"Save.BranchesTabs.0214510-9": "last hole",
+		"Save.BranchesTabs.0214510-10": "Turn off anti shake function",
+		"Save.BranchesTabs.0214510-11": "serial ",
+		"Save.BranchesTabs.0214510-12": "parallel"
+	}
+}

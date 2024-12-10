@@ -39,7 +39,9 @@ import type { PropType } from 'vue'
 import { getExpandedRowById } from './util'
 import { getTreeData_api } from '@/api/system/department'
 import { SelectorValuesItem } from '../../typings'
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 type Emit = {
   (e: 'update', data: SelectorValuesItem[]): void
 }
@@ -68,7 +70,7 @@ const orgRowKeys = computed(() => {
 
 const columns = [
   {
-    title: '名称',
+    title: $t('Device.OrgList.079985-0'),
     width: 300,
     ellipsis: true,
     dataIndex: 'name',
@@ -77,7 +79,7 @@ const columns = [
     }
   },
   {
-    title: '排序',
+    title: $t('Device.OrgList.079985-1'),
     dataIndex: 'sortIndex',
     sorter: true,
   },

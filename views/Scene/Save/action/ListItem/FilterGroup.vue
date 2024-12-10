@@ -4,8 +4,8 @@
       <div v-if="!isFirst" class="term-type-warp">
         <DropdownButton
           :options="[
-            { label: '并且', value: 'and' },
-            { label: '或者', value: 'or' },
+            { label: $t('ListItem.FilterGroup.9667710-0'), value: 'and' },
+            { label: $t('ListItem.FilterGroup.9667710-1'), value: 'or' },
           ]"
           type="type"
           v-model:value="
@@ -21,7 +21,7 @@
         @mouseout="mouseout"
       >
         <ConfirmModal
-          title="确认删除？"
+          :title="$t('ListItem.FilterGroup.9667710-2')"
           :onConfirm="onDelete"
           :show="showDelete"
           className="terms-params-delete"
@@ -80,7 +80,7 @@
             type="PlusOutlined"
             style="font-size: 12px; padding-right: 4px"
           />
-          <span>分组</span>
+          <span>{{ $t('ListItem.FilterGroup.9667710-3') }}</span>
         </div>
       </div>
     </div>
@@ -99,7 +99,9 @@ import { getParams, EventEmitter, EventSubscribeKeys } from "../../util";
 import { handleParamsData } from "../../components/Terms/util";
 import { filterTermsValidator } from "./util";
 import CheckFilterItem from "./CheckFilterItem.vue";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data: formModel } = storeToRefs(sceneStore);
 
@@ -219,7 +221,7 @@ const addTerms = () => {
     props.actionName
   ].options!.terms.push({
     terms: [["", "eq", "", "and"]],
-    termType: "并且",
+    termType: $t('ListItem.FilterGroup.9667710-0'),
   });
 };
 
@@ -255,16 +257,16 @@ const rules = [
       console.log(v);
       if (v !== undefined && !v.error) {
         if (!Object.keys(v).length) {
-          return Promise.reject(new Error("该数据已发生变更，请重新配置"));
+          return Promise.reject(new Error($t('ListItem.FilterGroup.9667710-4')));
         }
 
         return filterTermsValidator(v);
       } else {
         if (v?.error) {
           // 数据发生变化
-          return Promise.reject(new Error("该数据已发生变更，请重新配置"));
+          return Promise.reject(new Error($t('ListItem.FilterGroup.9667710-4')));
         }
-        return Promise.reject(new Error("请选择参数"));
+        return Promise.reject(new Error($t('ListItem.FilterGroup.9667710-5')));
       }
     },
   },

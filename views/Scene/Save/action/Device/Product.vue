@@ -24,7 +24,7 @@
                 :value="slotProps"
                 :active="rowKey === slotProps.id"
                 :status="String(slotProps.state)"
-                :statusText="slotProps.state === 1 ? '正常' : '禁用'"
+                :statusText="slotProps.state === 1 ? $t('Device.Product.455639-0') : $t('Device.Product.455639-1')"
                 :statusNames="{ '1': 'processing', '0': 'error' }"
                 @click="handleClick(slotProps)"
             >
@@ -50,15 +50,15 @@
                     </div>
                     <a-row>
                         <a-col :span="12">
-                            <div class="card-item-content-text">设备类型</div>
+                            <div class="card-item-content-text">{{ $t('Device.Product.455639-2') }}</div>
                             <j-ellipsis>{{
                                 slotProps.deviceType?.text
                             }}</j-ellipsis>
                         </a-col>
                         <a-col :span="12">
-                            <div class="card-item-content-text">接入方式</div>
+                            <div class="card-item-content-text">{{ $t('Device.Product.455639-3') }}</div>
                             <j-ellipsis>{{
-                                slotProps?.accessName || '未接入'
+                                slotProps?.accessName || $t('Device.Product.455639-4')
                             }}</j-ellipsis>
                         </a-col>
                     </a-row>
@@ -79,7 +79,9 @@ import {
 import { queryProductSortTree } from '../../../../../api/others';
 import { accessConfigTypeFilter } from '../../../../../utils/setting';
 import { sceneImages } from '../../../../../assets/index';
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 type Emit = {
     (e: 'update:rowKey', data: string): void;
     (e: 'update:detail', data: any): void;
@@ -113,7 +115,7 @@ const columns = [
         },
     },
     {
-        title: '名称',
+        title: $t('Device.Product.455639-5'),
         dataIndex: 'name',
         width: 200,
         ellipsis: true,
@@ -123,7 +125,7 @@ const columns = [
         },
     },
     {
-        title: '网关类型',
+        title: $t('Device.Product.455639-6'),
         dataIndex: 'accessProvider',
         width: 150,
         ellipsis: true,
@@ -138,7 +140,7 @@ const columns = [
         },
     },
     {
-        title: '接入方式',
+        title: $t('Device.Product.455639-3'),
         dataIndex: 'accessName',
         width: 150,
         ellipsis: true,
@@ -154,39 +156,39 @@ const columns = [
         },
     },
     {
-        title: '设备类型',
+        title: $t('Device.Product.455639-2'),
         dataIndex: 'deviceType',
         width: 150,
         search: {
             type: 'select',
             options: [
-                { label: '直连设备', value: 'device' },
-                { label: '网关子设备', value: 'childrenDevice' },
-                { label: '网关设备', value: 'gateway' },
+                { label: $t('Device.Product.455639-7'), value: 'device' },
+                { label: $t('Device.Product.455639-8'), value: 'childrenDevice' },
+                { label: $t('Device.Product.455639-9'), value: 'gateway' },
             ],
         },
     },
     {
-        title: '状态',
+        title: $t('Device.Product.455639-10'),
         dataIndex: 'state',
         width: '90px',
         search: {
             type: 'select',
             options: [
-                { label: '禁用', value: 0 },
-                { label: '正常', value: 1 },
+                { label: $t('Device.Product.455639-1'), value: 0 },
+                { label: $t('Device.Product.455639-0'), value: 1 },
             ],
         },
     },
     {
-        title: '说明',
+        title: $t('Device.Product.455639-11'),
         dataIndex: 'describe',
         ellipsis: true,
         width: 300,
     },
     {
         dataIndex: 'classifiedId',
-        title: '分类',
+        title: $t('Device.Product.455639-12'),
         hideInTable: true,
         search: {
             type: 'treeSelect',
@@ -208,7 +210,7 @@ const columns = [
     {
         dataIndex: 'id$dim-assets',
         key: 'id$dim-assets',
-        title: '所属组织',
+        title: $t('Device.Product.455639-13'),
         hideInTable: true,
         search: {
             type: 'treeSelect',

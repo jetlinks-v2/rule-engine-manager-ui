@@ -1,0 +1,26 @@
+{
+	"zh": {
+		"components.Log.165155-0": "设备名称：",
+		"components.Log.165155-1": "场景联动名称：",
+		"components.Log.165155-2": "查看更多",
+		"components.Log.165155-3": "已展示全部数据",
+		"components.Log.165155-4": "告警时间",
+		"components.Log.165155-5": "触发条件",
+		"components.Log.165155-6": "告警源",
+		"components.Log.165155-7": "告警原因",
+		"components.Log.165155-8": "操作",
+		"components.Log.165155-9": "定时触发"
+	},
+	"en": {
+		"components.Log.165155-0": "Equipment Name:",
+		"components.Log.165155-1": "Scene linkage name:",
+		"components.Log.165155-2": "View more",
+		"components.Log.165155-3": "All data has been displayed",
+		"components.Log.165155-4": "Alarm time",
+		"components.Log.165155-5": "Trigger condition",
+		"components.Log.165155-6": "Alarm source",
+		"components.Log.165155-7": "Reason for alarm",
+		"components.Log.165155-8": "operation",
+		"components.Log.165155-9": "Timed trigger"
+	}
+}

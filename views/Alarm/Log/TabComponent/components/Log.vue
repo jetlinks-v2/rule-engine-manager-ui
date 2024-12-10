@@ -14,12 +14,12 @@
         <j-ellipsis
           v-if="record.targetType === 'device'"
         >
-          设备名称：
+          {{ $t('components.Log.165155-0') }}
           <span class="deviceId" @click="() => gotoDevice(record.targetId)">{{
             text
           }}</span></j-ellipsis
         >
-        <j-ellipsis v-else>场景联动名称：<span class="deviceId" @click="() => gotoRule(record)">{{text}}</span></j-ellipsis>
+        <j-ellipsis v-else>{{ $t('components.Log.165155-1') }}<span class="deviceId" @click="() => gotoRule(record)">{{text}}</span></j-ellipsis>
       </template>
       <template
         v-if="
@@ -38,9 +38,9 @@
   ></a-table>
   <div class="tableBottom">
     <a-button v-if="exceed" class="moreBtn" type="link" @click="gotoAlarmLog"
-      >查看更多 ></a-button
+      >{{ $t('components.Log.165155-2') }} ></a-button
     >
-    <span v-else-if="dataSource.length">已展示全部数据</span>
+    <span v-else-if="dataSource.length">{{ $t('components.Log.165155-3') }}</span>
   </div>
   <LogDetail v-if="visibleDetail" :data="current" @close="close" />
 </template>
@@ -53,6 +53,9 @@ import {
 import dayjs from "dayjs";
 import { useMenuStore } from "@/store/menu";
 import LogDetail from "./LogDetail.vue";
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const props = defineProps({
   currentId: {
     type: String,
@@ -74,27 +77,27 @@ const dataSource = ref([]);
 const current = ref();
 const columns = [
   {
-    title: "告警时间",
+    title: $t('components.Log.165155-4'),
     dataIndex: "alarmTime",
     key: "alarmTime",
   },
   {
-    title: "触发条件",
+    title: $t('components.Log.165155-5'),
     dataIndex: "triggerDesc",
     key: "triggerDesc",
   },
   {
-    title: "告警源",
+    title: $t('components.Log.165155-6'),
     dataIndex: "sourceName",
     key: "sourceName",
   },
   {
-    title: "告警原因",
+    title: $t('components.Log.165155-7'),
     dataIndex: "actualDesc",
     key: "actualDesc",
   },
   {
-    title: "操作",
+    title: $t('components.Log.165155-8'),
     dataIndex: "action",
     key: "action",
     width: 100,
@@ -143,7 +146,7 @@ const gotoRule = (record) => {
   menuStory.jumpPage(
     'rule-engine/Scene/Save',
     {
-      query: { triggerType:record.sourceName==='定时触发'?'timer':'manual', id:record.sourceId, type: 'view' }
+      query: { triggerType:record.sourceName===$t('components.Log.165155-9')?'timer':'manual', id:record.sourceId, type: 'view' }
     },
   );
 }

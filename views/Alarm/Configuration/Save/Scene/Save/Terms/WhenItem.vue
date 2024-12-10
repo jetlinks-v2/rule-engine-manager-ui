@@ -26,24 +26,26 @@
 
 <script setup name="WhenItem">
 import { TermTypeMap } from '../utils'
+import { useI18n } from 'vue-i18n';
 
+const { t: $t } = useI18n();
 const TermsTypeMap = {
-  eq: '等于',
-  neq: '不等于',
-  gt: '大于',
-  gte: '大于等于',
-  lt: '小于',
-  lte: '小于等于',
-  btw: '在...之间',
-  nbtw: '不在...之间',
-  time_gt_now: '距离当前时间大于',
-  time_lt_now: '距离当前时间小于',
-  in: '在...之中',
-  nin: '不在...之中',
-  like: '包含',
-  nlike: '不包含',
-  notnull: '不为空',
-  isnull: '为空'
+  eq: $t('Terms.WhenItem.712302-0'),
+  neq: $t('Terms.WhenItem.712302-1'),
+  gt: $t('Terms.WhenItem.712302-2'),
+  gte: $t('Terms.WhenItem.712302-3'),
+  lt: $t('Terms.WhenItem.712302-4'),
+  lte: $t('Terms.WhenItem.712302-5'),
+  btw: $t('Terms.WhenItem.712302-6'),
+  nbtw: $t('Terms.WhenItem.712302-7'),
+  time_gt_now: $t('Terms.WhenItem.712302-8'),
+  time_lt_now: $t('Terms.WhenItem.712302-9'),
+  in: $t('Terms.WhenItem.712302-10'),
+  nin: $t('Terms.WhenItem.712302-11'),
+  like: $t('Terms.WhenItem.712302-12'),
+  nlike: $t('Terms.WhenItem.712302-13'),
+  notnull: $t('Terms.WhenItem.712302-14'),
+  isnull: $t('Terms.WhenItem.712302-15')
 };
 
 const props = defineProps({

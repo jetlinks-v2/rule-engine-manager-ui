@@ -41,13 +41,13 @@
                   style="margin-top: 16px; margin-bottom: 8px"
                   class="card-item-content-text"
                 >
-                  关联条件
+                  {{ $t('Save.CardBox.483900-0') }}
                 </div>
                 <Tags :tags="activeBranches" />
               </div>
               <j-ellipsis v-else>
                 <div class="subTitle">
-                  说明：{{ value?.description || itemType.tip }}
+                  {{ $t('Save.CardBox.483900-1') }}{{ value?.description || itemType.tip }}
                 </div>
               </j-ellipsis>
             </div>
@@ -62,14 +62,14 @@
                   :options="value.options?.trigger"
                 />
                 <template v-if="value.triggerType === 'timer'" #extra>
-                  <span style="padding-right: 10px"> 系统时间到达 </span>
+                  <span style="padding-right: 10px"> {{ $t('Save.CardBox.483900-2') }} </span>
                 </template>
                 <TimerTitle
                   v-if="value.triggerType === 'timer'"
                   :options="value.options?.trigger"
                 />
                 <span v-if="value.triggerType === 'manual'">
-                  系统在接收到手动触发指令时，触发场景
+                  {{ $t('Save.CardBox.483900-3') }}
                 </span>
               </AddButton>
             </div>
@@ -84,7 +84,7 @@
           >
             <div class="mask-content">
               <slot name="mask">
-                <div>当前告警已关联：</div>
+                <div>{{ $t('Save.CardBox.483900-4') }}</div>
                 <Tags
                   :tags="activeBranches"
                   :styles="{ justifyContent: 'center' }"
@@ -99,7 +99,7 @@
             @click.stop="jumpView"
           >
             <a-button style="font-size: 16px" type="link"
-              >无效数据，请重新保存场景</a-button
+              >{{ $t('Save.CardBox.483900-5') }}</a-button
             >
           </div>
         </div>
@@ -148,7 +148,9 @@ import { PropType } from "vue";
 import { handleActiveBranches, handleGroupAndFilter, typeMap } from "./utils";
 import { useMenuStore } from "@/store/menu";
 import Tags from "./tags.vue";
+import { useI18n } from 'vue-i18n';
 
+const { t: $t } = useI18n();
 type EmitProps = {
   (e: "click"): void;
   (e: "change", key: string, selected: boolean): void;
@@ -164,7 +166,7 @@ const props = defineProps({
   },
   statusText: {
     type: String,
-    default: "正常",
+    default: $t('Save.CardBox.483900-6'),
   },
   status: {
     type: [String, Number] as PropType<string | number>,

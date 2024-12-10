@@ -5,11 +5,11 @@
             :value="value?.source"
             @change="sourceChange"
         >
-            <a-select-option value="fixed">手动输入</a-select-option>
+            <a-select-option value="fixed">{{ $t('variableItem.BuildIn.352749-0') }}</a-select-option>
             <a-select-option value="upper">
-                <span style="margin-right: 4px;">内置参数</span>
+                <span style="margin-right: 4px;">{{ $t('variableItem.BuildIn.352749-1') }}</span>
                 <a-tooltip>
-                    <template #title>可选择物模型类型需同内置参数数据类型一致</template>
+                    <template #title>{{ $t('variableItem.BuildIn.352749-2') }}</template>
                     <AIcon type="QuestionCircleOutlined"></AIcon>
                 </a-tooltip>
             </a-select-option>
@@ -18,7 +18,7 @@
             <a-tree-select
                 v-model:value="upperKey"
                 :treeData="builtInList"
-                placeholder="请选择参数"
+                :placeholder="$t('variableItem.BuildIn.352749-3')"
                 style="width: calc(100% - 120px)"
                 :fieldNames="{ label: 'name', value: 'id' }"
                 @change="
@@ -51,7 +51,7 @@
                 allowClear
                 style="width: calc(100% - 120px)"
                 v-else-if="item.type === 'number'"
-                :placeholder="`请输入${item.name}`"
+                :placeholder="$t('variableItem.BuildIn.352749-4', [item.name])"
                 @change="itemOnChange"
             />
             <a-input
@@ -59,7 +59,7 @@
                 allowClear
                 style="width: calc(100% - 120px)"
                 v-else
-                :placeholder="`请输入${item.name}`"
+                :placeholder="$t('variableItem.BuildIn.352749-4', [item.name])"
                 @change="(e) => itemOnChange(e.target.value)"
             />
         </template>
@@ -70,7 +70,9 @@
 import { queryBuiltInParams } from '../../../../../../api/scene';
 import { useSceneStore } from '../../../../../../store/scene';
 import { storeToRefs } from 'pinia';
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
 

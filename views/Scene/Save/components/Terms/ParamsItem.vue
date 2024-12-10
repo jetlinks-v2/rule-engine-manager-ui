@@ -3,8 +3,8 @@
     <div v-if="!isFirst" class="term-type-warp">
       <DropdownButton
         :options="[
-          { label: '并且', value: 'and' },
-          { label: '或者', value: 'or' },
+          { label: $t('Terms.ParamsItem.9093430-0'), value: 'and' },
+          { label: $t('Terms.ParamsItem.9093430-1'), value: 'or' },
         ]"
         type="type"
         v-model:value="paramsValue.type"
@@ -18,7 +18,7 @@
         type="column"
         value-name="column"
         label-name="fullName"
-        placeholder="请选择参数"
+        :placeholder="$t('Terms.ParamsItem.9093430-2')"
         v-model:value="paramsValue.column"
         component="treeSelect"
         @select="columnSelect"
@@ -28,7 +28,7 @@
         type="termType"
         value-name="id"
         label-name="name"
-        placeholder="操作符"
+        :placeholder="$t('Terms.ParamsItem.9093430-3')"
         v-model:value="paramsValue.termType"
         @select="termsTypeSelect"
       />
@@ -39,7 +39,7 @@
         <DoubleParamsDropdown
           v-if="showDouble"
           icon="icon-canshu"
-          placeholder="参数值"
+          :placeholder="$t('Terms.ParamsItem.9093430-4')"
           :options="valueOptions"
           :metricOptions="metricOption"
           :tabsOptions="tabsOptions"
@@ -50,7 +50,7 @@
         <ArrayParamsDropdown
           v-else-if="showArray"
           icon="icon-canshu"
-          placeholder="参数值"
+          :placeholder="$t('Terms.ParamsItem.9093430-4')"
           :options="valueOptions"
           :metricOptions="metricOption"
           :tabsOptions="tabsOptions"
@@ -63,8 +63,8 @@
           icon="icon-canshu"
           :placeholder="
             tabsOptions[0]?.component === 'array'
-              ? '多个值以英文逗号隔开'
-              : '参数值'
+              ? $t('Terms.ParamsItem.9093430-5')
+              : $t('Terms.ParamsItem.9093430-4')
           "
           :options="valueOptions"
           :metricOptions="metricOption"
@@ -76,7 +76,7 @@
         />
       </div>
       <ConfirmModal
-        title="确认删除？"
+        :title="$t('Terms.ParamsItem.9093430-6')"
         :onConfirm="onDelete"
         className="button-delete"
         :show="showDelete"
@@ -112,7 +112,9 @@ import { useSceneStore } from "../../../../../store/scene";
 import { storeToRefs } from "pinia";
 import { Form } from "ant-design-vue";
 import { isArray, isObject, isString, pick } from "lodash-es";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data: formModel } = storeToRefs(sceneStore);
 const formItemContext = Form.useInjectFormItemContext();
@@ -192,7 +194,7 @@ const valueOptions = ref<any[]>([]); // 默认手动输入下拉
 const metricOption = ref<any[]>([]); // 根据termType获取对应指标值
 const isMetric = ref<boolean>(false); // 是否为指标值
 const tabsOptions = ref<Array<TabsOption>>([
-  { label: "手动输入", key: "manual", component: "string" },
+  { label: $t('Terms.ParamsItem.9093430-7'), key: "manual", component: "string" },
 ]);
 const metricsCacheOption = ref<any[]>([]); // 缓存指标值
 
@@ -209,7 +211,7 @@ const handOptionByColumn = (option: any) => {
     columnType.value = option.dataType;
     if (option.metrics && option.metrics.length) {
       tabsOptions.value.push({
-        label: "指标值",
+        label: $t('Terms.ParamsItem.9093430-8'),
         key: "metric",
         component: "select",
       });
@@ -233,8 +235,8 @@ const handOptionByColumn = (option: any) => {
           label: item.name,
           value: item.id,
         })) || [
-          { label: "是", value: "true" },
-          { label: "否", value: "false" },
+          { label: $t('Terms.ParamsItem.9093430-9'), value: "true" },
+          { label: $t('Terms.ParamsItem.9093430-10'), value: "false" },
         ];
       }
     } else if (option.dataType === "enum") {
@@ -507,7 +509,7 @@ const termAdd = () => {
 
   formModel.value.options!.when[props.branchName / 2].terms[
     props.whenName
-  ].terms.push(["", "", "", "并且"]);
+  ].terms.push(["", "", "", $t('Terms.ParamsItem.9093430-0')]);
 };
 
 const onDelete = () => {

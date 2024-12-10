@@ -12,15 +12,15 @@
 		"Save.output.945943-9": "操作成功"
 	},
 	"en": {
-		"Save.output.945943-0": "",
-		"Save.output.945943-1": "",
-		"Save.output.945943-2": "",
-		"Save.output.945943-3": "",
-		"Save.output.945943-4": "",
-		"Save.output.945943-5": "",
-		"Save.output.945943-6": "",
-		"Save.output.945943-7": "",
-		"Save.output.945943-8": "",
-		"Save.output.945943-9": ""
+		"Save.output.945943-0": "edit",
+		"Save.output.945943-1": "cancel",
+		"Save.output.945943-2": "determine",
+		"Save.output.945943-3": "state",
+		"Save.output.945943-4": "Enable",
+		"Save.output.945943-5": "Kafka address",
+		"Save.output.945943-6": "Please enter the Kafka address",
+		"Save.output.945943-7": "Enter a maximum of 64 characters",
+		"Save.output.945943-8": "Please enter the topic",
+		"Save.output.945943-9": "Operation successful"
 	}
 }

@@ -21,7 +21,7 @@
           dayjs(slotProps.alarmTime).format("YYYY-MM-DD HH:mm:ss")
         }}</template>
         <template #sourceName="slotProps"
-          >设备名称：<a-button
+          >{{ $t('Detail.index.165158-0') }}<a-button
             type="link"
             @click="() => gotoDevice(slotProps.sourceId)"
             >{{ slotProps.sourceName }}</a-button
@@ -69,6 +69,9 @@ import Info from "./info.vue";
 import { useRouterParams } from "@jetlinks-web/hooks";
 import { useMenuStore } from "@/store/menu";
 import LogDetail from "../TabComponent/components/LogDetail.vue";
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const route = useRoute();
 const id = route.params?.id;
 const menuStory = useMenuStore();
@@ -83,7 +86,7 @@ const details = ref(); // 告警记录的详情
 const alarmType = ref();
 const columns = ref([
   {
-    title: "告警时间",
+    title: $t('Detail.index.165158-1'),
     dataIndex: "alarmTime",
     key: "alarmTime",
     scopedSlots: true,
@@ -92,17 +95,17 @@ const columns = ref([
     },
   },
   {
-    title: "告警名称",
+    title: $t('Detail.index.165158-2'),
     dataIndex: "alarmConfigName",
     key: "alarmConfigName",
   },
   {
-    title: "说明",
+    title: $t('Detail.index.165158-3'),
     dataIndex: "description",
     key: "description",
   },
   {
-    title: "操作",
+    title: $t('Detail.index.165158-4'),
     dataIndex: "action",
     key: "action",
     scopedSlots: true,
@@ -118,9 +121,9 @@ const getActions = (
   const actions = [
     {
       key: "view",
-      text: "查看",
+      text: $t('Detail.index.165158-5'),
       tooltip: {
-        title: "查看",
+        title: $t('Detail.index.165158-5'),
       },
       icon: "EyeOutlined",
       onClick: () => {
@@ -169,7 +172,7 @@ watch(
       if (alarmType.value === "device") {
         columns.value = [
           {
-            title: "告警时间",
+            title: $t('Detail.index.165158-1'),
             dataIndex: "alarmTime",
             key: "alarmTime",
             scopedSlots: true,
@@ -178,12 +181,12 @@ watch(
             },
           },
           {
-            title: "触发条件",
+            title: $t('Detail.index.165158-6'),
             dataIndex: "triggerDesc",
             key: "triggerDesc",
           },
           {
-            title: "告警源",
+            title: $t('Detail.index.165158-7'),
             dataIndex: "sourceName",
             key: "sourceName",
             scopedSlots: true,
@@ -192,7 +195,7 @@ watch(
             },
           },
           {
-            title: "告警原因",
+            title: $t('Detail.index.165158-8'),
             dataIndex: "actualDesc",
             key: "actualDesc",
             scopedSlots: true,
@@ -201,7 +204,7 @@ watch(
             },
           },
           {
-            title: "操作",
+            title: $t('Detail.index.165158-4'),
             dataIndex: "action",
             key: "action",
             scopedSlots: true,

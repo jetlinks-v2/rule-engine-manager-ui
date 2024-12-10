@@ -1,6 +1,6 @@
 <template>
     <a-select
-        placeholder="请选择关系"
+        :placeholder="$t('device.RelationSelect.9667830-0')"
         :options="relationList"
         show-search
         :value="value ? value[0]?.value?.relation : undefined"
@@ -10,6 +10,9 @@
 
 <script lang="ts" setup>
 import { getRelationUsers } from '../../../../../../api/others';
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const props = defineProps({
     value: {
         type: Array,
@@ -28,7 +31,7 @@ const queryRelationList = () => {
     getRelationUsers({
         paging: false,
         sorts: [{ name: 'createTime', order: 'desc' }],
-        terms: [{ termType: 'eq', column: 'objectTypeName', value: '设备' }],
+        terms: [{ termType: 'eq', column: 'objectTypeName', value: $t('device.RelationSelect.9667830-1') }],
     }).then((resp) => {
         if (resp.status === 200) {
             relationList.value = (resp.result as any[]).map((item) => {

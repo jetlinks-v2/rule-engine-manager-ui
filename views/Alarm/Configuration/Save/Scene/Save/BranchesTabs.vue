@@ -4,7 +4,7 @@
       <a-tabs v-if="branchesGroup.length" v-model:activeKey="activeKey">
         <template v-if="showDetailBtn" #rightExtra>
           <a-button @click.stop="show = !show">
-            {{ show ? '收起' : '点击查看详情'}}
+            {{ show ? $t('Save.BranchesTabs.0214510-0') : $t('Save.BranchesTabs.0214510-1')}}
           </a-button>
         </template>
         <a-tab-pane
@@ -14,32 +14,32 @@
         >
           <div v-for="(branch, index) in group.children">
             <div style="display: flex;align-items: center" v-if="show && branch.when.length">
-              <span  style="padding-right: 12px;font-weight: bold;font-size: 16px;width: 46px; display: inline-block;">{{ index === 0 ? '当' : '否则' }}</span>
+              <span  style="padding-right: 12px;font-weight: bold;font-size: 16px;width: 46px; display: inline-block;">{{ index === 0 ? $t('Save.BranchesTabs.0214510-2') : $t('Save.BranchesTabs.0214510-3') }}</span>
               <Terms :when="branch.whenOptions" :data="branch.when" />
             </div>
             <div class="branches-shakeLimit" v-if="show">
-              <span class="branches-shakeLimit-action">执行</span>
+              <span class="branches-shakeLimit-action">{{ $t('Save.BranchesTabs.0214510-4') }}</span>
               <template v-if="branch.shakeLimit?.enabled">
-                <span>开启防抖</span>
+                <span>{{ $t('Save.BranchesTabs.0214510-5') }}</span>
                 <span class="branches-shakeLimit-time">{{ branch.shakeLimit.time }}</span>
-                <span>秒内发送</span>
+                <span>{{ $t('Save.BranchesTabs.0214510-6') }}</span>
                 <span class="branches-shakeLimit-time">{{ branch.shakeLimit.threshold }}</span>
-                <span>次及以上时，处理</span>
-                <span>{{ branch.shakeLimit.alarmFirst ? '第一次' : '最后一次' }}</span>
+                <span>{{ $t('Save.BranchesTabs.0214510-7') }}</span>
+                <span>{{ branch.shakeLimit.alarmFirst ? $t('Save.BranchesTabs.0214510-8') : $t('Save.BranchesTabs.0214510-9') }}</span>
               </template>
               <span v-else>
-                关闭防抖
+                {{ $t('Save.BranchesTabs.0214510-10') }}
               </span>
             </div>
           <template v-if="branch.serial?.length">
             <div v-if="show" class="branches-tabs-title">
-              串行
+              {{ $t('Save.BranchesTabs.0214510-11') }}
             </div>
             <Actions :actions="branch.serial" :activeKeys="activeKeys" :selectedKeys="selectedKeys" :show="show" :serial="true" :showUnbindBtn="showUnbindBtn" @change="change" @select="select" />
           </template>
           <template v-if="branch.parallel?.length">
             <div v-if="show" class="branches-tabs-title">
-              并行
+              {{ $t('Save.BranchesTabs.0214510-12') }}
             </div>
             <Actions :actions="branch.parallel" :activeKeys="activeKeys" :selectedKeys="selectedKeys" :show="show" :showUnbindBtn="showUnbindBtn" @change="change" @select="select" />
           </template>
@@ -52,20 +52,20 @@
     <div v-else>
       <div style="margin: 8px 0; text-align: right" v-if="showDetailBtn">
         <a-button @click.stop="show = !show">
-          {{ show ? '收起' : '点击查看详情'}}
+          {{ show ? $t('Save.BranchesTabs.0214510-0') : $t('Save.BranchesTabs.0214510-1')}}
         </a-button>
       </div>
       <div  v-for="group in branchesGroup">
         <div v-for="(branch, index) in group.children">
           <template v-if="branch.serial?.length">
             <div v-if="show" class="branches-tabs-title">
-              串行
+              {{ $t('Save.BranchesTabs.0214510-11') }}
             </div>
             <Actions :actions="branch.serial" :activeKeys="activeKeys" :selectedKeys="selectedKeys" :show="show" :serial="true" :showUnbindBtn="showUnbindBtn" @change="change" @select="select" />
           </template>
           <template v-if="branch.parallel?.length">
             <div v-if="show" class="branches-tabs-title">
-              并行
+              {{ $t('Save.BranchesTabs.0214510-12') }}
             </div>
             <Actions :actions="branch.parallel" :activeKeys="activeKeys" :selectedKeys="selectedKeys" :show="show" :showUnbindBtn="showUnbindBtn" @change="change" @select="select" />
           </template>
@@ -78,7 +78,9 @@
 <script setup name="BranchesTabs">
 import Terms from './Terms/Terms.vue'
 import Actions from './Actions.vue'
+import { useI18n } from 'vue-i18n';
 
+const { t: $t } = useI18n();
 const props = defineProps({
   branchesGroup: {
     type: Array,

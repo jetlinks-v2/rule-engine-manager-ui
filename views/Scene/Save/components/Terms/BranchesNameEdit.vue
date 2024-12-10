@@ -1,14 +1,14 @@
 <template>
   <a-modal
     visible
-    title="编辑"
+    :title="$t('Terms.BranchesNameEdit.9093533-0')"
     :keyboard="false"
     :maskClosable="false"
     @cancel="onCancel"
     @ok="onOk"
   >
     <a-form ref='formRef' layout='vertical' :model="formData">
-      <a-form-item label="条件名称" required name="name" :rules="[{ max: 64, message: '最多输入64个字符'}]">
+      <a-form-item :label="$t('Terms.BranchesNameEdit.9093533-1')" required name="name" :rules="[{ max: 64, message: $t('Terms.BranchesNameEdit.9093533-2')}]">
         <a-input v-model:value="formData.name"></a-input>
       </a-form-item>
     </a-form>
@@ -16,6 +16,9 @@
 </template>
 
 <script setup name="BranchesNameEdit">
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const props = defineProps({
   name: {
     type: String,

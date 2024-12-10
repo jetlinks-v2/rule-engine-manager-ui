@@ -26,7 +26,7 @@
                         :tab="item.label"
                         :key="item.key"
                     >
-                      <a-input placeholder="多个值以英文逗号隔开" v-model:value="myValue" @change="onSelect"/>
+                      <a-input :placeholder="$t('ParamsDropdown.Array.9093538-0')" v-model:value="myValue" @change="onSelect"/>
                     </a-tab-pane>
                 </a-tabs>
             </div>
@@ -37,6 +37,9 @@
 <script lang="ts" setup name="ArrayParamsDropdown">
 import type { ValueType } from './typings';
 import { defaultSetting } from './typings';
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 type Emit = {
     (e: 'update:value', data: Array<ValueType>): void;
     (e: 'update:source', data: string): void;

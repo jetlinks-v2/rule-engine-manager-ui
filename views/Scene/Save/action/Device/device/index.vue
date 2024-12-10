@@ -3,9 +3,9 @@
     <a-form :layout="'vertical'" ref="formRef" :model="modelRef">
       <a-form-item
         name="selector"
-        label="选择方式"
+        :label="$t('device.index.9667835-0')"
         v-show="!(list.length === 1)"
-        :rules="[{ required: true, message: '请选择方式' }]"
+        :rules="[{ required: true, message: $t('device.index.9667835-1') }]"
       >
         <TopCard
           :typeList="list"
@@ -21,9 +21,9 @@
       />
       <a-form-item
         v-else-if="modelRef.selector === 'relation'"
-        label="关系"
+        :label="$t('device.index.9667835-2')"
         name="selectorValues"
-        :rules="[{ required: true, message: '请选择关系' }]"
+        :rules="[{ required: true, message: $t('device.index.9667835-3') }]"
       >
         <RelationSelect
           @change="onRelationChange"
@@ -33,7 +33,7 @@
       <a-form-item
         v-else-if="modelRef.selector === 'tag' && isTags"
         name="selectorValues"
-        :rules="[{ required: true, message: '请选择标签' }]"
+        :rules="[{ required: true, message: $t('device.index.9667835-4') }]"
       >
         <Tag
           v-model:value="modelRef.selectorValues"
@@ -44,14 +44,14 @@
       <a-form-item
         v-else
         name="upperKey"
-        label="变量"
-        :rules="[{ required: true, message: '请选择' }]"
+        :label="$t('device.index.9667835-5')"
+        :rules="[{ required: true, message: $t('device.index.9667835-6') }]"
       >
         <a-tree-select
           style="width: 100%; height: 100%"
           :tree-data="builtInList"
           v-model:value="modelRef.upperKey"
-          placeholder="请选择参数"
+          :placeholder="$t('device.index.9667835-7')"
           @select="onVariableChange"
           :fieldNames="{ label: 'name', value: 'id' }"
         >
@@ -82,7 +82,9 @@ import { getParams } from "../../../util";
 import { handleParamsData } from "../../../components/Terms/util";
 import { map } from "lodash-es";
 import { TypeMap } from "./util";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const props = defineProps({
   values: {
     type: Object,
@@ -217,7 +219,7 @@ const filterType = async (newVal: any) => {
     const res = await getRelationUsers({
       paging: false,
       sorts: [{ name: "createTime", order: "desc" }],
-      terms: [{ termType: "eq", column: "objectTypeName", value: "设备" }],
+      terms: [{ termType: "eq", column: "objectTypeName", value: $t('device.index.9667835-8') }],
     }).catch(()=>{
         _typeList[2].disabled = true
     });
@@ -324,8 +326,8 @@ const onTagChange = (val: any[], arr: any[]) => {
     const _type =
       _index !== 0 && _index !== (arr || []).length && i.type
         ? i.type === "and"
-          ? "并且"
-          : "或者"
+          ? $t('device.index.9667835-9')
+          : $t('device.index.9667835-10')
         : "";
     return `${_type}${i.name}为${i.value}`;
   });
@@ -388,7 +390,7 @@ const onFormSave = () => {
       .then(async (_data: any) => {
         if (modelRef.selector === "fixed") {
           if (!modelRef?.selectorValues?.[0]?.value) {
-            onlyMessage("请选择设备", "error");
+            onlyMessage($t('device.index.9667835-12'), "error");
             reject(false);
           } else {
             resolve({

@@ -69,6 +69,9 @@ import { queryLevel, saveLevel } from "../../../api/config";
 import { LevelItem } from "./typing";
 import Io from "./Io/index.vue";
 import { configImages } from "../../../assets/index";
+import { useI18n } from 'vue-i18n';
+
+const { t: $t } = useI18n();
 const list = isNoCommunity
   ? [
       {

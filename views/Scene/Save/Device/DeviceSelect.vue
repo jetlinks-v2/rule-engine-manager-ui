@@ -14,7 +14,9 @@ import type { PropType } from 'vue'
 import { SelectorValuesItem } from '../../typings'
 import { isNoCommunity } from '@/utils/utils'
 import { sceneImages } from '../../../../assets/index'
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 type Emit = {
   (e: 'update:selector', data: string): void
   (e: 'update:selectorValues', data: SelectorValuesItem[]): void
@@ -52,12 +54,12 @@ const devices = ref(props.deviceKeys)
 const orgIds = ref(props.orgId)
 
 const typeList = ref([
-  { label: '自定义', value: 'fixed', tip: '自定义选择当前产品下的任意设备', img: sceneImages.deviceCustom},
-  { label: '全部', value: 'all', tip: '产品下的所有设备', img: sceneImages.triggerDeviceAll},
+  { label: $t('Device.DeviceSelect.372525-0'), value: 'fixed', tip: $t('Device.DeviceSelect.372525-1'), img: sceneImages.deviceCustom},
+  { label: $t('Device.DeviceSelect.372525-2'), value: 'all', tip: $t('Device.DeviceSelect.372525-3'), img: sceneImages.triggerDeviceAll},
 ])
 
 if (isNoCommunity) {
-  typeList.value.push({ label: '按组织', value: 'org', tip: '选择产品下归属于具体组织的设备', img: sceneImages.triggerDeviceOrg},)
+  typeList.value.push({ label: $t('Device.DeviceSelect.372525-4'), value: 'org', tip: $t('Device.DeviceSelect.372525-5'), img: sceneImages.triggerDeviceOrg},)
 }
 
 const select = (s: string) => {

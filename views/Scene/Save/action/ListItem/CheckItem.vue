@@ -29,7 +29,9 @@ import {
 import { getOption } from "../../components/DropdownButton/util";
 import { getBuildInData, getNotifyVariablesUser } from "./util";
 import { defineExpose } from "vue";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data: _data } = storeToRefs(sceneStore);
 
@@ -176,7 +178,7 @@ const checkDeviceDelete = async () => {
       paging: false,
       sorts: [{ name: "createTime", order: "desc" }],
       terms: [
-        { termType: "eq", column: "objectTypeName", value: "设备" },
+        { termType: "eq", column: "objectTypeName", value: $t('ListItem.CheckItem.9667712-0') },
         { termType: "eq", column: "relation", value: _relationValue },
       ],
     }).catch(() => ({ success: false, result: [] }));

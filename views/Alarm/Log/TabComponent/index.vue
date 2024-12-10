@@ -70,7 +70,7 @@
                   :span="6"
                   class="content-left"
                 >
-                  <div class="content-title">告警维度</div>
+                  <div class="content-title">{{ $t('TabComponent.index.165152-0') }}</div>
                   <j-ellipsis
                     ><div>
                       {{ slotProps?.targetName }}
@@ -80,16 +80,16 @@
                 <a-col
                   :span="6"
                 >
-                  <div class="content-title">最近告警时间</div>
+                  <div class="content-title">{{ $t('TabComponent.index.165152-1') }}</div>
                   <j-ellipsis>
                     <div>
                       {{
                         dayjs(slotProps?.lastAlarmTime || slotProps?.alarmTime).format(
                           "YYYY-MM-DD HH:mm:ss"
                         ) +
-                        "至" +
+                        $t('TabComponent.index.165152-2') +
                         (slotProps?.state?.value === "warning"
-                          ? "当前时间"
+                          ? $t('TabComponent.index.165152-3')
                           : dayjs(slotProps?.handleTime).format(
                               "YYYY-MM-DD HH:mm:ss"
                             ))
@@ -100,7 +100,7 @@
                 <a-col
                   :span="6"
                 >
-                  <div class="content-title">告警持续时长</div>
+                  <div class="content-title">{{ $t('TabComponent.index.165152-4') }}</div>
                   <j-ellipsis
                     ><Duration :data="slotProps"></Duration
                   ></j-ellipsis>
@@ -108,7 +108,7 @@
                 <a-col
                   :span="6"
                 >
-                  <div class="content-title">告警原因</div>
+                  <div class="content-title">{{ $t('TabComponent.index.165152-5') }}</div>
                   <j-ellipsis
                     ><div>
                       {{ slotProps?.actualDesc || "--" }}
@@ -168,6 +168,9 @@ import LogDrawer from "./components/DetailDrawer.vue";
 import Duration from "../components/Duration.vue";
 import { useAlarmLevel } from "../../../../hook";
 import { logImages } from "../../../../assets/index";
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 const menuStory = useMenuStore();
 const tableRef = ref();
 const { levelMap, levelList } = useAlarmLevel();
@@ -187,30 +190,30 @@ imgMap.set("other", logImages.other);
 imgMap.set("org", logImages.org);
 
 const titleMap = new Map();
-titleMap.set("product", "产品");
-titleMap.set("device", "设备");
-titleMap.set("other", "场景");
-titleMap.set("org", "组织");
+titleMap.set("product", $t('TabComponent.index.165152-6'));
+titleMap.set("device", $t('TabComponent.index.165152-7'));
+titleMap.set("other", $t('TabComponent.index.165152-8'));
+titleMap.set("org", $t('TabComponent.index.165152-9'));
 
 const columns = [
   {
-    title: "配置名称",
+    title: $t('TabComponent.index.165152-10'),
     dataIndex: "alarmName",
     key: "alarmName",
   },
   {
-    title: "类型",
+    title: $t('TabComponent.index.165152-11'),
     dataIndex: "targetType",
     key: "targetType",
     scopedSlots: true,
   },
   {
-    title: "关联场景联动",
+    title: $t('TabComponent.index.165152-12'),
     dataIndex: "sourceName",
     key: "sourceName",
   },
   {
-    title: "告警级别",
+    title: $t('TabComponent.index.165152-13'),
     dataIndex: "level",
     key: "level",
     width: 200,
@@ -223,7 +226,7 @@ const columns = [
     scopedSlots: true,
   },
   {
-    title: "最近告警时间",
+    title: $t('TabComponent.index.165152-1'),
     dataIndex: "alarmTime",
     key: "alarmTime",
     search: {
@@ -232,18 +235,18 @@ const columns = [
     scopedSlots: true,
   },
   {
-    title: "状态",
+    title: $t('TabComponent.index.165152-14'),
     dataIndex: "state",
     key: "state",
     search: {
       type: "select",
       options: [
         {
-          label: "告警中",
+          label: $t('TabComponent.index.165152-15'),
           value: "warning",
         },
         {
-          label: "无告警",
+          label: $t('TabComponent.index.165152-16'),
           value: "normal",
         },
       ],
@@ -251,7 +254,7 @@ const columns = [
     scopedSlots: true,
   },
   {
-    title: "操作",
+    title: $t('TabComponent.index.165152-17'),
     dateIndex: "actions",
     key: "actions",
     scopedSlots: true,
@@ -261,7 +264,7 @@ const columns = [
 
 const newColumns = computed(() => {
   const otherColumns = {
-    title: "产品名称",
+    title: $t('TabComponent.index.165152-18'),
     dataIndex: "targetName",
     key: "targetName",
     search: {
@@ -271,18 +274,18 @@ const newColumns = computed(() => {
 
   switch (props.type) {
     case "device":
-      otherColumns.title = "设备名称";
+      otherColumns.title = $t('TabComponent.index.165152-19');
       break;
     case "org":
-      otherColumns.title = "组织名称";
+      otherColumns.title = $t('TabComponent.index.165152-20');
       break;
     case "other":
-      otherColumns.title = "场景名称";
+      otherColumns.title = $t('TabComponent.index.165152-21');
       break;
   }
   if (props.type === "device") {
     const productColumns = {
-      title: "产品名称",
+      title: $t('TabComponent.index.165152-18'),
       dataIndex: "product_id",
       key: "product_id",
       search: {
@@ -346,7 +349,7 @@ const handleSearch = async (params: any) => {
             }
             //targetName处理之后的
             if (item.targetId === item.targetName) {
-              item.targetName = "无";
+              item.targetName = $t('TabComponent.index.165152-22');
             }
           });
         }
@@ -396,9 +399,9 @@ const getActions = (
   const actions = [
     {
       key: "solve",
-      text: "告警处理",
+      text: $t('TabComponent.index.165152-23'),
       tooltip: {
-        title: currentData.state?.value === "normal" ? "无告警" : "告警处理",
+        title: currentData.state?.value === "normal" ? $t('TabComponent.index.165152-16') : $t('TabComponent.index.165152-23'),
       },
       icon: "ToolOutlined",
       onClick: () => {
@@ -408,9 +411,9 @@ const getActions = (
     },
     {
       key: "log",
-      text: "告警日志",
+      text: $t('TabComponent.index.165152-24'),
       tooltip: {
-        title: "告警日志",
+        title: $t('TabComponent.index.165152-24'),
       },
       icon: "FileOutlined",
       onClick: () => {
@@ -421,9 +424,9 @@ const getActions = (
     },
     {
       key: "detail",
-      text: "处理记录",
+      text: $t('TabComponent.index.165152-25'),
       tooltip: {
-        title: "处理记录",
+        title: $t('TabComponent.index.165152-25'),
       },
       icon: "FileTextOutlined",
       onClick: () => {

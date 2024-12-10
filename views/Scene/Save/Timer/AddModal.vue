@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    title="触发规则"
+    :title="$t('Timer.AddModal.663671-0')"
     visible
     :width="820"
     :maskClosable="false"
@@ -18,7 +18,9 @@ import type { OperationTimer } from "../../typings";
 import { PropType } from "vue";
 import { handleTimerOptions } from "../components/Timer/util";
 import { cloneDeep } from "lodash-es";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 type Emit = {
   (e: "cancel"): void;
   (e: "save", data: OperationTimer, options: Record<string, any>): void;

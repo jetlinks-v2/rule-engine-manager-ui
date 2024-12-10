@@ -49,11 +49,11 @@
           </j-ellipsis>
           <a-row>
             <a-col :span="12">
-              <div class="card-item-content-text">设备类型</div>
+              <div class="card-item-content-text">{{ $t('Device.DeviceList.372526-0') }}</div>
               <div>{{ slotProps.deviceType?.text }}</div>
             </a-col>
             <a-col :span="12">
-              <div class="card-item-content-text">产品名称</div>
+              <div class="card-item-content-text">{{ $t('Device.DeviceList.372526-1') }}</div>
               <div>{{ slotProps.productName }}</div>
             </a-col>
           </a-row>
@@ -69,7 +69,9 @@ import { sceneImages } from "../../../../assets/index";
 import { query } from "../../../../api/others";
 import { cloneDeep } from "lodash-es";
 import type { SelectorValuesItem } from "../../typings";
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 type Emit = {
   (e: "update", data: SelectorValuesItem[]): void;
 };
@@ -104,7 +106,7 @@ const columns = [
     },
   },
   {
-    title: "设备名称",
+    title: $t('Device.DeviceList.372526-2'),
     dataIndex: "name",
     width: 200,
     ellipsis: true,
@@ -114,7 +116,7 @@ const columns = [
     },
   },
   {
-    title: "创建时间",
+    title: $t('Device.DeviceList.372526-3'),
     dataIndex: "createTime",
     width: 200,
     search: {
@@ -122,15 +124,15 @@ const columns = [
     },
   },
   {
-    title: "状态",
+    title: $t('Device.DeviceList.372526-4'),
     dataIndex: "state",
     width: 90,
     search: {
       type: "select",
       options: [
-        { label: "禁用", value: "notActive" },
-        { label: "离线", value: "offline" },
-        { label: "在线", value: "online" },
+        { label: $t('Device.DeviceList.372526-5'), value: "notActive" },
+        { label: $t('Device.DeviceList.372526-6'), value: "offline" },
+        { label: $t('Device.DeviceList.372526-7'), value: "online" },
       ],
     },
   },

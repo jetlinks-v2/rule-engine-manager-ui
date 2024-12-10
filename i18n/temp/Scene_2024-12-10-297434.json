@@ -1,0 +1,12 @@
+{
+	"zh": {
+		"actions.FunctionItem.9667832-0": "请选择",
+		"actions.FunctionItem.9667832-1": "手动输入",
+		"actions.FunctionItem.9667832-2": "内置参数"
+	},
+	"en": {
+		"actions.FunctionItem.9667832-0": "Please choose",
+		"actions.FunctionItem.9667832-1": "Manual input",
+		"actions.FunctionItem.9667832-2": "Built in parameters"
+	}
+}

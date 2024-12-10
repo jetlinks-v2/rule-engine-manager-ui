@@ -1,6 +1,6 @@
 <template>
     <div class="actions-terms">
-        <TitleComponent data="执行动作" style="font-size: 14px">
+        <TitleComponent :data="$t('Terms.Terms.9093429-0')" style="font-size: 14px">
         </TitleComponent>
         <!--    <template v-if='open'>-->
         <div>
@@ -21,16 +21,16 @@
                             :showClose="group.length > 1"
                             @close="() => addGroup(b.id, 'close')"
                         >
-                            {{ b.branchName || `条件${i + 1}` }}
+                            {{ b.branchName || $t('Terms.Terms.9093429-1', [i + 1]) }}
                         </TermsTabPane>
                     </template>
                     <div class="filterConditionSwitch">
-                        <span>执行</span>
+                        <span>{{ $t('Terms.Terms.9093429-2') }}</span>
                         <a-switch
                             v-model:checked="b.openFilter"
                             @change="(e) => change(e, b, i)"
-                            checkedChildren="开"
-                            unCheckedChildren="关"
+                            :checkedChildren="$t('Terms.Terms.9093429-3')"
+                            :unCheckedChildren="$t('Terms.Terms.9093429-4')"
                             style="margin-left: 4px"
                         />
                     </div>
@@ -64,7 +64,7 @@
                                     class="actions-terms-title"
                                     style="padding: 0; margin-bottom: 24px"
                                 >
-                                    否则
+                                    {{ $t('Terms.Terms.9093429-5') }}
                                 </div>
                                 <div class="actions-terms-options no-when">
                                     <AIcon
@@ -121,7 +121,9 @@ import {
     queryBindScene,
     unBindAlarmMultiple,
 } from '../../../../../api/configuration';
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
 const columnOptions = ref<any>([]);
@@ -331,7 +333,7 @@ const groupDelete = async (g: any, index: number) => {
             });
 
             Modal.confirm({
-                title: `已关联 ${resp.result.total} 条告警，删除该条件会同步解除对应的关联告警，确认删除？`,
+                title: $t('Terms.Terms.9093429-6', [resp.result.total]),
                 onOk() {
                     const _data = resp.result.data.map((item) => {
                         return {
@@ -346,7 +348,7 @@ const groupDelete = async (g: any, index: number) => {
             });
         } else {
             Modal.confirm({
-                title: '该条件下有执行动作，确认删除？',
+                title: $t('Terms.Terms.9093429-7'),
                 onOk() {
                     removeBranchesData(g, index);
                 },
@@ -483,7 +485,7 @@ watchEffect(() => {
                     branchId: item.branchId,
                     // branchName: item.branchName || whenItem?.branchName || `条件 ${_branchesIndex + 1}`,
                     branchName:
-                        item.branchName || whenItem?.branchName || `条件`,
+                        item.branchName || whenItem?.branchName || $t('Terms.Terms.9093429-8'),
                     groupIndex: _branchesIndex,
                     openFilter: !!item.when.length,
                 };
