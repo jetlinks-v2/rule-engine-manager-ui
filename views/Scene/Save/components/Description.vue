@@ -7,7 +7,7 @@
       {{ $t('components.Description.9093421-0') }}
     </a-button>
     <div class="scene-description-content" v-if="showEditBtn">
-      <a-input v-model:value="myValue" show-count :maxlength="200" :placeholder='$t('components.Description.9093421-1')' style="flex: 1 1 0"/>
+      <a-input v-model:value="myValue" show-count :maxlength="200" :placeholder="$t('components.Description.9093421-1')" style="flex: 1 1 0"/>
       <a-button @click="cancel">{{ $t('components.Description.9093421-2') }}</a-button>
       <a-button type="primary" @click="save">{{ $t('components.Description.9093421-3') }}</a-button>
     </div>

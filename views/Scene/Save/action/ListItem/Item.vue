@@ -18,19 +18,19 @@
             </div>
             <div class="item-options-content" v-if="data?.executor === 'alarm'">
               <template v-if="data?.alarm?.mode === 'trigger'">
-                {{ $t('ListItem.Item.9667816-0') }}<a-button
+                {{ $t('ListItem.Item.637563-0') }}<a-button
                   style="padding: 0"
                   type="link"
                   @click.stop="triggerVisible = true"
-                  >{{ $t('ListItem.Item.9667816-1') }}</a-button
+                  >{{ $t('ListItem.Item.637563-1') }}</a-button
                 >
               </template>
               <template v-else>
-                {{ $t('ListItem.Item.9667816-2') }}<a-button
+                {{ $t('ListItem.Item.637563-2') }}<a-button
                   style="padding: 0"
                   type="link"
                   @click.stop="triggerVisible = true"
-                  >{{ $t('ListItem.Item.9667816-1') }}</a-button
+                  >{{ $t('ListItem.Item.637563-1') }}</a-button
                 >
               </template>
             </div>
@@ -42,8 +42,8 @@
               <template v-if="data?.notify?.notifyType === 'dingTalk'">
                 <template v-if="options?.provider === 'dingTalkRobotWebHook'">
                   <div>
-                    {{ $t('ListItem.Item.9667816-3') }}<span class="notify-text-highlight">{{ $t('ListItem.Item.9667816-4') }}</span>
-                    {{ $t('ListItem.Item.9667816-5') }}
+                    {{ $t('ListItem.Item.637563-3') }}<span class="notify-text-highlight">{{ $t('ListItem.Item.637563-4') }}</span>
+                    {{ $t('ListItem.Item.637563-5') }}
                     <span class="notify-text-highlight">
                       {{ options?.templateName || data?.notify?.templateId }}
                     </span>
@@ -51,22 +51,22 @@
                 </template>
                 <template v-else>
                   <div>
-                    {{ $t('ListItem.Item.9667816-3') }}
+                    {{ $t('ListItem.Item.637563-3') }}
                     <span class="notify-text-highlight">
                       <img
                         style="width: 18px"
                         :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
                       />
-                      {{ $t('ListItem.Item.9667816-6') }}
+                      {{ $t('ListItem.Item.637563-6') }}
                     </span>
-                    {{ options?.sendTo || options?.orgName ? $t('ListItem.Item.9667816-7') : ""
+                    {{ options?.sendTo || options?.orgName ? $t('ListItem.Item.637563-7') : ""
                     }}<span class="notify-text-highlight">{{
                       options?.sendTo || ""
                     }}</span>
                     <span class="notify-text-highlight">{{
                       options?.orgName || ""
                     }}</span>
-                    {{ $t('ListItem.Item.9667816-5') }}
+                    {{ $t('ListItem.Item.637563-5') }}
                     <span class="notify-text-highlight">
                       {{ options?.templateName || data?.notify?.templateId }}
                     </span>
@@ -75,17 +75,17 @@
               </template>
               <template v-else-if="data?.notify?.notifyType === 'weixin'">
                 <div>
-                  {{ $t('ListItem.Item.9667816-3') }}
+                  {{ $t('ListItem.Item.637563-3') }}
                   <span class="notify-text-highlight">
                     <img
                       style="width: 18px"
                       :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
                     />
-                    {{ $t('ListItem.Item.9667816-8') }}
+                    {{ $t('ListItem.Item.637563-8') }}
                   </span>
                   {{
                     options?.sendTo || options?.orgName || options?.tagName
-                      ? $t('ListItem.Item.9667816-7')
+                      ? $t('ListItem.Item.637563-7')
                       : ""
                   }}<span class="notify-text-highlight">{{
                     options?.sendTo || ""
@@ -96,7 +96,7 @@
                   <span class="notify-text-highlight">{{
                     options?.tagName || ""
                   }}</span>
-                  {{ $t('ListItem.Item.9667816-5') }}
+                  {{ $t('ListItem.Item.637563-5') }}
                   <span class="notify-text-highlight">
                     {{ options?.templateName || data?.notify?.templateId }}
                   </span>
@@ -104,21 +104,21 @@
               </template>
               <template v-else-if="data?.notify?.notifyType === 'email'">
                 <div style="display: flex">
-                  {{ $t('ListItem.Item.9667816-3') }}
+                  {{ $t('ListItem.Item.637563-3') }}
                   <span class="notify-text-highlight">
                     <img
                       style="width: 18px"
                       :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
                     />
-                    {{ $t('ListItem.Item.9667816-9') }}
+                    {{ $t('ListItem.Item.637563-9') }}
                   </span>
-                  {{ options?.sendTo ? $t('ListItem.Item.9667816-7') : ""
+                  {{ options?.sendTo ? $t('ListItem.Item.637563-7') : ""
                   }}<span class="notify-text-highlight">
                     <j-ellipsis style="max-width: 400px">
                       {{ options?.sendTo || "" }}
                     </j-ellipsis>
                   </span>
-                  {{ $t('ListItem.Item.9667816-5') }}
+                  {{ $t('ListItem.Item.637563-5') }}
                   <span class="notify-text-highlight">
                     {{ options?.templateName || data?.notify?.templateId }}
                   </span>
@@ -126,19 +126,19 @@
               </template>
               <template v-else-if="data?.notify?.notifyType === 'voice'">
                 <div>
-                  {{ $t('ListItem.Item.9667816-3') }}
+                  {{ $t('ListItem.Item.637563-3') }}
                   <span class="notify-text-highlight">
                     <img
                       style="width: 18px"
                       :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
                     />
-                    {{ $t('ListItem.Item.9667816-10') }}
+                    {{ $t('ListItem.Item.637563-10') }}
                   </span>
-                  {{ options?.sendTo ? $t('ListItem.Item.9667816-7') : ""
+                  {{ options?.sendTo ? $t('ListItem.Item.637563-7') : ""
                   }}<span class="notify-text-highlight">{{
                     options?.sendTo || ""
                   }}</span>
-                  {{ $t('ListItem.Item.9667816-5') }}
+                  {{ $t('ListItem.Item.637563-5') }}
                   <span class="notify-text-highlight">
                     {{ options?.templateName || data?.notify?.templateId }}
                   </span>
@@ -146,19 +146,19 @@
               </template>
               <template v-else-if="data?.notify?.notifyType === 'sms'">
                 <div>
-                  {{ $t('ListItem.Item.9667816-3') }}
+                  {{ $t('ListItem.Item.637563-3') }}
                   <span class="notify-text-highlight">
                     <img
                       style="width: 18px"
                       :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
                     />
-                    {{ $t('ListItem.Item.9667816-11') }}
+                    {{ $t('ListItem.Item.637563-11') }}
                   </span>
-                  {{ options?.sendTo ? $t('ListItem.Item.9667816-7') : ""
+                  {{ options?.sendTo ? $t('ListItem.Item.637563-7') : ""
                   }}<span class="notify-text-highlight">{{
                     options?.sendTo || ""
                   }}</span>
-                  {{ $t('ListItem.Item.9667816-5') }}
+                  {{ $t('ListItem.Item.637563-5') }}
                   <span class="notify-text-highlight">
                     {{ options?.templateName || data?.notify?.templateId }}
                   </span>
@@ -166,7 +166,7 @@
               </template>
               <template v-else-if="data?.notify?.notifyType === 'webhook'">
                 <div>
-                  {{ $t('ListItem.Item.9667816-3') }}
+                  {{ $t('ListItem.Item.637563-3') }}
                   <span class="notify-text-highlight">
                     <img
                       style="width: 18px"
@@ -174,7 +174,7 @@
                     />
                     WebHook
                   </span>
-                  {{ $t('ListItem.Item.9667816-5') }}
+                  {{ $t('ListItem.Item.637563-5') }}
                   <span>{{
                     options?.templateName || data?.notify?.templateId
                   }}</span>
@@ -219,7 +219,7 @@
                       !isBoolean(data?.options?.propertiesValue) &&
                       data?.options?.propertiesValue
                     "
-                    >{{ $t('ListItem.Item.9667816-12') }}
+                    >{{ $t('ListItem.Item.637563-12') }}
                   </span>
                   <j-ellipsis style="max-width: 200px">
                     {{
@@ -247,7 +247,7 @@
                   />
                   {{ data?.options?.type }}
                   <span>{{ data?.options?.tagName }}</span>
-                  {{ $t('ListItem.Item.9667816-13') }}{{ data?.options?.productName }}
+                  {{ $t('ListItem.Item.637563-13') }}{{ data?.options?.productName }}
                   {{ data?.options?.propertiesName }}
                 </div>
               </template>
@@ -260,21 +260,21 @@
                       ]
                     "
                   />
-                  {{ data?.options?.type }}{{ $t('ListItem.Item.9667816-14') }}<span>{{
+                  {{ data?.options?.type }}{{ $t('ListItem.Item.637563-14') }}<span>{{
                     data?.options?.triggerName
                   }}</span
-                  >{{ $t('ListItem.Item.9667816-15') }} {{ data?.options?.relationName }}{{ $t('ListItem.Item.9667816-13') }}{{
+                  >{{ $t('ListItem.Item.637563-15') }} {{ data?.options?.relationName }}{{ $t('ListItem.Item.637563-13') }}{{
                     data?.options?.productName
-                  }}{{ $t('ListItem.Item.9667816-16') }}
+                  }}{{ $t('ListItem.Item.637563-16') }}
                   {{ data?.options?.propertiesName }}
                 </div>
               </template>
             </div>
-            <a-button v-else @click="onAdd">{{ $t('ListItem.Item.9667816-17') }}</a-button>
+            <a-button v-else @click="onAdd">{{ $t('ListItem.Item.637563-17') }}</a-button>
           </div>
           <div class="item-number">{{ name + 1 }}</div>
           <ConfirmModal
-            :title="$t('ListItem.Item.9667816-18')"
+            :title="$t('ListItem.Item.637563-18')"
             :onConfirm="onDelete"
             className="actions-item-delete"
           >
@@ -292,7 +292,7 @@
       >
         <template v-if="termsOptions.length">
           <div class="actions-item-filter-warp-tip">
-            {{ $t('ListItem.Item.9667816-19') }}
+            {{ $t('ListItem.Item.637563-19') }}
           </div>
           <div class="actions-item-filter-overflow">
             <FilterGroup
@@ -309,7 +309,7 @@
         </template>
         <div v-else class="filter-add-button" @click="addFilterParams">
           <AIcon type="PlusOutlined" style="padding-right: 4px" />
-          <span>{{ $t('ListItem.Item.9667816-20') }}</span>
+          <span>{{ $t('ListItem.Item.637563-20') }}</span>
         </div>
       </div>
     </template>
@@ -496,7 +496,7 @@ const addFilterParams = () => {
   ].options!.terms = [
     {
       terms: [["", "eq", "", "and"]],
-      termType: $t('ListItem.Item.9667816-21'),
+      termType: $t('ListItem.Item.637563-21'),
     },
   ];
 };
@@ -574,7 +574,7 @@ const rules = [
             !_device?.selectorValues?.length) ||
           _device?.changeData === true
         ) {
-          return Promise.reject(new Error($t('ListItem.Item.9667816-22')));
+          return Promise.reject(new Error($t('ListItem.Item.637563-22')));
         }
       } else if (v?.executor === "notify") {
         const _notify = v.notify;
@@ -583,7 +583,7 @@ const rules = [
           !_notify?.templateId ||
           _notify?.changeData === true
         ) {
-          return Promise.reject(new Error($t('ListItem.Item.9667816-22')));
+          return Promise.reject(new Error($t('ListItem.Item.637563-22')));
         }
       }
       return Promise.resolve();

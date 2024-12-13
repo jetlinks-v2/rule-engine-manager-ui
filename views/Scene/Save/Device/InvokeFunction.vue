@@ -11,7 +11,7 @@
             allowClear
             v-model:value='formModel.functionId'
             style='width: 100%'
-            :placeholder='$t('Device.InvokeFunction.372523-0')'
+            :placeholder="$t('Device.InvokeFunction.372523-0')"
             :options='functions'
             :filterOption='filterSelectNode'
             @select='onSelect'

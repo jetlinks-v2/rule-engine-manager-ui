@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    :title='$t('Device.AddModal.3725211-0')'
+    :title="$t('Device.AddModal.3725211-0')"
     visible
     :width='950'
     @ok='save'

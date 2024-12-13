@@ -9,7 +9,7 @@
           <a-select
             showSearch
             style='width: 100%'
-            :placeholder='$t('Device.WriteProperty.372527-1')'
+            :placeholder="$t('Device.WriteProperty.372527-1')"
             v-model:value='formModel.reportKey'
             :options='properties'
             :filter-option='filterSelectNode'
