@@ -5,7 +5,7 @@
       :name='["trigger", "device"]'
     >
       <template #label>
-        <TitleComponent :data="$t('Device.index.372524-0')" style='font-size: 14px;' />
+        <TitleComponent :data="$t('Device.index.372524-0')"/>
       </template>
 
         <AddButton
