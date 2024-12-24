@@ -16,7 +16,7 @@
             }"
             ref="tableRef"
             :params="params"
-            :gridColumn="2"
+            :gridColumns="[2]"
             :noPagination="true"
             :alertRender="false"
             :rowSelection="{
@@ -245,6 +245,7 @@ const handleData = async (e: any) => {
             total: resp.result.length,
         },
         status: resp.status,
+        success: resp.success
     };
 };
 

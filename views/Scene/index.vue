@@ -6,6 +6,7 @@
         ref="sceneRef"
         :columns="columns"
         :request="query"
+        modeValue="CARD"
         :defaultParams="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
         :params="params"
       >
@@ -216,7 +217,7 @@ const columns = [
     title: $t('Scene.index.895630-14'),
     key: "action",
     fixed: "right",
-    width: 200,
+    width: 250,
     scopedSlots: true,
   },
 ];

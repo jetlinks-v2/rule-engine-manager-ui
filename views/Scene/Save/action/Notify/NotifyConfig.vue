@@ -15,7 +15,7 @@
                 padding: 0,
             }"
             :params="params"
-            :gridColumn="2"
+            :gridColumns="[2]"
             :alertRender="false"
             :rowSelection="{
                 selectedRowKeys: _selectedRowKeys,
