@@ -80,7 +80,7 @@ export const handleTimerOptions = (timer: OperationTimer):TimerOption => {
   }
 
   if (timer.once) {
-    time = timer.once.time + ' 执行1次';
+    time = timer.once.time + ` ${$t('Timer.util.803811-17')}`;
   } else if (timer.period) {
     time = timer.period.from + '-' + timer.period.to;
     extraTime = $t('Timer.util.803811-18', [timer.period.every,timeUnitEnum[timer.period.unit]]);

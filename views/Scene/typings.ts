@@ -1,7 +1,8 @@
+import i18n from "@/locales";
 export const keyByLabel = {
-  manual: '手动触发',
-  timer: '定时触发',
-  device: '设备触发',
+  manual: i18n.global.t('Save.utils.021456-34'),
+  timer: i18n.global.t('Save.utils.021456-36'),
+  device: i18n.global.t('Save.utils.021456-38'),
 }
 
 type State = {

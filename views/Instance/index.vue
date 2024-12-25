@@ -14,6 +14,7 @@
                     :defaultParams="{
                         sorts: [{ name: 'createTime', order: 'desc' }],
                     }"
+                    modeValue="CARD"
                     :params="params"
                 >
                     <template #headerLeftRender>
@@ -110,7 +111,7 @@
                         />
                     </template>
                     <template #action="slotProps">
-                        <a-space :size="16">
+                        <a-space>
                             <template
                                 v-for="i in getActions(slotProps, 'table')"
                                 :key="i.key"
@@ -229,7 +230,7 @@ const columns = [
         title: $t('Instance.index.020452-6'),
         key: 'action',
         fixed: 'right',
-        width: 150,
+        width: 170,
         scopedSlots: true,
     },
 ];
@@ -277,7 +278,7 @@ const getActions = (
                     ? 'StopOutlined'
                     : 'CheckCircleOutlined',
             popConfirm: {
-                title: `确认${data.state.value !== 'disable' ? $t('Instance.index.020452-2') : $t('Instance.index.020452-9')}?`,
+                title: $t('Instance.index.020452-10', [data.state.value !== 'disable' ? $t('Instance.index.020452-2') : $t('Instance.index.020452-9')]),
                 onConfirm: async () => {
                     let response = undefined;
                     if (data.state?.value !== 'started') {
@@ -341,7 +342,7 @@ const handleSearch = (e: any) => {
 };
 const openRuleEditor = (item: any) => {
     window.open(
-        `/${BASE_API}/rule-editor/index.html#flow/${item.id}`,
+        `${BASE_API}/rule-editor/index.html#flow/${item.id}`,
     );
 };
 const closeSave = () => {

@@ -83,7 +83,7 @@ const onOk = () => {
                 unit: unit.value,
             },
             {
-                name: $t('Delay.index.9667826-5', [_value.value]),
+                name: $t('Delay.index.9667826-5', [_value.value, timeUnitEnum[unit.value]]),
             },
         );
     } else {

@@ -12,6 +12,7 @@
           :request="queryList"
           :gridColumn="3"
           :gridColumns="[1, 2, 3]"
+          modeValue="CARD"
           ref="tableRef"
           :defaultParams="{
             sorts: [{ name: 'createTime', order: 'desc' }],
@@ -335,8 +336,11 @@ const current = ref<any>({});
 const map = {
   product: $t('Configuration.index.021440-7'),
   device: $t('Configuration.index.021440-8'),
+  organization: $t('Configuration.index.021440-9'),
   org: $t('Configuration.index.021440-9'),
   other: $t('Configuration.index.021440-10'),
+  scene: $t('Configuration.index.021440-26'),
+  collector: $t('Configuration.index.021440-27'),
 };
 const handleSearch = (e: any) => {
   e.terms.map((i: any) => {

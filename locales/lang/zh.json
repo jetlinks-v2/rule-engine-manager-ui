@@ -1906,6 +1906,8 @@
 	"Configuration.index.021440-23": "请先禁用该告警，再删除",
 	"Configuration.index.021440-24": "删除告警配置将同步删除相关联的{0}条告警记录,确认删除？",
 	"Configuration.index.021440-25": "确认删除？",
+	"Configuration.index.021440-26": "场景",
+	"Configuration.index.021440-27": "采集器",
 	"Save.index.021441-0": "基础配置",
 	"Save.index.021441-1": "关联场景联动",
 	"Save.index.021441-2": "告警记录",
@@ -2755,5 +2757,11 @@
 	"ListItem.Item.637563-19": "满足此条件后执行后续动作",
 	"ListItem.Item.637563-20": "添加过滤条件",
 	"ListItem.Item.637563-21": "并且",
-	"ListItem.Item.637563-22": "该数据已发生变更，请重新配置"
+	"ListItem.Item.637563-22": "该数据已发生变更，请重新配置",
+	"Delay.index.9667826-0": "延迟执行",
+	"Delay.index.9667826-1": "请输入时间",
+	"Delay.index.9667826-2": "秒",
+	"Delay.index.9667826-3": "分",
+	"Delay.index.9667826-4": "小时",
+	"Delay.index.9667826-5": "{0}后，执行后续动作"
 }
