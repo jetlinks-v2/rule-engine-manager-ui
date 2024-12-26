@@ -54,7 +54,7 @@
               </j-ellipsis>
               <div class="subTitle">
                 <span class="subTitle-title"> {{ $t('Scene.index.895630-1') }} </span>
-                <span class="subTitle-content">
+                <span class="subTitle-content" :style="{textIndent: locale.includes('zh') ? '38px' : '60px'}">
                   <j-ellipsis :lineClamp="2">
                     {{
                       slotProps?.description
@@ -135,7 +135,7 @@ import { Modal } from "ant-design-vue";
 import { sceneImages } from "../../assets/index";
 import { useI18n } from 'vue-i18n'
 
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
 const menuStory = useMenuStore();
 const visible = ref<boolean>(false);
 const current = ref<Record<string, any>>({});
