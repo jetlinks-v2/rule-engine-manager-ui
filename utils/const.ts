@@ -1,4 +1,4 @@
-import { sceneImages } from "../assets/index";
+import { notifyImages } from '../assets/scene/notify/index'
 
 interface INoticeMethod {
     label: string;
@@ -39,19 +39,19 @@ export const MSG_TYPE = {
         {
             label: '钉钉消息',
             value: 'dingTalkMessage',
-            logo: sceneImages.dingTalk,
+            logo: notifyImages.dingTalk,
         },
         {
             label: '群机器人消息',
             value: 'dingTalkRobotWebHook',
-            logo: sceneImages.noticeRebot,
+            logo: notifyImages.dingTalkRebot,
         },
     ],
     weixin: [
         {
             label: '企业消息',
             value: 'corpMessage',
-            logo: sceneImages.weixin,
+            logo: notifyImages.weixinCorp,
         },
         // {
         //   label: '服务号消息',
@@ -63,28 +63,28 @@ export const MSG_TYPE = {
         {
             label: '阿里云语音',
             value: 'aliyun',
-            logo: sceneImages.voice,
+            logo: notifyImages.voice,
         },
     ],
     sms: [
         {
             label: '阿里云短信',
             value: 'aliyunSms',
-            logo: sceneImages.sms,
+            logo: notifyImages.sms,
         },
     ],
     webhook: [
         {
             label: 'WebHook',
             value: 'http',
-            logo: sceneImages.webhook,
+            logo: notifyImages.webhook,
         },
     ],
     email: [
         {
             label: '邮件',
             value: 'embedded',
-            logo: sceneImages.email,
+            logo: notifyImages.email,
         },
     ],
 }

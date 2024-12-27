@@ -18,7 +18,7 @@
         <div class='actions-terms-list-content'>
           <template v-if='showWhen'>
             <j-scrollbar>
-              <div style="display: flex; padding-top: 10px;">
+              <div style="display: flex; padding-top: 10px;overflow: auto">
                 <WhenItem
                   v-for='(item, index) in whenData'
                   :key='item.key'
