@@ -88,7 +88,7 @@
           {{ typeMap.get(slotProps.triggerType)?.text }}
         </template>
         <template #state="slotProps">
-          <BadgeStatus
+          <JBadgeStatus
             :status="slotProps.state?.value"
             :text="slotProps.state?.text"
             :statusNames="{
