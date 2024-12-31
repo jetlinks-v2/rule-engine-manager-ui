@@ -13,6 +13,7 @@
     :columns="columns"
     :request="deviceQuery"
     :gridColumn="2"
+    :gridColumns="[2, 2, 2]"
     :params="params"
     :bodyStyle="{
       paddingRight: 0,
