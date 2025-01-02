@@ -1,5 +1,5 @@
 const routerModules = import.meta.glob('./views/**/index.vue')
-
+import i18n from "@/locales";
 
 const getAsyncRoutesMap = () => {
     const modules = {}
@@ -19,7 +19,7 @@ const getExtraRoutesMap = () => {
                 {
                     code: 'Save',
                     url: '/Save',
-                    name: '详情信息',
+                    name: i18n.global.t('rule-engine-manager-ui.index.102627-0'),
                     component: () => import('./views/Scene/Save/index.vue')
                 }
             ]
@@ -29,7 +29,7 @@ const getExtraRoutesMap = () => {
                 {
                     code: 'Save',
                     url: '/Save',
-                    name: '详情',
+                    name: i18n.global.t('rule-engine-manager-ui.index.102627-1'),
                     component: () => import('./views/Alarm/Configuration/Save/index.vue')
                 }
             ]
@@ -39,13 +39,13 @@ const getExtraRoutesMap = () => {
                 {
                     code: 'Record',
                     url: '/Record',
-                    name: '处理记录',
+                    name: i18n.global.t('rule-engine-manager-ui.index.102627-2'),
                     component: () => import('./views/Alarm/Log/Record/index.vue')
                 },
                 {
                     code: 'Detail',
                     url: '/Detail/:id',
-                    name: '详情',
+                    name: i18n.global.t('rule-engine-manager-ui.index.102627-1'),
                     component: () => import('./views/Alarm/Log/Detail/index.vue')
                 }
             ]

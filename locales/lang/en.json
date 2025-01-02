@@ -2763,5 +2763,8 @@
 	"Delay.index.9667826-2": "second",
 	"Delay.index.9667826-3": "minute",
 	"Delay.index.9667826-4": "hour",
-	"Delay.index.9667826-5": "After {0}{1}, perform subsequent actions"
+	"Delay.index.9667826-5": "After {0}{1}, perform subsequent actions",
+	"rule-engine-manager-ui.index.102627-0": "Details",
+	"rule-engine-manager-ui.index.102627-1": "Details",
+	"rule-engine-manager-ui.index.102627-2": "Processing Records"
 }

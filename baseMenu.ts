@@ -2,6 +2,13 @@ export default [
     {
         code: 'iot',
         name: '物联网',
+        i18nMessages: {
+            name: {
+                zh_CN: '物联网',
+                en_US: 'IoT',
+                en: 'IoT'
+            }
+        },
         owner: 'iot',
         id: '9c21f88182e7cc75cbdfa8e4b7844272',
         url: '/iot',
@@ -12,6 +19,13 @@ export default [
             {
                 code: 'rule-engine/Alarm',
                 name: '告警中心',
+                i18nMessages: {
+                    name: {
+                        zh_CN: '告警中心',
+                        en_US: 'Alarm Center',
+                        en: 'Alarm Center'
+                    }
+                },
                 owner: 'iot',
                 //parentId: '1',
                 id: '3c7dca6ea8b5828bbcc023ce905244f7',
@@ -25,6 +39,13 @@ export default [
                     {
                         code: 'rule-engine/DashBoard',
                         name: '仪表盘',
+                        i18nMessages: {
+                            name: {
+                                zh_CN: '仪表盘',
+                                en_US: 'Dashboard',
+                                en: 'Dashboard'
+                            }
+                        },
                         owner: 'iot',
                         //parentId: '1-5',
                         id: 'f4d6880e3d8b3e3234c547fa84856b32',
@@ -44,6 +65,13 @@ export default [
                     {
                         code: 'rule-engine/Alarm/Config',
                         name: '基础配置',
+                        i18nMessages: {
+                            name: {
+                                zh_CN: '基础配置',
+                                en_US: 'Basic Configuration',
+                                en: 'Basic Configuration',
+                            }
+                        },
                         owner: 'iot',
                         //parentId: '1-5',
                         id: 'af160284d1934bf052a2eeb9b9a9cb8f',
@@ -56,6 +84,11 @@ export default [
                             {
                                 id: 'update',
                                 name: '保存',
+                                i18nMessages: {
+                                    zh_CN: "保存",
+                                    en_US: "Save",
+                                    en: "Save",
+                                },
                                 permissions: [
                                     // { permission: 'alarm-record', actions: ['query', 'save'] },
                                     { permission: 'alarm-config', actions: ['query', 'save'] },
@@ -68,6 +101,13 @@ export default [
                     {
                         code: 'rule-engine/Alarm/Configuration',
                         name: '告警配置',
+                        i18nMessages: {
+                            name: {
+                                zh_CN: '告警配置',
+                                en_US: 'Alarm Configuration',
+                                en: 'Alarm Configuration',
+                            }
+                        },
                         owner: 'iot',
                         //parentId: '1-5',
                         id: 'c5d3b1261f2f414dd04b0bf9194aa29e',
@@ -85,6 +125,11 @@ export default [
                             {
                                 id: 'view',
                                 name: '查看',
+                                i18nMessages: {
+                                    zh_CN: "查看",
+                                    en_US: "View",
+                                    en: "View",
+                                },
                                 permissions: [
                                     {
                                         permission: 'alarm-config',
@@ -99,6 +144,11 @@ export default [
                             {
                                 id: 'add',
                                 name: '新增',
+                                i18nMessages: {
+                                    zh_CN: "新增",
+                                    en_US: "Add",
+                                    en: "Add",
+                                },
                                 permissions: [
                                     {
                                         permission: 'rule-scene',
@@ -117,6 +167,11 @@ export default [
                             {
                                 id: 'action',
                                 name: '启/禁用',
+                                i18nMessages: {
+                                    zh_CN: "启/禁用",
+                                    en_US: "Enable/Disable",
+                                    en: "Enable/Disable",
+                                },
                                 permissions: [
                                     {
                                         permission: 'alarm-config',
@@ -131,6 +186,11 @@ export default [
                             {
                                 id: 'delete',
                                 name: '删除',
+                                i18nMessages: {
+                                    zh_CN: "删除",
+                                    en_US: "Delete",
+                                    en: "Delete",
+                                },
                                 permissions: [
                                     {
                                         permission: 'alarm-config',
@@ -145,6 +205,11 @@ export default [
                             {
                                 id: 'update',
                                 name: '编辑',
+                                i18nMessages: {
+                                    zh_CN: "编辑",
+                                    en_US: "Edit",
+                                    en: "Edit",
+                                },
                                 permissions: [
                                     {
                                         permission: 'rule-scene',
@@ -163,6 +228,11 @@ export default [
                             {
                                 id: 'tigger',
                                 name: '手动触发',
+                                i18nMessages: {
+                                    zh_CN: "手动触发",
+                                    en_US: "Manual Trigger",
+                                    en: "Manual Trigger",
+                                },
                                 permissions: [
                                     {
                                         permission: 'alarm-config',
@@ -182,6 +252,13 @@ export default [
                     {
                         code: 'rule-engine/Alarm/Log',
                         name: '告警记录',
+                        i18nMessages: {
+                            name: {
+                                zh_CN: '告警记录',
+                                en_US: 'Alarm Record',
+                                en: 'Alarm Record',
+                            }
+                        },
                         owner: 'iot',
                         //parentId: '1-5',
                         id: 'fca24d8d3276a410f7031a9b721017fd',
@@ -194,6 +271,11 @@ export default [
                             {
                                 id: 'view',
                                 name: '查看',
+                                i18nMessages: {
+                                    zh_CN: "查看",
+                                    en_US: "View",
+                                    en: "View"
+                                },
                                 permissions: [
                                     {
                                         permission: 'alarm-record',
@@ -212,6 +294,11 @@ export default [
                             {
                                 id: 'action',
                                 name: '告警处理',
+                                i18nMessages: {
+                                    zh_CN: "告警处理",
+                                    en_US: "Alarm Handle",
+                                    en: "Alarm Handle",
+                                },
                                 permissions: [
                                     {
                                         permission: 'alarm-record',
@@ -236,6 +323,13 @@ export default [
             {
                 code: 'rule-engine',
                 name: '规则引擎',
+                i18nMessages: {
+                    name: {
+                        zh_CN: '规则引擎',
+                        en_US: 'Rule Engine',
+                        en: 'Rule Engine'
+                    }
+                },
                 owner: 'iot',
                 //parentId: '1',
                 id: '91aa7c753b1c030dfad612aa0a45d453',
@@ -248,6 +342,13 @@ export default [
                     {
                         code: 'rule-engine/Instance',
                         name: '规则编排',
+                        i18nMessages: {
+                            name: {
+                                zh_CN: '规则编排',
+                                en_US: 'Rule Instance',
+                                en: 'Rule Instance',
+                            }
+                        },
                         owner: 'iot',
                         //parentId: '1-7',
                         id: '898001f2efa11f93253d67a254904ead',
@@ -260,6 +361,11 @@ export default [
                             {
                                 id: 'view',
                                 name: '查看',
+                                i18nMessages: {
+                                    zh_CN: "查看",
+                                    en_US: "View",
+                                    en: "View",
+                                },
                                 permissions: [
                                     {
                                         permission: 'template',
@@ -286,6 +392,11 @@ export default [
                             {
                                 id: 'action',
                                 name: '启/禁用',
+                                i18nMessages: {
+                                    zh_CN: "启/禁用",
+                                    en_US: "Enable/Disable",
+                                    en: "Enable/Disable",
+                                },
                                 permissions: [
                                     {
                                         permission: 'template',
@@ -312,6 +423,11 @@ export default [
                             {
                                 id: 'delete',
                                 name: '删除',
+                                i18nMessages: {
+                                    zh_CN: "删除",
+                                    en_US: "Delete",
+                                    en: "Delete",
+                                },
                                 permissions: [
                                     {
                                         permission: 'template',
@@ -338,6 +454,11 @@ export default [
                             {
                                 id: 'update',
                                 name: '编辑',
+                                i18nMessages: {
+                                    zh_CN: "编辑",
+                                    en_US: "Edit",
+                                    en: "Edit",
+                                },
                                 permissions: [
                                     {
                                         permission: 'template',
@@ -364,6 +485,11 @@ export default [
                             {
                                 id: 'add',
                                 name: '新增',
+                                i18nMessages: {
+                                    zh_CN: "新增",
+                                    en_US: "Add",
+                                    en: "Add",
+                                },
                                 permissions: [
                                     {
                                         permission: 'template',
@@ -395,6 +521,13 @@ export default [
                     {
                         code: 'rule-engine/Scene',
                         name: '场景联动',
+                        i18nMessages: {
+                            name: {
+                                zh_CN: '场景联动',
+                                en_US: 'Scene',
+                                en: 'Scene',
+                            }
+                        },
                         owner: 'iot',
                         //parentId: '1-7',
                         id: 'b68867fdc24cfc3df7c52e842136f439',
@@ -407,6 +540,11 @@ export default [
                             {
                                 id: 'delete',
                                 name: '删除',
+                                i18nMessages: {
+                                    zh_CN: "删除",
+                                    en_US: "Delete",
+                                    en: "Delete",
+                                },
                                 permissions: [
                                     {
                                         permission: 'rule-scene',
@@ -421,6 +559,11 @@ export default [
                             {
                                 id: 'tigger',
                                 name: '手动触发',
+                                i18nMessages: {
+                                    zh_CN: "手动触发",
+                                    en_US: "Manual Trigger",
+                                    en: "Manual Trigger",
+                                },
                                 permissions: [
                                     {
                                         permission: 'rule-scene',
@@ -431,6 +574,11 @@ export default [
                             {
                                 id: 'view',
                                 name: '查看',
+                                i18nMessages: {
+                                    zh_CN: "查看",
+                                    en_US: "View",
+                                    en: "View",
+                                },
                                 permissions: [
                                     {
                                         permission: 'user',
@@ -465,6 +613,11 @@ export default [
                             {
                                 id: 'action',
                                 name: '启用/禁用',
+                                i18nMessages: {
+                                    zh_CN: "启用/禁用",
+                                    en_US: "Enable/Disable",
+                                    en: "Enable/Disable",
+                                },
                                 permissions: [
                                     {
                                         permission: 'rule-scene',
@@ -475,6 +628,11 @@ export default [
                             {
                                 id: 'add',
                                 name: '新增',
+                                i18nMessages: {
+                                    zh_CN: "新增",
+                                    en_US: "Add",
+                                    en: "Add",
+                                },
                                 permissions: [
                                     {
                                         permission: 'user',
@@ -509,6 +667,11 @@ export default [
                             {
                                 id: 'update',
                                 name: '编辑',
+                                i18nMessages: {
+                                    zh_CN: "编辑",
+                                    en_US: "Edit",
+                                    en: "Edit",
+                                },
                                 permissions: [
                                     {
                                         permission: 'user',

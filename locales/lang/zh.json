@@ -2761,5 +2761,8 @@
 	"Delay.index.9667826-2": "秒",
 	"Delay.index.9667826-3": "分",
 	"Delay.index.9667826-4": "小时",
-	"Delay.index.9667826-5": "{0}{1}后，执行后续动作"
+	"Delay.index.9667826-5": "{0}{1}后，执行后续动作",
+	"rule-engine-manager-ui.index.102627-0": "详情信息",
+	"rule-engine-manager-ui.index.102627-1": "详情",
+	"rule-engine-manager-ui.index.102627-2": "处理记录"
 }
