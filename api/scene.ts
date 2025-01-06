@@ -31,3 +31,5 @@ export const queryAlarmPage = (data: Record<string, any>) => request.post(`/alar
 
 export const queryAlarmList = (data: Record<string, any>) => request.post(`/alarm/config/_query/no-paging`, data)
 export const queryAlarmCount = (data: Record<string, any>) => request.post(`/alarm/config/_count`, data)
+
+export const queryType = request.get('/alarm/config')

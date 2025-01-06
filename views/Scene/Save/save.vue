@@ -31,6 +31,7 @@
       >
         <TriggerWay
           v-model:modelValue="formModel.trigger.type"
+          :options="data"
           :disabled="disabled"
         />
       </a-form-item>
@@ -43,24 +44,25 @@ import { SceneItem } from "../typings";
 import TriggerWay from "./components/TriggerWay.vue";
 import type { PropType } from "vue";
 import type { FormInstance } from "ant-design-vue";
-import { save, modify } from "../../../api/scene";
+import { save, modify, queryType } from "@ruleEngineanager/api/scene";
 import { useMenuStore } from "@/store/menu";
 import { useI18n } from 'vue-i18n'
+import { useRequest } from '@jetlinks-web/hooks'
 
 const { t: $t } = useI18n()
 type Emit = {
   (e: "close"): void;
 };
 
-const loading = ref(false);
 const menuStory = useMenuStore();
+const { data } = useRequest(queryType)
+const loading = ref(false);
 const formModel = reactive({
   name: "",
   trigger: {
     type: "device",
   },
 });
-
 const formRef = ref<FormInstance>();
 
 const props = defineProps({

@@ -3,6 +3,7 @@ import type { FormModelType } from '../views/Scene/typings'
 import { detail } from '../api/scene'
 import {cloneDeep, isArray, isObject} from 'lodash-es'
 import {randomNumber, randomString} from '@jetlinks-web/utils'
+import i18n from '@/locales';
 
 type DataType = {
   data: FormModelType | any
@@ -55,7 +56,7 @@ export const defaultBranches = [
     then: [],
     executeAnyway: true,
     branchId: defaultBranchId,
-    branchName:'条件'
+    branchName: i18n.global.t('Terms.Terms.9093429-8')
   },
 ];
 
@@ -68,7 +69,7 @@ const defaultOptions = {
           terms: [['','eq','','and']],
         },
       ],
-      branchName:'条件',
+      branchName: i18n.global.t('Terms.Terms.9093429-8'),
       key:defaultBranchId,
       executeAnyway: true,
       groupIndex: 1
