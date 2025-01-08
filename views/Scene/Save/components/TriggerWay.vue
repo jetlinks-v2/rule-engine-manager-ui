@@ -27,11 +27,11 @@ type Emit = {
 
 const { t: $t } = useI18n()
 
-// const options = [
-//   { value: 'device', label: $t('components.TriggerWay.909349-0'), tip: $t('components.TriggerWay.909349-1'), image: sceneImages.deviceTrigger },
-//   { value: 'manual', label: $t('components.TriggerWay.909349-2'), tip: $t('components.TriggerWay.909349-3'), image: sceneImages.manualTrigger },
-//   { value: 'timer', label: $t('components.TriggerWay.909349-4'), tip: $t('components.TriggerWay.909349-5'), image: sceneImages.timingTrigger },
-// ]
+const options = [
+  { value: 'device', label: $t('components.TriggerWay.909349-0'), tip: $t('components.TriggerWay.909349-1'), image: sceneImages.deviceTrigger },
+  { value: 'manual', label: $t('components.TriggerWay.909349-2'), tip: $t('components.TriggerWay.909349-3'), image: sceneImages.manualTrigger },
+  { value: 'timer', label: $t('components.TriggerWay.909349-4'), tip: $t('components.TriggerWay.909349-5'), image: sceneImages.timingTrigger },
+]
 
 const props = defineProps({
   modelValue: {
@@ -46,10 +46,6 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  options: {
-    type: Array,
-    default: () => []
-  }
 })
 
 const emit = defineEmits<Emit>()

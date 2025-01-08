@@ -31,7 +31,6 @@
       >
         <TriggerWay
           v-model:modelValue="formModel.trigger.type"
-          :options="data"
           :disabled="disabled"
         />
       </a-form-item>
@@ -55,7 +54,6 @@ type Emit = {
 };
 
 const menuStory = useMenuStore();
-const { data } = useRequest(queryType)
 const loading = ref(false);
 const formModel = reactive({
   name: "",
