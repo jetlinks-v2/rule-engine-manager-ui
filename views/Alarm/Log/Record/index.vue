@@ -21,18 +21,23 @@
                 <template #handleTime="slotsProps">
                     <span>
                         {{
-                            dayjs(slotsProps.handleTime).format(
-                                'YYYY-MM-DD HH:mm:ss',
-                            )
+                            slotsProps?.handleTime
+                                ? dayjs(slotsProps.handleTime).format(
+                                      'YYYY-MM-DD HH:mm:ss',
+                                  )
+                                : '--'
                         }}
                     </span>
                 </template>
                 <template #handleType="slotProps">
-                    <span>{{ slotProps.handleType?.text }}</span>
+                    <span>{{ slotProps.handleType?.text || '--' }}</span>
                 </template>
                 <template #alarmDuration="slotProps">
                     <j-ellipsis><Duration :data="slotProps" /></j-ellipsis>
                 </template>
+                <template #state="slotProps">{{
+                    slotProps?.state?.text
+                }}</template>
                 <template #alarmTime="slotProps">
                     <span>
                         {{
@@ -41,6 +46,9 @@
                             )
                         }}
                     </span>
+                </template>
+                <template #description="slotProps">
+                    {{ slotProps?.description || '--' }}
                 </template>
             </JProTable>
         </FullPage>
@@ -58,6 +66,16 @@ const { t: $t } = useI18n()
 const route = useRoute();
 const id = route.query?.id;
 const columns = [
+{
+        title: $t('Record.index.165150-5'),
+        dataIndex: 'alarmTime',
+        key: 'alarmTime',
+        scopedSlots: true,
+        search: {
+            type: 'date',
+        },
+        width: 180,
+    },
     {
         title: $t('Record.index.165150-1'),
         dataIndex: 'handleTime',
@@ -67,6 +85,20 @@ const columns = [
         search: {
             type: 'date',
         },
+    },
+    {
+        title: $t('Record.index.165150-6'),
+        dataIndex: 'alarmDuration',
+        key: 'alarmDuration',
+        scopedSlots: true,
+        width: 180,
+    },
+    {
+        title: '处理状态',
+        dataIndex: 'state',
+        key: 'state',
+        width: 100,
+        scopedSlots: true,
     },
     {
         dataIndex: 'handleType',
@@ -88,28 +120,14 @@ const columns = [
             ],
         },
     },
-    {
-        title: $t('Record.index.165150-5'),
-        dataIndex: 'alarmTime',
-        key: 'alarmTime',
-        scopedSlots: true,
-        search: {
-            type: 'date',
-        },
-        width: 180,
-    },
-    {
-        title: $t('Record.index.165150-6'),
-        dataIndex: 'alarmDuration',
-        key: 'alarmDuration',
-        scopedSlots: true,
-        width: 180,
-    },
+    
+    
     {
         title: $t('Record.index.165150-7'),
         dataIndex: 'description',
         key: 'description',
         ellipsis: true,
+        scopedSlots:true,
         search: {
             type: 'string',
         },

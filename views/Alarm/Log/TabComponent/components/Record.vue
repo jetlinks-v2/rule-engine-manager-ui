@@ -7,14 +7,24 @@
     :scroll="{ y: 'calc(100vh - 260px)' }"
   >
     <template #bodyCell="{ column, text, record }">
-      <template v-if="['alarmTime', 'handleTime'].includes(column.dataIndex)">
-        {{ dayjs(text).format("YYYY-MM-DD HH:mm:ss") }}
+      <template v-if="column.dataIndex === 'alarmTime'">
+        <j-ellipsis>
+          {{ dayjs(text).format("YYYY-MM-DD HH:mm:ss") }}
+        </j-ellipsis>
+      </template>
+      <template v-if="column.dataIndex === 'handleTime'">
+        <j-ellipsis>
+          {{ text ? dayjs(text).format("YYYY-MM-DD HH:mm:ss") : "--" }}
+        </j-ellipsis>
       </template>
       <template v-if="column.dataIndex === 'duration'">
         <Duration :data="record" />
       </template>
+      <template v-if="column.dataIndex === 'state'">
+        {{ text?.text || "--" }}
+      </template>
       <template v-if="column.dataIndex === 'handleType'">
-        {{ text?.text }}
+        {{ text?.text || "--" }}
       </template>
       <template v-if="column.dataIndex === 'description'">
         <j-ellipsis>
@@ -25,8 +35,10 @@
   </a-table>
   <div class="tableBottom">
     <a-button v-if="exceed" class="moreBtn" type="link" @click="gotoAlarmRecord"
-      >{{ $t('components.Record.165159-0') }} ></a-button
-    ><span v-else-if="dataSource.length">{{ $t('components.Record.165159-1') }}</span>
+      >{{ $t("components.Record.165159-0") }} ></a-button
+    ><span v-else-if="dataSource.length">{{
+      $t("components.Record.165159-1")
+    }}</span>
   </div>
 </template>
 
@@ -36,9 +48,9 @@ import dayjs from "dayjs";
 import { useMenuStore } from "@/store/menu";
 import { defineExpose } from "vue";
 import Duration from "../../components/Duration.vue";
-import { useI18n } from 'vue-i18n'
+import { useI18n } from "vue-i18n";
 
-const { t: $t } = useI18n()
+const { t: $t } = useI18n();
 const props = defineProps({
   currentId: {
     type: String,
@@ -50,33 +62,40 @@ const dataSource = ref([]);
 const menuStory = useMenuStore();
 const columns = [
   {
-    title: $t('components.Record.165159-2'),
+    title: $t("components.Record.165159-2"),
     dataIndex: "alarmTime",
     key: "alarmTime",
   },
   {
-    title: $t('components.Record.165159-3'),
+    title: $t("components.Record.165159-3"),
     dataIndex: "handleTime",
     key: "handleTime",
   },
   {
-    title: $t('components.Record.165159-4'),
+    title: $t("components.Record.165159-4"),
     dataIndex: "duration",
     key: "duration",
   },
   {
-    title: $t('components.Record.165159-5'),
-    dataIndex: "handleType",
-    key: "handleType",
+    title: "处理状态",
+    dataIndex: "state",
+    key: "state",
+    width: 100,
   },
   {
-    title: $t('components.Record.165159-6'),
+    title: $t("components.Record.165159-5"),
+    dataIndex: "handleType",
+    key: "handleType",
+    width: 100,
+  },
+  {
+    title: $t("components.Record.165159-6"),
     dataIndex: "description",
     key: "description",
   },
 ];
 const queryList = async () => {
-  const res = await queryHandleHistory(props.currentId,{
+  const res = await queryHandleHistory(props.currentId, {
     sorts: [{ name: "createTime", order: "desc" }],
     pageIndex: 0,
     pageSize: 51,
