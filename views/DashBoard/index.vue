@@ -90,7 +90,6 @@ import TopCard from "./components/TopCard.vue";
 import NewAlarm from "./components/NewAlarm.vue";
 import TimeSelect from "./components/TimeSelect.vue";
 import Guide from "./components/Guide.vue";
-import { encodeQuery } from "@/utils/";
 import {
   dashboard,
   getAlarm,
@@ -128,13 +127,13 @@ let alarmState = ref<any[]>([
 const selectOpt1 = ref<Object[]>([
   { label: $t('DashBoard.index.753511-10'), value: "device" },
   { label: $t('DashBoard.index.753511-11'), value: "product" },
-  { label: $t('DashBoard.index.753511-12'), value: "org" },
-  { label: $t('DashBoard.index.753511-13'), value: "other" },
+  { label: $t('DashBoard.index.753511-12'), value: "organization" },
+  { label: $t('DashBoard.index.753511-13'), value: "scene" },
 ]);
 const selectOpt2 = ref<any["options"]>([
   { label: $t('DashBoard.index.753511-10'), value: "device" },
   { label: $t('DashBoard.index.753511-11'), value: "product" },
-  { label: $t('DashBoard.index.753511-13'), value: "other" },
+  { label: $t('DashBoard.index.753511-13'), value: "scene" },
 ]);
 let queryCodition = reactive({
   startTime: 0,
@@ -317,8 +316,30 @@ const getAlarmConfig = async () => {
 getAlarmConfig();
 const getCurrentAlarm = async () => {
   const alarmLevel: any = await getAlarmLevel();
+  const params ={
+      "pageIndex": 0,
+      "pageSize": 12,
+      "sorts": [
+          {
+              "name": "alarmTime",
+              "order": "desc"
+          }
+      ],
+      "terms": [
+          {
+              "terms": [
+                  {
+                      "type": "or",
+                      "value": "warning",
+                      "termType": "eq",
+                      "column": "state"
+                  }
+              ]
+          }
+      ]
+  }
   const sorts = { alarmTime: "desc" };
-  const currentAlarm: any = await getAlarm(encodeQuery({ sorts }));
+  const currentAlarm: any = await getAlarm(params);
   if (currentAlarm.status === 200) {
     if (alarmLevel.status === 200) {
       const levels = alarmLevel.result.levels;
@@ -410,7 +431,7 @@ const selectChange = () => {
     tip = $t('DashBoard.index.753511-10');
   } else if (queryCodition.targetType === "product") {
     tip = $t('DashBoard.index.753511-11');
-  } else if (queryCodition.targetType === "org") {
+  } else if (queryCodition.targetType === "organization") {
     tip = $t('DashBoard.index.753511-12');
   }
   // 网络请求

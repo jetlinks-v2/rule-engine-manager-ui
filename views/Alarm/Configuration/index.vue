@@ -215,11 +215,11 @@ const columns = [
           },
           {
             label: $t('Configuration.index.021440-9'),
-            value: 'org',
+            value: 'organization',
           },
           {
             label: $t('Configuration.index.021440-10'),
-            value: 'other',
+            value: 'scene',
           },
         ]
         : [
@@ -233,7 +233,7 @@ const columns = [
           },
           {
             label: $t('Configuration.index.021440-10'),
-            value: 'other',
+            value: 'scene',
           },
         ],
     },

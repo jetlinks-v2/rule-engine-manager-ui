@@ -40,7 +40,7 @@
                 {
                   column:
                     targetType === 'device' ? 'targetType$in' : 'targetType',
-                  value: targetType === 'device' ? [] : 'other',
+                  value: targetType === 'device' ? [] : 'scene',
                   type: 'and',
                 },
               ],
@@ -149,7 +149,7 @@ const columns = [
         if (resp.success) {
           return resp.result
             .filter((item) => {
-              return props.targetType === "device" || item.id === "other";
+              return props.targetType === "device" || item.id === 'scene';
             })
             .map((item) => ({ label: item.name, value: item.id }));
         } else {

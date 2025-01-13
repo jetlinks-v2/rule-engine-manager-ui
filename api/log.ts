@@ -26,6 +26,11 @@ export const getOrgList = (params?:any) => request.get('/organization/_query/no-
 export const query = (data:any) => request.post('/alarm/record/_query/',data);
 
 /**
+ * 查看对应类型的告警列表
+ */
+export const queryAlarmRecordByType = (type:string,data:any) => request.post(`/alarm/record/${type}/_query/`,data);
+
+/**
  * 设备产品专用查询
  * @param data 
  * @returns 
@@ -62,7 +67,7 @@ export const queryHistoryList = (data:any) => request.post('/alarm/history/_quer
 /**
  * 获取告警处理结果
  */
-export const queryHandleHistory = (data:any) => request.post('/alarm/record/handle-history/_query',data);
+export const queryHandleHistory = (id:any,data:any) => request.post(`alarm/record/${id}/handle-history/_query`,data);
 
 /**
  * 获取预处理数据告警处理结果

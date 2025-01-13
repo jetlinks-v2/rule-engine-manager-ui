@@ -158,7 +158,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getOrgList, query, getAlarmProduct } from "../../../../api/log";
+import { getOrgList, query, getAlarmProduct , queryAlarmRecordByType } from "../../../../api/log";
 import { useAlarmStore } from "../../../../store/alarm";
 import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
@@ -173,7 +173,7 @@ import { useI18n } from 'vue-i18n'
 const { t: $t } = useI18n()
 const menuStory = useMenuStore();
 const tableRef = ref();
-const { levelMap, levelList } = useAlarmLevel();
+const { levelMap, getLevelList } = useAlarmLevel();
 const alarmStore = useAlarmStore();
 const { data } = storeToRefs(alarmStore);
 const drawerData = ref();
@@ -186,14 +186,14 @@ const props = defineProps<{
 const imgMap = new Map();
 imgMap.set("product", logImages.product);
 imgMap.set("device", logImages.device);
-imgMap.set("other", logImages.other);
-imgMap.set("org", logImages.org);
+imgMap.set("scene", logImages.other);
+imgMap.set('organization', logImages.other);
 
 const titleMap = new Map();
 titleMap.set("product", $t('TabComponent.index.165152-6'));
 titleMap.set("device", $t('TabComponent.index.165152-7'));
-titleMap.set("other", $t('TabComponent.index.165152-8'));
-titleMap.set("org", $t('TabComponent.index.165152-9'));
+titleMap.set("scene", $t('TabComponent.index.165152-8'));
+titleMap.set("organization", $t('TabComponent.index.165152-9'));
 
 const columns = [
   {
@@ -220,7 +220,7 @@ const columns = [
     search: {
       type: "select",
       options: async () => {
-        return levelList.value;
+        return getLevelList();
       },
     },
     scopedSlots: true,
@@ -276,10 +276,10 @@ const newColumns = computed(() => {
     case "device":
       otherColumns.title = $t('TabComponent.index.165152-19');
       break;
-    case "org":
+    case "organization":
       otherColumns.title = $t('TabComponent.index.165152-20');
       break;
-    case "other":
+    case "scene":
       otherColumns.title = $t('TabComponent.index.165152-21');
       break;
   }
@@ -337,7 +337,7 @@ let params: any = ref({
   terms: [],
 });
 const handleSearch = async (params: any) => {
-  const resp: any = await query(params);
+  const resp: any =props.type !== 'all' ? await queryAlarmRecordByType(props.type,params) : await query(params);
   if (resp.status === 200) {
     const res: any = await getOrgList();
     if (res.status === 200) {
@@ -361,14 +361,6 @@ const handleSearch = async (params: any) => {
 
 const search = (data: any) => {
   params.value.terms = [...data?.terms];
-  if (props.type !== "all" && !props.id) {
-    params.value.terms.push({
-      termType: "eq",
-      column: "targetType",
-      value: props.type,
-      type: "and",
-    });
-  }
   if (props.type === "device") {
     data?.terms.forEach((i: any, _index: number) => {
       i.terms.forEach((item: any, index: number) => {
@@ -458,16 +450,6 @@ const showDrawer = (data: any) => {
   visibleDrawer.value = true;
 };
 onMounted(() => {
-  if (props.type !== "all" && !props.id) {
-    params.value.terms = [
-      {
-        termType: "eq",
-        column: "targetType",
-        value: props.type,
-        type: "and",
-      },
-    ];
-  }
   if (props.id) {
     params.value.terms = [
       {
