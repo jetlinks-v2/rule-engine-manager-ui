@@ -146,6 +146,16 @@ export interface TriggerDevice {
   operation?: TriggerDeviceOptions;
 }
 
+export interface TriggerCollector {
+  operator?: string,
+  pointSelectInfo: {
+    channelId: string,
+    collectorId: string,
+    pointIds: string[],
+  },
+  timer?: OperationTimer;
+}
+
 export interface ShakeLimitType {
   enabled: boolean;
   groupType?: string; // 执行动作没有该参数

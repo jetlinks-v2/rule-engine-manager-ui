@@ -55,20 +55,16 @@
 </template>
 
 <script lang="ts" setup>
+import type { BranchesThen } from "../../typings";
 import ShakeLimit from "../components/ShakeLimit/index.vue";
 import { List } from "./ListItem";
-import { BranchesThen } from "../../typings";
 import { PropType } from "vue";
 import { randomString } from "@jetlinks-web/utils";
 import { storeToRefs } from "pinia";
-import { useSceneStore } from "../../../../store/scene";
-import { Form } from "ant-design-vue";
-import { Modal } from "ant-design-vue";
-import { queryAlarmCount, queryAlarmPage } from "../../../../api/scene";
-import {
-  unBindAlarm,
-  unBindAlarmMultiple,
-} from "../../../../api/configuration";
+import { useSceneStore } from "@ruleEngine/store/scene";
+import { Form, Modal } from "ant-design-vue";
+import { queryAlarmPage } from "@ruleEngine/api/scene";
+import { unBindAlarmMultiple } from "@ruleEngine/api/configuration";
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()

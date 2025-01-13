@@ -28,3 +28,10 @@ export const stopRule = (id:string) => request.post(`/rule-engine/instance/${id}
  * 删除规则
  */
 export const deleteRule = (id:string) => request.remove(`/rule-engine/instance/${id}`)
+
+/**
+ * 根据设备ID获取设备详情
+ * @param id 设备ID
+ * @returns 设备详情
+ */
+export const detail = (id: string, hiddenError?: any) => request.get(`/device-instance/${id}/detail`, {}, {hiddenError})

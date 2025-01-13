@@ -64,9 +64,9 @@
         </template>
     </JProTable>
 </template>
-  
+
   <script setup lang='ts' name='Product'>
-import { query, detail , queryNoPagingPost } from '@ruleEngineanager/api/others';
+import { query, detail , queryNoPagingPost } from '@ruleEngine/api/others';
 import { sceneImages } from '../../../../../../assets/index';
 import { PropType } from 'vue';
 import { cloneDeep } from 'lodash-es';
@@ -231,7 +231,7 @@ onMounted(async() => {
     }
 });
 </script>
-  
+
   <style scoped lang='less'>
 .search {
     margin-bottom: 0;
