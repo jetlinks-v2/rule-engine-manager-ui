@@ -43,7 +43,7 @@ import { SceneItem } from "../typings";
 import TriggerWay from "./components/TriggerWay.vue";
 import type { PropType } from "vue";
 import type { FormInstance } from "ant-design-vue";
-import { save, modify, queryType } from "@ruleEngineanager/api/scene";
+import { save, modify, queryType } from "@rule/api/scene";
 import { useMenuStore } from "@/store/menu";
 import { useI18n } from 'vue-i18n'
 import { useRequest } from '@jetlinks-web/hooks'

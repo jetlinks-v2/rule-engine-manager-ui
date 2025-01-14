@@ -147,6 +147,7 @@ import LogDrawer from "./components/DetailDrawer.vue";
 import Duration from "../components/Duration.vue";
 import { useAlarmLevel } from "../../../../hook";
 import { logImages } from "../../../../assets/index";
+import LevelIcon from '@rule/components/AlarmLevelIcon/index.vue'
 import { useI18n } from "vue-i18n";
 
 const { t: $t } = useI18n();

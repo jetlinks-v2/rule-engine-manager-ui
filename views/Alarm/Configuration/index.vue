@@ -27,7 +27,7 @@
                 hasPermission="rule-engine/Alarm/Configuration:add"
               >
                 <template #icon><AIcon type="PlusOutlined" /></template>
-                {{ $t('Configuration.index.021440-0') }}
+                {{ $t("Configuration.index.021440-0") }}
               </j-permission-button>
             </a-space>
           </template>
@@ -44,10 +44,9 @@
               }"
               @click="
                 () => {
-                  menuStory.jumpPage(
-                    'rule-engine/Alarm/Configuration/Save',
-                    { query: { id: slotProps.id } }
-                  );
+                  menuStory.jumpPage('rule-engine/Alarm/Configuration/Save', {
+                    query: { id: slotProps.id },
+                  });
                 }
               "
             >
@@ -66,7 +65,9 @@
                 </a-row>
                 <a-row>
                   <a-col :span="12">
-                    <div class="card-item-content-text">{{ $t('Configuration.index.021440-1') }}</div>
+                    <div class="card-item-content-text">
+                      {{ $t("Configuration.index.021440-1") }}
+                    </div>
                     <div style="height: 22px; width: 100%">
                       <j-ellipsis style="max-width: 100%">
                         {{ slotProps.description }}
@@ -74,7 +75,9 @@
                     </div>
                   </a-col>
                   <a-col :span="12">
-                    <div class="card-item-content-text">{{ $t('Configuration.index.021440-2') }}</div>
+                    <div class="card-item-content-text">
+                      {{ $t("Configuration.index.021440-2") }}
+                    </div>
                     <div style="display: flex">
                       <LevelIcon :level="slotProps.level"></LevelIcon>
                       <j-ellipsis>
@@ -107,7 +110,11 @@
 
           <template #state="slotProps">
             <j-badgeStatus
-              :text="slotProps.state?.value === 'enabled' ? $t('Configuration.index.021440-3') : $t('Configuration.index.021440-4')"
+              :text="
+                slotProps.state?.value === 'enabled'
+                  ? $t('Configuration.index.021440-3')
+                  : $t('Configuration.index.021440-4')
+              "
               :status="slotProps.state?.value"
               :statusNames="{
                 enabled: 'processing',
@@ -173,10 +180,11 @@ import HandTrigger from "./HandTrigger/index.vue";
 import { Modal } from "ant-design-vue";
 import { useAlarmLevel } from "../../../hook";
 import { ConfigurationImages } from "../../../assets/index";
-import { isNoCommunity } from '@/utils/utils';
-import { useI18n } from 'vue-i18n'
+import LevelIcon from "@rule/components/AlarmLevelIcon/index.vue";
+import { isNoCommunity } from "@/utils/utils";
+import { useI18n } from "vue-i18n";
 
-const { t: $t } = useI18n()
+const { t: $t } = useI18n();
 const params = ref<Record<string, any>>({});
 const tableRef = ref<Record<string, any>>({});
 const menuStory = useMenuStore();
@@ -187,7 +195,7 @@ const deleteState = ref(false);
 const alarmRecordNumber = ref(0);
 const columns = [
   {
-    title: $t('Configuration.index.021440-5'),
+    title: $t("Configuration.index.021440-5"),
     dataIndex: "name",
     key: "name",
     search: {
@@ -197,7 +205,7 @@ const columns = [
     ellipsis: true,
   },
   {
-    title: $t('Configuration.index.021440-6'),
+    title: $t("Configuration.index.021440-6"),
     dataIndex: "targetType",
     key: "targetType",
     scopedSlots: true,
@@ -205,42 +213,42 @@ const columns = [
       type: "select",
       options: isNoCommunity
         ? [
-          {
-            label: $t('Configuration.index.021440-7'),
-            value: 'product',
-          },
-          {
-            label: $t('Configuration.index.021440-8'),
-            value: 'device',
-          },
-          {
-            label: $t('Configuration.index.021440-9'),
-            value: 'organization',
-          },
-          {
-            label: $t('Configuration.index.021440-10'),
-            value: 'scene',
-          },
-        ]
+            {
+              label: $t("Configuration.index.021440-7"),
+              value: "product",
+            },
+            {
+              label: $t("Configuration.index.021440-8"),
+              value: "device",
+            },
+            {
+              label: $t("Configuration.index.021440-9"),
+              value: "organization",
+            },
+            {
+              label: $t("Configuration.index.021440-10"),
+              value: "scene",
+            },
+          ]
         : [
-          {
-            label: $t('Configuration.index.021440-7'),
-            value: 'product',
-          },
-          {
-            label: $t('Configuration.index.021440-8'),
-            value: 'device',
-          },
-          {
-            label: $t('Configuration.index.021440-10'),
-            value: 'scene',
-          },
-        ],
+            {
+              label: $t("Configuration.index.021440-7"),
+              value: "product",
+            },
+            {
+              label: $t("Configuration.index.021440-8"),
+              value: "device",
+            },
+            {
+              label: $t("Configuration.index.021440-10"),
+              value: "scene",
+            },
+          ],
     },
     width: 150,
   },
   {
-    title: $t('Configuration.index.021440-11'),
+    title: $t("Configuration.index.021440-11"),
     dataIndex: "id",
     hideInTable: true,
     key: "id",
@@ -272,7 +280,7 @@ const columns = [
     ellipsis: true,
   },
   {
-    title: $t('Configuration.index.021440-2'),
+    title: $t("Configuration.index.021440-2"),
     dataIndex: "level",
     key: "level",
     scopedSlots: true,
@@ -294,7 +302,7 @@ const columns = [
     width: 150,
   },
   {
-    title: $t('Configuration.index.021440-12'),
+    title: $t("Configuration.index.021440-12"),
     dataIndex: "state",
     key: "state",
     scopedSlots: true,
@@ -302,11 +310,11 @@ const columns = [
       type: "select",
       options: [
         {
-          label: $t('Configuration.index.021440-3'),
+          label: $t("Configuration.index.021440-3"),
           value: "enabled",
         },
         {
-          label: $t('Configuration.index.021440-4'),
+          label: $t("Configuration.index.021440-4"),
           value: "disabled",
         },
       ],
@@ -314,7 +322,7 @@ const columns = [
     width: 120,
   },
   {
-    title: $t('Configuration.index.021440-1'),
+    title: $t("Configuration.index.021440-1"),
     dataIndex: "description",
     key: "description",
     search: {
@@ -323,7 +331,7 @@ const columns = [
     ellipsis: true,
   },
   {
-    title: $t('Configuration.index.021440-13'),
+    title: $t("Configuration.index.021440-13"),
     key: "action",
     fixed: "right",
     width: 170,
@@ -334,13 +342,13 @@ const visible = ref<boolean>(false);
 const current = ref<any>({});
 
 const map = {
-  product: $t('Configuration.index.021440-7'),
-  device: $t('Configuration.index.021440-8'),
-  organization: $t('Configuration.index.021440-9'),
-  org: $t('Configuration.index.021440-9'),
-  other: $t('Configuration.index.021440-10'),
-  scene: $t('Configuration.index.021440-26'),
-  collector: $t('Configuration.index.021440-27'),
+  product: $t("Configuration.index.021440-7"),
+  device: $t("Configuration.index.021440-8"),
+  organization: $t("Configuration.index.021440-9"),
+  org: $t("Configuration.index.021440-9"),
+  other: $t("Configuration.index.021440-10"),
+  scene: $t("Configuration.index.021440-26"),
+  collector: $t("Configuration.index.021440-27"),
 };
 const handleSearch = (e: any) => {
   e.terms.map((i: any) => {
@@ -364,13 +372,13 @@ const getActions = (
   const actions = [
     {
       key: "tigger",
-      text: $t('Configuration.index.021440-14'),
+      text: $t("Configuration.index.021440-14"),
       disabled: data?.state?.value === "disabled",
       tooltip: {
         title:
           data?.state?.value === "disabled"
-            ? $t('Configuration.index.021440-15')
-            : $t('Configuration.index.021440-14'),
+            ? $t("Configuration.index.021440-15")
+            : $t("Configuration.index.021440-14"),
       },
       onClick: () => {
         visible.value = true;
@@ -380,9 +388,9 @@ const getActions = (
     },
     {
       key: "update",
-      text: $t('Configuration.index.021440-16'),
+      text: $t("Configuration.index.021440-16"),
       tooltip: {
-        title: $t('Configuration.index.021440-16'),
+        title: $t("Configuration.index.021440-16"),
       },
 
       icon: "EditOutlined",
@@ -394,9 +402,15 @@ const getActions = (
     },
     {
       key: "action",
-      text: data.state?.value !== "disabled" ? $t('Configuration.index.021440-4') : $t('Configuration.index.021440-17'),
+      text:
+        data.state?.value !== "disabled"
+          ? $t("Configuration.index.021440-4")
+          : $t("Configuration.index.021440-17"),
       tooltip: {
-        title: data.state?.value !== "disabled" ? $t('Configuration.index.021440-4') : $t('Configuration.index.021440-17'),
+        title:
+          data.state?.value !== "disabled"
+            ? $t("Configuration.index.021440-4")
+            : $t("Configuration.index.021440-17"),
       },
       icon:
         data.state?.value !== "disabled"
@@ -405,8 +419,8 @@ const getActions = (
       popConfirm: {
         title: `${
           data.state?.value !== "disabled"
-            ? $t('Configuration.index.021440-18')
-            : $t('Configuration.index.021440-19')
+            ? $t("Configuration.index.021440-18")
+            : $t("Configuration.index.021440-19")
         }?`,
         onConfirm: async () => {
           let response = undefined;
@@ -416,10 +430,10 @@ const getActions = (
             response = await _disable(data.id);
           }
           if (response && response.status === 200) {
-            onlyMessage($t('Configuration.index.021440-20'));
+            onlyMessage($t("Configuration.index.021440-20"));
             tableRef.value?.reload();
           } else {
-            onlyMessage($t('Configuration.index.021440-21'), "error");
+            onlyMessage($t("Configuration.index.021440-21"), "error");
           }
           return;
         },
@@ -427,11 +441,13 @@ const getActions = (
     },
     {
       key: "delete",
-      text: $t('Configuration.index.021440-22'),
+      text: $t("Configuration.index.021440-22"),
       disabled: data?.state?.value !== "disabled",
       tooltip: {
         title:
-          data?.state?.value !== "disabled" ? $t('Configuration.index.021440-23') : $t('Configuration.index.021440-22'),
+          data?.state?.value !== "disabled"
+            ? $t("Configuration.index.021440-23")
+            : $t("Configuration.index.021440-22"),
         placement: "topLeft",
       },
       onClick: async () => {
@@ -456,8 +472,8 @@ const getActions = (
         }
         Modal.confirm({
           title: alarmRecordNumber.value
-            ? $t('Configuration.index.021440-24', [alarmRecordNumber.value])
-            : $t('Configuration.index.021440-25'),
+            ? $t("Configuration.index.021440-24", [alarmRecordNumber.value])
+            : $t("Configuration.index.021440-25"),
           onOk() {
             return deleteConfig(data.id);
           },
@@ -487,10 +503,10 @@ const add = () => {
 const deleteConfig = async (id: any) => {
   const resp = await remove(id);
   if (resp.success) {
-    onlyMessage($t('Configuration.index.021440-20'));
+    onlyMessage($t("Configuration.index.021440-20"));
     refreshTable();
   } else {
-    onlyMessage($t('Configuration.index.021440-21'), "error");
+    onlyMessage($t("Configuration.index.021440-21"), "error");
   }
   deleteState.value = false;
 };

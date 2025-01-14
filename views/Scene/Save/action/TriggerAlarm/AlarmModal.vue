@@ -102,6 +102,7 @@ import { useAlarmLevel } from "../../../../../hook";
 import { bindScene, getTargetTypes } from "../../../../../api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { ConfigurationImages } from "../../../../../assets/index";
+import LevelIcon from '@rule/components/AlarmLevelIcon/index.vue'
 import { useI18n } from "vue-i18n";
 
 const { t: $t } = useI18n();

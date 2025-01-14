@@ -109,6 +109,7 @@ import { onlyMessage } from "@jetlinks-web/utils";
 import { EventEmitter } from "../../util";
 import { useRequest } from '@jetlinks-web/hooks';
 import { useAlarmLevel } from "../../../../../hook";
+import LevelIcon from '@rule/components/AlarmLevelIcon/index.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
@@ -237,38 +238,14 @@ const unBind = async (record: any) => {
 };
 
 const queryData = async (terms: any) => {
-  const resp = await queryAlarmPage(terms);
+  const resp:any = await queryAlarmPage(terms);
 
   count.value = resp.result.total;
 
   return {
-    code: resp.status,
-    result: resp.result,
-    status: resp.status,
+    ...resp
   };
 };
-
-// watch(
-//     () => props.id,
-//     (newId) => {
-//         if (newId) {
-//             getAlarmConfigCount({
-//                 terms: [
-//                     {
-//                         column: 'id$rule-bind-alarm',
-//                         // value: newId,
-//                         value: props.branchId ? `${newId}:${props.branchId}` : newId,
-//                     },
-//                 ],
-//             }).then((resp) => {
-//                 if (resp.status === 200) {
-//                     count.value = (resp.result || 0) as number;
-//                 }
-//             });
-//         }
-//     },
-//     { immediate: true },
-// );
 </script>
 <style scoped lang="less">
 .related-alarms-content {

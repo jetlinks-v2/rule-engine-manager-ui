@@ -85,7 +85,7 @@ import { query } from "../../../../../api/log";
 import Record from "./Record.vue";
 import Log from "./Log.vue";
 import SolveComponent from "../../SolveComponent/index.vue";
-import LevelIcon from "../../../../../components/AlarmLeveIcon/index.vue";
+import LevelIcon from "@rule/components/AlarmLevelIcon/index.vue";
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
