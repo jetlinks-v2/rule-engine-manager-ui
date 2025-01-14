@@ -14,20 +14,20 @@
             <a-form-item name="targetType">
               <template #label>
                 <a-space>
-                  {{ $t('Base.index.021452-2') }}
+                  {{ $t("Base.index.021452-2") }}
                   <a-tooltip>
                     <template #title>
                       <div>
-                        {{ $t('Base.index.021452-3') }}
+                        {{ $t("Base.index.021452-3") }}
                       </div>
                       <div>
-                        {{ $t('Base.index.021452-4') }}
+                        {{ $t("Base.index.021452-4") }}
                       </div>
                       <div v-if="isNoCommunity">
-                        {{ $t('Base.index.021452-5') }}
+                        {{ $t("Base.index.021452-5") }}
                       </div>
                       <div>
-                        {{ $t('Base.index.021452-6') }}
+                        {{ $t("Base.index.021452-6") }}
                       </div>
                     </template>
                     <AIcon
@@ -84,7 +84,7 @@
             'rule-engine/Alarm/Configuration:add',
             'rule-engine/Alarm/Configuration:update',
           ]"
-          >{{ $t('Base.index.021452-9') }}</j-permission-button
+          >{{ $t("Base.index.021452-9") }}</j-permission-button
         >
       </a-form>
     </div>
@@ -106,8 +106,8 @@ import { useRoute } from "vue-router";
 import { useAlarmConfigurationStore } from "../../../../../store/alarm";
 import { storeToRefs } from "pinia";
 import { configImages } from "../../../../../assets/index";
-import { isNoCommunity } from '@/utils/utils';
-import { useI18n } from 'vue-i18n';
+import { isNoCommunity } from "@/utils/utils";
+import { useI18n } from "vue-i18n";
 
 const { t: $t } = useI18n();
 const route = useRoute();
@@ -123,10 +123,6 @@ const queryData = () => {
       if (res.status === 200) {
         emit("change", res?.result?.targetType);
         form.value = res?.result;
-        // form.level = res?.result?.level;
-        // form.name = res?.result?.name;
-        // form.targetType = res?.result?.targetType;
-        // form.description = res?.result?.description;
         configurationData.value.current = res.result;
         query({
           terms: [
@@ -160,29 +156,29 @@ const rule = {
   name: [
     {
       required: true,
-      message: $t('Base.index.021452-1'),
+      message: $t("Base.index.021452-1"),
     },
     {
       max: 64,
-      message: $t('Base.index.021452-10'),
+      message: $t("Base.index.021452-10"),
     },
   ],
   targetType: [
     {
       required: true,
-      message: $t('Base.index.021452-11'),
+      message: $t("Base.index.021452-11"),
     },
   ],
   level: [
     {
       required: true,
-      message: $t('Base.index.021452-12'),
+      message: $t("Base.index.021452-12"),
     },
   ],
   description: [
     {
       max: 200,
-      message: $t('Base.index.021452-13'),
+      message: $t("Base.index.021452-13"),
     },
   ],
 };
@@ -200,10 +196,14 @@ const menuStory = useMenuStore();
 const getSupports = async () => {
   let res = await getTargetTypes();
   if (res.status === 200) {
-    options.value = res.result.map((item: { id: string; name: string }) => ({
-      label: item.name,
-      value: item.id,
-    }));
+    options.value = res.result
+      .map((item: { id: string; name: string }) => ({
+        label: item.name,
+        value: item.id,
+      }))
+      .filter((i: any) => {
+        return i.value !== "collector";
+      });
   }
 };
 getSupports();
@@ -229,14 +229,13 @@ const handleSave = async () => {
         ? await update(form.value)
         : await save(form.value);
       if (res.status === 200) {
-        onlyMessage($t('Base.index.021452-14'));
+        onlyMessage($t("Base.index.021452-14"));
         loading.value = false;
         emit("change", form.value.targetType);
         if (res.result?.id) {
-          menuStory.jumpPage(
-            "rule-engine/Alarm/Configuration/Save",
-            { query: { id: res.result?.id } }
-          );
+          menuStory.jumpPage("rule-engine/Alarm/Configuration/Save", {
+            query: { id: res.result?.id },
+          });
         }
         if (!route.query?.id) {
           configurationData.value.current = res.result;

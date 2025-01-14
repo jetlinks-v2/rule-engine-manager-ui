@@ -163,8 +163,8 @@ const { data: activeKeys } = useRequest<any, Record<string, any>>(
 const map = {
   product: $t('TriggerAlarm.index.966773-5'),
   device: $t('TriggerAlarm.index.966773-6'),
-  org: $t('TriggerAlarm.index.966773-7'),
-  other: $t('TriggerAlarm.index.966773-8'),
+  organization: $t('TriggerAlarm.index.966773-7'),
+  scene: $t('TriggerAlarm.index.966773-8'),
 };
 
 const columns = [

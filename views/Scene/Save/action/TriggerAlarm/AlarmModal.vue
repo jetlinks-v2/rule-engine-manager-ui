@@ -102,9 +102,9 @@ import { useAlarmLevel } from "../../../../../hook";
 import { bindScene, getTargetTypes } from "../../../../../api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { ConfigurationImages } from "../../../../../assets/index";
-import { useI18n } from 'vue-i18n'
+import { useI18n } from "vue-i18n";
 
-const { t: $t } = useI18n()
+const { t: $t } = useI18n();
 const props = defineProps({
   id: {
     type: String,
@@ -132,7 +132,7 @@ const { run, loading } = useRequest(bindScene, {
   immediate: false,
   onSuccess() {
     emit("ok");
-    onlyMessage($t('TriggerAlarm.AlarmModal.966772-1'));
+    onlyMessage($t("TriggerAlarm.AlarmModal.966772-1"));
   },
 });
 
@@ -140,7 +140,7 @@ const { levelMap, levelList } = useAlarmLevel();
 
 const columns = [
   {
-    title: $t('TriggerAlarm.AlarmModal.966772-2'),
+    title: $t("TriggerAlarm.AlarmModal.966772-2"),
     dataIndex: "targetType",
     search: {
       type: "select",
@@ -149,9 +149,12 @@ const columns = [
         if (resp.success) {
           return resp.result
             .filter((item) => {
-              return props.targetType === "device" || item.id === 'scene';
+              return props.targetType === "device" || item.id === "scene";
             })
-            .map((item) => ({ label: item.name, value: item.id }));
+            .map((item) => ({ label: item.name, value: item.id }))
+            .filter((i) => {
+              return i.value !== "collector";
+            });
         } else {
           return [];
         }
@@ -159,7 +162,7 @@ const columns = [
     },
   },
   {
-    title: $t('TriggerAlarm.AlarmModal.966772-3'),
+    title: $t("TriggerAlarm.AlarmModal.966772-3"),
     dataIndex: "name",
     key: "name",
     search: {
@@ -169,7 +172,7 @@ const columns = [
     ellipsis: true,
   },
   {
-    title: $t('TriggerAlarm.AlarmModal.966772-4'),
+    title: $t("TriggerAlarm.AlarmModal.966772-4"),
     dataIndex: "state",
     key: "state",
     scopedSlots: true,
@@ -177,11 +180,11 @@ const columns = [
       type: "select",
       options: [
         {
-          label: $t('TriggerAlarm.AlarmModal.966772-5'),
+          label: $t("TriggerAlarm.AlarmModal.966772-5"),
           value: "enabled",
         },
         {
-          label: $t('TriggerAlarm.AlarmModal.966772-6'),
+          label: $t("TriggerAlarm.AlarmModal.966772-6"),
           value: "disabled",
         },
       ],
@@ -189,7 +192,7 @@ const columns = [
     width: 90,
   },
   {
-    title: $t('TriggerAlarm.AlarmModal.966772-7'),
+    title: $t("TriggerAlarm.AlarmModal.966772-7"),
     dataIndex: "level",
     key: "level",
     scopedSlots: true,
@@ -239,7 +242,7 @@ const onOk = async () => {
       })
     );
   } else {
-    onlyMessage($t('TriggerAlarm.AlarmModal.966772-8'), "warning");
+    onlyMessage($t("TriggerAlarm.AlarmModal.966772-8"), "warning");
   }
 };
 </script>

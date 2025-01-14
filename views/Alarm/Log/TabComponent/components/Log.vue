@@ -48,7 +48,6 @@
 <script setup>
 import {
   queryLogList,
-  queryPreconditioningLogList,
 } from "../../../../../api/log";
 import dayjs from "dayjs";
 import { useMenuStore } from "@/store/menu";
@@ -107,14 +106,6 @@ const queryData = async () => {
   const params = {
     pageIndex: 0,
     pageSize: 51,
-    terms: [
-      {
-        column: "alarmRecordId",
-        termType: "eq",
-        value: props.currentId,
-        type: "and",
-      },
-    ],
     sorts: [
       {
         name: "alarmTime",
@@ -122,9 +113,7 @@ const queryData = async () => {
       },
     ],
   };
-  const res = props.goal
-    ? await queryPreconditioningLogList(props.configId, params)
-    : await queryLogList(props.configId, params);
+  const res = await queryLogList(props.currentId, params);
   if (res.success) {
     if (res.result.data?.length > 50) {
       exceed.value = true;

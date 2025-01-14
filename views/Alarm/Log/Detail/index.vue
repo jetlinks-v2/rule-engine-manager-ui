@@ -61,7 +61,7 @@
 </template>
 
 <script lang="ts" setup>
-import { detail, queryLogList } from "../../../../api/log";
+import { detail, queryLogList } from "@ruleEngineanager/api/log";
 import { useRoute } from "vue-router";
 import dayjs from "dayjs";
 import { useAlarmStore } from "../../../../store/alarm";
@@ -146,8 +146,8 @@ const terms = [
  * 获取详情列表
  */
 const queryList = async (params: any) => {
-  if (data.current?.alarmConfigId) {
-    return  queryLogList(data.current?.alarmConfigId, {
+  if (id) {
+    const res: any = await queryLogList(id, {
       ...params,
     })
   }
