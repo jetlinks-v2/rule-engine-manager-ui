@@ -12,7 +12,7 @@
       >
       <template v-if="column.dataIndex === 'sourceName'">
         <j-ellipsis
-          v-if="record.targetType === 'device'"
+          v-if="['device','organization'].includes(record.targetType)"
         >
           {{ $t('components.Log.165155-0') }}
           <span class="deviceId" @click="() => gotoDevice(record.targetId)">{{
