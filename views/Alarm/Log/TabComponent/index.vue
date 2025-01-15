@@ -149,6 +149,7 @@ import { useAlarmLevel } from "../../../../hook";
 import { logImages } from "../../../../assets/index";
 import LevelIcon from '@rule/components/AlarmLevelIcon/index.vue'
 import { useI18n } from "vue-i18n";
+import org from "@/modules/rule-engine-manager-ui/assets/alarm/org.png";
 
 const { t: $t } = useI18n();
 const menuStory = useMenuStore();
@@ -167,7 +168,7 @@ const imgMap = new Map();
 imgMap.set("product", logImages.product);
 imgMap.set("device", logImages.device);
 imgMap.set("scene", logImages.other);
-imgMap.set("organization", logImages.other);
+imgMap.set("organization", logImages.org);
 
 const titleMap = new Map();
 titleMap.set("product", $t("TabComponent.index.165152-6"));
