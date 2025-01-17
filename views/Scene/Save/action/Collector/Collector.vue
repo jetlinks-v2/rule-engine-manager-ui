@@ -65,6 +65,8 @@ type Emit = {
   (e: "change", data: string): void;
 };
 
+const actionRef = ref();
+const params = ref({});
 const props = defineProps({
   rowKey: {
     type: String,
@@ -81,46 +83,42 @@ const props = defineProps({
 });
 
 const emit = defineEmits<Emit>();
-
-const actionRef = ref();
-const params = ref({});
 const firstFind = ref(true);
 
 const defaultParams = {
-    sorts: [
-        {name: 'createTime', order: 'desc'}
-    ],
-    terms: [
-        {column: 'channelId', value: props.channelId, termType: 'eq'}
-    ]
+  sorts: [
+    {name: 'createTime', order: 'desc'}
+  ],
+  terms: [
+    {column: 'channelId', value: props.channelId, termType: 'eq'}
+  ]
 }
 
 const handleSearch = (p: any) => {
-    params.value = p;
+  params.value = p;
 };
 
 const productQuery = async (p: any) => {
-    const sorts: any = [];
-
-    if (props.rowKey) {
-        sorts.push({
-            name: "id",
-            value: props.rowKey,
-        });
-    }
-    sorts.push({name: "createTime", order: "desc"});
-    p.sorts = sorts;
-    const resp = await queryCollector(p);
-    if (resp.success && props.rowKey && firstFind.value) {
-        const productItem = (resp.result as { data: any[] }).data.find(
-            (item: any) => item.id === props.rowKey
-        );
-        emit("update:detail", productItem);
-        firstFind.value = false;
-    }
-    return {
-        ...resp,
-    };
+  const sorts: any = [];
+  if (props.rowKey) {
+    sorts.push({
+      name: "id",
+      value: props.rowKey,
+    });
+  }
+  sorts.push({name: "createTime", order: "desc"});
+  p.sorts = sorts;
+  const resp = await queryCollector(p);
+  if (resp.success && props.rowKey && firstFind.value) {
+    const productItem = (resp.result as { data: any[] }).data.find(
+        (item: any) => item.id === props.rowKey
+    );
+    emit("update:detail", productItem);
+    firstFind.value = false;
+  }
+  return {
+    ...resp,
+  };
 };
 
 const handleClick = (detail: any) => {
@@ -132,4 +130,5 @@ const handleClick = (detail: any) => {
 </script>
 
 <style scoped lang="less">
+
 </style>

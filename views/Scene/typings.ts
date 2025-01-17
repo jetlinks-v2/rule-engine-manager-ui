@@ -289,6 +289,12 @@ export interface ActionsDeviceProps {
   changeData?: boolean
 }
 
+export interface ActionsCollectorProps {
+  handlerType: string
+  source: string
+  pointSelectInfos: Array<{collectorId: string, pointIds: string[]}>
+}
+
 export interface BranchesThen {
   parallel: boolean;
   actions: ActionsType[];
@@ -314,6 +320,7 @@ export interface ActionsType {
     unit?: keyof typeof TimeUnit;
   };
   device?: ActionsDeviceProps;
+  collector?: ActionsCollectorProps;
   alarm?: {
     mode: keyof typeof ActionAlarmMode;
   };

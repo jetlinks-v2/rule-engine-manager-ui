@@ -14,9 +14,9 @@
     :gridColumn="2"
     :gridColumns="[2, 2, 2]"
     :bodyStyle="{
-      paddingRight: 0,
-      paddingLeft: 0,
-    }"
+            paddingRight: 0,
+            paddingLeft: 0,
+          }"
   >
     <template #card="slotProps">
       <CardBox
@@ -94,13 +94,13 @@
 
 <script setup lang="ts" name="Channel">
 import {query, getProviders} from '@ruleEngine/api/channel'
-import {protocolList, imgMap, StatusColorEnum} from "./data";
+import {protocolList, imgMap, StatusColorEnum} from "../../Collector/data";
 import { useI18n } from 'vue-i18n';
 
 type Emit = {
   (e: "update:rowKey", data: string): void;
   (e: "update:detail", data: string): void;
-  (e: "change", data: string): void;
+  (e: "change", value:string, data: string): void;
 };
 
 const {t: $t} = useI18n();
@@ -120,6 +120,7 @@ const props = defineProps({
 
 const emit = defineEmits<Emit>();
 const firstFind = ref(true);
+const _selectedRowKeys = ref<any[]>([]);
 
 const columns = [
   {
@@ -229,12 +230,6 @@ const productQuery = async (p: any) => {
   };
 };
 
-const handleClick = (detail: any) => {
-  emit("update:rowKey", detail.id);
-  emit("update:detail", detail);
-  emit("change", detail);
-};
-
 const getState = (record: Partial<Record<string, any>>) => {
   if (record) {
     if (record?.state?.value === 'enabled') {
@@ -248,6 +243,12 @@ const getState = (record: Partial<Record<string, any>>) => {
   } else {
     return {};
   }
+};
+
+const handleClick = (detail: any) => {
+  emit("update:rowKey", detail.id);
+  emit("update:detail", detail);
+  emit("change", detail.id, detail);
 };
 
 </script>

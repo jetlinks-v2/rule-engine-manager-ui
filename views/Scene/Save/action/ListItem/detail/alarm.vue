@@ -1,4 +1,6 @@
-<script setup lang="ts">
+<script setup name="Alarm">
+import {useI18n} from "vue-i18n";
+
 defineProps({
   data: {
     type: Object,
@@ -6,7 +8,7 @@ defineProps({
   },
 })
 const emit = defineEmits(['visibleChange'])
-
+const {t: $t} = useI18n();
 const onVisibleChange = () => {
   emit('visibleChange', true)
 }

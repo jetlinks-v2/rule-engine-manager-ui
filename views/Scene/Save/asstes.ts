@@ -6,9 +6,3 @@ export const TriggerHeaderIcon = {
   device: sceneImages.TriggerHeaderIconDevice
 }
 
-export const TriggerListIcon = {
-  timer: sceneImages.TriggerListIconTimer,
-  manual: sceneImages.TriggerListIconHand,
-  device: sceneImages.TriggerListIconDevice
-}
-

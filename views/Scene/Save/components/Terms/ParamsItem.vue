@@ -13,21 +13,21 @@
     </div>
     <div class="params-item_button" @mouseover="mouseover" @mouseout="mouseout">
       <DropdownButton
-        :options="columnOptions"
         icon="icon-zhihangdongzuoxie-1"
         type="column"
         value-name="column"
         label-name="fullName"
+        :options="columnOptions"
         :placeholder="$t('Terms.ParamsItem.9093430-2')"
         v-model:value="paramsValue.column"
         component="treeSelect"
         @select="columnSelect"
       />
       <DropdownButton
-        :options="termTypeOptions"
         type="termType"
         value-name="id"
         label-name="name"
+        :options="termTypeOptions"
         :placeholder="$t('Terms.ParamsItem.9093430-3')"
         v-model:value="paramsValue.termType"
         @select="termsTypeSelect"
@@ -58,6 +58,13 @@
           v-model:source="paramsValue.value.source"
           @select="valueSelect"
         />
+        <FulfillParamsDropdown
+          v-else-if="showFulfill"
+          icon="icon-canshu"
+          :column="paramsValue.column"
+          v-model:value="paramsValue.value.value"
+          @select="valueSelect"
+        />
         <ParamsDropdown
           v-else
           icon="icon-canshu"
@@ -76,9 +83,9 @@
         />
       </div>
       <ConfirmModal
+        className="button-delete"
         :title="$t('Terms.ParamsItem.9093430-6')"
         :onConfirm="onDelete"
-        className="button-delete"
         :show="showDelete"
       >
         <AIcon type="CloseOutlined" />
@@ -100,6 +107,7 @@ import { getOption } from "../DropdownButton/util";
 import ParamsDropdown, {
   DoubleParamsDropdown,
   ArrayParamsDropdown,
+  FulfillParamsDropdown
 } from "../ParamsDropdown";
 import { inject, watch } from "vue";
 import {
@@ -260,46 +268,6 @@ const handOptionByColumn = (option: any) => {
   }
 };
 
-watch(
-  () => JSON.stringify(columnOptions.value),
-  () => {
-    if (paramsValue.column) {
-      const option = getOption(
-        columnOptions.value,
-        paramsValue.column,
-        "column"
-      );
-      const copyValue = props.value;
-      if (option && Object.keys(option).length) {
-        handOptionByColumn(option);
-        if (copyValue.error) {
-          copyValue.error = false;
-          emit("update:value", copyValue);
-          formItemContext.onFieldChange();
-        }
-      } else {
-        copyValue.error = true;
-        emit("update:value", copyValue);
-        formItemContext.onFieldChange();
-      }
-      //数据类型为date时判断是选择还是手动输入
-      if (option?.dataType === "date") {
-        if (timeTypeKeys.includes(paramsValue.termType || "")) {
-          if (tabsOptions.value[0].component !== "int") {
-          }
-          tabsOptions.value[0].component = "int";
-        } else if (
-          !timeTypeKeys.includes(paramsValue.termType || "") &&
-          tabsOptions.value[0].component == "int"
-        ) {
-          tabsOptions.value[0].component = "date";
-        }
-      }
-    }
-  },
-  { immediate: true }
-);
-
 const showDouble = computed(() => {
   const isRange = paramsValue.termType
     ? doubleParamsKey.includes(paramsValue.termType)
@@ -343,6 +311,10 @@ const showArray = computed(() => {
   }
   return false;
 });
+
+const showFulfill = computed(() => {
+  return paramsValue.termType === "complex_exists";
+})
 
 const mouseover = () => {
   if (props.showDeleteBtn) {
@@ -428,7 +400,7 @@ const termsTypeSelect = (e: { key: string; name: string }) => {
       tabsOptions.value[0].component = "int";
     } else if (
       !timeTypeKeys.includes(e.key) &&
-      tabsOptions.value[0].component == "int"
+      tabsOptions.value[0].component === "int"
     ) {
       value = undefined;
       tabsOptions.value[0].component = "date";
@@ -437,7 +409,7 @@ const termsTypeSelect = (e: { key: string; name: string }) => {
 
   const _source = paramsValue.value?.source || tabsOptions.value[0].key;
   const newValue: any = {
-    source: _source,
+    source: paramsValue.value.termType === 'complex_exists' ? 'fixed' : _source,
     value: value,
   };
 
@@ -520,6 +492,46 @@ const onDelete = () => {
     props.whenName
   ].terms.splice(props.termsName, 1);
 };
+
+watch(
+  () => JSON.stringify(columnOptions.value),
+  () => {
+    if (paramsValue.column) {
+      const option = getOption(
+        columnOptions.value,
+        paramsValue.column,
+        "column"
+      );
+      const copyValue = props.value;
+      if (option && Object.keys(option).length) {
+        handOptionByColumn(option);
+        if (copyValue.error) {
+          copyValue.error = false;
+          emit("update:value", copyValue);
+          formItemContext.onFieldChange();
+        }
+      } else {
+        copyValue.error = true;
+        emit("update:value", copyValue);
+        formItemContext.onFieldChange();
+      }
+      //数据类型为date时判断是选择还是手动输入
+      if (option?.dataType === "date") {
+        if (timeTypeKeys.includes(paramsValue.termType || "")) {
+          if (tabsOptions.value[0].component !== "int") {
+          }
+          tabsOptions.value[0].component = "int";
+        } else if (
+          !timeTypeKeys.includes(paramsValue.termType || "") &&
+          tabsOptions.value[0].component === "int"
+        ) {
+          tabsOptions.value[0].component = "date";
+        }
+      }
+    }
+  },
+  { immediate: true }
+);
 
 watchEffect(() => {
   const isRange = paramsValue.termType

@@ -14,7 +14,7 @@
         :params="params"
         :request="productQuery"
         :gridColumn="2"
-        :gridColumns="[2]"
+        :gridColumns="[2,2,2]"
         :bodyStyle="{
             paddingRight: 0,
             paddingLeft: 0,
@@ -76,10 +76,10 @@ import {
     queryProductList,
     productDetail,
     getTreeData_api
-} from '../../../../../api/others';
-import { queryProductSortTree } from '../../../../../api/others';
-import { accessConfigTypeFilter } from '../../../../../utils/setting';
-import { sceneImages } from '../../../../../assets/index';
+} from '@ruleEngine/api/others';
+import { queryProductSortTree } from '@ruleEngine/api/others';
+import { accessConfigTypeFilter } from '@ruleEngine/utils/setting';
+import { sceneImages } from '@ruleEngine/assets/index';
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()

@@ -86,6 +86,9 @@ const rules = [
           return Promise.reject(new Error($t('Terms.TermsItem.9093428-2')));
         }
         if (v.value?.value === undefined) {
+          if (v.value?.filter?.length) {
+            return Promise.resolve();
+          }
           return Promise.reject(new Error($t('Terms.TermsItem.9093428-3')));
         }
         if (

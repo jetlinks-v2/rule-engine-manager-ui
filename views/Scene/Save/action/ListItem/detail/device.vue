@@ -1,6 +1,7 @@
-<script setup lang="ts">
+<script setup name="Device">
 import {typeIconMap} from "@ruleEngine/views/Scene/Save/action/ListItem/util";
 import {isBoolean} from "lodash-es";
+import {useI18n} from "vue-i18n";
 
 const props = defineProps({
   data: {
@@ -8,7 +9,7 @@ const props = defineProps({
     default: () => ({}),
   },
 })
-
+const {t: $t} = useI18n();
 const icon = computed(() => typeIconMap[props.data?.device?.message?.messageType || 'INVOKE_FUNCTION'])
 </script>
 

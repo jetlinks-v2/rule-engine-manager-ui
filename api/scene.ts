@@ -23,7 +23,7 @@ export const _action = (id: string, type: '_disable' | '_enable') => request.put
 export const _execute = (id: string) => request.post(`/scene/${id}/_execute`);
 
 // 内置参数
-export const queryBuiltInParams = (data: any, params?: any) => request.post(`/scene/parse-variables`, data, params);
+export const queryBuiltInParams = (data: any, params?: any) => request.post(`/scene/parse-variables`, data, {params});
 
 export const getParseTerm = (data: Record<string, any>) => request.post(`/scene/parse-term-column`, data)
 
@@ -41,3 +41,7 @@ export const queryType = () => request.get('/scene/trigger/supports')
  * 获取执行动作类型
  */
 export const queryActionType = () => request.get('/scene/action/supports')
+
+export const queryAggregation = () => request.get('/scene/aggregation/supports')
+
+export const queryArrayTerms = (data:any={}) => request.post('/scene/parse-array-child-term-column', data)
