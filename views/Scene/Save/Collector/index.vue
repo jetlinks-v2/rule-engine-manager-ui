@@ -4,7 +4,7 @@
         :rules='rules'
         :name='["trigger", "collector"]'
         v-if="formData.triggerType==='collector'"
-        label="触发规则"
+        :label="$t('Device.index.372524-0')"
     >
       <AddButton
           style='width: 100%'
@@ -30,17 +30,18 @@ import CheckItem from '../Device/CheckItem.vue'
 import Terms from "../components/Terms";
 import {useSceneStore} from "@ruleEngine/store/scene";
 import {storeToRefs} from "pinia";
+import { useI18n } from 'vue-i18n'
 
 const sceneStore = useSceneStore()
 const { data: formData } = storeToRefs(sceneStore)
-
+const { t: $t } = useI18n()
 const visible = ref(false)
 const termsRef = ref()
 
 const rules = [{
   validator(_: any, v: any) {
     if (!v) {
-      return Promise.reject(new Error('请配置采集器触发规则'));
+      return Promise.reject(new Error($t('Collector.actions.index-6100078-12')));
     } else {
       if (
           !v.pointSelectInfo.collectorId ||
@@ -49,7 +50,7 @@ const rules = [{
           (v.operation?.operator === 'invokeFunction' && !v.operation.functionId) ||
           (v.operation?.operator === 'reportEvent' && !v.operation.eventId)
       ) {
-        return Promise.reject(new Error('该数据已发生变更，请重新配置'));
+        return Promise.reject(new Error($t('Collector.actions.index-6100078-13')));
       }
       //  判断产品
       //  判断设备或者组织
@@ -61,7 +62,7 @@ const rules = [{
 const rulesAI = [{
   validator(_: any, v: any) {
     if (!v) {
-      return Promise.reject(new Error('请配置采集器触发规则'));
+      return Promise.reject(new Error($t('Collector.actions.index-6100078-12')));
     }
     return Promise.resolve();
   },

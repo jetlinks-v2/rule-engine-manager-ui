@@ -1,6 +1,6 @@
 <template>
     <a-modal
-        title='触发规则'
+        :title='$t("Device.index.372524-0")'
         visible
         :width='950'
         @ok='save'
@@ -9,14 +9,14 @@
     >
       <div class="body_height_60">
         <a-steps :current='addModel.stepNumber' @change='stepChange'>
+          <a-step>
+            <template #title>{{ $t('Collector.actions.index-6100078-7') }}</template>
+          </a-step>
+          <a-step>
+            <template #title>{{ $t('Collector.actions.index-6100078-8')}}</template>
+          </a-step>
             <a-step>
-                <template #title>选择通道</template>
-            </a-step>
-            <a-step>
-                <template #title>选择采集器</template>
-            </a-step>
-            <a-step>
-                <template #title>触发类型</template>
+                <template #title>{{ $t('Device.AddModal.3725211-3') }}</template>
             </a-step>
         </a-steps>
         <div class='steps-content'>
@@ -43,10 +43,10 @@
       </div>
         <template #footer>
             <div class='steps-action'>
-                <a-button v-if='addModel.stepNumber === 0' @click='cancel'>取消</a-button>
-                <a-button v-else @click='prev'>上一步</a-button>
-                <a-button type='primary' v-if='addModel.stepNumber < 2' @click='saveClick'>下一步</a-button>
-                <a-button type='primary' v-else @click='saveClick'>确定</a-button>
+                <a-button v-if='addModel.stepNumber === 0' @click='cancel'>$t('Save.index.551009-1')}</a-button>
+                <a-button v-else @click='prev'>{{ $t('DeviceAccess.index.551011-21') }}</a-button>
+                <a-button type='primary' v-if='addModel.stepNumber < 2' @click='saveClick'>{{ $t('DeviceAccess.index.551011-20')}}</a-button>
+                <a-button type='primary' v-else @click='saveClick'>{{ $t('Save.index.551009-0') }}</a-button>
             </div>
         </template>
     </a-modal>
@@ -65,13 +65,13 @@ import Type from './Type.vue'
 import { handleTimerOptions } from '../components/Timer/util'
 import { Form } from 'ant-design-vue'
 import { queryPointNoPaging } from '@ruleEngine/api/collector'
+import { useI18n } from 'vue-i18n'
 
 type Emit = {
     (e: 'cancel'): void
     (e: 'change', data: TriggerCollector): void
     (e: 'save', data: TriggerCollector, options: Record<string, any>): void
 }
-
 
 interface AddModelType extends TriggerCollector {
     channelDetail: any
@@ -80,8 +80,10 @@ interface AddModelType extends TriggerCollector {
     metadata: metadataType,
     operator: string
 }
+
 const formItemContext = Form.useInjectFormItemContext();
 
+const { t: $t } = useI18n()
 const emit = defineEmits<Emit>()
 const typeRef = ref()
 
@@ -139,7 +141,7 @@ const handleOptions = (data: TriggerCollector) => {
     };
     _options.name = addModel.collectorDetail?.name;
     if (data.operator === 'sub') {
-        _options.type = '点位上报';
+        _options.type = $t('Collector.actions.index-6100078-9');
     }
 
     if (data.timer) {
@@ -151,7 +153,7 @@ const handleOptions = (data: TriggerCollector) => {
     }
 
     if (data.operator === 'reportProperty') {
-        _options.type = '属性上报';
+        _options.type = $t('Device.AddModal.3725211-13');
         _options.action = '';
         _options.typeIcon = 'icon-file-upload-outline';
     }
@@ -193,10 +195,10 @@ const getDeviceDetailByMetadata = async (deviceId: string) => {
 const save = async (step?: number) => {
     let _step = step !== undefined ? step : addModel.stepNumber
     if (_step === 0) {
-        addModel.pointSelectInfo.channelId ? addModel.stepNumber = 1 : onlyMessage('请选择通道', 'error')
+        addModel.pointSelectInfo.channelId ? addModel.stepNumber = 1 : onlyMessage($t('Collector.actions.index-6100078-10'), 'error')
     } else if (_step === 1) {
         // 选择方式为设备且仅选中一个设备时，物模型取该设备
-        addModel.pointSelectInfo.collectorId ? addModel.stepNumber = 2 : onlyMessage('请选择采集器', 'error')
+        addModel.pointSelectInfo.collectorId ? addModel.stepNumber = 2 : onlyMessage($t('Collector.actions.index-6100078-11'), 'error')
         const res = await queryPointNoPaging({
             terms: [
                 {
