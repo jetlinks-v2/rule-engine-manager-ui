@@ -45,6 +45,7 @@ const rules = [{
     if (!v) {
       return Promise.reject(new Error($t('Device.index.372524-1')));
     } else {
+
         if (
           !v.productId ||
           (['fixed', 'org'].includes(v.selector) && !v.selectorValues) ||
@@ -55,9 +56,6 @@ const rules = [{
         ) {
           return Promise.reject(new Error($t('Device.index.372524-2')));
         }
-      //  判断产品
-      //  判断设备或者组织
-      //  判断属性、事件、功能
     }
     return Promise.resolve();
   },

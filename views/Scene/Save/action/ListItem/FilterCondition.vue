@@ -40,32 +40,42 @@
         v-model:value="paramsValue.termType"
         @select="termsTypeSelect"
       />
-      <DoubleParamsDropdown
-        v-if="!['notnull', 'isnull'].includes(paramsValue.termType) && showDouble"
-        icon="icon-canshu"
-        :placeholder="$t('ListItem.FilterCondition.9667711-5')"
-        value-name="id"
-        label-name="name"
-        :options="valueOptions"
-        :metricOptions="valueColumnOptions"
-        :tabsOptions="tabsOptions"
-        v-model:value="paramsValue.value.value"
-        v-model:source="paramsValue.value.source"
-        @select="valueSelect"
-      />
-      <ParamsDropdown
-        v-else
-        icon="icon-canshu"
-        :placeholder="$t('ListItem.FilterCondition.9667711-5')"
-        value-name="id"
-        label-name="name"
-        :options="showAlarmSelect ? alarmOptions : valueOptions"
-        :metricOptions="valueColumnOptions"
-        :tabsOptions="tabsOptions"
-        v-model:value="paramsValue.value.value"
-        v-model:source="paramsValue.value.source"
-        @select="valueSelect"
-      />
+      <template v-if="!['notnull', 'isnull'].includes(paramsValue.termType)">
+        <DoubleParamsDropdown
+          v-if="showDouble"
+          icon="icon-canshu"
+          :placeholder="$t('ListItem.FilterCondition.9667711-5')"
+          value-name="id"
+          label-name="name"
+          :options="valueOptions"
+          :metricOptions="valueColumnOptions"
+          :tabsOptions="tabsOptions"
+          v-model:value="paramsValue.value.value"
+          v-model:source="paramsValue.value.source"
+          @select="valueSelect"
+        />
+        <FulfillParamsDropdown
+          v-else-if="showFulfill"
+          icon="icon-canshu"
+          :column="paramsValue.column"
+          v-model:value="paramsValue.value.value"
+          @select="valueSelect"
+        />
+        <ParamsDropdown
+          v-else
+          icon="icon-canshu"
+          :placeholder="$t('ListItem.FilterCondition.9667711-5')"
+          value-name="id"
+          label-name="name"
+          :options="showAlarmSelect ? alarmOptions : valueOptions"
+          :metricOptions="valueColumnOptions"
+          :tabsOptions="tabsOptions"
+          v-model:value="paramsValue.value.value"
+          v-model:source="paramsValue.value.source"
+          @select="valueSelect"
+        />
+      </template>
+
       <ConfirmModal
         :title="$t('ListItem.FilterCondition.9667711-6')"
         :onConfirm="onDelete"
@@ -89,7 +99,7 @@ import type { TermsType } from "../../../typings";
 import DropdownButton from "../../components/DropdownButton";
 import { getOption } from "../../components/DropdownButton/util";
 import ParamsDropdown, {
-  DoubleParamsDropdown,
+  DoubleParamsDropdown, FulfillParamsDropdown,
 } from "../../components/ParamsDropdown";
 import { inject } from "vue";
 import { useSceneStore } from "../../../../../store/scene";
@@ -222,6 +232,10 @@ const showAlarm = computed(() => {
 const showAlarmSelect = computed(() => {
   return showAlarmSelectKey.includes(paramsValue.column?.split(".")?.[1]);
 });
+
+const showFulfill = computed(() => {
+  return paramsValue.termType === "complex_exists";
+})
 
 const valueChangeAfter = () => {
   checkFilter.onFieldChange();

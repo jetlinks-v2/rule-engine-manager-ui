@@ -38,13 +38,13 @@
               <span
                 ><img
                   :height="16"
-                  :src="typeMap.get(slotProps.triggerType)?.icon"
+                  :src="typeMap[slotProps.triggerType]?.icon"
                   style="margin-right: 5px"
-                />{{ typeMap.get(slotProps.triggerType)?.text }}</span
+                />{{ slotProps.trigger.typeName }}</span
               >
             </template>
             <template #img>
-              <img :src="typeMap.get(slotProps.triggerType)?.img" />
+              <img :src="typeMap[slotProps.triggerType]?.img" />
             </template>
             <template #content>
               <j-ellipsis style="width: calc(100% - 100px)">
@@ -59,7 +59,7 @@
                     {{
                       slotProps?.description
                         ? slotProps?.description
-                        : typeMap.get(slotProps.triggerType)?.tip
+                        : typeMap[slotProps.triggerType]?.tip
                     }}
                   </j-ellipsis>
                 </span>
@@ -85,7 +85,7 @@
           </CardBox>
         </template>
         <template #triggerType="slotProps">
-          {{ typeMap.get(slotProps.triggerType)?.text }}
+          {{ slotProps.trigger.typeName }}
         </template>
         <template #state="slotProps">
           <JBadgeStatus
@@ -121,22 +121,57 @@
         </template>
       </JProTable>
     </FullPage>
-    <SaveModal v-if="visible" @close="visible = false" :data="current" />
+    <SaveModal v-if="visible" @close="visible = false" :data="current" :typeOptions="typeOptions" />
   </j-page-container>
 </template>
 
 <script setup lang="ts" name="Scene">
 import SaveModal from "./Save/save.vue";
 import { useMenuStore } from "@/store/menu";
-import { query, _delete, _action, _execute } from "../../api/scene";
+import { query, _delete, _action, _execute, queryType } from "../../api/scene";
 import { queryList } from "../../api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { Modal } from "ant-design-vue";
 import { sceneImages } from "../../assets/index";
 import { useI18n } from 'vue-i18n'
+import {useRequest} from "@jetlinks-web/hooks";
+
+const images = {
+  timer: sceneImages.timingTrigger,
+  manual: sceneImages.manualTrigger,
+  device: sceneImages.deviceTrigger,
+}
 
 const { t: $t, locale } = useI18n()
 const menuStory = useMenuStore();
+const typeMap = ref({
+  manual: {
+    img: sceneImages.TriggerListIconHand,
+    icon: sceneImages.TriggerHeaderIconManual,
+  },
+  timer: {
+    img: sceneImages.TriggerListIconTimer,
+    icon: sceneImages.TriggerHeaderIconTiming,
+  },
+  device: {
+    img: sceneImages.TriggerListIconDevice,
+    icon: sceneImages.TriggerHeaderIconDevice,
+  },
+  collector: {
+    img: sceneImages.TriggerListIconDevice,
+    icon: sceneImages.TriggerHeaderIconDevice,
+  }
+})
+const { data: typeOptions } = useRequest(queryType, {
+  onSuccess(resp) {
+
+    return resp.result.map(item => {
+      const obj = { label: item.name, value: item.provider, tip: item.description, image: images[item.provider] }
+      typeMap.value[item.provider] = Object.assign(typeMap.value[item.provider] || {}, obj)
+      return obj
+    })
+  }
+})
 const visible = ref<boolean>(false);
 const current = ref<Record<string, any>>({});
 
@@ -147,27 +182,7 @@ statusMap.set("disable", "error");
 const params = ref<Record<string, any>>({});
 const sceneRef = ref<Record<string, any>>({});
 
-const typeMap = new Map();
-typeMap.set("manual", {
-  text: $t('Scene.index.895630-2'),
-  img: sceneImages.TriggerListIconHand,
-  icon: sceneImages.TriggerHeaderIconManual,
-  tip: $t('Scene.index.895630-3'),
-});
-typeMap.set("timer", {
-  text: $t('Scene.index.895630-4'),
-  img: sceneImages.TriggerListIconTimer,
-  icon: sceneImages.TriggerHeaderIconTiming,
-  tip: $t('Scene.index.895630-5'),
-});
-typeMap.set("device", {
-  text: $t('Scene.index.895630-6'),
-  img: sceneImages.TriggerListIconDevice,
-  icon: sceneImages.TriggerHeaderIconDevice,
-  tip: $t('Scene.index.895630-7'),
-});
-
-const columns = [
+const columns = ref([
   {
     dataIndex: "name",
     fixed: "left",
@@ -184,12 +199,14 @@ const columns = [
     scopedSlots: true,
     search: {
       type: "select",
-      options: Array.from(typeMap).map((item) => {
-        return {
-          label: item[1]?.text,
-          value: item[0],
-        };
-      }),
+      options: () => {
+        return Object.values(typeMap.value).map((item) => {
+          return {
+            label: item.label,
+            value: item.value,
+          };
+        })
+      }
     },
   },
   {
@@ -220,7 +237,7 @@ const columns = [
     width: 250,
     scopedSlots: true,
   },
-];
+]);
 
 const deleteScene = async (id: string) => {
   const resp = await _delete(id);

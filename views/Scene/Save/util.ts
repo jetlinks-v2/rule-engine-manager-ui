@@ -180,3 +180,12 @@ export const handleFeatures = (branches: ActionBranchesProps[]): string[] => {
 
     return features.size === 0 ? ['none'] : [...features.values()]
 }
+
+
+export const actionIconMap = {
+    'device': 'icon-shebeishuchu',
+    'notify': 'icon-xiaoxitongzhi',
+    'delay': 'icon-yanchizhihang',
+    'trigger': 'icon-chufagaojing',
+    'relieve': 'icon-jiechugaojing',
+}

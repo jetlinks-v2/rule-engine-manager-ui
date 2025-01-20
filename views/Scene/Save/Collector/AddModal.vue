@@ -1,0 +1,275 @@
+<template>
+    <a-modal
+        title='触发规则'
+        visible
+        :width='950'
+        @ok='save'
+        @cancel='cancel'
+        :maskClosable="false"
+    >
+      <div class="body_height_60">
+        <a-steps :current='addModel.stepNumber' @change='stepChange'>
+            <a-step>
+                <template #title>选择通道</template>
+            </a-step>
+            <a-step>
+                <template #title>选择采集器</template>
+            </a-step>
+            <a-step>
+                <template #title>触发类型</template>
+            </a-step>
+        </a-steps>
+        <div class='steps-content'>
+            <Channel
+                v-if="addModel.stepNumber === 0"
+                v-model:rowKey='addModel.pointSelectInfo.channelId'
+                v-model:detail='addModel.channelDetail'
+                @change='channelChange'
+            />
+            <Collector
+                v-if="addModel.stepNumber === 1"
+                :channelId='addModel.pointSelectInfo.channelId'
+                v-model:rowKey='addModel.pointSelectInfo.collectorId'
+                v-model:detail='addModel.collectorDetail'
+            />
+            <Type
+                ref='typeRef'
+                v-else-if='addModel.stepNumber === 2'
+                :operator='addModel.operator'
+                :collectorConfig="value"
+                :pointList="pointList"
+            />
+        </div>
+      </div>
+        <template #footer>
+            <div class='steps-action'>
+                <a-button v-if='addModel.stepNumber === 0' @click='cancel'>取消</a-button>
+                <a-button v-else @click='prev'>上一步</a-button>
+                <a-button type='primary' v-if='addModel.stepNumber < 2' @click='saveClick'>下一步</a-button>
+                <a-button type='primary' v-else @click='saveClick'>确定</a-button>
+            </div>
+        </template>
+    </a-modal>
+</template>
+
+<script setup lang='ts' name='AddModel'>
+import type { PropType } from 'vue'
+import type {
+    TriggerCollector, metadataType
+} from '../../typings'
+import { onlyMessage } from '@jetlinks-web/utils'
+import { detail as deviceDetail } from '@ruleEngine/api/instance'
+import Channel from './Channel.vue'
+import Collector from './Collector.vue'
+import Type from './Type.vue'
+import { handleTimerOptions } from '../components/Timer/util'
+import { Form } from 'ant-design-vue'
+import { queryPointNoPaging } from '@ruleEngine/api/collector'
+
+type Emit = {
+    (e: 'cancel'): void
+    (e: 'change', data: TriggerCollector): void
+    (e: 'save', data: TriggerCollector, options: Record<string, any>): void
+}
+
+
+interface AddModelType extends TriggerCollector {
+    channelDetail: any
+    collectorDetail: any
+    stepNumber: number
+    metadata: metadataType,
+    operator: string
+}
+const formItemContext = Form.useInjectFormItemContext();
+
+const emit = defineEmits<Emit>()
+const typeRef = ref()
+
+const props = defineProps({
+    value: {
+        type: Object as PropType<TriggerCollector>,
+        default: () => ({
+            productId: '',
+            selector: 'fixed',
+            selectorValues: [],
+        })
+    },
+    options: {
+        type: Object as PropType<Record<string, any>>,
+        default: () => ({})
+    }
+})
+
+const addModel = reactive<AddModelType>({
+    channelDetail: {},
+    collectorDetail: {},
+    pointSelectInfo: {
+        channelId: props.options?.channelId || '',
+        collectorId: props.value?.pointSelectInfo?.collectorId || '',
+        pointIds: props.value?.pointSelectInfo?.pointIds || [],
+    },
+    stepNumber: 0,
+    metadata: {},
+    operator: props.value.operator || 'readPoints',
+})
+
+const optionsCache = ref(props.options)
+const pointList = ref<Record<string, any>[]>([]);
+
+const handleOptions = (data: TriggerCollector) => {
+    const typeIconMap = {
+        write: 'icon-bianji1',
+        sub: 'icon-shijian',
+        read: 'icon-Group',
+    };
+
+    const _options: any = {
+        name: '', // 名称
+        extraName: '', // 拓展参数
+        onlyName: false,
+        type: '', // 触发类型
+        typeIcon: typeIconMap[data.operator],
+        selectorIcon: 'icon-shebei1',
+        time: undefined,
+        when: undefined,
+        extraTime: undefined,
+        action: optionsCache.value?.action,
+        pointsName: '',
+        channelId: addModel.pointSelectInfo.channelId,
+    };
+    _options.name = addModel.collectorDetail?.name;
+    if (data.operator === 'sub') {
+        _options.type = '点位上报';
+    }
+
+    if (data.timer) {
+        const _timer = data.timer;
+        const { time, extraTime, when } = handleTimerOptions(_timer)
+        _options.when = when;
+        _options.time = time;
+        _options.extraTime = extraTime;
+    }
+
+    if (data.operator === 'reportProperty') {
+        _options.type = '属性上报';
+        _options.action = '';
+        _options.typeIcon = 'icon-file-upload-outline';
+    }
+    return _options;
+}
+
+const prev = () => {
+    addModel.stepNumber = addModel.stepNumber - 1
+}
+
+const cancel = () => {
+    emit("cancel")
+}
+
+const handleMetadata = (metadata?: string) => {
+    try {
+        addModel.metadata = JSON.parse(metadata || "{}")
+    } catch (e) {
+        console.warn('handleMetadata: ' + e)
+    }
+}
+
+const channelChange = () => {
+    addModel.operator = {
+        operator: 'read'
+    }
+    addModel.pointSelectInfo = {
+        channelId: addModel.pointSelectInfo.channelId,
+        collectorId: '',
+        pointIds: [],
+    }
+}
+
+const getDeviceDetailByMetadata = async (deviceId: string) => {
+    const resp = await deviceDetail(deviceId)
+    return resp.result?.metadata
+}
+
+const save = async (step?: number) => {
+    let _step = step !== undefined ? step : addModel.stepNumber
+    if (_step === 0) {
+        addModel.pointSelectInfo.channelId ? addModel.stepNumber = 1 : onlyMessage('请选择通道', 'error')
+    } else if (_step === 1) {
+        // 选择方式为设备且仅选中一个设备时，物模型取该设备
+        addModel.pointSelectInfo.collectorId ? addModel.stepNumber = 2 : onlyMessage('请选择采集器', 'error')
+        const res = await queryPointNoPaging({
+            terms: [
+                {
+                    column: 'collectorId',
+                    value: addModel.pointSelectInfo.collectorId,
+                }
+            ]
+        })
+        if(res.success) {
+            pointList.value = res.result
+        }
+    } else {
+        const typeData = await typeRef.value.vail()
+        if (typeData) {
+            optionsCache.value.action = typeData.action
+            const _options = handleOptions(typeData.data);
+            const data = typeData.data.operator !== 'sub' ?
+                {
+                    ...typeData.data,
+                    collectorConfig: {
+                        handlerType: typeData.data.operator,
+                        source: 'fixed',
+                        pointSelectInfos: [{
+                          collectorId: addModel.pointSelectInfo.collectorId,
+                          pointIds: typeData.data.readPoints || Object.keys(typeData.data?.writePoints) || [],
+                        }],
+                        value: typeData.data?.writePoints?.[Object.keys(typeData.data?.writePoints || {})?.[0]] || ''
+                    },
+                    pointSelectInfo: {
+                        collectorId: addModel.pointSelectInfo.collectorId,
+                        pointIds: typeData.data.readPoints || Object.keys(typeData.data?.writePoints) || [],
+                    },
+                }
+                : {
+                    ...typeData.data,
+                    pointSelectInfo: {
+                        collectorId: addModel.pointSelectInfo.collectorId,
+                        pointIds: pointList.value.map(item => item.id),
+                    }
+                }
+            emit('save', data, _options)
+            formItemContext.onFieldChange()
+        }
+    }
+}
+
+const saveClick = () => save()
+
+const stepChange = (step: number) => {
+    if (step !== 0) {
+        save(step - 1)
+    } else {
+        addModel.stepNumber = 0
+    }
+}
+
+const initQuery = async () => {
+    if (props.value.selector === 'fixed' && props.value.selectorValues?.length) {
+        handleMetadata(await getDeviceDetailByMetadata(props.value.selectorValues[0].value))
+    }
+}
+
+nextTick(() => {
+    initQuery()
+})
+
+</script>
+
+<style scoped>
+.steps-content {
+    width: 100%;
+    height: calc(100% - 35px);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+</style>

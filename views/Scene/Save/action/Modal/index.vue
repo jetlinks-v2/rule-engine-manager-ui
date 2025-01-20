@@ -26,7 +26,7 @@
                     </div>
                   </div>
                 </template>
-                <CardSelect v-model:value="formModel.type" :options="options.filter(item => !(item.value === 'delay' && parallel))"/>
+                <CardSelect v-model:value="formModel.type" :options="actionList"/>
             </a-form-item>
             <ActionTypeComponent
                 v-bind="props"
@@ -82,41 +82,46 @@ const emit = defineEmits(['cancel', 'save']);
 
 const optionDisabled = Object.keys(props.data).length > 2 && props.data?.executor === 'alarm'
 
-const options = [
-  {
-    label: $t('Modal.index.966774-3'),
-    value: 'device',
-    iconUrl: 'icon-shebeishuchu',
-    subLabel: $t('Modal.index.966774-4'),
-    disabled: optionDisabled
-  },
-  {
-    label: $t('Modal.index.966774-5'),
-    value: 'notify',
-    iconUrl: 'icon-xiaoxitongzhi',
-    subLabel: $t('Modal.index.966774-6'),
-    disabled: optionDisabled
-  },
-  {
-    label: $t('Modal.index.966774-7'),
-    value: 'delay',
-    iconUrl: 'icon-yanchizhihang',
-    subLabel: $t('Modal.index.966774-8'),
-    disabled: optionDisabled
-  },
-  {
-    label: $t('Modal.index.966774-9'),
-    value: 'trigger',
-    iconUrl: 'icon-chufagaojing',
-    subLabel: $t('Modal.index.966774-10'),
-  },
-  {
-    label: $t('Modal.index.966774-11'),
-    value: 'relieve',
-    iconUrl: 'icon-jiechugaojing',
-    subLabel: $t('Modal.index.966774-12'),
-  },
-];
+const options = inject('action-options', [])
+
+const actionList = computed(() => {
+  return options.value.filter(item => !(item.value === 'delay' && props.parallel))
+})
+// const options = [
+//   {
+//     label: $t('Modal.index.966774-3'),
+//     value: 'device',
+//     iconUrl: 'icon-shebeishuchu',
+//     subLabel: $t('Modal.index.966774-4'),
+//     disabled: optionDisabled
+//   },
+//   {
+//     label: $t('Modal.index.966774-5'),
+//     value: 'notify',
+//     iconUrl: 'icon-xiaoxitongzhi',
+//     subLabel: $t('Modal.index.966774-6'),
+//     disabled: optionDisabled
+//   },
+//   {
+//     label: $t('Modal.index.966774-7'),
+//     value: 'delay',
+//     iconUrl: 'icon-yanchizhihang',
+//     subLabel: $t('Modal.index.966774-8'),
+//     disabled: optionDisabled
+//   },
+//   {
+//     label: $t('Modal.index.966774-9'),
+//     value: 'trigger',
+//     iconUrl: 'icon-chufagaojing',
+//     subLabel: $t('Modal.index.966774-10'),
+//   },
+//   {
+//     label: $t('Modal.index.966774-11'),
+//     value: 'relieve',
+//     iconUrl: 'icon-jiechugaojing',
+//     subLabel: $t('Modal.index.966774-12'),
+//   },
+// ];
 
 const actionForm = ref();
 const formModel = reactive({

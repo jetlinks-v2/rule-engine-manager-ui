@@ -16,258 +16,12 @@
                 "
               />
             </div>
-            <div class="item-options-content" v-if="data?.executor === 'alarm'">
-              <template v-if="data?.alarm?.mode === 'trigger'">
-                {{ $t('ListItem.Item.637563-0') }}<a-button
-                  style="padding: 0"
-                  type="link"
-                  @click.stop="triggerVisible = true"
-                  >{{ $t('ListItem.Item.637563-1') }}</a-button
-                >
+            <div class="item-options-content" v-if="data?.executor" @click="onType(data?.executor)">
+              <template v-if="data.executor === 'delay'">
+                {{ options?.name }}
               </template>
               <template v-else>
-                {{ $t('ListItem.Item.637563-2') }}<a-button
-                  style="padding: 0"
-                  type="link"
-                  @click.stop="triggerVisible = true"
-                  >{{ $t('ListItem.Item.637563-1') }}</a-button
-                >
-              </template>
-            </div>
-            <div
-              class="item-options-content"
-              v-else-if="data?.executor === 'notify'"
-              @click="onType('notify')"
-            >
-              <template v-if="data?.notify?.notifyType === 'dingTalk'">
-                <template v-if="options?.provider === 'dingTalkRobotWebHook'">
-                  <div>
-                    {{ $t('ListItem.Item.637563-3') }}<span class="notify-text-highlight">{{ $t('ListItem.Item.637563-4') }}</span>
-                    {{ $t('ListItem.Item.637563-5') }}
-                    <span class="notify-text-highlight">
-                      {{ options?.templateName || data?.notify?.templateId }}
-                    </span>
-                  </div>
-                </template>
-                <template v-else>
-                  <div>
-                    {{ $t('ListItem.Item.637563-3') }}
-                    <span class="notify-text-highlight">
-                      <img
-                        style="width: 18px"
-                        :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
-                      />
-                      {{ $t('ListItem.Item.637563-6') }}
-                    </span>
-                    {{ options?.sendTo || options?.orgName ? $t('ListItem.Item.637563-7') : ""
-                    }}<span class="notify-text-highlight">{{
-                      options?.sendTo || ""
-                    }}</span>
-                    <span class="notify-text-highlight">{{
-                      options?.orgName || ""
-                    }}</span>
-                    {{ $t('ListItem.Item.637563-5') }}
-                    <span class="notify-text-highlight">
-                      {{ options?.templateName || data?.notify?.templateId }}
-                    </span>
-                  </div>
-                </template>
-              </template>
-              <template v-else-if="data?.notify?.notifyType === 'weixin'">
-                <div>
-                  {{ $t('ListItem.Item.637563-3') }}
-                  <span class="notify-text-highlight">
-                    <img
-                      style="width: 18px"
-                      :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
-                    />
-                    {{ $t('ListItem.Item.637563-8') }}
-                  </span>
-                  {{
-                    options?.sendTo || options?.orgName || options?.tagName
-                      ? $t('ListItem.Item.637563-7')
-                      : ""
-                  }}<span class="notify-text-highlight">{{
-                    options?.sendTo || ""
-                  }}</span>
-                  <span class="notify-text-highlight">{{
-                    options?.orgName || ""
-                  }}</span>
-                  <span class="notify-text-highlight">{{
-                    options?.tagName || ""
-                  }}</span>
-                  {{ $t('ListItem.Item.637563-5') }}
-                  <span class="notify-text-highlight">
-                    {{ options?.templateName || data?.notify?.templateId }}
-                  </span>
-                </div>
-              </template>
-              <template v-else-if="data?.notify?.notifyType === 'email'">
-                <div style="display: flex">
-                  {{ $t('ListItem.Item.637563-3') }}
-                  <span class="notify-text-highlight">
-                    <img
-                      style="width: 18px"
-                      :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
-                    />
-                    {{ $t('ListItem.Item.637563-9') }}
-                  </span>
-                  {{ options?.sendTo ? $t('ListItem.Item.637563-7') : ""
-                  }}<span class="notify-text-highlight">
-                    <j-ellipsis style="max-width: 400px">
-                      {{ options?.sendTo || "" }}
-                    </j-ellipsis>
-                  </span>
-                  {{ $t('ListItem.Item.637563-5') }}
-                  <span class="notify-text-highlight">
-                    {{ options?.templateName || data?.notify?.templateId }}
-                  </span>
-                </div>
-              </template>
-              <template v-else-if="data?.notify?.notifyType === 'voice'">
-                <div>
-                  {{ $t('ListItem.Item.637563-3') }}
-                  <span class="notify-text-highlight">
-                    <img
-                      style="width: 18px"
-                      :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
-                    />
-                    {{ $t('ListItem.Item.637563-10') }}
-                  </span>
-                  {{ options?.sendTo ? $t('ListItem.Item.637563-7') : ""
-                  }}<span class="notify-text-highlight">{{
-                    options?.sendTo || ""
-                  }}</span>
-                  {{ $t('ListItem.Item.637563-5') }}
-                  <span class="notify-text-highlight">
-                    {{ options?.templateName || data?.notify?.templateId }}
-                  </span>
-                </div>
-              </template>
-              <template v-else-if="data?.notify?.notifyType === 'sms'">
-                <div>
-                  {{ $t('ListItem.Item.637563-3') }}
-                  <span class="notify-text-highlight">
-                    <img
-                      style="width: 18px"
-                      :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
-                    />
-                    {{ $t('ListItem.Item.637563-11') }}
-                  </span>
-                  {{ options?.sendTo ? $t('ListItem.Item.637563-7') : ""
-                  }}<span class="notify-text-highlight">{{
-                    options?.sendTo || ""
-                  }}</span>
-                  {{ $t('ListItem.Item.637563-5') }}
-                  <span class="notify-text-highlight">
-                    {{ options?.templateName || data?.notify?.templateId }}
-                  </span>
-                </div>
-              </template>
-              <template v-else-if="data?.notify?.notifyType === 'webhook'">
-                <div>
-                  {{ $t('ListItem.Item.637563-3') }}
-                  <span class="notify-text-highlight">
-                    <img
-                      style="width: 18px"
-                      :src="itemNotifyIconMap.get(data?.notify?.notifyType)"
-                    />
-                    WebHook
-                  </span>
-                  {{ $t('ListItem.Item.637563-5') }}
-                  <span>{{
-                    options?.templateName || data?.notify?.templateId
-                  }}</span>
-                </div>
-              </template>
-            </div>
-            <div
-              class="item-options-content"
-              v-else-if="data?.executor === 'delay'"
-              @click="onType('delay')"
-            >
-              {{ options?.name }}
-            </div>
-            <div
-              class="item-options-content"
-              v-else-if="data?.executor === 'device'"
-              @click="onType('device')"
-            >
-              <template
-                v-if="['fixed', 'context'].includes(data?.device?.selector)"
-              >
-                <div style="display: flex; align-items: center">
-                  <AIcon
-                    :type="
-                      typeIconMap[
-                        data?.device?.message?.messageType || 'INVOKE_FUNCTION'
-                      ]
-                    "
-                  />
-                  <span style="padding-left: 4px">{{
-                    data?.options?.type
-                  }}</span>
-                  <AIcon type="icon-mubiao" style="padding: 0 4px" />
-                  <j-ellipsis style="max-width: 200px; margin-right: 12px">
-                    {{ Array.isArray(data?.options?.name) ? data?.options?.name?.join(',') : data?.options?.name }}
-                  </j-ellipsis>
-                  <j-ellipsis style="max-width: 400px">
-                    {{ data?.options?.propertiesName }}
-                  </j-ellipsis>
-                  <span
-                    v-if="
-                      !isBoolean(data?.options?.propertiesValue) &&
-                      data?.options?.propertiesValue
-                    "
-                    >{{ $t('ListItem.Item.637563-12') }}
-                  </span>
-                  <j-ellipsis style="max-width: 200px">
-                    {{
-                      `${
-                        (
-                          isBoolean(data?.options?.propertiesValue)
-                            ? true
-                            : data?.options?.propertiesValue
-                        )
-                          ? `${data?.options?.propertiesValue}`
-                          : ""
-                      }`
-                    }}
-                  </j-ellipsis>
-                </div>
-              </template>
-              <template v-else-if="data?.device?.selector === 'tag'">
-                <div>
-                  <AIcon
-                    :type="
-                      typeIconMap[
-                        data?.device?.message?.messageType || 'INVOKE_FUNCTION'
-                      ]
-                    "
-                  />
-                  {{ data?.options?.type }}
-                  <span>{{ data?.options?.tagName }}</span>
-                  {{ $t('ListItem.Item.637563-13') }}{{ data?.options?.productName }}
-                  {{ data?.options?.propertiesName }}
-                </div>
-              </template>
-              <template v-else-if="data?.device?.selector === 'relation'">
-                <div>
-                  <AIcon
-                    :type="
-                      typeIconMap[
-                        data?.device?.message?.messageType || 'INVOKE_FUNCTION'
-                      ]
-                    "
-                  />
-                  {{ data?.options?.type }}{{ $t('ListItem.Item.637563-14') }}<span>{{
-                    data?.options?.triggerName
-                  }}</span
-                  >{{ $t('ListItem.Item.637563-15') }} {{ data?.options?.relationName }}{{ $t('ListItem.Item.637563-13') }}{{
-                    data?.options?.productName
-                  }}{{ $t('ListItem.Item.637563-16') }}
-                  {{ data?.options?.propertiesName }}
-                </div>
+                <component :is="ComponentsMap[data.executor]" :data="data" :options="options" @visibleChange="(e) => triggerVisible = e"  />
               </template>
             </div>
             <a-button v-else @click="onAdd">{{ $t('ListItem.Item.637563-17') }}</a-button>
@@ -328,18 +82,16 @@
       />
     </template>
     <!-- 编辑 -->
-    <template>
-      <ActionTypeComponent
-        v-bind="props"
-        v-if="!!actionType"
-        :actionType="actionType"
-        :options="
+    <ActionTypeComponent
+      v-bind="props"
+      v-if="!!actionType"
+      :actionType="actionType"
+      :options="
           _data.branches[branchesName].then[thenName].actions[name].options
         "
-        @save="onPropsOk"
-        @cancel="onPropsCancel"
-      />
-    </template>
+      @save="onPropsOk"
+      @cancel="onPropsCancel"
+    />
     <TriggerAlarm
       :id="_data.id"
       :branchId="_data.branches[branchesName].branchId"
@@ -354,20 +106,20 @@
 </template>
 
 <script lang="ts" setup name="ActionItem">
-import { isBoolean } from "lodash-es";
 import { PropType } from "vue";
 import { ActionsType, ParallelType } from "../../../typings";
 import Modal from "../Modal/index.vue";
 import ActionTypeComponent from "../Modal/ActionTypeComponent.vue";
 import TriggerAlarm from "../TriggerAlarm/index.vue";
-import { useSceneStore } from "../../../../../store/scene";
+import { useSceneStore } from "@ruleEngine/store/scene";
 import { storeToRefs } from "pinia";
-import { iconMap, itemNotifyIconMap, typeIconMap } from "./util";
+import { iconMap} from "./util";
 import FilterGroup from "./FilterGroup.vue";
 import { randomString } from "@jetlinks-web/utils";
 import { EventEmitter, EventEmitterKeys } from "../../util";
 import CheckItem from "./CheckItem.vue";
 import { useI18n } from 'vue-i18n'
+import ComponentsMap from './detail'
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -506,7 +258,9 @@ const onAdd = () => {
 };
 
 const onType = (_type: string) => {
-  actionType.value = _type;
+  if (_type !== 'device') {
+    actionType.value = _type;
+  }
 };
 
 /**

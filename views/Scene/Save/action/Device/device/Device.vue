@@ -14,6 +14,7 @@
         :params="params"
         :request="deviceQuery"
         :gridColumn="2"
+        :gridColumns="[2]"
         :bodyStyle="{
             paddingRight: 0,
             paddingLeft: 0,
@@ -64,9 +65,9 @@
         </template>
     </JProTable>
 </template>
-  
+
   <script setup lang='ts' name='Product'>
-import { query, detail , queryNoPagingPost } from '@rule/api/others';
+import { query, detail , queryNoPagingPost } from '@ruleEngine/api/others';
 import { sceneImages } from '../../../../../../assets/index';
 import { PropType } from 'vue';
 import { cloneDeep } from 'lodash-es';
@@ -231,7 +232,7 @@ onMounted(async() => {
     }
 });
 </script>
-  
+
   <style scoped lang='less'>
 .search {
     margin-bottom: 0;

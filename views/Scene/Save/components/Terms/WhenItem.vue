@@ -8,9 +8,7 @@
                         { label: $t('Terms.WhenItem.9093425-1'), value: 'or' },
                     ]"
                     type="type"
-                    v-model:value="
-                        formModel.branches[branchName].when[name].type
-                    "
+                    v-model:value="formModel.branches[branchName].when[name].type"
                     @select="typeChange"
                 />
             </div>

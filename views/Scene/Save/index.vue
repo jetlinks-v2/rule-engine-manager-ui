@@ -1,6 +1,6 @@
 <template>
   <j-page-container>
-    <FullPage>
+    <FullPage :fixed="false">
       <div class="scene-warp">
         <div class="header" v-if="data.name">
           <j-ellipsis :tooltip="data.name" style="max-width: 50%">
@@ -8,7 +8,7 @@
           </j-ellipsis>
           <div class="type">
             <img :src="TriggerHeaderIcon[data.triggerType]" />
-            {{ keyByLabel[data.triggerType] }}
+            {{ data.trigger.typeName }}
           </div>
           <div style="flex: 1 1 0; min-width: 0; margin-left: 8px">
             <Description v-model:value="data.description" />
@@ -18,19 +18,7 @@
           <Device ref="deviceRef" v-if="data.triggerType === 'device'" />
           <Manual v-else-if="data.triggerType === 'manual'" />
           <Timer v-else-if="data.triggerType === 'timer'" />
-          <!--          <a-form-item-->
-          <!--          >-->
-          <!--            <template #label>-->
-          <!--              <TitleComponent data='说明' style='font-size: 14px;' />-->
-          <!--            </template>-->
-          <!--            <a-textarea-->
-          <!--                v-model:value="data.description"-->
-          <!--                placeholder='请输入说明'-->
-          <!--                :rows="4"-->
-          <!--                show-count-->
-          <!--                :maxLength="200"-->
-          <!--            />-->
-          <!--          </a-form-item>-->
+          <Collector v-else-if="data.triggerType === 'collector'"/>
         </a-form>
         <j-permission-button
           type="primary"
@@ -49,20 +37,26 @@
 import { storeToRefs } from "pinia";
 import { useSceneStore } from "../../../store/scene";
 import { TriggerHeaderIcon } from "./asstes";
-import { keyByLabel } from "../typings";
+import {modify, queryActionType} from "../../../api/scene";
+import { useMenuStore } from "@/store/menu";
+import { onlyMessage } from "@jetlinks-web/utils";
+import { handleFeatures, actionIconMap } from "./util";
+import { useI18n } from 'vue-i18n'
+import {useRequest} from "@jetlinks-web/hooks";
 import Device from "./Device/index.vue";
 import Manual from "./Manual/index.vue";
 import Timer from "./Timer/index.vue";
-import { modify } from "../../../api/scene";
-import { useMenuStore } from "@/store/menu";
-import { onlyMessage } from "@jetlinks-web/utils";
+import Collector from "./Collector/index.vue";
 import Description from "./components/Description.vue";
-import { handleFeatures } from "./util";
-import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const menuStore = useMenuStore();
+const { data: actionOptions } = useRequest(queryActionType, {
+  onSuccess(resp) {
+    return resp.result.map(item => ({ label: item.name, value: item.provider, subLabel: item.description, iconUrl: actionIconMap[item.provider] }))
+  }
+})
 const { data } = storeToRefs(sceneStore);
 const { getDetail, refresh } = sceneStore;
 
@@ -70,6 +64,8 @@ const route = useRoute();
 const sceneForm = ref();
 const loading = ref(false);
 const deviceRef = ref();
+
+provide('action-options', actionOptions)
 
 const save = async () => {
   const formData = await sceneForm.value.validateFields().catch((err) => {

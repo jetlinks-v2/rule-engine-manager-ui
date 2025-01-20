@@ -20,7 +20,7 @@
     </div>
     <template #overlay>
       <div class="scene-select-content">
-        <a-tabs @change="tabsChange" v-model:activeKey="mySource">
+        <a-tabs v-model:activeKey="mySource" @change="tabsChange">
           <a-tab-pane
             v-for="item in tabsOptions"
             :tab="item.label"
@@ -88,6 +88,15 @@
                   <a-empty />
                 </div>
               </template>
+
+              <j-value-item
+                v-else-if="item.component === 'array'"
+                v-model:modelValue="myValue"
+                :itemType="item.component"
+                :options="item.key === 'upper' ? metricOptions : options"
+                :extra="props"
+                @change="valueItemChange"
+              />
 
               <j-value-item
                 v-else

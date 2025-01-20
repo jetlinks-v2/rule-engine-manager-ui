@@ -146,6 +146,16 @@ export interface TriggerDevice {
   operation?: TriggerDeviceOptions;
 }
 
+export interface TriggerCollector {
+  operator?: string,
+  pointSelectInfo: {
+    channelId: string,
+    collectorId: string,
+    pointIds: string[],
+  },
+  timer?: OperationTimer;
+}
+
 export interface ShakeLimitType {
   enabled: boolean;
   groupType?: string; // 执行动作没有该参数
@@ -279,6 +289,12 @@ export interface ActionsDeviceProps {
   changeData?: boolean
 }
 
+export interface ActionsCollectorProps {
+  handlerType: string
+  source: string
+  pointSelectInfos: Array<{collectorId: string, pointIds: string[]}>
+}
+
 export interface BranchesThen {
   parallel: boolean;
   actions: ActionsType[];
@@ -304,6 +320,7 @@ export interface ActionsType {
     unit?: keyof typeof TimeUnit;
   };
   device?: ActionsDeviceProps;
+  collector?: ActionsCollectorProps;
   alarm?: {
     mode: keyof typeof ActionAlarmMode;
   };
