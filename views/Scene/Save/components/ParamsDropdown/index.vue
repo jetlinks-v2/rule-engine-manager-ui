@@ -103,7 +103,7 @@
                 v-model:modelValue="myValue"
                 :itemType="item.component"
                 :options="item.key === 'upper' ? metricOptions : options"
-                :extra="props"
+                :extraProps="props"
                 @change="valueItemChange"
               />
             </div>

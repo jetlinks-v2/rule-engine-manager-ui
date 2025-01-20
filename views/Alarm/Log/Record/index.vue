@@ -11,9 +11,8 @@
                 :columns="columns"
                 :defaultParams="{
                     sorts: [{ name: 'createTime', order: 'desc' }],
-                    terms,
                 }"
-                :request="queryHandleHistory"
+                :request="query"
                 :params="params"
             >
                 <template #headerLeftRender>
@@ -22,18 +21,23 @@
                 <template #handleTime="slotsProps">
                     <span>
                         {{
-                            dayjs(slotsProps.handleTime).format(
-                                'YYYY-MM-DD HH:mm:ss',
-                            )
+                            slotsProps?.handleTime
+                                ? dayjs(slotsProps.handleTime).format(
+                                      'YYYY-MM-DD HH:mm:ss',
+                                  )
+                                : '--'
                         }}
                     </span>
                 </template>
                 <template #handleType="slotProps">
-                    <span>{{ slotProps.handleType?.text }}</span>
+                    <span>{{ slotProps.handleType?.text || '--' }}</span>
                 </template>
                 <template #alarmDuration="slotProps">
                     <j-ellipsis><Duration :data="slotProps" /></j-ellipsis>
                 </template>
+                <template #state="slotProps">{{
+                    slotProps?.state?.text
+                }}</template>
                 <template #alarmTime="slotProps">
                     <span>
                         {{
@@ -42,6 +46,9 @@
                             )
                         }}
                     </span>
+                </template>
+                <template #description="slotProps">
+                    {{ slotProps?.description || '--' }}
                 </template>
             </JProTable>
         </FullPage>
@@ -58,15 +65,17 @@ import { useI18n } from 'vue-i18n'
 const { t: $t } = useI18n()
 const route = useRoute();
 const id = route.query?.id;
-const terms = [
-    {
-        column: 'alarmRecordId',
-        termType: 'eq',
-        value: id,
-        type: 'and',
-    },
-];
 const columns = [
+{
+        title: $t('Record.index.165150-5'),
+        dataIndex: 'alarmTime',
+        key: 'alarmTime',
+        scopedSlots: true,
+        search: {
+            type: 'date',
+        },
+        width: 180,
+    },
     {
         title: $t('Record.index.165150-1'),
         dataIndex: 'handleTime',
@@ -76,6 +85,20 @@ const columns = [
         search: {
             type: 'date',
         },
+    },
+    {
+        title: $t('Record.index.165150-6'),
+        dataIndex: 'alarmDuration',
+        key: 'alarmDuration',
+        scopedSlots: true,
+        width: 180,
+    },
+    {
+        title: '处理状态',
+        dataIndex: 'state',
+        key: 'state',
+        width: 100,
+        scopedSlots: true,
     },
     {
         dataIndex: 'handleType',
@@ -97,34 +120,23 @@ const columns = [
             ],
         },
     },
-    {
-        title: $t('Record.index.165150-5'),
-        dataIndex: 'alarmTime',
-        key: 'alarmTime',
-        scopedSlots: true,
-        search: {
-            type: 'date',
-        },
-        width: 180,
-    },
-    {
-        title: $t('Record.index.165150-6'),
-        dataIndex: 'alarmDuration',
-        key: 'alarmDuration',
-        scopedSlots: true,
-        width: 180,
-    },
+    
+    
     {
         title: $t('Record.index.165150-7'),
         dataIndex: 'description',
         key: 'description',
         ellipsis: true,
+        scopedSlots:true,
         search: {
             type: 'string',
         },
     },
 ];
 const params = ref();
+const query = async(queryParams) =>{
+    return queryHandleHistory(id,queryParams);
+}
 const emit = defineEmits(['closeLog']);
 /**
  * 关闭弹窗
@@ -132,19 +144,6 @@ const emit = defineEmits(['closeLog']);
 
 const handleSearch = (e: any) => {
     params.value = e;
-};
-const calculateDuration = (startTime, endTime) => {
-    const diffInSeconds = endTime.diff(startTime, 'second');
-    let result;
-
-    if (diffInSeconds < 60) {
-        result = `${diffInSeconds.toFixed(1)} s`;
-    } else if (diffInSeconds < 3600) {
-        result = `${(diffInSeconds / 60).toFixed(1)} min`;
-    } else {
-        result = `${(diffInSeconds / 3600).toFixed(1)} h`;
-    }
-    return result;
 };
 </script>
 <style lang="less" scoped></style>

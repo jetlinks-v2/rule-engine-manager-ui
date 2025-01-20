@@ -35,7 +35,7 @@
               v-model:expandedKeys="treeOpenKeys"
               :selectedKeys="selectValue ? [selectValue] : []"
               :treeData="options"
-              :height="350"
+              style="width: auto;  height: 350px;overflow: auto;"
               :virtual="true"
               @select="treeSelect"
             >
