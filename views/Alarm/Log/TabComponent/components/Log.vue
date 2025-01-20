@@ -15,7 +15,7 @@
           v-if="['device','organization','product'].includes(record.targetType)"
         >
           {{ $t('components.Log.165155-0') }}
-          <span class="deviceId" @click="() => gotoDevice(record.targetId)">{{
+          <span class="deviceId" @click="() => gotoDevice(record.sourceId)">{{
             text
           }}</span></j-ellipsis
         >
