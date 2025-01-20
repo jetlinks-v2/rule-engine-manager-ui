@@ -61,7 +61,7 @@
 </template>
 
 <script lang="ts" setup>
-import { detail, queryLogList } from "@rule/api/log";
+import { detail, queryLogList } from "@ruleEngine/api/log";
 import { useRoute } from "vue-router";
 import dayjs from "dayjs";
 import { useAlarmStore } from "../../../../store/alarm";

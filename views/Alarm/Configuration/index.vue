@@ -180,7 +180,7 @@ import HandTrigger from "./HandTrigger/index.vue";
 import { Modal } from "ant-design-vue";
 import { useAlarmLevel } from "../../../hook";
 import { ConfigurationImages } from "../../../assets/index";
-import LevelIcon from "@rule/components/AlarmLevelIcon/index.vue";
+import LevelIcon from "@ruleEngine/components/AlarmLevelIcon/index.vue";
 import { isNoCommunity } from "@/utils/utils";
 import { useI18n } from "vue-i18n";
 

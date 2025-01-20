@@ -109,7 +109,7 @@ import { onlyMessage } from "@jetlinks-web/utils";
 import { EventEmitter } from "../../util";
 import { useRequest } from '@jetlinks-web/hooks';
 import { useAlarmLevel } from "../../../../../hook";
-import LevelIcon from '@rule/components/AlarmLevelIcon/index.vue'
+import LevelIcon from '@ruleEngine/components/AlarmLevelIcon/index.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()

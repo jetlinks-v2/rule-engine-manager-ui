@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { configImages } from '@rule/assets/index';
+import { configImages } from '@ruleEngine/assets/index';
 defineOptions({
   name: 'LevelIcon'
 })
