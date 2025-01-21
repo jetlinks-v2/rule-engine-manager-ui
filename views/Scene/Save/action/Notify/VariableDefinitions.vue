@@ -52,6 +52,9 @@
             <BuildIn
                 v-else
                 :item="item"
+                :name="name"
+                :thenName="thenName"
+                :branchesName="branchesName"
                 v-model:value="modelRef[item.id]"
                 @change="
                     (val, _options) =>
@@ -94,6 +97,18 @@ const props = defineProps({
     options: {
         type: Object,
         default: () => ({}),
+    },
+    branchesName: {
+      type: Number,
+      default: 0,
+    },
+    thenName: {
+      type: Number,
+      default: 0,
+    },
+    name: {
+      type: Number,
+      default: 0,
     },
 });
 
@@ -245,12 +260,12 @@ const onSave = () =>
         );
         const pass = filterData.length
             ? filterData.some((item) => {
-                
+
                   if (
                       item.id === 'toUser' &&
                       modelRef[item.id]?.source === 'relation'
                   ) {
-                    
+
                       return (
                           modelRef[item.id].relation?.objectId ||
                           modelRef[item.id].relation?.related

@@ -91,9 +91,17 @@ const props = defineProps({
         type: Object,
         default: () => {},
     },
+    branchesName: {
+      type: Number,
+      default: 0,
+    },
+    thenName: {
+      type: Number,
+      default: 0,
+    },
     name: {
-        type: Number,
-        default: 0,
+      type: Number,
+      default: 0,
     },
 });
 
@@ -177,15 +185,22 @@ watch(
     (newVal) => {
         const v = newVal;
         if (v === 'upper') {
-            const params =
-                props.name - 1 >= 0 ? { action: props.name - 1 } : undefined;
+            const params: Record<string, Number> = {
+                branch: props.branchesName,
+                branchGroup: props.thenName,
+            }
+            const lastIndex = props.name - 1
+
+            if (lastIndex >= 0) {
+              params.action = lastIndex
+            }
+
             queryBuiltInParams(unref(data), params).then((resp) => {
                 if (resp.status === 200) {
-                    const arr = treeDataFilter(
-                        resp.result as any[],
-                        props.item.expands?.businessType || props.item?.type,
+                    builtInList.value = treeDataFilter(
+                      resp.result as any[],
+                      props.item.expands?.businessType || props.item?.type,
                     );
-                    builtInList.value = arr;
                 }
             });
         }
