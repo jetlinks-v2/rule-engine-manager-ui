@@ -43,7 +43,7 @@
       </div>
         <template #footer>
             <div class='steps-action'>
-                <a-button v-if='addModel.stepNumber === 0' @click='cancel'>$t('Save.index.551009-1')}</a-button>
+                <a-button v-if='addModel.stepNumber === 0' @click='cancel'>{{$t('Save.index.551009-1')}}</a-button>
                 <a-button v-else @click='prev'>{{ $t('DeviceAccess.index.551011-21') }}</a-button>
                 <a-button type='primary' v-if='addModel.stepNumber < 2' @click='saveClick'>{{ $t('DeviceAccess.index.551011-20')}}</a-button>
                 <a-button type='primary' v-else @click='saveClick'>{{ $t('Save.index.551009-0') }}</a-button>

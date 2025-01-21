@@ -165,7 +165,7 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
       v-model:visible="visible"
       title="配置条件"
       width="800px"
-      :okText="$t('Save.index.551010-2')"
+      :okText="$t('Save.index.551009-0')"
       :keyboard="false"
       :maskClosable="false"
       @ok="onSelect"

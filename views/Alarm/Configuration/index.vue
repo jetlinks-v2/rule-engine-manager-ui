@@ -102,7 +102,7 @@
             </CardBox>
           </template>
           <template #targetType="slotProps">
-            <span>{{ map[slotProps.targetType] }}</span>
+            <span>{{ slotProps.trigger.typeName }}</span>
           </template>
 
           <template #state="slotProps">
@@ -333,15 +333,6 @@ const columns = [
 const visible = ref<boolean>(false);
 const current = ref<any>({});
 
-const map = {
-  product: $t('Configuration.index.021440-7'),
-  device: $t('Configuration.index.021440-8'),
-  organization: $t('Configuration.index.021440-9'),
-  org: $t('Configuration.index.021440-9'),
-  other: $t('Configuration.index.021440-10'),
-  scene: $t('Configuration.index.021440-26'),
-  collector: $t('Configuration.index.021440-27'),
-};
 const handleSearch = (e: any) => {
   e.terms.map((i: any) => {
     i.terms.forEach((item: any) => {
