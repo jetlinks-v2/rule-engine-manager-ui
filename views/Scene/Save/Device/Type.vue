@@ -78,6 +78,10 @@ const props = defineProps({
     type: Object as PropType<TriggerDeviceOptions>,
     default: () => ({}),
   },
+  options: {
+    type: Object,
+    default: () => ({})
+  }
 });
 
 const formModel = reactive({
@@ -93,7 +97,7 @@ const formModel = reactive({
 Object.assign(formModel, props.operator);
 
 const optionCache = reactive({
-  action: "",
+  action: props.optionsCache?.action || "",
 });
 
 const readProperties = ref<any[]>([]);
