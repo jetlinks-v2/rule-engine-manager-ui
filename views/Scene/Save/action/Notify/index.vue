@@ -62,6 +62,9 @@
                             :notify="formModel"
                             :template="template"
                             :options='formModel.options'
+                            :name="name"
+                            :thenName="thenName"
+                            :branchesName="branchesName"
                             @change="(val) => onValChange(val, 'variables')"
                             ref="variableRef"
                         />
@@ -94,6 +97,7 @@ import { getTemplateDetail , queryTemplateDetail} from '../../../../../api/other
 import { PropType } from 'vue';
 import { NotifyProps } from '../../../typings';
 import { useI18n } from 'vue-i18n'
+import Modal from "@/modules/rule-engine-manager-ui/views/Scene/Save/action/Modal/index.vue";
 
 const { t: $t } = useI18n()
 const props = defineProps({
@@ -105,9 +109,17 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    branchesName: {
+      type: Number,
+      default: 0,
+    },
+    thenName: {
+      type: Number,
+      default: 0,
+    },
     name: {
-        type: Number,
-        default: 0,
+      type: Number,
+      default: 0,
     },
 });
 

@@ -85,6 +85,9 @@
     <ActionTypeComponent
       v-bind="props"
       v-if="!!actionType"
+      :name="name"
+      :branchGroup="thenName"
+      :branchesName="branchesName"
       :actionType="actionType"
       :options="
           _data.branches[branchesName].then[thenName].actions[name].options
@@ -137,6 +140,10 @@ const props = defineProps({
   name: {
     type: Number,
     default: 0,
+  },
+  branchesGroup: {
+    type: Number,
+    default: 0
   },
   data: {
     type: Object as PropType<ActionsType>,

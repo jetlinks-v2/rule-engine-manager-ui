@@ -39,6 +39,7 @@
           v-else-if='addModel.stepNumber === 2'
           :metadata='addModel.metadata'
           :operator='addModel.operator'
+          :options="optionsCache"
         />
     </div>
     <template #footer>

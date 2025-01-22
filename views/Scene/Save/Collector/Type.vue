@@ -1,7 +1,7 @@
 <template>
     <div class="type">
         <a-form ref="typeForm" :model="formModel" layout="vertical" :colon="false">
-            <a-form-item required label="触发类型">
+            <a-form-item required :label="$t('Device.AddModal.3725211-3')">
                 <TopCard
                     :label-bottom="true"
                     :options="topOptions"
@@ -36,6 +36,7 @@ import ReadPoints from "./ReadPoints.vue";
 import WriteProperty from "../Device/WriteProperty.vue";
 import {cloneDeep, omit} from "lodash-es";
 import {sceneImages} from "@ruleEngine/assets";
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
     operator: {
@@ -52,6 +53,7 @@ const props = defineProps({
     }
 });
 
+const { t: $t } = useI18n()
 const formModel = reactive({
     operator: props.operator || 'read',
     timer: {},
@@ -97,19 +99,19 @@ const writeRef = ref();
 
 const topOptions = [
     {
-        label: "读取点位",
+        label: $t('Collector.actions.index-6100078-0'),
         value: "read",
         img: sceneImages.readProperty,
         disabled: false
     },
     {
-        label: "修改点位",
+        label: $t('Collector.actions.index-6100078-17'),
         value: "write",
         img: sceneImages.writeProperty,
         disabled: false
     },
     {
-        label: "点位上报",
+        label: $t('Collector.actions.index-6100078-9'),
         value: "sub",
         img: sceneImages.reportProperty,
         disabled: false

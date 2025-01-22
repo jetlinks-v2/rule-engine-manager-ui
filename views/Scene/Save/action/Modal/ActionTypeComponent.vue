@@ -20,6 +20,9 @@
       v-else-if="actionType === 'notify'"
       :options="data?.options"
       :value="data?.notify"
+      :name="name"
+      :branchGroup="thenName"
+      :branchesName="branchesName"
       @cancel="onCancel"
       @save="onPropsOk"
     />

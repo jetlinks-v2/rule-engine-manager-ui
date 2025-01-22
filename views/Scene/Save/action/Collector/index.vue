@@ -1,6 +1,6 @@
 <template>
   <a-modal
-      title="执行动作"
+      :title="$t('Manual.index.515142-2')"
       visible
       :width="1000"
       @cancel="onCancel"
@@ -10,13 +10,13 @@
     <div class="body_height_60">
       <a-steps :current="current" @change="stepChange">
         <a-step>
-          <template #title>选择通道</template>
+          <template #title>{{ $t('Collector.actions.index-6100078-7') }}</template>
         </a-step>
         <a-step>
-          <template #title>选择采集器</template>
+          <template #title>{{ $t('Collector.actions.index-6100078-8')}}</template>
         </a-step>
         <a-step>
-          <template #title>执行动作</template>
+          <template #title>{{ $t('Device.index.9667820-0')}}</template>
         </a-step>
       </a-steps>
       <div class="steps-content">
@@ -57,16 +57,10 @@
     </div>
     <template #footer>
       <div class="steps-action">
-        <a-button v-if="current === 0" @click="onCancel">取消</a-button>
-        <a-button v-else @click="prev">上一步</a-button>
-        <a-button type="primary" v-if="current < 2" @click="saveClick"
-        >下一步
-        </a-button
-        >
-        <a-button type="primary" v-else @click="saveClick"
-        >确定
-        </a-button
-        >
+        <a-button v-if="current === 0" @click="onCancel">{{ $t('Save.index.551009-1')}}</a-button>
+        <a-button v-else @click="prev">{{ $t('DeviceAccess.index.551011-21') }}</a-button>
+        <a-button type="primary" v-if="current < 2" @click="saveClick">{{ $t('DeviceAccess.index.551011-20')}}</a-button>
+        <a-button type="primary" v-else @click="saveClick">{{ $t('Save.index.551009-0') }}</a-button>
       </div>
     </template>
   </a-modal>
@@ -80,11 +74,14 @@ import {onlyMessage} from '@jetlinks-web/utils';
 import {useRequest} from "@jetlinks-web/hooks";
 import {queryPointNoPaging} from "@ruleEngine/api/collector";
 import {cloneDeep} from "lodash-es";
+import { useI18n } from 'vue-i18n'
 
 type Emit = {
   (e: 'cancel'): void;
   (e: 'save', data: any, options: Record<string, any>): void;
 };
+
+const { t: $t } = useI18n()
 
 const props = defineProps({
   value: {

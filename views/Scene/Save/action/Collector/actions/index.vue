@@ -3,8 +3,8 @@
         <a-form :layout="'vertical'" ref="formRef" :model="modelRef">
             <a-form-item
                 :name="['message', 'messageType']"
-                label="动作类型"
-                :rules="[{ required: true, message: '请选择动作类型' }]"
+                :label="$t('actions.index.9667837-0')"
+                :rules="[{ required: true, message: $t('actions.index.9667837-1') }]"
             >
                 <TopCard
                     :typeList="TypeList"
@@ -15,12 +15,12 @@
             <template v-if="deviceMessageType === 'read'">
                 <a-form-item
                     :name="['message', 'properties']"
-                    label="读取点位"
-                    :rules="[{ required: true, message: '请选择读取点位' }]"
+                    :label="$t('Collector.actions.index-6100078-0')"
+                    :rules="[{ required: true, message: $t('Collector.actions.index-6100078-1') }]"
                 >
                     <a-select
                         showSearch
-                        placeholder="请选择点位"
+                        :placeholder="$t('Collector.actions.index-6100078-2')"
                         v-model:value="modelRef.message.properties"
                     >
                         <a-select-option
@@ -50,17 +50,20 @@
 import TopCard from '../../Device/device/TopCard.vue';
 import WriteProperty from './WriteProperty.vue';
 import {sceneImages} from "@ruleEngine/assets";
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 
 const TypeList = [
     {
-        label: '读取点位',
+        label: $t('Collector.actions.index-6100078-0'),
         value: 'read',
         image: sceneImages.readProperty,
         tip: '',
         disabled: false,
     },
     {
-        label: '设置点位',
+        label: $t('Collector.actions.index-6100078-3'),
         value: 'write',
         image: sceneImages.writeProperty,
         tip: '',

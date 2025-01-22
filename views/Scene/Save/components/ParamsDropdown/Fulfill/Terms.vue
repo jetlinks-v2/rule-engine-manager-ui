@@ -52,9 +52,11 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:value', 'add'])
+const _defaultValue = defaultTermsValue()
+
+const emit = defineEmits(['update:value', 'add', 'delete'])
 const formItemContext = Form.useInjectFormItemContext();
-const {show, mouseover, mouseout} = useMouseEvent(props.showDeleteBtn)
+const {show, mouseover, mouseout} = useMouseEvent(toRefs(props).showDeleteBtn)
 const { t: $t} = useI18n()
 const columnOptions = useColumnOptions()
 const aggregationOption = useAggOptions()
@@ -79,8 +81,9 @@ const paramsValue = reactive({
   column: props.value?.column,
   type: props.value?.type,
   termType: props.value?.termType,
-  value: props.value?.value || defaultTermsValue.value,
-  function: props.value.function
+  value: props.value?.value || _defaultValue.value,
+  function: props.value.function,
+  key: props.value.key || _defaultValue.key
 })
 
 const showDouble = computed(() => {
@@ -224,10 +227,14 @@ const termsTypeSelect = (e) => {
 }
 
 const valueSelect = () => {
-  fulFillData.value.filter[props.whenIndex].terms[props.index] = toRaw(paramsValue)
+  fulFillData.value.filter[props.whenIndex].terms[props.index] = {...paramsValue}
   nextTick(() => {
     formItemContext.onFieldChange();
   })
+}
+
+const onDelete = () => {
+  emit('delete')
 }
 
 watch(
@@ -286,6 +293,14 @@ watch(
       />
     </div>
     <div class="params-item_button" @mouseover="mouseover" @mouseout="mouseout">
+      <ConfirmModal
+        :title="$t('Terms.WhenItem.9093425-2')"
+        :onConfirm="onDelete"
+        :show="show"
+        className="terms-params-delete"
+      >
+        <AIcon type="CloseOutlined" />
+      </ConfirmModal>
       <DropdownButton
         :options="columnOptions"
         icon="icon-zhihangdongzuoxie-1"

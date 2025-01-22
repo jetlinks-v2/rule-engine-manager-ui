@@ -11,6 +11,7 @@ import { useSceneStore } from '@ruleEngine/store/scene'
 import {detail, productDetail} from "@ruleEngine/api/instance";
 import {cloneDeep} from "lodash-es";
 import TermItem from './Terms.vue'
+import {randomNumber} from "@jetlinks-web/utils";
 
 const props = defineProps({
   value: {
@@ -104,8 +105,9 @@ const showVisible = async () => {
       {
         type: 'and',
         terms: [
-          defaultTermsValue
-        ]
+          defaultTermsValue()
+        ],
+        key: randomNumber()
       }
     ]
   }
@@ -115,9 +117,14 @@ const onAdd = () =>{
   dataCache.value.filter.push({
     type: 'and',
     terms: [
-      defaultTermsValue
-    ]
+      defaultTermsValue()
+    ],
+    key: randomNumber()
   })
+}
+
+const onDelete = (index) => {
+  dataCache.value.filter.splice(index, 1)
 }
 
 const onSwitch = (e) => {
@@ -165,7 +172,7 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
       v-model:visible="visible"
       title="配置条件"
       width="800px"
-      :okText="$t('Save.index.551010-2')"
+      :okText="$t('Save.index.551009-0')"
       :keyboard="false"
       :maskClosable="false"
       @ok="onSelect"
@@ -179,11 +186,13 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
         <div style="display: flex; padding-top: 10px;overflow: auto">
           <WhenItem
             v-for="(item, index) in dataCache.filter"
+            :key="item.key"
             :data="item"
             :showDeleteBtn="dataCache.filter.length > 1"
             :isFirst="index === 0"
             :isLast="index === dataCache.filter.length - 1"
             @add="onAdd"
+            @delete="() => onDelete(index)"
           />
         </div>
       </a-form>
@@ -211,6 +220,8 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
             :showAggregationOption="true"
             :builtInOptions="builtInOptions"
             :showBuildIn="true"
+            :whenIndex="0"
+            :index="0"
             v-model:value="aggregation"
           />
         </div>
