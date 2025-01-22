@@ -97,7 +97,7 @@ const formModel = reactive({
 Object.assign(formModel, props.operator);
 
 const optionCache = reactive({
-  action: props.optionsCache?.action || "",
+  action: props.options?.action || "",
 });
 
 const readProperties = ref<any[]>([]);
