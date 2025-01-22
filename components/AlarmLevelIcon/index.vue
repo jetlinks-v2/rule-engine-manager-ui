@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { configImages } from '../../assets/index';
+import { configImages } from '@ruleEngine/assets/index';
 defineOptions({
   name: 'LevelIcon'
 })
@@ -16,7 +16,7 @@ const props = defineProps({
 })
 
 const src = computed(() => {
-  return configImages.alarm[props.level]
+  return configImages.alarm[props.level - 1]
 })
 
 
