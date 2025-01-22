@@ -22,6 +22,7 @@ const props = defineProps({
       column: undefined,
       termType: 'eq',
       value: undefined,
+      type: 'and'
     }),
   },
   whenIndex: {
@@ -34,8 +35,8 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:data', 'add'])
-const {show, mouseover, mouseout} = useMouseEvent(props.showDeleteBtn)
+const emit = defineEmits(['update:data', 'add', 'delete'])
+const {show, mouseover, mouseout} = useMouseEvent(toRefs(props).showDeleteBtn)
 const { t: $t} = useI18n()
 const termsData = computed(() => props.data.terms)
 
@@ -44,7 +45,7 @@ const paramsValue = reactive({
 })
 
 const typeSelect = () => {
-
+  props.data.type = paramsValue.type
 }
 
 const addWhen = () => {
@@ -52,11 +53,16 @@ const addWhen = () => {
 }
 
 const onDelete = () => {
-
+  emit('delete')
 }
 
 const termsItemAdd = () => {
-  props.data.terms.push(defaultTermsValue)
+  props.data.terms.push(defaultTermsValue())
+  emit('update:data', toRaw(props.data))
+}
+
+const termsItemDelete = (index) => {
+  props.data.terms.splice(index, 1)
   emit('update:data', toRaw(props.data))
 }
 
@@ -91,12 +97,15 @@ const termsItemAdd = () => {
         </ConfirmModal>
         <a-form-item v-for="(item, index) in termsData">
           <TermsItem
+            :key="item.key"
             :value="item"
             :isFirst="index === 0"
             :isLast="termsData.length - 1 === index"
             :whenIndex="whenIndex"
             :index="index"
+            :showDeleteBtn="termsData.length !== 1"
             @add="termsItemAdd"
+            @delete="() => termsItemDelete(index)"
           />
         </a-form-item>
       </div>

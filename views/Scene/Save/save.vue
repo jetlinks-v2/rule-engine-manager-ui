@@ -46,6 +46,7 @@ import type { PropType } from "vue";
 import type { FormInstance } from "ant-design-vue";
 import { useMenuStore } from "@/store/menu";
 import { useI18n } from 'vue-i18n'
+import { modify, save } from "../../../api/scene";
 
 type Emit = {
   (e: "close"): void;

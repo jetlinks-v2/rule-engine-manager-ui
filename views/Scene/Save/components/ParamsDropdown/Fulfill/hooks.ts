@@ -1,14 +1,14 @@
-export const useMouseEvent = (showDeleteBtn: boolean) => {
+export const useMouseEvent = (showDeleteBtn: Ref<boolean>) => {
   const show = ref(false)
 
   const mouseover = () => {
-    if (showDeleteBtn) {
+    if (showDeleteBtn.value) {
       show.value = true;
     }
   };
 
   const mouseout = () => {
-    if (showDeleteBtn) {
+    if (showDeleteBtn.value) {
       show.value = false;
     }
   };
