@@ -1,8 +1,8 @@
 <template>
   <pro-search
     type="simple"
-    @search="handleSearch"
     class="scene-search"
+    @search="handleSearch"
   />
   <j-pro-table
     ref="actionRef"
@@ -42,7 +42,7 @@
             <a-row class="card-item-content-box">
               <a-col :span="24">
                 <div class="card-item-content-text">
-                  点位数量
+                  {{ $t('Collector.actions.index-6100078-6') }}
                 </div>
                 <div class="card-item-content-text">
                   {{ slotProps.pointNumber }}
@@ -58,14 +58,15 @@
 
 <script setup lang="ts" name="Collector">
 import {queryCollector} from '@ruleEngine/api/collector'
-import {imgMap, protocolList} from './data'
-import {cloneDeep} from "lodash-es";
+import { useI18n } from 'vue-i18n'
 
 type Emit = {
   (e: "update:rowKey", data: string): void;
   (e: "update:detail", data: string): void;
   (e: "change", data: string): void;
 };
+
+const { t: $t } = useI18n()
 
 const props = defineProps({
   rowKey: {

@@ -2,6 +2,7 @@
   <FullPage>
     <JProTable
       mode="CARD"
+      style="padding: 16px 0"
       :request="queryTable"
       :gridColumns="[1, 2, 3]"
       :defaultParams="{

@@ -277,8 +277,8 @@
             </template>
             <template v-if="item.executor === 'device-data' && show">
               <div
-                  v-if="['fixed', 'context'].includes(item.configuration?.selector?.selector)"
-                  style="display: flex; align-items: center"
+                v-if="['fixed', 'context'].includes(item.configuration?.selector?.selector)"
+                style="display: flex; align-items: center"
               >
                 <AIcon type="icon-mubiao" style="padding: 0 4px" />
                 <j-ellipsis style="max-width: 120px; margin-right: 12px">
@@ -288,7 +288,7 @@
                   {{ item.options?.propertiesName }}
                 </j-ellipsis>
                 <span
-                    v-if="
+                  v-if="
                     !isBoolean(item.options?.propertiesValue) &&
                     item.options?.propertiesValue
                   "
@@ -297,20 +297,20 @@
                 <j-ellipsis style="max-width: 120px">
                   {{
                     `${
-                        (
-                            isBoolean(item.options?.propertiesValue)
-                                ? true
-                                : item.options?.propertiesValue
-                        )
-                            ? `${item.options?.propertiesValue}`
-                            : ""
+                      (
+                        isBoolean(item.options?.propertiesValue)
+                          ? true
+                          : item.options?.propertiesValue
+                      )
+                        ? `${item.options?.propertiesValue}`
+                        : ""
                     }`
                   }}
                 </j-ellipsis>
               </div>
               <div v-else-if="item.configuration?.selector.selector === 'tag'">
                 <AIcon
-                    :type="
+                  :type="
                     typeIconMap[
                       item.configuration?.message?.messageType || 'INVOKE_FUNCTION'
                     ]
@@ -323,7 +323,7 @@
               </div>
               <div v-else-if="item.configuration?.selector?.selector === 'relation'">
                 <AIcon
-                    :type="
+                  :type="
                     typeIconMap[
                       item.configuration?.message?.messageType || 'INVOKE_FUNCTION'
                     ]

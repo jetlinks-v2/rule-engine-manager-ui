@@ -64,6 +64,10 @@ const props = defineProps({
         type: Array as PropType<ListProps['actions']>,
         default: () => [],
     },
+    branchesGroup: {
+      type: Number,
+      default: 0
+    },
     parallel: Boolean,
 });
 

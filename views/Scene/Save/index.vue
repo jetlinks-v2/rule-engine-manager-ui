@@ -8,7 +8,7 @@
           </j-ellipsis>
           <div class="type">
             <img :src="TriggerHeaderIcon[data.triggerType]" />
-            {{ keyByLabel[data.triggerType] }}
+            {{ data.trigger.typeName }}
           </div>
           <div style="flex: 1 1 0; min-width: 0; margin-left: 8px">
             <Description v-model:value="data.description" />
@@ -37,18 +37,17 @@
 import { storeToRefs } from "pinia";
 import { useSceneStore } from "../../../store/scene";
 import { TriggerHeaderIcon } from "./asstes";
-import { keyByLabel } from "../typings";
+import {modify, queryActionType} from "../../../api/scene";
+import { useMenuStore } from "@/store/menu";
+import { onlyMessage } from "@jetlinks-web/utils";
+import { handleFeatures, actionIconMap } from "./util";
+import { useI18n } from 'vue-i18n'
+import {useRequest} from "@jetlinks-web/hooks";
 import Device from "./Device/index.vue";
 import Manual from "./Manual/index.vue";
 import Timer from "./Timer/index.vue";
 import Collector from "./Collector/index.vue";
-import {modify, queryActionType} from "../../../api/scene";
-import { useMenuStore } from "@/store/menu";
-import { onlyMessage } from "@jetlinks-web/utils";
 import Description from "./components/Description.vue";
-import { handleFeatures, actionIconMap } from "./util";
-import { useI18n } from 'vue-i18n'
-import {useRequest} from "@jetlinks-web/hooks";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

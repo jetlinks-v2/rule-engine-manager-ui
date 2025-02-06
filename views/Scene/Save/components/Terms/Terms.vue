@@ -455,7 +455,7 @@ const changePaneIndex = (index) => {
 };
 
 watchEffect(() => {
-    if (data.value.trigger?.device) {
+    if (data.value.trigger?.type && !['timer', 'manual'].includes(data.value.trigger.type)) {
         queryColumn({ trigger: data.value.trigger });
     }
 });

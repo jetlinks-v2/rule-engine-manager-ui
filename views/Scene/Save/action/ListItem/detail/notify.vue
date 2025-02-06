@@ -1,5 +1,5 @@
-<script setup lang="ts">
-
+<script setup name="Notify">
+import { useI18n } from 'vue-i18n';
 import {itemNotifyIconMap} from "@ruleEngine/views/Scene/Save/action/ListItem/util";
 
 defineProps({
@@ -12,6 +12,8 @@ defineProps({
     default: () => ({})
   }
 })
+
+const {t: $t} = useI18n();
 </script>
 
 <template>

@@ -21,7 +21,7 @@
                 {{ options?.name }}
               </template>
               <template v-else>
-                <component :is="components[data.executor]" :data="data" :options="options" @visibleChange="(e) => triggerVisible = e"  />
+                <component :is="ComponentsMap[data.executor]" :data="data" :options="options" @visibleChange="(e) => triggerVisible = e"  />
               </template>
             </div>
             <a-button v-else @click="onAdd">{{ $t('ListItem.Item.637563-17') }}</a-button>
@@ -85,6 +85,9 @@
     <ActionTypeComponent
       v-bind="props"
       v-if="!!actionType"
+      :name="name"
+      :branchGroup="thenName"
+      :branchesName="branchesName"
       :actionType="actionType"
       :options="
           _data.branches[branchesName].then[thenName].actions[name].options
@@ -106,7 +109,6 @@
 </template>
 
 <script lang="ts" setup name="ActionItem">
-import { isBoolean } from "lodash-es";
 import { PropType } from "vue";
 import { ActionsType, ParallelType } from "../../../typings";
 import Modal from "../Modal/index.vue";
@@ -120,17 +122,11 @@ import { randomString } from "@jetlinks-web/utils";
 import { EventEmitter, EventEmitterKeys } from "../../util";
 import CheckItem from "./CheckItem.vue";
 import { useI18n } from 'vue-i18n'
-import { alarm, device, notify} from './detail'
+import ComponentsMap from './detail'
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data: _data } = storeToRefs(sceneStore);
-
-const components = {
-  alarm: alarm,
-  device: device,
-  notify: notify
-}
 
 const props = defineProps({
   branchesName: {
@@ -144,6 +140,10 @@ const props = defineProps({
   name: {
     type: Number,
     default: 0,
+  },
+  branchesGroup: {
+    type: Number,
+    default: 0
   },
   data: {
     type: Object as PropType<ActionsType>,

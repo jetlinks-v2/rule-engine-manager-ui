@@ -1,3 +1,13 @@
-export { default as alarm } from './alarm.vue'
-export { default as device } from './device.vue'
-export { default as notify } from './notify.vue'
+import alarm from './alarm.vue'
+import device from './device.vue'
+import notify from './notify.vue'
+import collector from './collector.vue'
+import deviceData from './device-data.vue'
+
+export default {
+  alarm,
+  device,
+  notify,
+  collector,
+  'device-data': deviceData
+}

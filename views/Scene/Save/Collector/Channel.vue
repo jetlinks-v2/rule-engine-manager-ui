@@ -94,9 +94,8 @@
 
 <script setup lang="ts" name="Channel">
 import {query, getProviders} from '@ruleEngine/api/channel'
-import {protocolList, imgMap} from "./data";
+import {protocolList, imgMap, StatusColorEnum} from "./data";
 import { useI18n } from 'vue-i18n';
-import {StatusColorEnum} from "@/modules/data-collector-ui/views/DataCollect/Channel/data";
 
 type Emit = {
   (e: "update:rowKey", data: string): void;

@@ -35,3 +35,10 @@ export const deleteRule = (id:string) => request.remove(`/rule-engine/instance/$
  * @returns 设备详情
  */
 export const detail = (id: string, hiddenError?: any) => request.get(`/device-instance/${id}/detail`, {}, {hiddenError})
+
+/**
+ * 根据产品ID获取产品详情
+ * @param id 产品ID
+ * @returns
+ */
+export const productDetail = (id: string) => request.get(`/device-product/${id}`)

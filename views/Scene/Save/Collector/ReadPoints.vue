@@ -3,13 +3,13 @@
         <a-col :span='10'>
             <a-form-item
                 name='readPoints'
-                :rules="[{ required: true, message: '请选择点位' }]"
+                :rules="[{ required: true, message: $t('Collector.actions.index-6100078-2') }]"
             >
                 <a-select
                     show-search
                     mode='multiple'
                     max-tag-count='responsive'
-                    placeholder='请选择点位'
+                    :placeholder='$t("Collector.actions.index-6100078-2")'
                     style='width: 100%'
                     v-model:value='readPoints'
                     :options='properties'
@@ -19,7 +19,7 @@
             </a-form-item>
         </a-col>
         <a-col :span='14'>
-            <a-form-item>定时读取所选点位</a-form-item>
+            <a-form-item>{{ $t('Collector.actions.index-6100078-14') }}</a-form-item>
         </a-col>
     </a-row>
 </template>
@@ -27,11 +27,14 @@
 <script setup lang='ts' name='ReadProperties'>
 import {filterSelectNode} from '@/utils/comm'
 import type {PropType} from 'vue'
+import { useI18n } from 'vue-i18n'
 
 type Emit = {
     (e: 'update:value', data: Array<string>): void
     (e: 'update:action', data: string): void
 }
+
+const { t: $t } = useI18n()
 
 const props = defineProps({
     value: {
@@ -68,10 +71,10 @@ const change = (values: string[], optionItems: any[]) => {
     }, '');
 
     if (isLimit && names.length - 1 > indexOf) {
-        extraStr += `等${optionItems.length}个点位`;
+        extraStr += $t('Collector.actions.index-6100078-15', [optionItems.length]);
     }
     emit('update:value', values)
-    emit('update:action', `读取 ${extraStr}`)
+    emit('update:action',  $t('Device.ReadProperties.372521-3', [extraStr]))
 }
 
 </script>

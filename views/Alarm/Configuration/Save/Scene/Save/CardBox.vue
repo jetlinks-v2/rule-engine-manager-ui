@@ -58,7 +58,7 @@
                 :showCircular="false"
               >
                 <DeviceTitle
-                  v-if="value.triggerType === 'device'"
+                  v-if="['device', 'collector'].includes(value.triggerType)"
                   :options="value.options?.trigger"
                 />
                 <template v-if="value.triggerType === 'timer'" #extra>

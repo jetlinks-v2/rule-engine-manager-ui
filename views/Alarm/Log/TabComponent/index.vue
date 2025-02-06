@@ -66,49 +66,42 @@
                 </div>
               </div>
               <a-row :gutter="24">
-                <a-col
-                  :span="6"
-                  class="content-left"
-                >
-                  <div class="content-title">{{ $t('TabComponent.index.165152-0') }}</div>
+                <a-col :span="6" class="content-left">
+                  <div class="content-title">
+                    {{ $t("TabComponent.index.165152-0") }}
+                  </div>
                   <j-ellipsis
                     ><div>
                       {{ slotProps?.targetName }}
                     </div></j-ellipsis
                   >
                 </a-col>
-                <a-col
-                  :span="6"
-                >
-                  <div class="content-title">{{ $t('TabComponent.index.165152-1') }}</div>
+                <a-col :span="6">
+                  <div class="content-title">
+                    {{ $t("TabComponent.index.165152-1") }}
+                  </div>
                   <j-ellipsis>
                     <div>
                       {{
-                        dayjs(slotProps?.lastAlarmTime || slotProps?.alarmTime).format(
-                          "YYYY-MM-DD HH:mm:ss"
-                        ) +
-                        $t('TabComponent.index.165152-2') +
-                        (slotProps?.state?.value === "warning"
-                          ? $t('TabComponent.index.165152-3')
-                          : dayjs(slotProps?.handleTime).format(
-                              "YYYY-MM-DD HH:mm:ss"
-                            ))
+                        dayjs(
+                          slotProps?.lastAlarmTime || slotProps?.alarmTime
+                        ).format("YYYY-MM-DD HH:mm:ss")
                       }}
                     </div>
                   </j-ellipsis>
                 </a-col>
-                <a-col
-                  :span="6"
-                >
-                  <div class="content-title">{{ $t('TabComponent.index.165152-4') }}</div>
+                <a-col :span="6">
+                  <div class="content-title">
+                    {{ $t("TabComponent.index.165152-4") }}
+                  </div>
                   <j-ellipsis
                     ><Duration :data="slotProps"></Duration
                   ></j-ellipsis>
                 </a-col>
-                <a-col
-                  :span="6"
-                >
-                  <div class="content-title">{{ $t('TabComponent.index.165152-5') }}</div>
+                <a-col :span="6">
+                  <div class="content-title">
+                    {{ $t("TabComponent.index.165152-5") }}
+                  </div>
                   <j-ellipsis
                     ><div>
                       {{ slotProps?.actualDesc || "--" }}
@@ -117,25 +110,6 @@
                 </a-col>
               </a-row>
             </template>
-<!--            <template #actions="item">-->
-<!--              <j-permission-button-->
-<!--                :disabled="-->
-<!--                  item.key === 'solve' && slotProps.state.value === 'normal'-->
-<!--                "-->
-<!--                :tooltip="{-->
-<!--                  ...item.tooltip,-->
-<!--                }"-->
-<!--                @click="item.onClick"-->
-<!--                :hasPermission="-->
-<!--                  item.key == 'solve'-->
-<!--                    ? 'rule-engine/Alarm/Log:action'-->
-<!--                    : 'rule-engine/Alarm/Log:view'-->
-<!--                "-->
-<!--              >-->
-<!--                <AIcon :type="item.icon" />-->
-<!--                <span>{{ item?.text }}</span>-->
-<!--              </j-permission-button>-->
-<!--            </template>-->
           </CardBox>
         </template>
       </JProTable>
@@ -158,7 +132,12 @@
 </template>
 
 <script lang="ts" setup>
-import { getOrgList, query, getAlarmProduct } from "../../../../api/log";
+import {
+  getOrgList,
+  query,
+  getAlarmProduct,
+  queryAlarmRecordByType,
+} from "../../../../api/log";
 import { useAlarmStore } from "../../../../store/alarm";
 import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
@@ -168,12 +147,14 @@ import LogDrawer from "./components/DetailDrawer.vue";
 import Duration from "../components/Duration.vue";
 import { useAlarmLevel } from "../../../../hook";
 import { logImages } from "../../../../assets/index";
-import { useI18n } from 'vue-i18n'
+import LevelIcon from '@ruleEngine/components/AlarmLevelIcon/index.vue'
+import { useI18n } from "vue-i18n";
+import org from "@/modules/rule-engine-manager-ui/assets/alarm/org.png";
 
-const { t: $t } = useI18n()
+const { t: $t } = useI18n();
 const menuStory = useMenuStore();
 const tableRef = ref();
-const { levelMap, levelList } = useAlarmLevel();
+const { levelMap, getLevelList } = useAlarmLevel();
 const alarmStore = useAlarmStore();
 const { data } = storeToRefs(alarmStore);
 const drawerData = ref();
@@ -186,47 +167,47 @@ const props = defineProps<{
 const imgMap = new Map();
 imgMap.set("product", logImages.product);
 imgMap.set("device", logImages.device);
-imgMap.set("other", logImages.other);
-imgMap.set("org", logImages.org);
+imgMap.set("scene", logImages.other);
+imgMap.set("organization", logImages.org);
 
 const titleMap = new Map();
-titleMap.set("product", $t('TabComponent.index.165152-6'));
-titleMap.set("device", $t('TabComponent.index.165152-7'));
-titleMap.set("other", $t('TabComponent.index.165152-8'));
-titleMap.set("org", $t('TabComponent.index.165152-9'));
+titleMap.set("product", $t("TabComponent.index.165152-6"));
+titleMap.set("device", $t("TabComponent.index.165152-7"));
+titleMap.set("scene", $t("TabComponent.index.165152-8"));
+titleMap.set("organization", $t("TabComponent.index.165152-9"));
 
 const columns = [
   {
-    title: $t('TabComponent.index.165152-10'),
+    title: $t("TabComponent.index.165152-10"),
     dataIndex: "alarmName",
     key: "alarmName",
   },
   {
-    title: $t('TabComponent.index.165152-11'),
+    title: $t("TabComponent.index.165152-11"),
     dataIndex: "targetType",
     key: "targetType",
     scopedSlots: true,
   },
   {
-    title: $t('TabComponent.index.165152-12'),
+    title: $t("TabComponent.index.165152-12"),
     dataIndex: "sourceName",
     key: "sourceName",
   },
   {
-    title: $t('TabComponent.index.165152-13'),
+    title: $t("TabComponent.index.165152-13"),
     dataIndex: "level",
     key: "level",
     width: 200,
     search: {
       type: "select",
       options: async () => {
-        return levelList.value;
+        return getLevelList();
       },
     },
     scopedSlots: true,
   },
   {
-    title: $t('TabComponent.index.165152-1'),
+    title: $t("TabComponent.index.165152-1"),
     dataIndex: "alarmTime",
     key: "alarmTime",
     search: {
@@ -235,18 +216,18 @@ const columns = [
     scopedSlots: true,
   },
   {
-    title: $t('TabComponent.index.165152-14'),
+    title: $t("TabComponent.index.165152-14"),
     dataIndex: "state",
     key: "state",
     search: {
       type: "select",
       options: [
         {
-          label: $t('TabComponent.index.165152-15'),
+          label: $t("TabComponent.index.165152-15"),
           value: "warning",
         },
         {
-          label: $t('TabComponent.index.165152-16'),
+          label: $t("TabComponent.index.165152-16"),
           value: "normal",
         },
       ],
@@ -254,7 +235,7 @@ const columns = [
     scopedSlots: true,
   },
   {
-    title: $t('TabComponent.index.165152-17'),
+    title: $t("TabComponent.index.165152-17"),
     dateIndex: "actions",
     key: "actions",
     scopedSlots: true,
@@ -264,7 +245,7 @@ const columns = [
 
 const newColumns = computed(() => {
   const otherColumns = {
-    title: $t('TabComponent.index.165152-18'),
+    title: $t("TabComponent.index.165152-18"),
     dataIndex: "targetName",
     key: "targetName",
     search: {
@@ -274,18 +255,18 @@ const newColumns = computed(() => {
 
   switch (props.type) {
     case "device":
-      otherColumns.title = $t('TabComponent.index.165152-19');
+      otherColumns.title = $t("TabComponent.index.165152-19");
       break;
-    case "org":
-      otherColumns.title = $t('TabComponent.index.165152-20');
+    case "organization":
+      otherColumns.title = $t("TabComponent.index.165152-20");
       break;
-    case "other":
-      otherColumns.title = $t('TabComponent.index.165152-21');
+    case "scene":
+      otherColumns.title = $t("TabComponent.index.165152-21");
       break;
   }
   if (props.type === "device") {
     const productColumns = {
-      title: $t('TabComponent.index.165152-18'),
+      title: $t("TabComponent.index.165152-18"),
       dataIndex: "product_id",
       key: "product_id",
       search: {
@@ -337,7 +318,10 @@ let params: any = ref({
   terms: [],
 });
 const handleSearch = async (params: any) => {
-  const resp: any = await query(params);
+  const resp: any =
+    props.type !== "all"
+      ? await queryAlarmRecordByType(props.type, params)
+      : await query(params);
   if (resp.status === 200) {
     const res: any = await getOrgList();
     if (res.status === 200) {
@@ -349,7 +333,7 @@ const handleSearch = async (params: any) => {
             }
             //targetName处理之后的
             if (item.targetId === item.targetName) {
-              item.targetName = $t('TabComponent.index.165152-22');
+              item.targetName = $t("TabComponent.index.165152-22");
             }
           });
         }
@@ -361,14 +345,6 @@ const handleSearch = async (params: any) => {
 
 const search = (data: any) => {
   params.value.terms = [...data?.terms];
-  if (props.type !== "all" && !props.id) {
-    params.value.terms.push({
-      termType: "eq",
-      column: "targetType",
-      value: props.type,
-      type: "and",
-    });
-  }
   if (props.type === "device") {
     data?.terms.forEach((i: any, _index: number) => {
       i.terms.forEach((item: any, index: number) => {
@@ -399,9 +375,12 @@ const getActions = (
   const actions = [
     {
       key: "solve",
-      text: $t('TabComponent.index.165152-23'),
+      text: $t("TabComponent.index.165152-23"),
       tooltip: {
-        title: currentData.state?.value === "normal" ? $t('TabComponent.index.165152-16') : $t('TabComponent.index.165152-23'),
+        title:
+          currentData.state?.value === "normal"
+            ? $t("TabComponent.index.165152-16")
+            : $t("TabComponent.index.165152-23"),
       },
       icon: "ToolOutlined",
       onClick: () => {
@@ -411,9 +390,9 @@ const getActions = (
     },
     {
       key: "log",
-      text: $t('TabComponent.index.165152-24'),
+      text: $t("TabComponent.index.165152-24"),
       tooltip: {
-        title: $t('TabComponent.index.165152-24'),
+        title: $t("TabComponent.index.165152-24"),
       },
       icon: "FileOutlined",
       onClick: () => {
@@ -424,16 +403,15 @@ const getActions = (
     },
     {
       key: "detail",
-      text: $t('TabComponent.index.165152-25'),
+      text: $t("TabComponent.index.165152-25"),
       tooltip: {
-        title: $t('TabComponent.index.165152-25'),
+        title: $t("TabComponent.index.165152-25"),
       },
       icon: "FileTextOutlined",
       onClick: () => {
-        menuStory.jumpPage(
-          "rule-engine/Alarm/Log/Record",
-          { query: { id: currentData.id } }
-        );
+        menuStory.jumpPage("rule-engine/Alarm/Log/Record", {
+          query: { id: currentData.id },
+        });
       },
     },
   ];
@@ -458,16 +436,6 @@ const showDrawer = (data: any) => {
   visibleDrawer.value = true;
 };
 onMounted(() => {
-  if (props.type !== "all" && !props.id) {
-    params.value.terms = [
-      {
-        termType: "eq",
-        column: "targetType",
-        value: props.type,
-        type: "and",
-      },
-    ];
-  }
   if (props.id) {
     params.value.terms = [
       {

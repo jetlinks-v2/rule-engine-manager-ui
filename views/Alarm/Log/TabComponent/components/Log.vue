@@ -12,10 +12,10 @@
       >
       <template v-if="column.dataIndex === 'sourceName'">
         <j-ellipsis
-          v-if="record.targetType === 'device'"
+          v-if="['device','organization','product'].includes(record.targetType)"
         >
           {{ $t('components.Log.165155-0') }}
-          <span class="deviceId" @click="() => gotoDevice(record.targetId)">{{
+          <span class="deviceId" @click="() => gotoDevice(record.sourceId)">{{
             text
           }}</span></j-ellipsis
         >
@@ -48,7 +48,6 @@
 <script setup>
 import {
   queryLogList,
-  queryPreconditioningLogList,
 } from "../../../../../api/log";
 import dayjs from "dayjs";
 import { useMenuStore } from "@/store/menu";
@@ -107,14 +106,6 @@ const queryData = async () => {
   const params = {
     pageIndex: 0,
     pageSize: 51,
-    terms: [
-      {
-        column: "alarmRecordId",
-        termType: "eq",
-        value: props.currentId,
-        type: "and",
-      },
-    ],
     sorts: [
       {
         name: "alarmTime",
@@ -122,9 +113,7 @@ const queryData = async () => {
       },
     ],
   };
-  const res = props.goal
-    ? await queryPreconditioningLogList(props.configId, params)
-    : await queryLogList(props.configId, params);
+  const res = await queryLogList(props.currentId, params);
   if (res.success) {
     if (res.result.data?.length > 50) {
       exceed.value = true;
