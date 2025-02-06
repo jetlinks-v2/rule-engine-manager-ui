@@ -275,6 +275,69 @@
                 {{ $t('Save.Actions.0214511-20') }} {{ item.options?.propertiesName }}
               </div>
             </template>
+            <template v-if="item.executor === 'device-data' && show">
+              <div
+                  v-if="['fixed', 'context'].includes(item.configuration?.selector?.selector)"
+                  style="display: flex; align-items: center"
+              >
+                <AIcon type="icon-mubiao" style="padding: 0 4px" />
+                <j-ellipsis style="max-width: 120px; margin-right: 12px">
+                  {{ Array.isArray(item?.options?.name) ? item?.options?.name?.join(',') : item.options?.name }}
+                </j-ellipsis>
+                <j-ellipsis style="max-width: 120px">
+                  {{ item.options?.propertiesName }}
+                </j-ellipsis>
+                <span
+                    v-if="
+                    !isBoolean(item.options?.propertiesValue) &&
+                    item.options?.propertiesValue
+                  "
+                >{{ $t('Save.Actions.0214511-16') }}
+                </span>
+                <j-ellipsis style="max-width: 120px">
+                  {{
+                    `${
+                        (
+                            isBoolean(item.options?.propertiesValue)
+                                ? true
+                                : item.options?.propertiesValue
+                        )
+                            ? `${item.options?.propertiesValue}`
+                            : ""
+                    }`
+                  }}
+                </j-ellipsis>
+              </div>
+              <div v-else-if="item.configuration?.selector.selector === 'tag'">
+                <AIcon
+                    :type="
+                    typeIconMap[
+                      item.configuration?.message?.messageType || 'INVOKE_FUNCTION'
+                    ]
+                  "
+                />
+                {{ item.options?.type }}
+                <span>{{ item.options?.tagName }}</span>
+                {{ $t('Save.Actions.0214511-17') }}{{ item.options?.productName }}
+                {{ item.options?.propertiesName }}
+              </div>
+              <div v-else-if="item.configuration?.selector?.selector === 'relation'">
+                <AIcon
+                    :type="
+                    typeIconMap[
+                      item.configuration?.message?.messageType || 'INVOKE_FUNCTION'
+                    ]
+                  "
+                />
+                {{ item.options?.type }}
+                {{ $t('Save.Actions.0214511-18') }}
+                <span>{{ item.options?.triggerName }}</span>
+                {{ $t('Save.Actions.0214511-19') }} {{ item.options?.relationName }} {{ $t('Save.Actions.0214511-17') }}{{
+                  item.options?.productName
+                }}
+                {{ $t('Save.Actions.0214511-20') }} {{ item.options?.propertiesName }}
+              </div>
+            </template>
           </div>
         </div>
       </div>
