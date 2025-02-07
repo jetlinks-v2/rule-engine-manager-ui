@@ -52,7 +52,7 @@
 
 <script setup>
 import dayjs from "dayjs";
-import JsonViewer from "vue3-json-viewer";
+import { JsonViewer } from "vue3-json-viewer";
 import { useMenuStore } from "@/store/menu";
 import { useI18n } from 'vue-i18n'
 

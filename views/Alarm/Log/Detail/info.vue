@@ -45,7 +45,7 @@
 
 <script lang="ts" setup>
 import dayjs from 'dayjs';
-import JsonViewer from 'vue3-json-viewer';
+import { JsonViewer } from 'vue3-json-viewer';
 import { useAlarmLevel } from '../../../../hook/index';
 import { useI18n } from 'vue-i18n'
 
