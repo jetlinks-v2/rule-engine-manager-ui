@@ -63,26 +63,28 @@
                   style="min-width: 400px"
                   v-if="(item.key === 'upper' ? metricOptions : options).length"
                 >
-                  <a-tree
-                    v-model:expandedKeys="treeOpenKeys"
-                    :selectedKeys="myValue ? [myValue] : []"
-                    :treeData="item.key === 'upper' ? metricOptions : options"
-                    :height="450"
-                    :virtual="true"
-                    :fieldNames="{ key: treeKey }"
-                    @select="treeSelect"
-                  >
-                    <template #title="{ name, description }">
-                      <a-space>
-                        {{ name }}
-                        <span
-                          v-if="description"
-                          class="tree-title-description"
+                  <j-scrollbar height="200">
+                    <a-tree
+                      v-model:expandedKeys="treeOpenKeys"
+                      :selectedKeys="myValue ? [myValue] : []"
+                      :treeData="item.key === 'upper' ? metricOptions : options"
+                      :height="450"
+                      :virtual="true"
+                      :fieldNames="{ key: treeKey }"
+                      @select="treeSelect"
+                    >
+                      <template #title="{ name, description }">
+                        <a-space>
+                          {{ name }}
+                          <span
+                            v-if="description"
+                            class="tree-title-description"
                           >{{ description }}</span
-                        >
-                      </a-space>
-                    </template>
-                  </a-tree>
+                          >
+                        </a-space>
+                      </template>
+                    </a-tree>
+                  </j-scrollbar>
                 </div>
                 <div class="scene-select-empty" v-else>
                   <a-empty />
