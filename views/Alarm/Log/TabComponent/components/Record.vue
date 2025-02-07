@@ -77,16 +77,14 @@ const columns = [
     key: "duration",
   },
   {
-    title: "处理状态",
+    title: $t('components.Record.165159-7'),
     dataIndex: "state",
     key: "state",
-    width: 100,
   },
   {
     title: $t("components.Record.165159-5"),
     dataIndex: "handleType",
     key: "handleType",
-    width: 100,
   },
   {
     title: $t("components.Record.165159-6"),

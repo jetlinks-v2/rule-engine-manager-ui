@@ -94,7 +94,7 @@ const columns = [
         width: 180,
     },
     {
-        title: '处理状态',
+        title: $t('Record.index.165150-8'),
         dataIndex: 'state',
         key: 'state',
         width: 100,
