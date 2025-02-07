@@ -341,6 +341,12 @@ const columnSelect = (option: any) => {
     // 修改操作符
     termTypeChange = true;
     paramsValue.termType = termTypes?.length ? termTypes[0].id : "eq";
+    if(['isnull', 'notnull'].includes(paramsValue.termType)) {
+      paramsValue.value = {
+        source: tabsOptions.value[0].key,
+        value: 1
+      }
+    }
   }
   if (
     hasTypeChange ||
@@ -348,10 +354,17 @@ const columnSelect = (option: any) => {
   ) {
     // 类型发生变化
     paramsValue.termType = termTypes?.length ? termTypes[0].id : "eq";
-    paramsValue.value = {
-      source: tabsOptions.value[0].key,
-      value: undefined,
-    };
+    if(['isnull', 'notnull'].includes(paramsValue.termType)) {
+      paramsValue.value = {
+        source: tabsOptions.value[0].key,
+        value: 1
+      }
+    } else {
+      paramsValue.value = {
+        source: tabsOptions.value[0].key,
+        value: undefined,
+      };
+    }
   } else if (termTypeChange) {
     const oldValue = isArray(paramsValue.value!.value)
       ? paramsValue.value!.value[0]
