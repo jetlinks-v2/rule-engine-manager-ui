@@ -30,6 +30,7 @@ export const getProviders = () => request.get(`/data-collect/channel/providers`)
 
 export const getResourceJson = (provider: string) => request.get(`/data-collect/${provider}/resource/_/script/editor.json`);
 export const getResourceFile = (provider: string, module: string) => request.get(`/data-collect/${provider}/resource/_/script/${module}.vue`, {}, { hiddenError: true });
+export const getResourceLangFile = (provider: string, language: string) => request.get(`/data-collect/${provider}/resource/_/script/lang/${language}.json`, {}, { hiddenError: true });
 
 export const queryOptionsList = (type: string) =>
   request.get(`/data-collect/opc/${type}`);
