@@ -21,9 +21,14 @@
       <CardBox
         :value="slotProps"
         :active="rowKey === slotProps.id"
-        :status="slotProps.state"
-        :statusText="slotProps.state.text"
-        :statusNames="{ enabled: 'processing', disabled: 'error' }"
+        :status="slotProps.uniformState.value"
+        :statusText="slotProps.uniformState.text"
+        :statusNames="{
+          normal: 'success',
+          allError: 'error',
+          partError: 'warning',
+          none: '#646C73',
+        }"
         @click="handleClick"
       >
         <template #content>
