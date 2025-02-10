@@ -318,7 +318,7 @@ watch(
         type="termType"
         value-name="id"
         label-name="name"
-        placeholder="请选择聚合函数"
+        :placeholder="$t('FulFill.Terms-4029416-0')"
         v-model:value="paramsValue.function"
         @select="valueSelect"
       />
@@ -327,7 +327,7 @@ watch(
         type="termType"
         value-name="id"
         label-name="name"
-        placeholder="运算符"
+        :placeholder="$t('FulFill.Terms-4029416-1')"
         v-model:value="paramsValue.termType"
         @select="termsTypeSelect"
       />

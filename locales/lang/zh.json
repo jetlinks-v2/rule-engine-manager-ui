@@ -930,5 +930,11 @@
 	"Collector.actions.index-6100078-15": "等{0}个点位",
 	"Collector.actions.index-6100078-16": "点击配置采集器触发",
 	"Collector.actions.index-6100078-17": "修改点位",
-	"Collector.actions.index-6100078-18": "定时调用所选点位"
+	"Collector.actions.index-6100078-18": "定时调用所选点位",
+	"ParamsDropdown.FulFill-3147419-0": "配置条件",
+	"ParamsDropdown.FulFill-3147419-1": "聚合",
+	"ParamsDropdown.FulFill-3147419-2": "通过聚合函数对数据项进行汇总",
+	"ParamsDropdown.FulFill-3147419-3": "请配置条件",
+	"FulFill.Terms-4029416-0": "请选择聚合函数",
+	"FulFill.Terms-4029416-1": "运算符"
 }

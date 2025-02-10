@@ -146,7 +146,7 @@ const hideVisible = () => {
 }
 
 const tips = computed(() => {
-  return props.value.filter?.length ? '条件' : '请配置条件'
+  return props.value.filter?.length ? $t('Save.utils.021456-40') : '请配置条件'
 })
 
 watch(() => [JSON.stringify(props.value), visible.value], () => {
@@ -170,7 +170,7 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
     </div>
     <a-modal
       v-model:visible="visible"
-      title="配置条件"
+      :title="$t('ParamsDropdown.FulFill-3147419-0')"
       width="800px"
       :okText="$t('Save.index.551009-0')"
       :keyboard="false"
@@ -203,8 +203,8 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
               <AIcon type="FunctionOutlined"/>
             </div>
             <div>
-              <div style="font-size: 16px">聚合</div>
-              <div>通过聚合函数对数据项进行汇总</div>
+              <div style="font-size: 16px">{{$t('ParamsDropdown.FulFill-3147419-1')}}</div>
+              <div>{{$t('ParamsDropdown.FulFill-3147419-2')}}</div>
             </div>
           </div>
           <div class="right">

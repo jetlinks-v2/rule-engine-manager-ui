@@ -1,9 +1,9 @@
 {
-	"Save.index.551009-0": "Determine",
+	"Save.index.551009-0": "Confirm",
 	"Save.index.551009-1": "Cancel",
-	"DeviceAccess.index.551011-12": "",
-	"DeviceAccess.index.551011-20": "",
-	"DeviceAccess.index.551011-21": "",
+	"DeviceAccess.index.551011-12": "Please Select",
+	"DeviceAccess.index.551011-20": "Next",
+	"DeviceAccess.index.551011-21": "Previous",
 	"Scene.index.021455-0": "Add",
 	"Scene.index.021455-1": "View details",
 	"Scene.SceneDrawer.021453-0": "Related scene linkage details",
@@ -930,5 +930,11 @@
 	"Collector.actions.index-6100078-15": "and {0} other locations",
 	"Collector.actions.index-6100078-16": "Click to configure the collector trigger",
 	"Collector.actions.index-6100078-17": "Modify the location",
-	"Collector.actions.index-6100078-18": "Regularly call the selected location"
+	"Collector.actions.index-6100078-18": "Regularly call the selected location",
+	"ParamsDropdown.FulFill-3147419-0": "Configure conditions",
+	"ParamsDropdown.FulFill-3147419-1": "Aggregation",
+	"ParamsDropdown.FulFill-3147419-2": "Summarize data entries through aggregation functions.",
+	"ParamsDropdown.FulFill-3147419-3": "Please configure the conditions",
+	"FulFill.Terms-4029416-0": "Please select an agg function",
+	"FulFill.Terms-4029416-1": "Operator"
 }
