@@ -146,7 +146,7 @@ const hideVisible = () => {
 }
 
 const tips = computed(() => {
-  return props.value.filter?.length ? $t('Save.utils.021456-40') : '请配置条件'
+  return props.value.filter?.length ? $t('Save.utils.021456-40') : $t('ParamsDropdown.FulFill-3147419-3')
 })
 
 watch(() => [JSON.stringify(props.value), visible.value], () => {
