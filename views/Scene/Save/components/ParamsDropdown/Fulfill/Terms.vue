@@ -227,7 +227,11 @@ const termsTypeSelect = (e) => {
 }
 
 const valueSelect = () => {
-  fulFillData.value.filter[props.whenIndex].terms[props.index] = {...paramsValue}
+  if(props.showAggregationOption) {
+    fulFillData.value.aggregation = [{...paramsValue}]
+  } else {
+    fulFillData.value.filter[props.whenIndex].terms[props.index] = {...paramsValue}
+  }
   nextTick(() => {
     formItemContext.onFieldChange();
   })

@@ -9,7 +9,7 @@ import {
 } from "./util";
 import { useSceneStore } from '@ruleEngine/store/scene'
 import {detail, productDetail} from "@ruleEngine/api/instance";
-import {cloneDeep} from "lodash-es";
+import {cloneDeep, isArray, isNil} from "lodash-es";
 import TermItem from './Terms.vue'
 import {randomNumber} from "@jetlinks-web/utils";
 
@@ -37,6 +37,7 @@ const dataCache = ref([])
 const visible = ref(false)
 const showPropertyList = ref(false)
 const formRef = ref()
+const formAggregationRef = ref()
 const builtInOptions = ref([])
 
 const aggregation = ref({
@@ -63,9 +64,50 @@ useAggContext(aggregationOptions)
 useColumnContext(arrayTermsOptions)
 useFulfillDataContext(dataCache)
 
+const rules = [
+  {
+    validator: async (_, v) => {
+      if (v !== undefined && !v.error) {
+        if (!Object.keys(v).length) {
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-0')));
+        }
+        if (!v.column) {
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-1')));
+        }
+        if (!v.termType) {
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-2')));
+        }
+        if (isNil(v.value?.value)) {
+          if (v.value?.filter?.length) {
+            return Promise.resolve();
+          }
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-3')));
+        }
+        if (
+          isArray(v.value.value) &&
+          v.value.value.some((_v) => _v === undefined)
+        ) {
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-3')));
+        }
+      } else {
+        if (v?.error) { // 数据发生变化
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-0')))
+        }
+        return Promise.reject(new Error($t('Terms.TermsItem.9093428-1')));
+      }
+      return Promise.resolve();
+    },
+  }
+]
 const onSelect = async () => {
   const result = await formRef.value.validateFields()
   if (result) {
+    if(formAggregationRef.value) {
+      const valid = await formAggregationRef.value.validateFields()
+      if(!valid) {
+        return
+      }
+    }
     let obj = cloneDeep(dataCache.value)
     if (aggregation.value.value.value) {
       obj.aggregation = [{ ...cloneDeep(aggregation.value)}]
@@ -129,6 +171,7 @@ const onDelete = (index) => {
 
 const onSwitch = (e) => {
   if (!e) {
+    delete dataCache.value.aggregation
     aggregation.value = {
       column: undefined,
       value: { source: 'fixed', value: undefined },
@@ -187,7 +230,9 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
           <WhenItem
             v-for="(item, index) in dataCache.filter"
             :key="item.key"
+            :termsName="index"
             :data="item"
+            :whenIndex="index"
             :showDeleteBtn="dataCache.filter.length > 1"
             :isFirst="index === 0"
             :isLast="index === dataCache.filter.length - 1"
@@ -212,18 +257,27 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
           </div>
         </div>
         <div v-if="showPropertyList" class="array-property-list">
-          <TermItem
-            v-if="visible"
-            :options="arrayTermsOptions"
-            :isLast="false"
-            :showDeleteBtn="false"
-            :showAggregationOption="true"
-            :builtInOptions="builtInOptions"
-            :showBuildIn="true"
-            :whenIndex="0"
-            :index="0"
-            v-model:value="aggregation"
-          />
+          <a-form
+            ref="formAggregationRef"
+            :model="dataCache.aggregation">
+            <a-form-item
+              :name="[0]"
+              :rules="rules"
+            >
+              <TermItem
+                v-if="visible"
+                :options="arrayTermsOptions"
+                :isLast="false"
+                :showDeleteBtn="false"
+                :showAggregationOption="true"
+                :builtInOptions="builtInOptions"
+                :showBuildIn="true"
+                :whenIndex="0"
+                :index="0"
+                v-model:value="aggregation"
+              />
+            </a-form-item>
+          </a-form>
         </div>
       </div>
     </a-modal>
