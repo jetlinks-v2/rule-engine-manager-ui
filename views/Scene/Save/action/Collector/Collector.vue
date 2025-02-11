@@ -21,12 +21,25 @@
       <CardBox
         :value="slotProps"
         :active="rowKey === slotProps.id"
-        :status="slotProps.uniformState.value"
-        :statusText="slotProps.uniformState.text"
+        :status="
+          slotProps.state.value == 'disabled'
+          ? slotProps.state.value
+          : slotProps.runningState.value
+        "
+        :statusText="
+            slotProps.state.value == 'disabled'
+          ? slotProps.state.text
+          : slotProps.runningState.text"
         :statusNames="{
-          normal: 'success',
+          running: 'success',
+          enabled: 'success',
           allError: 'error',
+          disabled: 'error',
+          partialError: 'error',
+          failed: 'error',
           partError: 'warning',
+          notActive: 'warning',
+          stopped: 'default',
           none: '#646C73',
         }"
         @click="handleClick"

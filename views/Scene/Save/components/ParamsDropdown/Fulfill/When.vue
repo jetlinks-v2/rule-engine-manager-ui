@@ -6,6 +6,7 @@ import TermsItem from './Terms.vue'
 import {
   defaultTermsValue
 } from "./util";
+import {isArray, isNil} from "lodash-es";
 
 const props = defineProps({
   isLast: {
@@ -29,6 +30,10 @@ const props = defineProps({
     type: Number,
     default: 0
   },
+  termsName: {
+    type: Number,
+    default: 0
+  },
   showDeleteBtn: {
     type: Boolean,
     default: true,
@@ -40,8 +45,44 @@ const {show, mouseover, mouseout} = useMouseEvent(toRefs(props).showDeleteBtn)
 const { t: $t} = useI18n()
 const termsData = computed(() => props.data.terms)
 
+const rules = [
+  {
+    validator: async (_, v) => {
+      if (v !== undefined && !v.error) {
+        if (!Object.keys(v).length) {
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-0')));
+        }
+        if (!v.column) {
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-1')));
+        }
+        if (!v.termType) {
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-2')));
+        }
+        if (isNil(v.value?.value)) {
+          if (v.value?.filter?.length) {
+            return Promise.resolve();
+          }
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-3')));
+        }
+        if (
+          isArray(v.value.value) &&
+          v.value.value.some((_v) => _v === undefined)
+        ) {
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-3')));
+        }
+      } else {
+        if (v?.error) { // 数据发生变化
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-0')))
+        }
+        return Promise.reject(new Error($t('Terms.TermsItem.9093428-1')));
+      }
+      return Promise.resolve();
+    },
+  }
+]
+
 const paramsValue = reactive({
-  type: 'and'
+  type: props.data.type || 'and'
 })
 
 const typeSelect = () => {
@@ -95,7 +136,11 @@ const termsItemDelete = (index) => {
         >
           <AIcon type="CloseOutlined" />
         </ConfirmModal>
-        <a-form-item v-for="(item, index) in termsData">
+        <a-form-item
+          v-for="(item, index) in termsData"
+          :name="[whenIndex, 'terms', index]"
+          :rules="rules"
+          >
           <TermsItem
             :key="item.key"
             :value="item"

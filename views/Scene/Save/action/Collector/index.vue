@@ -206,12 +206,12 @@ const save = async (step?: number) => {
   if (_step === 0) {
     CollectorModel.pointSelectInfos[0]?.channelId
         ? (current.value = 1)
-        : onlyMessage('请选择通道', 'error');
+        : onlyMessage($t('Collector.actions.index-6100078-10'), 'error');
   } else if (_step === 1) {
     if (CollectorModel.pointSelectInfos[0]?.collectorId) {
       current.value = 2;
     } else {
-      onlyMessage('请选择采集器', 'error');
+      onlyMessage($t('Collector.actions.index-6100078-11'), 'error');
     }
   } else {
     if (actionRef.value) {
