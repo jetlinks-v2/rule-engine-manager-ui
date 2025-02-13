@@ -365,7 +365,7 @@ const initQueryTime = (data: any) => {
 };
 const selectChange = () => {
   let time = "1m";
-  let format = 'M月dd日 HH:mm';
+  let format = 'MM-dd HH:mm';
   let limit = 12;
   const dt = queryCodition.endTime - queryCodition.startTime;
   const hour = 60 * 60 * 1000;
@@ -382,11 +382,11 @@ const selectChange = () => {
   } else if (dt > day && dt < year) {
     limit = Math.abs(Math.ceil(dt / day)) + 1;
     time = "1d";
-    format = 'M月dd日 HH:mm:ss';
+    format = 'MM-dd HH:mm:ss';
   } else if (dt >= year) {
     limit = Math.abs(Math.floor(dt / month));
     time = "1M";
-    format = 'yyyy年-M月';
+    format = 'yyyy-MM';
   }
 
   // 告警趋势

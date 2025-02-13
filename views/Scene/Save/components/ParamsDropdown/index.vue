@@ -98,6 +98,7 @@
                 :options="item.key === 'upper' ? metricOptions : options"
                 :extra="props"
                 @change="valueItemChange"
+                style="width: 100%"
               />
 
               <j-value-item
@@ -107,6 +108,7 @@
                 :options="item.key === 'upper' ? metricOptions : options"
                 :extraProps="props"
                 @change="valueItemChange"
+                style="width: 100%"
               />
             </div>
           </a-tab-pane>

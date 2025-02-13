@@ -11,7 +11,7 @@
     <DeviceData
         v-else-if="actionType === 'device-data'"
         v-bind="props"
-        :value="data?.device"
+        :value="data?.configuration"
         :options="options"
         @cancel="onCancel"
         @save="onPropsOk"

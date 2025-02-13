@@ -14,7 +14,7 @@
         >
           <div v-for="(branch, index) in group.children">
             <div style="display: flex;align-items: center" v-if="show && branch.when.length">
-              <span  style="padding-right: 12px;font-weight: bold;font-size: 16px;width: 46px; display: inline-block;">{{ index === 0 ? $t('Save.BranchesTabs.0214510-2') : $t('Save.BranchesTabs.0214510-3') }}</span>
+              <div style="padding-right: 12px;font-weight: bold;font-size: 16px;width: 46px; white-space: nowrap;">{{ index === 0 ? $t('Save.BranchesTabs.0214510-2') : $t('Save.BranchesTabs.0214510-3') }}</div>
               <Terms :when="branch.whenOptions" :data="branch.when" />
             </div>
             <div class="branches-shakeLimit" v-if="show">
