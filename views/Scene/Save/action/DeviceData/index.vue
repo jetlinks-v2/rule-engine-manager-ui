@@ -147,7 +147,7 @@ const onSave = async () => {
         ...DeviceOptions.value,
         otherColumns: [],
     };
-
+    console.log(item)
     emit('save', item, JSON.parse(JSON.stringify(_options)));
 };
 
@@ -187,14 +187,15 @@ const save = async (step?: number) => {
             : onlyMessage($t('Device.index.9667820-11'), 'error');
     } else {
         if (deviceRef.value) {
-            await deviceRef.value?.onFormSave();
-            onSave();
+            const resp = await deviceRef.value?.onFormSave();
+            if(resp){
+              onSave();
+            }
         } else if (DeviceModel.selector.selectorValues?.length) {
             onSave();
         } else {
             onlyMessage($t('Device.index.9667820-12'), 'error');
         }
-
     }
 };
 

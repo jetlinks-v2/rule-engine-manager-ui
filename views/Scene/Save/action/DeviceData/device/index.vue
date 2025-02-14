@@ -379,14 +379,14 @@ const onFormSave = () => {
     formRef.value
       .validate()
       .then(async (_data: any) => {
-        if (modelRef.selector === "fixed") {
-          if (!modelRef?.selectorValues?.[0]?.value) {
+        if (modelRef.selector.selector === "fixed") {
+          if (!modelRef.selector?.selectorValues?.[0]?.value) {
             onlyMessage($t('device.index.9667835-12'), "error");
-            reject(false);
+            resolve(false);
           } else {
             resolve({
               ..._data,
-              selectorValues: modelRef.selectorValues,
+              selectorValues: modelRef.selector.selectorValues,
             });
           }
         } else {
@@ -394,7 +394,7 @@ const onFormSave = () => {
         }
       })
       .catch((err: any) => {
-        reject(err);
+        resolve(false);
       });
   });
 };
