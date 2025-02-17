@@ -65,6 +65,7 @@ const handleBoolean = (key: string) => {
 }
 
 const click = (e: any) => {
+  if(e.key === myValue.value) return
   let _key = ['true', 'false'].includes(e.item?.value) ? handleBoolean(e.item?.value) : e.item?.value
   const findKeyValue = e.key
   const findKey = ['true', 'false'].includes(findKeyValue) ? handleBoolean(findKeyValue) : findKeyValue
