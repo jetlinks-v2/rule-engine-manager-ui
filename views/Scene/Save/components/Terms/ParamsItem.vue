@@ -400,6 +400,9 @@ const columnSelect = (option: any) => {
 };
 
 const termsTypeSelect = (e: { key: string; name: string }) => {
+  if(e.key === 'complex_exists') {
+    paramsValue.value.value = {};
+  }
   const oldValue = isArray(paramsValue.value!.value)
     ? paramsValue.value!.value[0]
     : paramsValue.value!.value;
