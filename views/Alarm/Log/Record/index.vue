@@ -74,14 +74,12 @@ const columns = [
         search: {
             type: 'date',
         },
-        width: 180,
     },
     {
         title: $t('Record.index.165150-1'),
         dataIndex: 'handleTime',
         key: 'handleTime',
         scopedSlots: true,
-        width: 180,
         search: {
             type: 'date',
         },
@@ -91,7 +89,6 @@ const columns = [
         dataIndex: 'alarmDuration',
         key: 'alarmDuration',
         scopedSlots: true,
-        width: 180,
     },
     {
         title: $t('Record.index.165150-8'),
