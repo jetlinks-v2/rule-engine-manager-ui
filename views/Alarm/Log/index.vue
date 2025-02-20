@@ -10,9 +10,9 @@ import { storeToRefs } from 'pinia';
 import  TableComponents  from './TabComponent/index.vue';
 import { useI18n } from 'vue-i18n';
 import { isNoCommunity } from '@/utils/utils';
+import {useAlarmConfigType} from "@/modules/rule-engine-manager-ui/hook/useAlarmConfigType";
 
 
-const list  = ref()
 const alarmStore = useAlarmStore();
 const { data }  = storeToRefs(alarmStore);
 const onTabChange = (key:string) =>{
@@ -20,48 +20,16 @@ const onTabChange = (key:string) =>{
 }
 const { t: $t } = useI18n()
 
-onMounted(()=>{
-    list.value = isNoCommunity ?  [
-    {
-        key: 'all',
-        tab: $t('Log.index.165154-0'),
-    },
-    {
-        key: 'product',
-        tab: $t('Log.index.165154-1'),
-    },
-    {
-        key: 'device',
-        tab: $t('Log.index.165154-2'),
-    },
-    {
-        key: 'organization',
-        tab: $t('Log.index.165154-3'),
-    },
-    {
-        key: 'scene',
-        tab: $t('Log.index.165154-4'),
-    },
-]  :  [
-    {
-        key: 'all',
-        tab: $t('Log.index.165154-0'),
-    },
-    {
-        key: 'product',
-        tab: $t('Log.index.165154-1'),
-    },
-    {
-        key: 'device',
-        tab: $t('Log.index.165154-2'),
-    },
-    {
-        key: 'scene',
-        tab: $t('Log.index.165154-4'),
-    },
-];
-}
-)
+const { supports } = useAlarmConfigType();
+
+const list = computed(() => {
+  return [{key: 'all', tab: $t('Log.index.165154-0')}, ...supports.value.map(item => {
+    return {
+      key: item.value,
+      tab: item.label
+    }
+  })]
+})
 </script>
 <style lang="less" scoped>
 </style>

@@ -263,6 +263,9 @@ const newColumns = computed(() => {
     case "scene":
       otherColumns.title = $t("TabComponent.index.165152-21");
       break;
+    case "collector":
+      otherColumns.title = $t("TabComponent.index.165152-26");
+      break;
   }
   if (props.type === "device") {
     const productColumns = {

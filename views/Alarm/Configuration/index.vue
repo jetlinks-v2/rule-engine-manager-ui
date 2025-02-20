@@ -175,6 +175,7 @@ import { useAlarmLevel } from "../../../hook";
 import { ConfigurationImages } from "../../../assets/index";
 import { isNoCommunity } from '@/utils/utils';
 import { useI18n } from 'vue-i18n'
+import {useAlarmConfigType} from "@/modules/rule-engine-manager-ui/hook/useAlarmConfigType";
 
 const { t: $t } = useI18n()
 const params = ref<Record<string, any>>({});
@@ -185,6 +186,7 @@ const visibleDelete = ref(false);
 const configId = ref();
 const deleteState = ref(false);
 const alarmRecordNumber = ref(0);
+const { supports } = useAlarmConfigType();
 const columns = [
   {
     title: $t('Configuration.index.021440-5'),
@@ -203,39 +205,9 @@ const columns = [
     scopedSlots: true,
     search: {
       type: "select",
-      options: isNoCommunity
-        ? [
-          {
-            label: $t('Configuration.index.021440-7'),
-            value: 'product',
-          },
-          {
-            label: $t('Configuration.index.021440-8'),
-            value: 'device',
-          },
-          {
-            label: $t('Configuration.index.021440-9'),
-            value: 'org',
-          },
-          {
-            label: $t('Configuration.index.021440-10'),
-            value: 'other',
-          },
-        ]
-        : [
-          {
-            label: $t('Configuration.index.021440-7'),
-            value: 'product',
-          },
-          {
-            label: $t('Configuration.index.021440-8'),
-            value: 'device',
-          },
-          {
-            label: $t('Configuration.index.021440-10'),
-            value: 'other',
-          },
-        ],
+      options: () => {
+        return supports.value
+      },
     },
     width: 150,
   },

@@ -108,6 +108,7 @@ import { storeToRefs } from "pinia";
 import { configImages } from "../../../../../assets/index";
 import { isNoCommunity } from "@/utils/utils";
 import { useI18n } from "vue-i18n";
+import { useAlarmConfigType } from "@ruleEngine/hook/useAlarmConfigType";
 
 const { t: $t } = useI18n();
 const route = useRoute();
@@ -188,25 +189,11 @@ let form = ref({
   name: "",
   description: "",
 });
-let options = ref();
+const { supports: options } = useAlarmConfigType();
 let levelOption = ref();
 let loading = ref(false);
 const formRef = ref();
 const menuStory = useMenuStore();
-const getSupports = async () => {
-  let res = await getTargetTypes();
-  if (res.status === 200) {
-    options.value = res.result
-      .map((item: { id: string; name: string }) => ({
-        label: item.name,
-        value: item.id,
-      }))
-      .filter((i: any) => {
-        return i.value !== "collector";
-      });
-  }
-};
-getSupports();
 const getLevel = () => {
   queryLevel().then((res) => {
     if (res.status === 200) {
