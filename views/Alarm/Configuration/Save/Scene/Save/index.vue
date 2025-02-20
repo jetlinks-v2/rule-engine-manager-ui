@@ -27,7 +27,7 @@
           terms: [
             {
               column: 'triggerType',
-              value: props.type === 'scene' ? null : 'device'
+              value: props.type === 'scene' ? null : props.type === 'collector' ? 'collector' : 'device',
             },
             {
               terms: [

@@ -108,6 +108,7 @@ const columns = ref([
     title: $t('Detail.index.165158-4'),
     dataIndex: "action",
     key: "action",
+    width: 100,
     scopedSlots: true,
   },
 ]);
@@ -145,9 +146,9 @@ const terms = [
 /**
  * 获取详情列表
  */
-const queryList = async (params: any) => {
+const queryList = (params: any) => {
   if (id) {
-    const res: any = await queryLogList(id, {
+    return queryLogList(id, {
       ...params,
     })
   }
@@ -207,6 +208,7 @@ watch(
             title: $t('Detail.index.165158-4'),
             dataIndex: "action",
             key: "action",
+            width: 100,
             scopedSlots: true,
           },
         ];

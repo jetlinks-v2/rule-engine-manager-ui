@@ -19,6 +19,14 @@
             text
           }}</span></j-ellipsis
         >
+        <j-ellipsis
+          v-else-if="['collector'].includes(record.targetType)"
+        >
+          {{ $t('components.Log.165155-10') }}
+          <span class="deviceId" @click="() => gotoCollector(record.sourceId)">{{
+              text
+            }}</span></j-ellipsis
+        >
         <j-ellipsis v-else>{{ $t('components.Log.165155-1') }}<span class="deviceId" @click="() => gotoRule(record)">{{text}}</span></j-ellipsis>
       </template>
       <template
@@ -53,6 +61,7 @@ import dayjs from "dayjs";
 import { useMenuStore } from "@/store/menu";
 import LogDetail from "./LogDetail.vue";
 import { useI18n } from 'vue-i18n'
+import { queryCollectorById } from "@ruleEngine/api/collector";
 
 const { t: $t } = useI18n()
 const props = defineProps({
@@ -128,6 +137,13 @@ const queryData = async () => {
 const gotoDevice = (id) => {
   menuStory.jumpPage("device/Instance/Detail", {
     params: { id, tab: "Running" },
+  });
+};
+
+const gotoCollector = async (id) => {
+  const res = await queryCollectorById(id);
+  menuStory.jumpPage("DataCollect/Collector", {
+    query: { channelId: res.result.channelId },
   });
 };
 
