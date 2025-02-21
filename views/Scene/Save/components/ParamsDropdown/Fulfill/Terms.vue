@@ -282,11 +282,11 @@ watch(
   { immediate: true }
 );
 
-// watch(() => JSON.stringify(paramsValue), () => {
-//   if(props.showAggregationOption) {
-//     emit('update:value', toRaw(paramsValue))
-//   }
-// })
+watch(() => JSON.stringify(paramsValue), () => {
+  if(props.showAggregationOption) {
+    emit('update:value', toRaw(paramsValue))
+  }
+})
 </script>
 
 <template>
