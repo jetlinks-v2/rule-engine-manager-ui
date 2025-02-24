@@ -188,4 +188,5 @@ export const actionIconMap = {
     'delay': 'icon-yanchizhihang',
     'trigger': 'icon-chufagaojing',
     'relieve': 'icon-jiechugaojing',
+    'device-data': 'icon-shebei'
 }

@@ -18,7 +18,7 @@
                         @change="onChange"
                     >
                         <a-select-option
-                            v-for="item in pointList"
+                            v-for="item in writePointList"
                             :value="item?.id"
                             :key="item?.id"
                             >{{ item?.name }}</a-select-option
@@ -89,6 +89,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:value', 'change', 'update:columnMap']);
 
+const writePointList = computed(() => {
+  return props.pointList.filter((item: any) => item.accessModes.some((mode: any) => mode.value === 'write'))
+})
 const propertyFormRef = ref();
 const columnMap = ref(props.columnMap || {})
 

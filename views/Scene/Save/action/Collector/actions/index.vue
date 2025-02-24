@@ -50,9 +50,14 @@
 import TopCard from '../../Device/device/TopCard.vue';
 import WriteProperty from './WriteProperty.vue';
 import {sceneImages} from "@ruleEngine/assets";
-import { useI18n } from 'vue-i18n'
+import { useI18n } from 'vue-i18n';
+import {getParams} from "@ruleEngine/views/Scene/Save/util";
+import {useSceneStore} from "@ruleEngine/store/scene";
+import {storeToRefs} from "pinia";
 
 const { t: $t } = useI18n()
+const sceneStore = useSceneStore();
+const { data } = storeToRefs(sceneStore);
 
 const TypeList = [
     {
@@ -159,9 +164,52 @@ const getColumnMap = () => {
     return columnMap.value;
 };
 
-const handleChange = () => {
-  modelRef.message.properties = undefined;
+const queryBuiltIn = async () => {
+  const _params = {
+    branch: props.thenName,
+    branchGroup: props.branchesName,
+    action: props.name - 1,
+  };
+  const _data = await getParams(_params, unref(data));
+  builtInList.value = _data;
+};
+
+
+const handleChange = (val) => {
+  columnMap.value = {};
+  const flag = val === 'write';
+  modelRef.message = {
+    messageType: val,
+    properties: (flag ? undefined : []) as any,
+    inputs: [],
+  };
+  if (flag) {
+    queryBuiltIn();
+  }
 }
+
+watch(
+  () => props.values?.message,
+  (newVal) => {
+    if (newVal?.messageType) {
+      modelRef.message = JSON.parse(JSON.stringify(newVal));
+      if (
+        ['WRITE_PROPERTY', 'INVOKE_FUNCTION'].includes(
+          newVal.messageType,
+        )
+      ) {
+        queryBuiltIn();
+      } else {
+        if (!modelRef.message.properties) {
+          modelRef.message = Object.assign(modelRef.message, {
+            properties: [],
+          });
+        }
+      }
+    }
+  },
+  { immediate: true },
+);
 defineExpose({
     onFormSave,
     getColumnMap
