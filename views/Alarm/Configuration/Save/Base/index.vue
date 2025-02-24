@@ -29,6 +29,9 @@
                       <div>
                         {{ $t("Base.index.021452-6") }}
                       </div>
+                      <div>
+                        {{ $t("Base.index.021452-15") }}
+                      </div>
                     </template>
                     <AIcon
                       type="QuestionCircleOutlined"
