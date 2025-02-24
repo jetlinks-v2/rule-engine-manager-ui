@@ -168,7 +168,7 @@ const { t: $t } = useI18n()
 const params = ref<Record<string, any>>({});
 let visible = ref(false);
 const tableRef = ref<Record<string, any>>({});
-const { params: routeParams } = useRouterParams();
+const routerParams = useRouterParams();
 const query = {
     columns: [
         {
@@ -349,7 +349,7 @@ const closeSave = () => {
     visible.value = false;
 };
 onMounted(() => {
-    if (history.state?.params) {
+    if (routerParams.params.value?.save) {
         add();
     }
 });
