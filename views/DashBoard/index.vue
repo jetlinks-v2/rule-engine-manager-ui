@@ -426,14 +426,6 @@ const selectChange = () => {
       limit: 9,
     },
   };
-  let tip = $t('DashBoard.index.753511-13');
-  if (queryCodition.targetType === "device") {
-    tip = $t('DashBoard.index.753511-10');
-  } else if (queryCodition.targetType === "product") {
-    tip = $t('DashBoard.index.753511-11');
-  } else if (queryCodition.targetType === "organization") {
-    tip = $t('DashBoard.index.753511-12');
-  }
   // 网络请求
   dashboard([chartData, order]).then((res) => {
     if (res.status == 200) {
@@ -476,7 +468,7 @@ const selectChange = () => {
           },
           series: [
             {
-              name: tip,
+              name: supports.value.find(item => item.value === queryCodition.targetType)?.label,
               data: sData.reverse(),
               type: "line",
               smooth: true,
