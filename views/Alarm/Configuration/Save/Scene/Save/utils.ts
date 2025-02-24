@@ -261,6 +261,12 @@ typeMap.set('device', {
     icon: ConfigurationImages.deviceIcon,
     tip: $t('Save.utils.021456-39'),
 });
+typeMap.set('collector', {
+    text: $t('Save.utils.021456-41'),
+    img: ConfigurationImages.sceneDevice,
+    icon: ConfigurationImages.deviceIcon,
+    tip: $t('Save.utils.021456-42'),
+});
 
 export const handleGroupAndFilter = (branches: any[], when: any[]) =>{
     const group: any[] = []

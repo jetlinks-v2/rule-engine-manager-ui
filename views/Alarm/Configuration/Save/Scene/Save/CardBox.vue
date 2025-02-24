@@ -4,7 +4,7 @@
       <div class="card-type">
         <div class="card-type-text">
           <img :height="16" :src="itemType.icon" style="margin-right: 5px" />
-          {{ itemType.text }}
+          {{ value.trigger.typeName }}
         </div>
       </div>
       <div class="card-content" :style="{ paddingTop: '40px' }">

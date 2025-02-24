@@ -1,5 +1,5 @@
 <template>
-  <j-modal
+  <a-modal
     visible
     :title="$t('HandTrigger.index.0214513-0')"
     :okText="$t('HandTrigger.index.0214513-1')"
@@ -88,7 +88,7 @@
         </template>
       </JProTable>
     </div>
-  </j-modal>
+  </a-modal>
 </template>
 
 <script setup>

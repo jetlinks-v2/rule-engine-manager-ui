@@ -124,7 +124,7 @@ const onCancel = () => {
 };
 
 const onSave = async () => {
-    let metadata = productDetail.value.metadata;
+    let metadata = productDetail.value.metadata || '{}';
     if (DeviceModel.selector.selector === 'fixed' && DeviceModel.selector.selectorValues === 1) {
       const resp = await detail(DeviceModel.selector.selectorValues[0].id);
       if (resp.success) {

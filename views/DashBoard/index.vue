@@ -101,6 +101,7 @@ import { useMenuStore } from "@/store/menu";
 import { query } from "../../api/scene";
 import { dashBoardImg } from "../../assets/index";
 import { useI18n } from 'vue-i18n'
+import {useAlarmConfigType} from "@/modules/rule-engine-manager-ui/hook/useAlarmConfigType";
 
 const { t: $t } = useI18n()
 
@@ -124,17 +125,16 @@ let alarmState = ref<any[]>([
     status: "error",
   },
 ]);
-const selectOpt1 = ref<Object[]>([
-  { label: $t('DashBoard.index.753511-10'), value: "device" },
-  { label: $t('DashBoard.index.753511-11'), value: "product" },
-  { label: $t('DashBoard.index.753511-12'), value: "organization" },
-  { label: $t('DashBoard.index.753511-13'), value: "scene" },
-]);
-const selectOpt2 = ref<any["options"]>([
-  { label: $t('DashBoard.index.753511-10'), value: "device" },
-  { label: $t('DashBoard.index.753511-11'), value: "product" },
-  { label: $t('DashBoard.index.753511-13'), value: "scene" },
-]);
+
+const { supports } = useAlarmConfigType();
+const selectOpt1 = computed(() => {
+  return supports.value
+});
+const selectOpt2 = computed(() => {
+  return supports.value.filter((item) => {
+    return item.value !== 'organization'
+  })
+})
 let queryCodition = reactive({
   startTime: 0,
   endTime: 0,
