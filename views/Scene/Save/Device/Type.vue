@@ -272,6 +272,14 @@ defineExpose({
     });
   },
 });
+watch(() => formModel.operator, (newVal, oldVal) => {
+  typeForm.value?.resetFields();
+  if(newVal === 'readProperty') {
+    formModel.writeProperties = {}
+  } else if(newVal === 'writeProperty') {
+    formModel.readProperties = []
+  }
+})
 </script>
 
 <style scoped lang="less">
