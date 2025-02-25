@@ -60,6 +60,9 @@ export enum OperatorType {
   'readProperty' = 'readProperty',
   'writeProperty' = 'writeProperty',
   'invokeFunction' = 'invokeFunction',
+  'write' = 'write',
+  'read' = 'read',
+  'sub' = 'sub',
 }
 
 export enum TimerTrigger {

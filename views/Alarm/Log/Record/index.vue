@@ -15,9 +15,6 @@
                 :request="query"
                 :params="params"
             >
-                <template #headerLeftRender>
-                    <h3>{{ $t('Record.index.165150-0') }}</h3>
-                </template>
                 <template #handleTime="slotsProps">
                     <span>
                         {{
