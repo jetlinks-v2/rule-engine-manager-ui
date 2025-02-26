@@ -322,6 +322,8 @@
 	"components.Record.165159-5": "Processing type",
 	"components.Record.165159-6": "Processing results",
 	"components.Record.165159-7": "Processing state",
+	"components.Record.165159-8": "processed",
+	"components.Record.165159-9": "unprocessed",
 	"components.Log.165155-0": "Equipment Name:",
 	"components.Log.165155-1": "Scene linkage name:",
 	"components.Log.165155-2": "View more",

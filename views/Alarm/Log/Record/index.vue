@@ -114,8 +114,6 @@ const columns = [
             ],
         },
     },
-    
-    
     {
         title: $t('Record.index.165150-7'),
         dataIndex: 'description',
