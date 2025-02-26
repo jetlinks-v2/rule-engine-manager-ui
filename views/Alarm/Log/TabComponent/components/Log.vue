@@ -1,4 +1,10 @@
 <template>
+  <pro-search
+      :columns="columns"
+      @search="onSearch"
+      type="simple"
+      style="padding: 0"
+  />
   <a-table
     :dataSource="dataSource"
     :columns="columns"
@@ -88,6 +94,9 @@ const columns = [
     title: $t('components.Log.165155-4'),
     dataIndex: "alarmTime",
     key: "alarmTime",
+    search: {
+      type: 'date',
+    },
   },
   {
     title: $t('components.Log.165155-5'),
@@ -98,11 +107,17 @@ const columns = [
     title: $t('components.Log.165155-6'),
     dataIndex: "sourceName",
     key: "sourceName",
+    search: {
+      type: 'string',
+    },
   },
   {
     title: $t('components.Log.165155-7'),
     dataIndex: "actualDesc",
     key: "actualDesc",
+    search: {
+      type: 'string',
+    },
   },
   {
     title: $t('components.Log.165155-8'),
@@ -111,8 +126,9 @@ const columns = [
     width: 100,
   },
 ];
-const queryData = async () => {
+const queryData = async (e = {}) => {
   const params = {
+    ...e,
     pageIndex: 0,
     pageSize: 51,
     sorts: [
@@ -133,6 +149,10 @@ const queryData = async () => {
     }
   }
 };
+
+const onSearch = (e) => {
+  queryData(e)
+}
 
 const gotoDevice = (id) => {
   menuStory.jumpPage("device/Instance/Detail", {
