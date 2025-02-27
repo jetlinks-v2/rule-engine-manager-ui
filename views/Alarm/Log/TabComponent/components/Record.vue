@@ -1,4 +1,10 @@
 <template>
+  <pro-search
+      :columns="columns"
+      @search="onSearch"
+      type="simple"
+      style="padding: 0"
+  />
   <a-table
     :dataSource="dataSource"
     :columns="columns"
@@ -60,16 +66,23 @@ const props = defineProps({
 const exceed = ref();
 const dataSource = ref([]);
 const menuStory = useMenuStore();
+// const params = ref({})
 const columns = [
   {
     title: $t("components.Record.165159-2"),
     dataIndex: "alarmTime",
     key: "alarmTime",
+    search: {
+      type: 'date',
+    },
   },
   {
     title: $t("components.Record.165159-3"),
     dataIndex: "handleTime",
     key: "handleTime",
+    search: {
+      type: 'date',
+    },
   },
   {
     title: $t("components.Record.165159-4"),
@@ -80,21 +93,52 @@ const columns = [
     title: $t('components.Record.165159-7'),
     dataIndex: "state",
     key: "state",
+    search: {
+      type: 'select',
+      options: [
+        {
+          label: $t('components.Record.165159-8'),
+          value: 'processed',
+        },
+        {
+          label: $t('components.Record.165159-9'),
+          value: 'unprocessed',
+        },
+      ],
+    },
   },
   {
     title: $t("components.Record.165159-5"),
     dataIndex: "handleType",
     key: "handleType",
+    search: {
+      type: 'select',
+      options: [
+        {
+          label: $t('Record.index.165150-3'),
+          value: 'system',
+        },
+        {
+          label: $t('Record.index.165150-4'),
+          value: 'user',
+        },
+      ],
+    },
   },
   {
     title: $t("components.Record.165159-6"),
     dataIndex: "description",
     key: "description",
+    search: {
+      type: 'string',
+    },
   },
 ];
-const queryList = async () => {
+
+const queryList = async (params = {}) => {
   const res = await queryHandleHistory(props.currentId, {
     sorts: [{ name: "createTime", order: "desc" }],
+    ...params,
     pageIndex: 0,
     pageSize: 51,
   });
@@ -108,6 +152,11 @@ const queryList = async () => {
     }
   }
 };
+
+const onSearch = (e) => {
+  // params.value = e
+  queryList(e)
+}
 const gotoAlarmRecord = () => {
   menuStory.jumpPage("rule-engine/Alarm/Log/Record", {
     query: { id: props.currentId },
@@ -120,7 +169,7 @@ defineExpose({
   refreshRecord,
 });
 onMounted(() => {
-  queryList();
+  queryList({});
 });
 </script>
 <style lang="less" scoped>

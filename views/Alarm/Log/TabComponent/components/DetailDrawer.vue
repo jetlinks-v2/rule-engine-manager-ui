@@ -56,7 +56,7 @@
     <a-radio-group
       v-model:value="activeKey"
       button-style="solid"
-      style="margin: 20px 0"
+      style="margin-bottom: 20px"
     >
       <a-radio-button value="record">{{ $t('components.DetailDrawer.488913-2') }}</a-radio-button>
       <a-radio-button value="logs">{{ $t('components.DetailDrawer.488913-3') }}</a-radio-button>
