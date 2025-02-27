@@ -226,6 +226,9 @@ watchEffect(() => {
 
 <style scoped lang="less">
 @import "../DropdownButton/index.less";
+.select-box-content {
+  overflow: auto;
+}
 .manual-time-picker {
   position: absolute;
   top: -2px;

@@ -78,11 +78,11 @@ const _value = ref([])
 
 const handleOptions = (item: any, type: string) => {
     if (type === 'enum') {
-        return item.valueType.elements?.map((a: any) => ({ ...a, label: a.text }))
+        return item.dataType.elements?.map((a: any) => ({ ...a, label: a.text }))
     } else if (type === 'boolean') {
         return [
-            { label: item.valueType.trueText, value: item.valueType.trueValue },
-            { label: item.valueType.falseText, value: item.valueType.falseValue },
+            { label: item.dataType.trueText, value: item.dataType.trueValue },
+            { label: item.dataType.falseText, value: item.dataType.falseValue },
         ]
     }
     return undefined
@@ -94,12 +94,12 @@ const callDataOptions = computed(() => {
         return _valueKeys.map(key => {
             const item: any = props.properties.find((p: any) => p.id === key)
             if (item) {
-                const _options = handleOptions(item, item.valueType?.type)
+                const _options = handleOptions(item, item.dataType?.type)
                 return {
                     id: item.id,
                     name: item.name,
-                    type: item.valueType ? item.valueType.type : '-',
-                    format: item.valueType ? item.valueType.format : undefined,
+                    type: item.dataType ? item.dataType.type : '-',
+                    format: item.dataType ? item.dataType.format : undefined,
                     options: _options,
                     value: props.value[key]
                 }
