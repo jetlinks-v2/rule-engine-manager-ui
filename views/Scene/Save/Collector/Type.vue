@@ -17,7 +17,7 @@
                 v-model:action="optionCache.action"
                 :properties="readPoints"
             />
-            <WriteProperty
+            <WritePoint
                 ref="writeRef"
                 v-if="showWriteProperty"
                 v-model:value="formModel.writePoints"
@@ -33,7 +33,7 @@ import {TopCard, Timer} from "../components";
 import type {TriggerDeviceOptions} from "../../typings";
 import type {PropType} from "vue";
 import ReadPoints from "./ReadPoints.vue";
-import WriteProperty from "../Device/WriteProperty.vue";
+import WritePoint from "./WritePoint.vue";
 import {cloneDeep, omit} from "lodash-es";
 import {sceneImages} from "@ruleEngine/assets";
 import { useI18n } from 'vue-i18n'
@@ -57,8 +57,8 @@ const { t: $t } = useI18n()
 const formModel = reactive({
     operator: props.operator || 'read',
     timer: {},
-    readPoints: props.operator === 'sub' ? [] : props.collectorConfig?.pointSelectInfo?.pointIds || [],
-    writePoints: props.operator === 'sub' ? {} : props.collectorConfig?.pointSelectInfo?.pointIds[0] ?  {
+    readPoints: props.collectorConfig?.pointSelectInfo?.pointIds || [],
+    writePoints: props.collectorConfig?.pointSelectInfo?.pointIds[0] ?  {
        [props.collectorConfig?.pointSelectInfo?.pointIds[0]]: props.collectorConfig?.collectorConfig?.value
     } : {},
     value: '',
@@ -71,8 +71,15 @@ const optionCache = reactive({
 });
 
 const readPoints = computed(() => {
+    /**
+     * 读：1（001）
+     * 写：2（010）
+     * 订阅：4（100）
+     * 可使用按位与计算来校验是否包含对应枚举
+     * 例如，判断是否包含读：accessModes & 1 !== 0，判断是否包含写：accessModes & (1 << 1) !== 0
+     */
     return props.pointList.filter((item) => {
-        return item.accessModes.find((v) => v.value === "read");
+        return item.accessModeMask & (1 << 1);
     }).map((item) => {
         return {
             ...item,
@@ -83,7 +90,7 @@ const readPoints = computed(() => {
 });
 const writePoints = computed(() => {
     return props.pointList.filter((item) => {
-        return item.accessModes.find((v) => v.value === "write");
+        return item.accessModeMask & (1 << 1);
     }).map((item) => {
         return {
             ...item,
@@ -129,6 +136,11 @@ const showWriteProperty = computed(() => {
 const showTimer = computed(() => {
     return ['read', 'write'].includes(formModel.operator);
 });
+
+watch(() => formModel.operator, () => {
+    formModel.writePoints = {};
+    formModel.readPoints = [];
+})
 
 defineExpose({
     vail: () => {
