@@ -65,7 +65,7 @@ const columnType = ref();
 const termTypeOptions = ref([])
 const valueOptions = ref([])
 const tabsOptions = ref([
-  { label: $t('Terms.ParamsItem.9093430-7'), key: "fixed", component: "string" },
+  { label: $t('Terms.ParamsItem.9093430-7'), key: "fixed", component: "int" },
 ]);
 
 if (props.showBuildIn) {
@@ -101,7 +101,6 @@ const showArray = computed(() => {
 const handOptionByColumn = (option) => {
   if (option) {
     termTypeOptions.value = option.termTypes || [];
-    tabsOptions.value[0].component = option.dataType;
     columnType.value = option.dataType;
 
     if (option.dataType === "boolean") {
@@ -198,20 +197,6 @@ const termsTypeSelect = (e) => {
   const oldValue = isArray(paramsValue.value.value) ? paramsValue.value.value[0] : paramsValue.value.value;
   let value = arrayParamsKey.includes(e.key) ? [oldValue, undefined] : oldValue;
 
-  // 如果上次的值 在 timeTypeKeys中 则不变
-  if (columnType.value === "date") {
-    if (timeTypeKeys.includes(e.key)) {
-      if (tabsOptions.value[0].component !== "int") {
-        value = undefined;
-      }
-      tabsOptions.value[0].component = "int";
-    } else if (
-      !timeTypeKeys.includes(e.key) && tabsOptions.value[0].component === "int"
-    ) {
-      value = undefined;
-      tabsOptions.value[0].component = "date";
-    }
-  }
 
   const _source = paramsValue.value?.source || tabsOptions.value[0].key;
   const newValue = {
@@ -263,19 +248,6 @@ watch(
         copyValue.error = true;
         emit("update:value", copyValue);
         formItemContext.onFieldChange();
-      }
-      //数据类型为date时判断是选择还是手动输入
-      if (option?.dataType === "date") {
-        if (timeTypeKeys.includes(paramsValue.termType || "")) {
-          if (tabsOptions.value[0].component !== "int") {
-          }
-          tabsOptions.value[0].component = "int";
-        } else if (
-          !timeTypeKeys.includes(paramsValue.termType || "") &&
-          tabsOptions.value[0].component === "int"
-        ) {
-          tabsOptions.value[0].component = "date";
-        }
       }
     }
   },
@@ -374,6 +346,7 @@ watch(() => JSON.stringify(paramsValue), () => {
           :options="valueOptions"
           :tabsOptions="tabsOptions"
           :metricOptions="builtInOptions"
+          valueName="id"
           v-model:value="paramsValue.value.value"
           v-model:source="paramsValue.value.source"
           @select="valueSelect"
