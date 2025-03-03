@@ -180,7 +180,18 @@ const titleMap = computed(() => {
   return map
 })
 
-const columns = [
+const columns = ref([
+  {
+    title: '告警源',
+    dataIndex: 'sourceName',
+    key: 'sourceName',
+    search: {
+      type: 'select',
+      options: () => {
+        return sourceNameFilter.value
+      }
+    },
+  },
   {
     title: $t("TabComponent.index.165152-10"),
     dataIndex: "alarmName",
@@ -191,11 +202,6 @@ const columns = [
     dataIndex: "targetType",
     key: "targetType",
     scopedSlots: true,
-  },
-  {
-    title: $t("TabComponent.index.165152-12"),
-    dataIndex: "sourceName",
-    key: "sourceName",
   },
   {
     title: $t("TabComponent.index.165152-13"),
@@ -245,7 +251,21 @@ const columns = [
     scopedSlots: true,
     width: 200,
   },
-];
+]);
+
+const sourceNameFilter = computed(() => {
+  return tableRef.value.dataSource.reduce((arr: any, cur: any) => {
+    if (!arr.includes(cur.sourceName)) {
+      arr.push(cur.sourceName)
+    }
+    return arr
+  }, []).map((item: any) => {
+    return {
+      label: item,
+      value: item
+    }
+  })
+})
 
 const newColumns = computed(() => {
   const otherColumns = {
@@ -313,11 +333,11 @@ const newColumns = computed(() => {
         },
       },
     };
-    return [otherColumns, productColumns, ...columns];
+    return [otherColumns, productColumns, ...columns.value];
   }
   return ["all", "detail"].includes(props.type)
-    ? columns
-    : [otherColumns, ...columns];
+    ? columns.value
+    : [otherColumns, ...columns.value];
 });
 
 let params: any = ref({
@@ -457,6 +477,14 @@ onMounted(() => {
     params.value.terms = [];
   }
 });
+
+watch(() => JSON.stringify(tableRef.value?.dataSource), (val) => {
+  columns.value.forEach((item) => {
+    if(item.key === 'sourceName') {
+      item.search!.options = sourceNameFilter.value
+    }
+  })
+})
 </script>
 <style lang="less" scoped>
 .content-title {

@@ -64,7 +64,7 @@ import Collector from './Collector.vue'
 import Type from './Type.vue'
 import { handleTimerOptions } from '../components/Timer/util'
 import { Form } from 'ant-design-vue'
-import { queryPointNoPaging } from '@ruleEngine/api/collector'
+import {queryPointNoPaging, queryPointNoPagingV2} from '@ruleEngine/api/collector'
 import { useI18n } from 'vue-i18n'
 
 type Emit = {
@@ -199,7 +199,7 @@ const save = async (step?: number) => {
     } else if (_step === 1) {
         // 选择方式为设备且仅选中一个设备时，物模型取该设备
         addModel.pointSelectInfo.collectorId ? addModel.stepNumber = 2 : onlyMessage($t('Collector.actions.index-6100078-11'), 'error')
-        const res = await queryPointNoPaging({
+        const res = await queryPointNoPagingV2({
             terms: [
                 {
                     column: 'collectorId',

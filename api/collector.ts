@@ -79,6 +79,9 @@ export const writePoint = (collectorId: string, data: string[]) =>
 export const queryPointNoPaging = (data: any) =>
   request.post(`/data-collect/point/_query/no-paging`, data);
 
+export const queryPointNoPagingV2 = (data: any) => 
+  request.post(`/data-collect/point/convert/_query/no-paging`, data)
+
 export const scanOpcUAList = (data: any) =>
   request.get(
     `/data-collect/opc/channel/${data.id}/nodes?nodeId=${data?.nodeId || ''

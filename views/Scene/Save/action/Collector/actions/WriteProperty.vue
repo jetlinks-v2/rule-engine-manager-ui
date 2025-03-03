@@ -90,7 +90,19 @@ const props = defineProps({
 const emit = defineEmits(['update:value', 'change', 'update:columnMap']);
 
 const writePointList = computed(() => {
-  return props.pointList.filter((item: any) => item.accessModes.some((mode: any) => mode.value === 'write'))
+  /**
+   * 读：1（001）
+   * 写：2（010）
+   * 订阅：4（100）
+   * 可使用按位与计算来校验是否包含对应枚举
+   * 例如，判断是否包含读：accessModes & 1 !== 0，判断是否包含写：accessModes & (1 << 1) !== 0
+   */
+  return props.pointList.filter((item: any) => (item.accessModeMask & (1 << 1)) !== 0).map((item: any) => {
+    return {
+      ...item,
+      component: item.dataType.type
+    }
+  })
 })
 const propertyFormRef = ref();
 const columnMap = ref(props.columnMap || {})
@@ -102,7 +114,7 @@ const propertyModelRef = reactive({
 });
 
 const getType = computed(() => {
-    return props.metadata.properties.find(
+    return props.pointList.find(
         (item: any) => item.id === propertyModelRef.properties,
     );
 });
@@ -111,7 +123,7 @@ const tabOptions = computed(() => {
     return [
         {
             label: $t('actions.FunctionItem.9667832-1'),
-            component: getType.value?.valueType?.type,
+            component: getType.value?.dataType?.type,
             key: 'fixed',
         },
         {
@@ -140,12 +152,12 @@ const filterParamsData = (type?: string, data?: any[]): any[] => {
 };
 
 const upperOptions = computed(() => {
-    const _data = filterParamsData(getType.value?.valueType?.type, cloneDeep(props?.builtInList))
+    const _data = filterParamsData(getType.value?.dataType?.type, cloneDeep(props?.builtInList))
     return _data
 });
 
 const handleOptions = computed(() => {
-    const _item = getType.value?.valueType;
+    const _item = getType.value?.dataType;
     const _type = _item?.type;
     if (_type === 'boolean') {
         return [
