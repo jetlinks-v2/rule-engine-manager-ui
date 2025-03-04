@@ -18,7 +18,7 @@
       >
       <template v-if="column.dataIndex === 'sourceName'">
         <j-ellipsis
-          v-if="['device','organization','product'].includes(record.targetType)"
+          v-if="['device','organization','product'].includes(record.sourceType)"
         >
           {{ $t('components.Log.165155-0') }}
           <span class="deviceId" @click="() => gotoDevice(record.sourceId)">{{
@@ -26,7 +26,7 @@
           }}</span></j-ellipsis
         >
         <j-ellipsis
-          v-else-if="['collector'].includes(record.targetType)"
+          v-else-if="['collector'].includes(record.sourceType)"
         >
           {{ $t('components.Log.165155-10') }}
           <span class="deviceId" @click="() => gotoCollector(record.sourceId)">{{
