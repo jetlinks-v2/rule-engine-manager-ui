@@ -163,7 +163,7 @@ const gotoDevice = (id) => {
 const gotoCollector = async (id) => {
   const res = await queryCollectorById(id);
   menuStory.jumpPage("DataCollect/Collector", {
-    query: { channelId: res.result.channelId },
+    query: { channelId: res.result.channelId, collectorId: res.result.id },
   });
 };
 

@@ -312,6 +312,7 @@
 	"components.LogDetail.1651510-5": "告警源",
 	"components.LogDetail.1651510-6": "设备ID：",
 	"components.LogDetail.1651510-7": "场景联动ID：",
+	"components.LogDetail.1651510-7-1": "采集器ID：",
 	"components.LogDetail.1651510-8": "告警流水",
 	"components.LogDetail.1651510-9": "定时触发",
 	"components.Record.165159-0": "查看更多",

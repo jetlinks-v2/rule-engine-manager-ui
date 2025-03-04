@@ -312,6 +312,7 @@
 	"components.LogDetail.1651510-5": "Alarm source",
 	"components.LogDetail.1651510-6": "Device ID:",
 	"components.LogDetail.1651510-7": "Scene linkage ID:",
+	"components.LogDetail.1651510-7-1": "Collector ID：",
 	"components.LogDetail.1651510-8": "Alarm flow",
 	"components.LogDetail.1651510-9": "Timed trigger",
 	"components.Record.165159-0": "View more",
