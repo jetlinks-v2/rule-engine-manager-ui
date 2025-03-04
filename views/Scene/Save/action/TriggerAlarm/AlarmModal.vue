@@ -39,9 +39,10 @@
                 },
                 {
                   column:
-                    targetType === 'device' ? 'targetType$in' : 'targetType',
-                  value: targetType === 'device' ? [] : 'scene',
-                  type: 'and',
+                    'targetType',
+                    value: targetType === 'device' ? 'collector' : targetType === 'collector' ? ['collector', 'scene'] : 'scene',
+                    type: 'and',
+                    termType: targetType === 'device' ? 'neq' : targetType === 'collector' ? 'in' : 'eq',
                 },
               ],
             },
@@ -150,12 +151,9 @@ const columns = [
         if (resp.success) {
           return resp.result
             .filter((item) => {
-              return props.targetType === "device" || item.id === "scene";
+              return (item.id === props.targetType || item.id === "scene") || (props.targetType === 'device' && item.id !== 'collector');
             })
             .map((item) => ({ label: item.name, value: item.id }))
-            .filter((i) => {
-              return i.value !== "collector";
-            });
         } else {
           return [];
         }
