@@ -104,6 +104,10 @@ const columns = [
           label: $t('Save.index.021458-7'),
           value: "device",
         },
+        {
+          label: $t('Save.utils.021456-41'),
+          value: "collector",
+        },
       ],
     },
   },

@@ -2,6 +2,7 @@
   <pro-search
     type="simple"
     class="scene-search"
+    :columns="columns"
     @search="handleSearch"
   />
   <j-pro-table
@@ -86,6 +87,54 @@ type Emit = {
 
 const {t: $t} = useI18n();
 
+const columns = [
+  {
+    title: $t('Channel.index.290640-3'),
+    dataIndex: 'name',
+    key: 'name',
+    ellipsis: true,
+    fixed: 'left',
+    search: {
+      type: 'string',
+    },
+  },
+  {
+    title: 'ID',
+    key: 'id',
+    dataIndex: 'id',
+    search: {
+      type: 'string'
+    }
+  },
+  {
+    title: $t('Channel.index.290640-5'),
+    dataIndex: 'state',
+    key: 'state',
+    ellipsis: true,
+    scopedSlots: true,
+    search: {
+      type: 'select',
+      options: [
+        { label: $t('Channel.index.290640-6'), value: 'enabled' },
+        { label: $t('Channel.index.290640-7'), value: 'disabled' },
+      ],
+    },
+  },
+  {
+    title: $t('Channel.index.290640-8'),
+    dataIndex: 'runningState',
+    key: 'runningState',
+    ellipsis: true,
+    scopedSlots: true,
+    search: {
+      type: 'select',
+      options: [
+        { label: $t('Channel.index.290640-9'), value: 'running' },
+        { label: $t('Channel.index.290640-10'), value: 'stopped' },
+      ],
+    },
+  },
+]
 const actionRef = ref();
 const params = ref({});
 const props = defineProps({
