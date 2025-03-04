@@ -102,7 +102,7 @@
             </CardBox>
           </template>
           <template #targetType="slotProps">
-            <span>{{ slotProps.trigger.typeName }}</span>
+            <span>{{ supports.find(item => slotProps.targetType === item.value)?.label }}</span>
           </template>
 
           <template #state="slotProps">
@@ -298,7 +298,7 @@ const columns = [
     title: $t('Configuration.index.021440-13'),
     key: "action",
     fixed: "right",
-    width: 170,
+    width: 200,
     scopedSlots: true,
   },
 ];
