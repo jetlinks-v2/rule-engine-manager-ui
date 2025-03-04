@@ -26,7 +26,7 @@
                         :tab="item.label"
                         :key="item.key"
                     >
-                      <a-input :placeholder="$t('ParamsDropdown.Array.9093538-0')" v-model:value="myValue" @change="onSelect"/>
+                      <j-value-item :placeholder="$t('actions.WriteProperty.9667836-3')" v-model:modelValue="myValue" itemType="object" @change="onSelect"/>
                     </a-tab-pane>
                 </a-tabs>
             </div>
@@ -38,6 +38,7 @@
 import type { ValueType } from './typings';
 import { defaultSetting } from './typings';
 import { useI18n } from 'vue-i18n'
+import {onlyMessage} from "@jetlinks-web/utils";
 
 const { t: $t } = useI18n()
 type Emit = {
@@ -68,10 +69,19 @@ const tabsChange = (e: string) => {
 };
 
 const onSelect = () => {
-    const _value = myValue.value.split(',')
-    emit('update:value', _value);
-    label.value = JSON.stringify(_value)
-    emit('select', _value, myValue.value, label.value);
+    if(myValue.value) {
+        try {
+            const _value = JSON.parse(myValue.value);
+            emit('update:value', _value);
+            label.value = JSON.stringify(_value)
+            emit('select', _value, myValue.value, label.value);
+        } catch (e) {
+            onlyMessage('请输入正确格式的数据', 'error')
+        }
+    } else {
+        emit('update:value', undefined);
+        emit('select', '', undefined, undefined);
+    }
 };
 
 const visibleChange = (v: boolean) => {
@@ -83,7 +93,7 @@ watch(()=>props.value,() => {
       myValue.value = undefined
       label.value = '[]'
     } else {
-      myValue.value = props.value.toString()
+      myValue.value = JSON.stringify(props.value)
       label.value = JSON.stringify(props.value)
     }
 }, { immediate: true })
