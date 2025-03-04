@@ -26,3 +26,4 @@ components.d.ts
 *.sw?
 .history
 du-i18n.config.json
+/target
