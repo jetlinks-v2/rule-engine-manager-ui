@@ -1,5 +1,6 @@
 {
   "name": "rule-engine-manager-ui",
+  "id": "rule-engine-manager",
   "version": "1.0.0",
   "description": "规则引擎",
   "main": "index.js",
