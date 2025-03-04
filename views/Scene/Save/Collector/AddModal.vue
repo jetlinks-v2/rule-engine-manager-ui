@@ -37,6 +37,7 @@
                 v-else-if='addModel.stepNumber === 2'
                 :operator='addModel.operator'
                 :collectorConfig="value"
+                :collectorId="addModel.pointSelectInfo?.collectorId"
                 :pointList="pointList"
             />
         </div>

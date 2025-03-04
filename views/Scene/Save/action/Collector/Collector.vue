@@ -89,7 +89,7 @@ const {t: $t} = useI18n();
 
 const columns = [
   {
-    title: $t('Channel.index.290640-3'),
+    title: $t('Save.index.4001415-4'),
     dataIndex: 'name',
     key: 'name',
     ellipsis: true,

@@ -17,11 +17,13 @@ const icon = computed(() => typeIconMap[props.data?.device?.message?.messageType
 </script>
 
 <template>
+  <span>获取</span>
   <div v-if="['fixed', 'context'].includes(info.selector.selector)" style="display: flex; align-items: center">
     <AIcon type="icon-mubiao" style="padding: 0 4px" />
     <j-ellipsis style="max-width: 200px; margin-right: 12px">
       {{ Array.isArray(data.options?.name) ? data.options?.name?.join(',') : data.options?.name }}
     </j-ellipsis>
+    <span>的</span>
   </div>
   <div v-else-if="info.selector.selector === 'tag'">
     <AIcon :type="icon" />
@@ -29,6 +31,7 @@ const icon = computed(() => typeIconMap[props.data?.device?.message?.messageType
     <span>{{ data.options?.tagName }}</span>
     {{ $t('ListItem.Item.637563-13') }}{{ data.options?.productName }}
     {{ data.options?.propertiesName }}
+    <span>的</span>
   </div>
   <div v-else-if="info.selector.selector === 'relation'">
     <AIcon :type="icon" />
@@ -40,6 +43,7 @@ const icon = computed(() => typeIconMap[props.data?.device?.message?.messageType
     }}{{ $t('ListItem.Item.637563-16') }}
     {{ data.options?.propertiesName }}
   </div>
+  <span>设备信息</span>
 </template>
 
 <style scoped lang="less">

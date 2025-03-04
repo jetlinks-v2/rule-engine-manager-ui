@@ -17,7 +17,7 @@
       <AIcon type='icon-canshu' />
       {{ typeof(_value) === 'object' ? _value[0] : _value}}
     </div>
-    <div v-if="value[2][1]" class="dropdown-button value">
+    <div v-if="value[2][1] && typeof value[2] === 'object'" class="dropdown-button value">
       <AIcon type='icon-canshu' />
       {{ _value[1] }}
     </div>

@@ -39,8 +39,11 @@
               :virtual="true"
               @select="treeSelect"
             >
-              <template #title="{ name, fullName, description }">
-                <a-space>
+              <template #title="{ column, name, fullName, description }">
+                <template v-if="slots.includes('title')">
+                  <slot name="title" :data="{column, name, fullName}"></slot>
+                </template>
+                <a-space v-else>
                   {{ name || fullName }}
                   <span v-if="description" class="tree-title-description">{{
                     description
@@ -109,6 +112,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits<Emit>();
+const slots = Object.keys(useSlots());
 
 const label = ref<LabelType>(props.placeholder);
 const selectValue = ref(props.value);
