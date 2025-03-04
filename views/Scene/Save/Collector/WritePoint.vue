@@ -4,7 +4,7 @@
             <a-col :span='10'>
                 <a-form-item
                     name='reportKey'
-                    :rules="[{ required: true, message: $t('Device.WriteProperty.372527-0') }]"
+                    :rules="[{ required: true, message: $t('Device.WriteProperty.372527-0-1') }]"
                 >
                     <a-select
                         showSearch
@@ -143,7 +143,7 @@ const callDataChange = (v: any[]) => {
 const rules = [{
     validator(_: string, value: any) {
         if (!value?.length && callDataOptions.value.length) {
-            return Promise.reject($t('Device.WriteProperty.372527-4'))
+            return Promise.reject($t('Device.WriteProperty.372527-4-1'))
         } else {
             let hasValue = value.find((item: { name: string, value: any}) => !item.value)
             if (hasValue) {

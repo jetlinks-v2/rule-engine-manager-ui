@@ -50,6 +50,10 @@ const props = defineProps({
     collectorConfig: {
         type: Object as PropType<Record<string, any>>,
         default: () => ({}),
+    },
+    collectorId: {
+        type: String,
+        default: '',
     }
 });
 
@@ -57,8 +61,8 @@ const { t: $t } = useI18n()
 const formModel = reactive({
     operator: props.operator || 'read',
     timer: {},
-    readPoints: props.operator === 'sub' ? [] : props.collectorConfig?.pointSelectInfo?.pointIds || [],
-    writePoints: props.operator === 'sub' ? {} : props.collectorConfig?.pointSelectInfo?.pointIds[0] ?  {
+    readPoints: props.collectorId !== props.collectorConfig?.pointSelectInfo?.collectorId ? [] : props.collectorConfig?.pointSelectInfo?.pointIds || [],
+    writePoints: props.collectorId !== props.collectorConfig?.pointSelectInfo?.collectorId ? {} : props.collectorConfig?.pointSelectInfo?.pointIds[0] ?  {
        [props.collectorConfig?.pointSelectInfo?.pointIds[0]]: props.collectorConfig?.collectorConfig?.value
     } : {},
     value: '',
