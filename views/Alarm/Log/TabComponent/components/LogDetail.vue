@@ -62,7 +62,7 @@ import dayjs from "dayjs";
 import { JsonViewer } from "vue3-json-viewer";
 import { useMenuStore } from "@/store/menu";
 import { useI18n } from 'vue-i18n'
-import {queryCollectorById} from "@/modules/rule-engine-manager-ui/api/collector";
+import {queryCollectorById} from "@ruleEngine/api/collector";
 
 const { t: $t } = useI18n()
 const props = defineProps({

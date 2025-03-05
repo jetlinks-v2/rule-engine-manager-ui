@@ -97,7 +97,6 @@ import { getTemplateDetail , queryTemplateDetail} from '../../../../../api/other
 import { PropType } from 'vue';
 import { NotifyProps } from '../../../typings';
 import { useI18n } from 'vue-i18n'
-import Modal from "@/modules/rule-engine-manager-ui/views/Scene/Save/action/Modal/index.vue";
 
 const { t: $t } = useI18n()
 const props = defineProps({

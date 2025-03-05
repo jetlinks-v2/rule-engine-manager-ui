@@ -101,8 +101,8 @@ import { useMenuStore } from "@/store/menu";
 import { query } from "../../api/scene";
 import { dashBoardImg } from "../../assets/index";
 import { useI18n } from 'vue-i18n'
-import {useAlarmConfigType} from "@/modules/rule-engine-manager-ui/hook/useAlarmConfigType";
-import {queryCollectorById} from "@/modules/rule-engine-manager-ui/api/collector";
+import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
+import {queryCollectorById} from "@ruleEngine/api/collector";
 
 const { t: $t } = useI18n()
 
