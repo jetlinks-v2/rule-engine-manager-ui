@@ -23,10 +23,17 @@
         data?.actualDesc
       }}</a-descriptions-item>
       <a-descriptions-item :label="$t('components.LogDetail.1651510-5')" :span="2">
-        <div v-if="data.targetType === 'device'">
+        <div v-if="data.sourceType === 'device'">
           {{ $t('components.LogDetail.1651510-6') }}<a-button
           type="link"
           @click="() => gotoDevice(data?.sourceId)"
+        >{{ data?.sourceId }}</a-button
+        >
+        </div>
+        <div v-if="data.sourceType === 'collector'">
+          {{ $t('components.LogDetail.1651510-7-1') }}<a-button
+          type="link"
+          @click="() => gotoCollector(data?.sourceId)"
         >{{ data?.sourceId }}</a-button
         >
         </div>
@@ -55,6 +62,7 @@ import dayjs from "dayjs";
 import { JsonViewer } from "vue3-json-viewer";
 import { useMenuStore } from "@/store/menu";
 import { useI18n } from 'vue-i18n'
+import {queryCollectorById} from "@/modules/rule-engine-manager-ui/api/collector";
 
 const { t: $t } = useI18n()
 const props = defineProps({
@@ -72,6 +80,13 @@ const closeModal = () => {
 const gotoDevice = (id) => {
   menuStory.jumpPage("device/Instance/Detail", {
     params: { id, tab: "Running" },
+  });
+};
+
+const gotoCollector = async (id) => {
+  const res = await queryCollectorById(id);
+  menuStory.jumpPage("DataCollect/Collector", {
+    query: { channelId: res.result.channelId, collectorId: res.result.id },
   });
 };
 

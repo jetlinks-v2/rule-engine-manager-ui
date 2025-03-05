@@ -11,6 +11,8 @@ iconMap.set('notify', 'icon-xiaoxitongzhi');
 iconMap.set('device', 'icon-shebeishuchu');
 iconMap.set('relieve', 'icon-jiechugaojing');
 iconMap.set('delay', 'icon-yanchizhihang');
+iconMap.set('device-data', 'icon-shebei');
+iconMap.set('collector', 'icon-collector-output');
 
 export const itemNotifyIconMap = new Map();
 itemNotifyIconMap.set(

@@ -293,7 +293,14 @@ watch(() => JSON.stringify(paramsValue), () => {
         v-model:value="paramsValue.column"
         component="treeSelect"
         @select="columnSelect"
-      />
+      >
+        <template #title="{data}">
+          <a-space>
+            <span>{{data.column.split('.')[data.column.split('.').length - 1]}}</span>
+            <span>({{data.name || data.fullName}})</span>
+          </a-space>
+        </template>
+      </DropdownButton>
       <DropdownButton
         v-if="showAggregationOption"
         :options="aggregationOption"

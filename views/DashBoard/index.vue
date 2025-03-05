@@ -102,6 +102,7 @@ import { query } from "../../api/scene";
 import { dashBoardImg } from "../../assets/index";
 import { useI18n } from 'vue-i18n'
 import {useAlarmConfigType} from "@/modules/rule-engine-manager-ui/hook/useAlarmConfigType";
+import {queryCollectorById} from "@/modules/rule-engine-manager-ui/api/collector";
 
 const { t: $t } = useI18n()
 
@@ -512,7 +513,7 @@ const selectChange = () => {
   });
 };
 
-const jumpToDetail = (id: string) => {
+const jumpToDetail = async (id: string) => {
   switch (queryCodition.targetType) {
     case "device":
       menuStory.jumpPage("device/Instance/Detail", { params: { id } });
@@ -520,10 +521,14 @@ const jumpToDetail = (id: string) => {
     case "product":
       menuStory.jumpPage("device/Product/Detail", { params: { id } });
       break;
-    case "org":
+    case "organization":
       menuStory.jumpPage("system/Department", { query: { id } });
       break;
-    case "other":
+    case "collector":
+      const res = await queryCollectorById(id);
+      menuStory.jumpPage("DataCollect/Collector", { query: { channelId: res.result.channelId, collectorId: res.result.id } });
+      break;
+    case "scene":
       query({
         terms: [
           {
