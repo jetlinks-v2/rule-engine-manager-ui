@@ -83,7 +83,7 @@ const readPoints = computed(() => {
      * 例如，判断是否包含读：accessModes & 1 !== 0，判断是否包含写：accessModes & (1 << 1) !== 0
      */
     return props.pointList.filter((item) => {
-        return item.accessModeMask & (1 << 1);
+        return (item.accessModeMask & 1) !== 0;
     }).map((item) => {
         return {
             ...item,
@@ -93,6 +93,13 @@ const readPoints = computed(() => {
     })
 });
 const writePoints = computed(() => {
+  /**
+   * 读：1（001）
+   * 写：2（010）
+   * 订阅：4（100）
+   * 可使用按位与计算来校验是否包含对应枚举
+   * 例如，判断是否包含读：accessModes & 1 !== 0，判断是否包含写：accessModes & (1 << 1) !== 0
+   */
     return props.pointList.filter((item) => {
         return item.accessModeMask & (1 << 1);
     }).map((item) => {

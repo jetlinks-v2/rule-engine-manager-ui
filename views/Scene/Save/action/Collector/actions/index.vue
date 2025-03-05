@@ -24,7 +24,7 @@
                         v-model:value="modelRef.message.properties"
                     >
                         <a-select-option
-                            v-for="item in pointList"
+                            v-for="item in readPointList"
                             :value="item?.id"
                             :key="item?.id"
                             :label="item?.name"
@@ -106,11 +106,30 @@ const props = defineProps({
         default: '',
     },
     pointList: {
-        type: Array,
+        type: Array as PropType<Record<string, any>[]>,
         default: () => ([]),
     }
 });
 const emit = defineEmits(['change']);
+
+const readPointList = computed(() => {
+  /**
+   * 读：1（001）
+   * 写：2（010）
+   * 订阅：4（100）
+   * 可使用按位与计算来校验是否包含对应枚举
+   * 例如，判断是否包含读：accessModes & 1 !== 0，判断是否包含写：accessModes & (1 << 1) !== 0
+   */
+  return props.pointList.filter((item: any) => {
+    return (item.accessModeMask & 1) !== 0;
+  }).map((item: any) => {
+    return {
+      ...item,
+      label: item.name,
+      value: item.id,
+    };
+  })
+})
 
 const formRef = ref();
 const columnMap = ref(props.columnMap || {});

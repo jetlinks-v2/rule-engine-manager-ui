@@ -67,6 +67,7 @@ import { handleTimerOptions } from '../components/Timer/util'
 import { Form } from 'ant-design-vue'
 import {queryPointNoPaging, queryPointNoPagingV2} from '@ruleEngine/api/collector'
 import { useI18n } from 'vue-i18n'
+import {cloneDeep} from "lodash-es";
 
 type Emit = {
     (e: 'cancel'): void
@@ -116,7 +117,7 @@ const addModel = reactive<AddModelType>({
     operator: props.value.operator || 'readPoints',
 })
 
-const optionsCache = ref(props.options)
+const optionsCache = ref(cloneDeep(props.options))
 const pointList = ref<Record<string, any>[]>([]);
 
 const handleOptions = (data: TriggerCollector) => {
@@ -214,7 +215,7 @@ const save = async (step?: number) => {
     } else {
         const typeData = await typeRef.value.vail()
         if (typeData) {
-            optionsCache.value.action = typeData.action
+            optionsCache.value.action = typeData.action ? typeData.action : optionsCache.value.action
             const _options = handleOptions(typeData.data);
             const data = typeData.data.operator !== 'sub' ?
                 {
