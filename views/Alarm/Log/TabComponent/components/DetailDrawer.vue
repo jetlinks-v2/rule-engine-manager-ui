@@ -19,15 +19,15 @@
             </div>
             <LevelIcon :level="AlarmData.level"></LevelIcon>
           </div>
-          <div
-            style="
-              font-size: 12px;
-              margin-left: 10px;
-              margin-top: 5px;
-            "
-          >
-            {{ AlarmData?.description || $t('components.DetailDrawer.488913-0') }}
-          </div>
+<!--          <div-->
+<!--            style="-->
+<!--              font-size: 12px;-->
+<!--              margin-left: 10px;-->
+<!--              margin-top: 5px;-->
+<!--            "-->
+<!--          >-->
+<!--            {{ AlarmData?.description || $t('components.DetailDrawer.488913-0') }}-->
+<!--          </div>-->
         </div>
         <div class="alarmInfoRight">
           <div>
