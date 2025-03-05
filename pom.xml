@@ -11,7 +11,7 @@
     </parent>
     <packaging>jar</packaging>
 
-    <artifactId>rule-engine-manager-ui</artifactId>
+    <artifactId>rule-engine-manager</artifactId>
     <name>规则引擎UI</name>
     <description>JetLinks 规则引擎UI模块</description>
 
@@ -52,11 +52,33 @@
                     <include>package.json</include>
                     <include>baseMenu.json</include>
                 </includes>
-                <targetPath>ui/${project.artifactId}</targetPath>
+                <targetPath>ui/${project.artifactId}/</targetPath>
                 <filtering>false</filtering>
             </resource>
         </resources>
     </build>
+
+    <repositories>
+        <repository>
+            <id>aliyun-nexus</id>
+            <name>aliyun</name>
+            <url>https://maven.aliyun.com/nexus/content/groups/public/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
+        <repository>
+            <id>jetlinks</id>
+            <name>JetLinks Maven Repository</name>
+            <url>https://nexus.jetlinks.cn/content/groups/jetlinks/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+
+    </repositories>
 
 
 </project>

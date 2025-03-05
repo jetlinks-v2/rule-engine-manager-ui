@@ -173,9 +173,8 @@ import HandTrigger from "./HandTrigger/index.vue";
 import { Modal } from "ant-design-vue";
 import { useAlarmLevel } from "../../../hook";
 import { ConfigurationImages } from "../../../assets/index";
-import { isNoCommunity } from '@/utils/utils';
 import { useI18n } from 'vue-i18n'
-import {useAlarmConfigType} from "@/modules/rule-engine-manager-ui/hook/useAlarmConfigType";
+import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
 
 const { t: $t } = useI18n()
 const params = ref<Record<string, any>>({});

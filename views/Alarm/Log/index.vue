@@ -2,15 +2,14 @@
     <j-page-container :tabList="list" :tabActiveKey="data.tab" @tabChange="onTabChange">
         <TableComponents :type="data.tab"></TableComponents>
     </j-page-container>
-</template> 
+</template>
 
 <script lang="ts" setup>
 import { useAlarmStore } from '../../../store/alarm';
 import { storeToRefs } from 'pinia';
 import  TableComponents  from './TabComponent/index.vue';
 import { useI18n } from 'vue-i18n';
-import { isNoCommunity } from '@/utils/utils';
-import {useAlarmConfigType} from "@/modules/rule-engine-manager-ui/hook/useAlarmConfigType";
+import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
 
 
 const alarmStore = useAlarmStore();
