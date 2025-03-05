@@ -137,6 +137,7 @@ import {
   query,
   getAlarmProduct,
   queryAlarmRecordByType,
+  queryAlarmRecordNoPaging,
 } from "../../../../api/log";
 import { useAlarmStore } from "../../../../store/alarm";
 import { storeToRefs } from "pinia";
@@ -183,12 +184,18 @@ const titleMap = computed(() => {
 const columns = ref([
   {
     title: '告警源',
-    dataIndex: 'sourceName',
-    key: 'sourceName',
+    dataIndex: 'sourceId',
+    key: 'sourceId',
     search: {
       type: 'select',
-      options: () => {
-        return sourceNameFilter.value
+      options: async () => {
+        const res = props.type !== 'all' ? await queryAlarmRecordNoPaging({terms: [{column: 'targetType', value: props.type}]}) : await queryAlarmRecordNoPaging({})
+        return res.result.map(item => {
+          return {
+            label: item.sourceName,
+            value: item.sourceId
+          }
+        });
       }
     },
   },
@@ -253,19 +260,6 @@ const columns = ref([
   },
 ]);
 
-const sourceNameFilter = computed(() => {
-  return tableRef.value.dataSource.reduce((arr: any, cur: any) => {
-    if (!arr.includes(cur.sourceName)) {
-      arr.push(cur.sourceName)
-    }
-    return arr
-  }, []).map((item: any) => {
-    return {
-      label: item,
-      value: item
-    }
-  })
-})
 
 const newColumns = computed(() => {
   const otherColumns = {
@@ -478,13 +472,6 @@ onMounted(() => {
   }
 });
 
-watch(() => JSON.stringify(tableRef.value?.dataSource), (val) => {
-  columns.value.forEach((item) => {
-    if(item.key === 'sourceName') {
-      item.search!.options = sourceNameFilter.value
-    }
-  })
-})
 </script>
 <style lang="less" scoped>
 .content-title {

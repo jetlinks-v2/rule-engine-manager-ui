@@ -125,7 +125,7 @@ const actionList = computed(() => {
 
 const actionForm = ref();
 const formModel = reactive({
-    type: 'device',
+    type: 'device-data',
 });
 
 const actionType = ref<string>('');
