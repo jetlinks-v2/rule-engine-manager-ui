@@ -58,7 +58,7 @@ const loading = ref(false);
 const formModel = reactive({
   name: "",
   trigger: {
-    type: "device",
+    type: "timer",
   },
 });
 
