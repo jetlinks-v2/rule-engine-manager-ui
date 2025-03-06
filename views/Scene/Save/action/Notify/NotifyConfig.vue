@@ -16,7 +16,7 @@
             }"
             :params="params"
             :gridColumns="[2]"
-            :alertRender="false"
+            :alertShow="false"
             :rowSelection="{
                 selectedRowKeys: _selectedRowKeys,
                 onChange: onSelectChange,

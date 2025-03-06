@@ -18,7 +18,7 @@
             :params="params"
             :gridColumns="[2]"
             :noPagination="true"
-            :alertRender="false"
+            :alertShow="false"
             :rowSelection="{
                 selectedRowKeys: _selectedRowKeys,
                 onChange: onSelectChange,
