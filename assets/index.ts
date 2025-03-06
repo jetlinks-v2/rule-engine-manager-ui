@@ -32,7 +32,7 @@ import email from './scene/notify-item-img/email.png'
 import voice from './scene/notify-item-img/voice.png'
 import sms from './scene/notify-item-img/sms.png'
 import webhook from './scene/notify-item-img/webhook.png'
-import dingTalk from './scene/notify-item-img/dingTalk.png'
+import dingTalk from './scene/notify-item-img/dingtalk.png'
 import deviceCard from './device/device-card.png'
 import deviceProduct from './device/device-product.png'
 import noticeDingtalk from './notice/dingtalk.png'
@@ -65,7 +65,7 @@ import TriggerListIconHand from './scene/scene-hand.png'
 import TriggerListIconDevice from './scene/scene-device.png'
 
 export const configImages = {
-   alarm:[ 
+   alarm:[
     alarm1,
     alarm2,
     alarm3,

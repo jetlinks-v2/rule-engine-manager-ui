@@ -26,6 +26,11 @@ export const getOrgList = (params?:any) => request.get('/organization/_query/no-
 export const query = (data:any) => request.post('/alarm/record/_query/',data);
 
 /**
+ * 查看对应类型的告警列表不分页
+ */
+export const queryAlarmRecordNoPaging = (data:any) => request.post(`/alarm/record/_query/no-paging`,data);
+
+/**
  * 查看对应类型的告警列表
  */
 export const queryAlarmRecordByType = (type:string,data:any) => request.post(`/alarm/record/${type}/_query/`,data);

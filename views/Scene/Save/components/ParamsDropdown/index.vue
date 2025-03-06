@@ -100,11 +100,10 @@
                 @change="valueItemChange"
                 style="width: 100%"
               />
-
               <j-value-item
                 v-else
                 v-model:modelValue="myValue"
-                :itemType="item.component"
+                :itemType="['short', 'byte', 'word'].includes(item.component) ? 'int' : item.component"
                 :options="item.key === 'upper' ? metricOptions : options"
                 :extraProps="props"
                 @change="valueItemChange"
