@@ -33,7 +33,7 @@
       <a-form-item
         v-else-if="modelRef.selector.selector === 'tag' && isTags"
         :name="['selector','selectorValues']"
-        :rules="[{ required: true, message: $t('device.index.9667835-4') }]"
+        :rules="[{ validator: tagValidator }]"
       >
         <Tag
           v-model:value="modelRef.selector.selectorValues"
@@ -266,6 +266,18 @@ const onSelectorChange = (val: string) => {
   modelRef.selector.selector = val;
 };
 
+const tagValidator = (_: any, value: any) => {
+  if (value) {
+    debugger
+    if (value[0]?.value?.[0].value && value[0]?.value?.[0].column) {
+      return Promise.resolve();
+    } else {
+      return Promise.reject($t('device.index.9667835-4'));
+    }
+  } else {
+    return Promise.reject($t('device.index.9667835-4'));
+  }
+}
 /**
  * 切换设备
  * @param _detail

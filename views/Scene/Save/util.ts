@@ -188,6 +188,6 @@ export const actionIconMap = {
     'delay': 'icon-yanchizhihang',
     'trigger': 'icon-chufagaojing',
     'relieve': 'icon-jiechugaojing',
-    'device-data': 'HddOutlined',
+    'device-data': 'icon-shebeixinxi',
     'collector': 'icon-collector-output'
 }

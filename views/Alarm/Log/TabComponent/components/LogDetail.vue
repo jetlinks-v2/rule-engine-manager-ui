@@ -30,7 +30,7 @@
         >{{ data?.sourceId }}</a-button
         >
         </div>
-        <div v-if="data.sourceType === 'collector'">
+        <div v-else-if="data.sourceType === 'collector'">
           {{ $t('components.LogDetail.1651510-7-1') }}<a-button
           type="link"
           @click="() => gotoCollector(data?.sourceId)"

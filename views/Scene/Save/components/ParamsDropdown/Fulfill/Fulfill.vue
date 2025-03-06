@@ -33,7 +33,15 @@ const emit = defineEmits(['select', 'update:value'])
 
 const { t: $t} = useI18n()
 const sceneStore = useSceneStore();
-const dataCache = ref([])
+const dataCache = ref({
+  filter: [],
+  aggregation: [{
+    column: undefined,
+    value: { source: 'fixed', value: undefined },
+    termType: undefined,
+    function: undefined
+  }]
+})
 const visible = ref(false)
 const showPropertyList = ref(false)
 const formRef = ref()
@@ -74,6 +82,9 @@ const rules = [
         if (!v.column) {
           return Promise.reject(new Error($t('Terms.TermsItem.9093428-1')));
         }
+        if (!v.function) {
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-2-1')));
+        }
         if (!v.termType) {
           return Promise.reject(new Error($t('Terms.TermsItem.9093428-2')));
         }
@@ -100,22 +111,17 @@ const rules = [
   }
 ]
 const onSelect = async () => {
-  const result = await formRef.value.validateFields()
-  if (result) {
-    if(formAggregationRef.value) {
-      const valid = await formAggregationRef.value.validateFields()
-      if(!valid) {
-        return
-      }
-    }
-    let obj = cloneDeep(dataCache.value)
-    if (aggregation.value.value.value) {
-      obj.aggregation = [{ ...cloneDeep(aggregation.value)}]
-    }
-    emit('update:value', obj)
-    emit('select', obj, '', '条件')
-    hideVisible()
+  const result = await Promise.all([formRef.value.validateFields(), formAggregationRef.value && formAggregationRef.value.validateFields()])
+  if((formAggregationRef.value && !result[1]) || !result[0]) {
+    return
   }
+  let obj = cloneDeep(dataCache.value)
+  if (aggregation.value.value.value) {
+    obj.aggregation = [{ ...cloneDeep(aggregation.value)}]
+  }
+  emit('update:value', obj)
+  emit('select', obj, '', '条件')
+  hideVisible()
 }
 
 const showVisible = async () => {
@@ -171,8 +177,7 @@ const onDelete = (index) => {
 
 const onSwitch = (e) => {
   if (!e) {
-    delete dataCache.value.aggregation
-    aggregation.value = {
+    dataCache.value.aggregation = aggregation.value = {
       column: undefined,
       value: { source: 'fixed', value: undefined },
       termType: undefined,
@@ -195,8 +200,9 @@ const tips = computed(() => {
 watch(() => [JSON.stringify(props.value), visible.value], () => {
   if (visible.value) {
     const obj = props.value || {}
-    dataCache.value = Object.keys(obj).length ? cloneDeep(obj) : { filter: []}
-
+    if (Object.keys(obj).length) {
+      dataCache.value = Object.keys(obj).length ? cloneDeep(obj) : { filter: []}
+    }
     if (props.value && props.value.aggregation?.length) {
       aggregation.value = cloneDeep(props.value.aggregation[0])
       showPropertyList.value = true
@@ -274,7 +280,7 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
                 :showBuildIn="true"
                 :whenIndex="0"
                 :index="0"
-                v-model:value="aggregation"
+                v-model:value="dataCache.aggregation[0]"
               />
             </a-form-item>
           </a-form>
