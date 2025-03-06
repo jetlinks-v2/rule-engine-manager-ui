@@ -85,6 +85,9 @@ const rules = [
         if (!v.termType) {
           return Promise.reject(new Error($t('Terms.TermsItem.9093428-2')));
         }
+        if (v.termType === 'complex_exists' && Object.keys(v.value.value).length === 0) {
+          return Promise.reject(new Error($t('Terms.TermsItem.9093428-3-1')));
+        }
         if (v.value?.value === undefined) {
           if (v.value?.filter?.length) {
             return Promise.resolve();
