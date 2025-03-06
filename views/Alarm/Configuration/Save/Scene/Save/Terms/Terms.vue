@@ -45,6 +45,7 @@ const props = defineProps({
 .terms-content {
   display: flex;
   gap: 12px;
+  overflow: auto
 }
 
 .terms-group {
