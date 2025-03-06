@@ -36,6 +36,9 @@
             v-model:modelValue='record.value'
             :itemType="record.type === 'date'? 'time' : record.type"
             :options="record.options"
+            :extraProps="{
+              style: { width: '100%'}
+            }"
             @change='valueChange'
           />
         </div>

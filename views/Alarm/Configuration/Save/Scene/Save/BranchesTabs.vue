@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="triggerType ==='device'">
+    <div v-if="showDevice">
       <a-tabs v-if="branchesGroup.length" v-model:activeKey="activeKey">
         <template v-if="showDetailBtn" #rightExtra>
           <a-button @click.stop="show = !show">
@@ -124,6 +124,8 @@ const emit = defineEmits(['change', 'select'])
 
 const activeKey = ref(props.branchesGroup?.length ? props.branchesGroup[0].key : '')
 const show = ref(props.show)
+
+const showDevice = computed(() => ['device', 'collector'].includes(props.triggerType))
 
 const change = (id, selected) => {
   emit('change', id, selected)

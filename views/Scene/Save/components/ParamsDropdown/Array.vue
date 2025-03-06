@@ -72,6 +72,10 @@ const onSelect = () => {
     if(myValue.value) {
         try {
             const _value = JSON.parse(myValue.value);
+
+            if (!Array.isArray(_value)) {
+              throw new Error('must array')
+            }
             emit('update:value', _value);
             label.value = JSON.stringify(_value)
             emit('select', _value, myValue.value, label.value);
@@ -88,13 +92,18 @@ const visibleChange = (v: boolean) => {
     visible.value = v;
 };
 
-watch(()=>props.value,() => {
-    if (props.value?.every(item => !item)) {
+watch(()=>props.value,(val) => {
+    if (!val) {
       myValue.value = undefined
       label.value = '[]'
     } else {
-      myValue.value = JSON.stringify(props.value)
-      label.value = JSON.stringify(props.value)
+      if (Array.isArray(val)) {
+        myValue.value = JSON.stringify(val)
+        label.value = val.every(item => !item) ? '[]' : JSON.stringify(val)
+      } else {
+        myValue.value = JSON.stringify(val)
+        label.value = JSON.stringify(val)
+      }
     }
 }, { immediate: true })
 </script>

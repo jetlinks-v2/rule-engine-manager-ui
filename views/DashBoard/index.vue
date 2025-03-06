@@ -422,6 +422,7 @@ const selectChange = () => {
       // time: '1h',
       time: time,
       targetType: queryCodition.targetType,
+      assetType: queryCodition.targetType === 'collector' ? 'dataCollectCollector' : undefined,
       from: dayjs(queryCodition.startTime).format("YYYY-MM-DD HH:mm:ss"),
       to: dayjs(queryCodition.endTime).format("YYYY-MM-DD HH:mm:ss"),
       limit: 9,
