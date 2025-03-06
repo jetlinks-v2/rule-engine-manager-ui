@@ -13,6 +13,7 @@
                         v-model:value='formModel.reportKey'
                         :options='properties'
                         :filter-option='filterSelectNode'
+                        optionFilterProp="label"
                         @change='change'
                     />
                 </a-form-item>
