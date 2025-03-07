@@ -111,7 +111,7 @@ import { useRequest } from '@jetlinks-web/hooks';
 import { useAlarmLevel } from "../../../../../hook";
 import LevelIcon from '@ruleEngine/components/AlarmLevelIcon/index.vue'
 import { useI18n } from 'vue-i18n'
-import {useAlarmConfigType} from "@/modules/rule-engine-manager-ui/hook/useAlarmConfigType";
+import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
 
 const { t: $t } = useI18n()
 

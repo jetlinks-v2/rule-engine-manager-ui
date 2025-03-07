@@ -48,13 +48,6 @@ const formRef = ref()
 const formAggregationRef = ref()
 const builtInOptions = ref([])
 
-const aggregation = ref({
-  column: undefined,
-  function: undefined,
-  value: { source: 'fixed', value: undefined },
-  termType: undefined
-})
-
 const { data: aggregationOptions } = useRequest(queryAggregation, {
   onSuccess(resp) {
     return resp.result.map(item => ({ ...item, label: item.name, value: item.id }))
@@ -116,8 +109,8 @@ const onSelect = async () => {
     return
   }
   let obj = cloneDeep(dataCache.value)
-  if (aggregation.value.value.value) {
-    obj.aggregation = [{ ...cloneDeep(aggregation.value)}]
+  if (!dataCache.value?.aggregation?.[0]?.value.value) {
+    obj.aggregation = [];
   }
   emit('update:value', obj)
   emit('select', obj, '', '条件')
@@ -148,17 +141,17 @@ const showVisible = async () => {
     }
   })
 
-  if (dataCache.value.filter?.length === 0) {
-    dataCache.value.filter = [
-      {
-        type: 'and',
-        terms: [
-          defaultTermsValue()
-        ],
-        key: randomNumber()
-      }
-    ]
-  }
+  // if (dataCache.value.filter?.length === 0) {
+  //   dataCache.value.filter = [
+  //     {
+  //       type: 'and',
+  //       terms: [
+  //         defaultTermsValue()
+  //       ],
+  //       key: randomNumber()
+  //     }
+  //   ]
+  // }
 }
 
 const onAdd = () =>{
@@ -177,12 +170,12 @@ const onDelete = (index) => {
 
 const onSwitch = (e) => {
   if (!e) {
-    dataCache.value.aggregation = aggregation.value = {
+    dataCache.value.aggregation = [{
       column: undefined,
       value: { source: 'fixed', value: undefined },
       termType: undefined,
       function: undefined
-    }
+    }]
   }
 }
 
@@ -194,17 +187,16 @@ const hideVisible = () => {
 }
 
 const tips = computed(() => {
-  return props.value.filter?.length ? $t('Save.utils.021456-40') : $t('ParamsDropdown.FulFill-3147419-3')
+  return props.value.aggregation?.[0]?.value.value || props.value.filter?.length ? $t('Save.utils.021456-40') : $t('ParamsDropdown.FulFill-3147419-3')
 })
 
 watch(() => [JSON.stringify(props.value), visible.value], () => {
   if (visible.value) {
     const obj = props.value || {}
     if (Object.keys(obj).length) {
-      dataCache.value = Object.keys(obj).length ? cloneDeep(obj) : { filter: []}
+      Object.assign(dataCache.value, Object.keys(obj).length ? cloneDeep(obj) : { filter: []})
     }
     if (props.value && props.value.aggregation?.length) {
-      aggregation.value = cloneDeep(props.value.aggregation[0])
       showPropertyList.value = true
     }
   }
@@ -232,6 +224,12 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
         :model="dataCache.filter"
         v-if="visible"
       >
+        <span v-if="!dataCache.filter.length" class='when-add' @click='onAdd' :style='{ padding: isFirst ? "16px 0" : 0 }'>
+          <a-button type="link">
+            <AIcon type='PlusCircleOutlined' style='padding: 4px' />
+            {{ $t('Terms.Branches.9093534-4') }}
+          </a-button>
+        </span>
         <div style="display: flex; padding-top: 10px;overflow: auto">
           <WhenItem
             v-for="(item, index) in dataCache.filter"
@@ -239,7 +237,6 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
             :termsName="index"
             :data="item"
             :whenIndex="index"
-            :showDeleteBtn="dataCache.filter.length > 1"
             :isFirst="index === 0"
             :isLast="index === dataCache.filter.length - 1"
             @add="onAdd"
