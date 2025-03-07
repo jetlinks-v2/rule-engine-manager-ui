@@ -115,9 +115,9 @@ const termsItemDelete = (index) => {
       <div v-if="!isFirst" class="term-type-warp">
       <DropdownButton
         :options="[
-                  { label: $t('Terms.ParamsItem.9093430-0'), value: 'and' },
-                  { label: $t('Terms.ParamsItem.9093430-1'), value: 'or' },
-                ]"
+          { label: $t('Terms.ParamsItem.9093430-0'), value: 'and' },
+          { label: $t('Terms.ParamsItem.9093430-1'), value: 'or' },
+        ]"
         type="type"
         v-model:value="paramsValue.type"
         @select="typeSelect"

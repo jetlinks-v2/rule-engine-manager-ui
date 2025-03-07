@@ -75,6 +75,7 @@ const columns = [
     search: {
       type: 'date',
     },
+    width: 180,
   },
   {
     title: $t("components.Record.165159-3"),
@@ -83,6 +84,7 @@ const columns = [
     search: {
       type: 'date',
     },
+    width: 180,
   },
   {
     title: $t("components.Record.165159-4"),

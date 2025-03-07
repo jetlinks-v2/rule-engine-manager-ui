@@ -151,6 +151,7 @@ import { logImages } from "../../../../assets/index";
 import LevelIcon from '@ruleEngine/components/AlarmLevelIcon/index.vue'
 import { useI18n } from "vue-i18n";
 import { useAlarmConfigType } from "@ruleEngine/hook/useAlarmConfigType";
+import {getTreeData_api} from "@ruleEngine/api/others";
 
 const { t: $t } = useI18n();
 const { supports } = useAlarmConfigType();
@@ -190,12 +191,17 @@ const columns = ref([
       type: 'select',
       options: async () => {
         const res = props.type !== 'all' ? await queryAlarmRecordNoPaging({terms: [{column: 'targetType', value: props.type}]}) : await queryAlarmRecordNoPaging({})
-        return res.result.map(item => {
+        return res.result.map((item: any) => {
           return {
             label: item.sourceName,
             value: item.sourceId
           }
-        });
+        }).reduce((prev: any, next: any) => {
+          if (!prev.find((item: any) => item.value === next.value)) {
+            prev.push(next)
+          }
+          return prev
+        },[]);
       }
     },
   },
@@ -277,6 +283,35 @@ const newColumns = computed(() => {
       break;
     case "organization":
       otherColumns.title = $t("TabComponent.index.165152-20");
+      Object.assign(otherColumns, {
+        title: $t("TabComponent.index.165152-20"),
+        dataIndex: "targetId",
+        key: "targetId",
+        search: {
+          type: "treeSelect",
+          options: () => {
+            return new Promise((resolve) => {
+              getTreeData_api({}).then((resp: any) => {
+                const formatValue = (list: any[]) => {
+                  const _list: any[] = [];
+                  list.forEach((item) => {
+                    if (item.children) {
+                      item.children = formatValue(
+                        item.children,
+                      );
+                    }
+                    _list.push({
+                      ...item,
+                    });
+                  });
+                  return _list;
+                };
+                resolve(formatValue(resp.result));
+              });
+            })
+          }
+        },
+      })
       break;
     case "scene":
       otherColumns.title = $t("TabComponent.index.165152-21");
