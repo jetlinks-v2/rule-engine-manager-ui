@@ -58,7 +58,7 @@
           </div>
         </template>
         <template #targetType="slotProps">
-          {{ map[slotProps.targetType] }}
+          {{ supports?.find(item => item.value === slotProps.targetType)?.label }}
         </template>
         <template #state="slotProps">
           <a-badge
@@ -111,6 +111,7 @@ import { useRequest } from '@jetlinks-web/hooks';
 import { useAlarmLevel } from "../../../../../hook";
 import LevelIcon from '@ruleEngine/components/AlarmLevelIcon/index.vue'
 import { useI18n } from 'vue-i18n'
+import {useAlarmConfigType} from "@/modules/rule-engine-manager-ui/hook/useAlarmConfigType";
 
 const { t: $t } = useI18n()
 
@@ -161,12 +162,8 @@ const { data: activeKeys } = useRequest<any, Record<string, any>>(
   }
 );
 
-const map = {
-  product: $t('TriggerAlarm.index.966773-5'),
-  device: $t('TriggerAlarm.index.966773-6'),
-  organization: $t('TriggerAlarm.index.966773-7'),
-  scene: $t('TriggerAlarm.index.966773-8'),
-};
+
+const { supports } = useAlarmConfigType();
 
 const columns = [
   {
