@@ -35,6 +35,7 @@
                             <j-value-item
                                 v-model:modelValue="item.value"
                                 :itemType="item.valueType"
+                                style="width: 100%;"
                                 @change="onValueChange"
                                 :options="
                                     item.valueType === 'enum'

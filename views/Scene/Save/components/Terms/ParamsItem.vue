@@ -335,6 +335,10 @@ const columnSelect = (option: any) => {
   // 如果参数类型未发生变化，则不修改操作符以及值
   const termTypes = option.termTypes;
 
+  // 如果参数类型是数组
+  if  (dataType === 'array') {
+    paramsValue.value!.value = {};
+  }
   if (
     !termTypes.some((item: { id: string }) => paramsValue.termType === item.id)
   ) {
