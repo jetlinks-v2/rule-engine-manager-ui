@@ -26,22 +26,22 @@
         <div v-if="data.sourceType === 'device'">
           {{ $t('components.LogDetail.1651510-6') }}<a-button
           type="link"
-          @click="() => gotoDevice(data?.sourceId)"
-        >{{ data?.sourceId }}</a-button
+          @click="() => gotoDevice(data?.sourceName)"
+        >{{ data?.sourceName }}</a-button
         >
         </div>
         <div v-else-if="data.sourceType === 'collector'">
           {{ $t('components.LogDetail.1651510-7-1') }}<a-button
           type="link"
-          @click="() => gotoCollector(data?.sourceId)"
-        >{{ data?.sourceId }}</a-button
+          @click="() => gotoCollector(data?.sourceName)"
+        >{{ data?.sourceName }}</a-button
         >
         </div>
         <div v-else>
           {{ $t('components.LogDetail.1651510-7') }}<a-button
           type="link"
           @click="() => gotoRule(data)"
-        >{{ data?.sourceId }}</a-button
+        >{{ data?.sourceName }}</a-button
         >
         </div>
       </a-descriptions-item>
