@@ -398,6 +398,7 @@ const selectChange = () => {
     dimension: "agg",
     group: "alarmTrend",
     params: {
+      assetType: queryCodition.targetType === 'collector' ? 'dataCollectCollector' : undefined,
       targetType: queryCodition.targetType, // product、device、org、other
       format: format,
       time: time,
