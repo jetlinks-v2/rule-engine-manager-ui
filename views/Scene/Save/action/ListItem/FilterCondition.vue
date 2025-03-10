@@ -66,7 +66,7 @@
           icon="icon-canshu"
           :placeholder="$t('ListItem.FilterCondition.9667711-5')"
           value-name="id"
-          label-name="name"
+          label-name="fullName"
           :options="showAlarmSelect ? alarmOptions : valueOptions"
           :metricOptions="valueColumnOptions"
           :tabsOptions="tabsOptions"

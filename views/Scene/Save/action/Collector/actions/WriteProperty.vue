@@ -36,6 +36,7 @@
                         :options="handleOptions"
                         :tabsOptions="tabOptions"
                         :metricOptions="upperOptions"
+                        label-name="fullName"
                         v-model:value="propertyModelRef.propertiesValue"
                         v-model:source="propertyModelRef.source"
                         valueName="id"
@@ -201,8 +202,7 @@ const onChange = () => {
 };
 
 const onValueChange = (val: any, label: string) => {
-  const optionColumn = isObject(val) && (val as any).metadata ? [(val as any).column] : []
-
+  const optionColumn = isObject(val) && (val as any) ? [(val as any).column] : []
   const objectValue: any = {
     value: propertyModelRef?.propertiesValue,
     source: propertyModelRef?.source,

@@ -20,7 +20,7 @@ const {t: $t} = useI18n();
     <span>{{data?.options?.pointName}}</span>
     <template v-if="data.collector?.handlerType === 'write'">
       <span>为</span>
-      <span>{{data?.collector?.value}}</span>
+      <span>{{data?.options?.propertiesName}}</span>
     </template>
   </a-space>
 </template>
