@@ -154,6 +154,7 @@ export interface TriggerCollector {
   pointSelectInfo: {
     channelId: string,
     collectorId: string,
+    collectorName: string,
     pointIds: string[],
   },
   timer?: OperationTimer;

@@ -354,6 +354,7 @@ watch(() => JSON.stringify(paramsValue), () => {
           :tabsOptions="tabsOptions"
           :metricOptions="builtInOptions"
           valueName="id"
+          label-name="fullName"
           v-model:value="paramsValue.value.value"
           v-model:source="paramsValue.value.source"
           @select="valueSelect"
