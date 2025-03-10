@@ -12,6 +12,7 @@ import {detail, productDetail} from "@ruleEngine/api/instance";
 import {cloneDeep, isArray, isNil} from "lodash-es";
 import TermItem from './Terms.vue'
 import {randomNumber} from "@jetlinks-web/utils";
+import {handleParamsData} from "@ruleEngine/views/Scene/Save/components/Terms/util";
 
 const props = defineProps({
   value: {
@@ -137,7 +138,7 @@ const showVisible = async () => {
 
   queryBuiltInParams(toRaw(sceneStore.data), props.branchParams).then(resp => {
     if (resp.success) {
-      builtInOptions.value = resp.result
+      builtInOptions.value = handleParamsData(resp.result, 'id')
     }
   })
 

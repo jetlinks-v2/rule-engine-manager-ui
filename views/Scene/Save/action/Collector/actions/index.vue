@@ -40,6 +40,7 @@
                     v-model:columnMap="columnMap"
                     :builtInList="builtInList"
                     :pointList="pointList"
+                    @change="onWriteChange"
                 />
             </template>
         </a-form>
@@ -207,24 +208,24 @@ const handleChange = (val) => {
   }
 }
 
+const onWriteChange = (val: string, optionColumn: string[]) => {
+    modelRef.propertiesValue = val;
+    emit(
+        'change',
+        {
+            propertiesName: val,
+            propertiesValue: modelRef.propertiesValue,
+        },
+        optionColumn,
+    );
+};
+
 watch(
-  () => props.values?.message,
+  () => props.values,
   (newVal) => {
-    if (newVal?.messageType) {
-      modelRef.message = JSON.parse(JSON.stringify(newVal));
-      if (
-        ['WRITE_PROPERTY', 'INVOKE_FUNCTION'].includes(
-          newVal.messageType,
-        )
-      ) {
-        queryBuiltIn();
-      } else {
-        if (!modelRef.message.properties) {
-          modelRef.message = Object.assign(modelRef.message, {
-            properties: [],
-          });
-        }
-      }
+    if(newVal.handlerType === 'write') {
+      modelRef
+      queryBuiltIn();
     }
   },
   { immediate: true },
