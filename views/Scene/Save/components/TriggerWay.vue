@@ -11,7 +11,10 @@
         <span>{{ item.tip}}</span>
       </div>
       <div class='way-item-image'>
-        <img width='40' :src='item.image' />
+<!--        <img width='40' :src='item.image' />-->
+        <div class="way-item-icon">
+            <AIcon :type="item.image" style="font-size: 20px"></AIcon>
+        </div>
       </div>
     </div>
   </div>
@@ -107,6 +110,17 @@ const handleClick = (type: string) => {
       height: 100%;
       margin: 0 !important;
       opacity: 0.6;
+      .way-item-icon {
+        width: 40px;
+        height: 40px;
+        background: #1677FF;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 2px;
+        margin-left: 5px;
+      }
     }
 
     &:hover {

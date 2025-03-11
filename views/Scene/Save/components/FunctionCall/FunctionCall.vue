@@ -34,7 +34,7 @@
         <div style='max-width: 260px'>
           <j-value-item
             v-model:modelValue='record.value'
-            :itemType="record.type === 'date'? 'time' : record.type"
+            :itemType="record.type === 'date'? 'time' : ['short', 'byte', 'word'].includes(record.type) ? 'int' : record.type"
             :options="record.options"
             :extraProps="{
               style: { width: '100%'}

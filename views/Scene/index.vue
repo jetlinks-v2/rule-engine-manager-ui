@@ -137,9 +137,10 @@ import { useI18n } from 'vue-i18n'
 import {useRequest} from "@jetlinks-web/hooks";
 
 const images = {
-  timer: sceneImages.timingTrigger,
-  manual: sceneImages.manualTrigger,
-  device: sceneImages.deviceTrigger,
+  timer: 'icon-shijian2',
+  manual: 'icon-shoudongchufa',
+  device: 'icon-shebeixinxi',
+  collector: 'icon-caijiqichufa'
 }
 
 const { t: $t, locale } = useI18n()
