@@ -30,6 +30,7 @@
                 v-if="addModel.stepNumber === 1"
                 :channelId='addModel.pointSelectInfo.channelId'
                 v-model:rowKey='addModel.pointSelectInfo.collectorId'
+                v-model:collectorName='addModel.pointSelectInfo.collectorName'
                 v-model:detail='addModel.collectorDetail'
             />
             <Type
@@ -110,6 +111,7 @@ const addModel = reactive<AddModelType>({
     pointSelectInfo: {
         channelId: props.options?.channelId || '',
         collectorId: props.value?.pointSelectInfo?.collectorId || '',
+        collectorName: props.value?.pointSelectInfo?.collectorName || '',
         pointIds: props.value?.pointSelectInfo?.pointIds || [],
     },
     stepNumber: 0,
@@ -225,12 +227,14 @@ const save = async (step?: number) => {
                         source: 'fixed',
                         pointSelectInfos: [{
                           collectorId: addModel.pointSelectInfo.collectorId,
+                          collectorName: addModel.pointSelectInfo.collectorName,
                           pointIds: typeData.data.readPoints || Object.keys(typeData.data?.writePoints) || [],
                         }],
                         value: typeData.data?.writePoints?.[Object.keys(typeData.data?.writePoints || {})?.[0]] || ''
                     },
                     pointSelectInfo: {
                         collectorId: addModel.pointSelectInfo.collectorId,
+                        collectorName: addModel.pointSelectInfo.collectorName,
                         pointIds: typeData.data.readPoints || Object.keys(typeData.data?.writePoints) || [],
                     },
                 }
@@ -238,6 +242,7 @@ const save = async (step?: number) => {
                     ...typeData.data,
                     pointSelectInfo: {
                         collectorId: addModel.pointSelectInfo.collectorId,
+                        collectorName: addModel.pointSelectInfo.collectorName,
                         pointIds: pointList.value.map(item => item.id),
                     }
                 }

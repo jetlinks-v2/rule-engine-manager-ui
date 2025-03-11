@@ -144,13 +144,13 @@ const onCancel = () => {
 const onSave = (_data: any, _columnMap: any = {}) => {
   const item: any = {
     handlerType: _data.message.messageType,
-    source: CollectorModel.source,
     pointSelectInfos: [
       {
         collectorId: CollectorModel.pointSelectInfos[0]?.collectorId,
         pointIds: typeof _data.message.properties === 'object' ? Object.keys(_data.message.properties || {}) : [_data.message.properties],
       }
     ],
+    source: _data.message.messageType === 'write' ? _data.message.properties[Object.keys(_data.message.properties)[0]]?.source : undefined
   };
   const _options: any = {
     selector: CollectorModel.selector, //选择器标识

@@ -81,6 +81,7 @@ import { useI18n } from 'vue-i18n'
 
 type Emit = {
   (e: "update:rowKey", data: string): void;
+  (e: "update:collectorName", data: string): void;
   (e: "update:detail", data: string): void;
   (e: "change", data: string): void;
 };
@@ -196,6 +197,7 @@ const productQuery = async (p: any) => {
 
 const handleClick = (detail: any) => {
   emit("update:rowKey", detail.id);
+  emit("update:collectorName", detail.name);
   emit("update:detail", detail);
   emit("change", detail);
 };
