@@ -9,7 +9,7 @@
                 @click="onSelect(item.value)"
             >
                 <div class="notify-type-item-image">
-                    <img :width="106" :src="item.iconUrl" />
+                    <img :width="80" :src="item.iconUrl" />
                 </div>
                 <div class="notify-type-item-title">{{item.label}}</div>
             </div>
@@ -81,9 +81,9 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .notify-type-warp {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 16px 24px;
+  grid-template-columns: repeat(4, 1fr);
   width: 100%;
 
   .notify-type-item {
@@ -105,6 +105,8 @@ onMounted(() => {
     .notify-type-item-image {
       width: 106px;
       margin: 16px 33px;
+      display: flex;
+      justify-content: center;
     }
 
     &:hover {
