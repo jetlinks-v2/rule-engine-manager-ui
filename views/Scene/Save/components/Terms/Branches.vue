@@ -183,6 +183,7 @@ const addWhen = () => {
     ],
     key: `terms_${randomString()}`,
   }
+  FormModel.value.branches!.splice(props.name + 1, 0, null);
   FormModel.value.branches?.[props.name].when?.push(terms)
   if(FormModel.value.branches?.length <= props.name + 1){
     FormModel.value.branches?.splice(props.groupLen, 0, null)

@@ -59,7 +59,7 @@
                                     marginTop:
                                         data.branches.length === 2 ? 0 : 24,
                                 }"
-                                :key="item"
+                                :key="index"
                             >
                                 <div
                                     class="actions-terms-title"
