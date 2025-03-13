@@ -265,9 +265,7 @@ const onAdd = () => {
 };
 
 const onType = (_type: string) => {
-  if (_type !== 'device') {
-    actionType.value = _type;
-  }
+  actionType.value = _type;
 };
 
 /**

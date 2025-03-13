@@ -12,7 +12,7 @@
         @mouseover='mouseover'
         @mouseout='mouseout'
       >
-        <ConfirmModal title="该操作将清空过滤条件，{{ $t('Terms.Branches.9093534-2') }}" :show='showDelete && whenData.length' :onConfirm="onDeleteAll" className="terms-params-delete">
+        <ConfirmModal :title="$t('Terms.Branches.9093534-3')" :show='showDelete && whenData.length' :onConfirm="onDeleteAll" className="terms-params-delete">
           <AIcon type='CloseOutlined' />
         </ConfirmModal>
         <div class='actions-terms-list-content'>
@@ -183,6 +183,7 @@ const addWhen = () => {
     ],
     key: `terms_${randomString()}`,
   }
+  FormModel.value.branches!.splice(props.name + 1, 0, null);
   FormModel.value.branches?.[props.name].when?.push(terms)
   if(FormModel.value.branches?.length <= props.name + 1){
     FormModel.value.branches?.splice(props.groupLen, 0, null)

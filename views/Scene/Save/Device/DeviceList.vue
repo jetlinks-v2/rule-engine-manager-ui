@@ -51,11 +51,19 @@
           <a-row>
             <a-col :span="12">
               <div class="card-item-content-text">{{ $t('Device.DeviceList.372526-0') }}</div>
-              <div>{{ slotProps.deviceType?.text }}</div>
+              <div>
+                <j-ellipsis>
+                  {{ slotProps.deviceType?.text }}
+                </j-ellipsis>
+              </div>
             </a-col>
             <a-col :span="12">
               <div class="card-item-content-text">{{ $t('Device.DeviceList.372526-1') }}</div>
-              <div>{{ slotProps.productName }}</div>
+              <div>
+                <j-ellipsis>
+                  {{ slotProps.productName }}
+                </j-ellipsis>
+              </div>
             </a-col>
           </a-row>
         </template>
