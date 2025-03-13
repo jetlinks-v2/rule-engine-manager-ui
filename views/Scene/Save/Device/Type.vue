@@ -47,6 +47,7 @@
           ref="invokeRef"
           v-model:functionId="formModel.functionId"
           v-model:functionParameters="formModel.functionParameters"
+          v-model:action="optionCache.action"
           :functions="functionOptions"
         />
       </template>
