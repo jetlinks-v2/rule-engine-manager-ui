@@ -109,7 +109,7 @@ import { cloneDeep, pick } from 'lodash-es';
 import type { OperationTimer } from '../../../typings';
 import { defineExpose } from 'vue';
 import Calendar from './Calendar.vue';
-import cronstrue from 'cronstrue';
+// import cronstrue from 'cronstrue';
 import { isNoCommunity } from '@/utils/utils';
 import { useI18n } from 'vue-i18n'
 
@@ -142,14 +142,17 @@ const cronRules = [
     { max: 64, message: $t('Timer.index.9093537-8') },
     {
         validator: async (_: any, v: string) => {
-            if (v) {
-                try {
-                    console.log(v, cronstrue.toString(v));
-                } catch (e) {
-                    return Promise.reject(new Error($t('Timer.index.9093537-9')));
-                }
-            } else {
+            const cronRegex = /^((\*|[0-5]?\d)|\*\/([0-5]?\d)) ((\*|[0-5]?\d)|\*\/([0-5]?\d)) ((\*|1?\d|2[0-3])|\*\/(1?\d|2[0-3])) ((\*|[1-2]?\d|3[0-1])|\*\/([1-2]?\d|3[0-1])) ((\*|[1-9]|1[0-2])|\*\/([1-9]|1[0-2])) ((\*|\?|[0-6]|MON|TUE|WED|THU|FRI|SAT|SUN)|\*\/([0-6]))( (\d{4}|\*|\?|\d{4}-\d{4}|\d{4}\/\d{1,2}))?$/;
+            if (!v) {
                 return Promise.reject(new Error($t('Timer.index.9093537-10')));
+                // try {
+                //     console.log(v, cronstrue.toString(v));
+                // } catch (e) {
+                //     return Promise.reject(new Error($t('Timer.index.9093537-9')));
+                // }
+            }
+            if (!cronRegex.test(v)) {
+                return Promise.reject(new Error($t('Timer.index.9093537-9')));
             }
             return Promise.resolve();
         },
