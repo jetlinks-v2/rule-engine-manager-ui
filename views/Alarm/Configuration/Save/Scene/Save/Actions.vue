@@ -184,7 +184,7 @@
                   </span>
                 </div>
               </template>
-              <template v-else-if="item.notify?.notifyType === 'webhooks'">
+              <template v-else-if="item.notify?.notifyType === 'webhook'">
                 <div>
                   {{ $t('Save.Actions.0214511-7') }}
                   <span class="notify-text-highlight">
