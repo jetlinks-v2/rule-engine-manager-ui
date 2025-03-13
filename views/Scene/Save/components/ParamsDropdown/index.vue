@@ -60,10 +60,10 @@
               </template>
               <template v-else-if="item.component === 'tree'">
                 <div
-                  style="min-width: 400px"
+                  style="padding: 0 10px"
                   v-if="(item.key === 'upper' ? metricOptions : options).length"
                 >
-                  <j-scrollbar height="200">
+<!--                  <j-scrollbar height="200">-->
                     <a-tree
                       v-model:expandedKeys="treeOpenKeys"
                       :selectedKeys="myValue ? [myValue] : []"
@@ -75,16 +75,17 @@
                     >
                       <template #title="{ name, description }">
                         <a-space>
-                          {{ name }}
-                          <span
+                          <div class="no-warp">{{ name }}</div>
+                          <div
                             v-if="description"
-                            class="tree-title-description"
-                          >{{ description }}</span
+                            class="tree-title-description no-warp"
                           >
+                            {{ description }}
+                          </div>
                         </a-space>
                       </template>
                     </a-tree>
-                  </j-scrollbar>
+<!--                  </j-scrollbar>-->
                 </div>
                 <div class="scene-select-empty" v-else>
                   <a-empty />
@@ -227,6 +228,10 @@ watchEffect(() => {
 @import "../DropdownButton/index.less";
 .select-box-content {
   overflow: auto;
+
+  .no-warp {
+    white-space: nowrap
+  }
 }
 .manual-time-picker {
   position: absolute;

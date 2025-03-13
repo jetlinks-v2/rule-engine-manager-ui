@@ -2,7 +2,7 @@
   <a-menu class='scene-dropdown-menus' @click='click' :selectedKeys='[myValue]'>
     <a-menu-item v-for='item in myOptions' :key='item[valueName]' :value='item.value' :title='item.label'>
       <div>
-        <j-ellipsis >
+        <j-ellipsis>
           {{ item.label }}
         </j-ellipsis>
       </div>
