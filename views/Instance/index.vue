@@ -125,9 +125,7 @@
                                     @click="i.onClick"
                                     type="link"
                                     style="padding: 0px"
-                                    :hasPermission="
-                                        'rule-engine/Instance:' + i.key
-                                    "
+                                    :hasPermission="i.key === 'view' ? true : 'rule-engine/Instance:' + i.key"
                                     :danger="i.key === 'delete'"
                                 >
                                     <template #icon
