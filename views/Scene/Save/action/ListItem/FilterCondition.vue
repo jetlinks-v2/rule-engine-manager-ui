@@ -298,6 +298,7 @@ const handOptionByColumn = (option: any) => {
       valueOptions.value =
         _options?.elements?.map((item: any) => ({
           ...item,
+          fullName: item.text,
           label: item.text,
           value: item.value,
         })) || [];
@@ -305,6 +306,7 @@ const handOptionByColumn = (option: any) => {
       valueOptions.value =
         (isObject(_options) ? [] : _options)?.map((item: any) => ({
           ...item,
+          fullName: item.name,
           label: item.name,
           value: item.id,
         })) || [];
@@ -404,7 +406,6 @@ const columnSelect = (e: any) => {
       value: value,
     };
   }
-
   const columns = e.metadata === true ? [e.column] : [];
   const _options =
     formModel.value.branches![props.branchName].then[props.thenName].actions[
@@ -572,6 +573,7 @@ const getAlarmOptions = () => {
           return {
             ...item,
             label: item.name,
+            fullName: item.name,
             value: item.id,
           };
         }) || [];

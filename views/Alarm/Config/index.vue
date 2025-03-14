@@ -66,7 +66,6 @@
 import { onlyMessage } from "@jetlinks-web/utils";
 import { isNoCommunity } from '@/utils/utils'
 import { queryLevel, saveLevel } from "../../../api/config";
-import { LevelItem } from "./typing";
 import Io from "./Io/index.vue";
 import { configImages } from "../../../assets/index";
 import { useI18n } from 'vue-i18n';
@@ -89,19 +88,19 @@ const list = isNoCommunity
         tab: $t('Config.index.945945-7'),
       },
     ];
-let levels = ref<LevelItem[]>([]);
+let levels = ref([]);
 let tab = ref<"io" | "config" | string>("config");
 const getAlarmLevel = () => {
   queryLevel().then((res: any) => {
-    if (res.status == 200) {
+    if (res.success) {
       levels.value = res.result.levels;
     }
   });
 };
 getAlarmLevel();
 const handleSaveLevel = async () => {
-  saveLevel(levels.value).then((res: any) => {
-    if (res.status === 200) {
+  saveLevel(levels.value.map(item => ({level: item.level, title: item.title}))).then((res: any) => {
+    if (res.success) {
       onlyMessage($t('Config.index.945945-9'));
     }
   });
