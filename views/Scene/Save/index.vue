@@ -70,7 +70,8 @@ provide('action-options', actionOptions)
 const save = async () => {
   const formData = await sceneForm.value.validateFields().catch((err) => {
     const names = err.errorFields[0].name;
-    deviceRef.value?.changePaneIndex(names[1]);
+    const index = Math.floor(names[1] / 2) + 1
+    deviceRef.value?.changePaneIndex(index)
   });
   if (formData) {
     loading.value = true;
