@@ -446,10 +446,7 @@ const changeBranchName = (name: string) => {
 };
 
 const changePaneIndex = (index) => {
-    const _groupItem = group.value.find((item) => {
-        return item.start >= index && index < item.start + item.len;
-    });
-
+    const _groupItem = group.value[index - 1]
     if (_groupItem) {
         activeKey.value = _groupItem.branchId;
     }
