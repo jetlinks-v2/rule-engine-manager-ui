@@ -322,7 +322,7 @@ const getCurrentAlarm = async () => {
       "pageSize": 12,
       "sorts": [
           {
-              "name": "alarmTime",
+              "name": "lastAlarmTime",
               "order": "desc"
           }
       ],
@@ -330,7 +330,6 @@ const getCurrentAlarm = async () => {
           {
               "terms": [
                   {
-                      "type": "or",
                       "value": "warning",
                       "termType": "eq",
                       "column": "state"
@@ -339,7 +338,6 @@ const getCurrentAlarm = async () => {
           }
       ]
   }
-  const sorts = { alarmTime: "desc" };
   const currentAlarm: any = await getAlarm(params);
   if (currentAlarm.status === 200) {
     if (alarmLevel.status === 200) {
@@ -357,6 +355,7 @@ const getCurrentAlarm = async () => {
     }
   }
 };
+
 getCurrentAlarm();
 //初始化查询条件
 const initQueryTime = (data: any) => {

@@ -79,7 +79,6 @@ const jumpDetail = (item: any) => {
 </script>
 <style scoped lang="less">
 .new-alarm {
-  background-color: white;
   padding: 24px;
   background-color: #fff;
   border: 1px solid #e0e4e8;
