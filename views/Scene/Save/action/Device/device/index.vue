@@ -55,12 +55,9 @@
           @select="onVariableChange"
           :fieldNames="{ label: 'name', value: 'id' }"
         >
-          <template #title="{ name, description }">
+          <template #title="{ fullName }">
             <a-space>
-              {{ name }}
-              <span style="color: grey; margin-left: 5px">{{
-                description
-              }}</span>
+              {{ fullName }}
             </a-space>
           </template>
         </a-tree-select>
@@ -170,9 +167,9 @@ const filterTree = (nodes: any[]) => {
 
 const tagValidator = (_: any, value: any) => {
   if (value) {
-    if (!value[0]?.value?.[0].column) {
+    if (!value[0]?.value?.every((item: any) => item.column)) {
       return Promise.reject($t('device.index.9667835-4'));
-    } else if (!value[0]?.value?.[0].value) {
+    } else if (!value[0]?.value.every((item: any) => item.value)) {
       return Promise.reject($t('device.index.9667835-4-1'));
     } else {
       return Promise.resolve();
@@ -345,6 +342,7 @@ const onTagChange = (val: any[], arr: any[]) => {
         : "";
     return `${_type}${i.name}为${i.value}`;
   });
+  formRef.value.validate('selectorValues')
   emits("save", unref(modelRef), { tagName: tagName.join("") });
 };
 

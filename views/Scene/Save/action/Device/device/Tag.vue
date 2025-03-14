@@ -111,6 +111,7 @@ const handleItem = (data: any) => {
 
 const addItem = () => {
     tagList.value.push({ type: 'and' });
+    onValueChange();
 };
 
 const deleteItem = (_index: number) => {
