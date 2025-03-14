@@ -50,6 +50,8 @@ const icon = computed(() => typeIconMap[props.data?.device?.message?.messageType
       <span>{{ data?.options?.tagName }}</span>
       {{ $t('ListItem.Item.637563-13') }}{{ data?.options?.productName }}
       {{ data?.options?.propertiesName }}
+      {{ $t('ListItem.Item.637563-12')}}
+      {{ data?.options?.propertiesValue }}
     </div>
     <div v-else-if="data?.device?.selector === 'relation'">
       <AIcon :type="icon" />
@@ -60,6 +62,8 @@ const icon = computed(() => typeIconMap[props.data?.device?.message?.messageType
         data?.options?.productName
       }}{{ $t('ListItem.Item.637563-16') }}
       {{ data?.options?.propertiesName }}
+      {{ $t('ListItem.Item.637563-12')}}
+      {{ data?.options?.propertiesValue }}
     </div>
 </template>
 

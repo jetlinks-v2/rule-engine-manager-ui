@@ -11,7 +11,7 @@
             <span>{{ $t('ShakeLimit.index.9093426-2') }}</span>
             <a-input-number :min="1" :max="100" :precision="0" size="small" v-model:value="shakeLimit.threshold" style="width: 38px" />
             <span>{{ $t('ShakeLimit.index.9093426-3') }}</span>
-            <a-radio-group :options="alarmFirstOptions" optionType="button" v-model:value="shakeLimit.outputFirst" size="small" />
+            <a-radio-group :options="alarmFirstOptions" optionType="button" v-model:value="shakeLimit.alarmFirst" size="small" @change="handleChange"/>
         </template>
     </div>
 </template>
@@ -25,6 +25,7 @@ type ShakeLimitType = {
     enabled: boolean | undefined,
     time?: number | undefined | null,
     threshold?: number | undefined | null,
+    alarmFirst?: boolean | undefined
     outputFirst?: boolean | undefined
 }
 
@@ -50,10 +51,15 @@ const shakeLimit = reactive<ShakeLimitType>({
     enabled: undefined,
     time: 1,
     threshold: 1,
-    outputFirst: true,
+    alarmFirst: undefined,
+    outputFirst: undefined
 })
 
 Object.assign(shakeLimit, props.value)
+
+const handleChange = (e: InputEvent) => {
+  shakeLimit.outputFirst = e.target?.value
+}
 
 watch(() => shakeLimit, () => {
     emit('update:value', {...shakeLimit})
