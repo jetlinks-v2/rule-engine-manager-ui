@@ -499,7 +499,7 @@ const termAdd = () => {
     props.whenName
   ]?.terms?.push(termsData);
 
-  formModel.value.options!.when[props.branchName / 2].terms[
+  formModel.value.options!.when[props.branches_Index].terms[
     props.whenName
   ].terms.push(["", "", "", $t('Terms.ParamsItem.9093430-0')]);
 };
