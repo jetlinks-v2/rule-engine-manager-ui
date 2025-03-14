@@ -104,8 +104,8 @@ const { t: $t } = useI18n();
 const columns = [
   {
     title: $t('HandTrigger.index.0214513-3'),
-    dataIndex: "name",
-    key: "name",
+    dataIndex: "id",
+    key: "id",
     search: {
       type: "select",
       options: async () => {
@@ -235,7 +235,7 @@ const onSelectChange = () => {
 };
 
 const handleSearch = (e) => {
-  params.value = e;
+  params.value = e
 };
 const emit = defineEmits(["close", "save"]);
 /**
