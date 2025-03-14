@@ -303,6 +303,7 @@ const onSave = (data: ActionsType, options: any) => {
   );
   checkItemRef.value?.formTouchOff?.();
   visible.value = false;
+  console.log('key', key)
   EventEmitter.emit(key!, data); // 发布消息
 };
 

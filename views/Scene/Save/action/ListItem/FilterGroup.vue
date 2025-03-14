@@ -150,7 +150,7 @@ const handleRequest = (e: any) => {
     columnRequest();
   }
 };
-
+console.log('onKeys', onKeys)
 EventEmitter.subscribe(onKeys, handleRequest);
 
 provide("filter-params", columnOptions);

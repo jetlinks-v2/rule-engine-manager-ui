@@ -7,7 +7,9 @@
             {{ group.termType }}
           </div>
           <div class="terms-group-content" >
-            <WhenItem v-for="(item, groupIndex) in group.terms" :type="item.termType" :value="item" :showType="groupIndex !== 0" />
+            <template v-for="(item, groupIndex) in group.terms">
+              <WhenItem v-if="item[0]"  :type="item.termType" :value="item" :showType="groupIndex !== 0" />
+            </template>
           </div>
         </div>
       </div>

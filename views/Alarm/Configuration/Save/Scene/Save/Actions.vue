@@ -338,6 +338,20 @@
                 {{ $t('Save.Actions.0214511-20') }} {{ item.options?.propertiesName }}
               </div>
             </template>
+            <template v-if="item.executor === 'collector' && show">
+              <a-space>
+                <span>{{item?.options?.type}}</span>
+                <span>
+                    <AIcon type="icon-mubiao" style="padding: 0 4px" />
+                    <span>{{item?.options?.triggerName}}</span>
+                  </span>
+                <span>{{item?.options?.pointName}}</span>
+                <template v-if="item.collector?.handlerType === 'write'">
+                  <span>为</span>
+                  <span>{{item?.options?.propertiesName}}</span>
+                </template>
+              </a-space>
+            </template>
           </div>
         </div>
       </div>
