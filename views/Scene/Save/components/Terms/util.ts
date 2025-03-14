@@ -2,10 +2,10 @@ import i18n from '@/locales/index'
 import { BranchesThen } from '../../../typings'
 const $t = i18n.global.t
 export const ContextKey = 'columnOptions'
-export const arrayParamsKey = ['nbtw', 'btw', 'in', 'nin', 'contains_all', 'contains_any', 'not_contains']
-export const doubleParamsKey= ['nbtw','btw']
-export const timeTypeKeys = ['time_gt_now', 'time_lt_now']
-
+export const arrayParamsKey: Array<string | undefined> = ['nbtw', 'btw', 'in', 'nin', 'contains_all', 'contains_any', 'not_contains']
+export const doubleParamsKey: Array<string | undefined> = ['nbtw','btw']
+export const timeTypeKeys: Array<string | undefined> = ['time_gt_now', 'time_lt_now']
+export const nullKeys: Array<string | undefined> = ['notnull', 'isnull']
 
 export const handleParamsData = (data: any[], key: string = 'column', parentId?: string): any[] => {
   return data?.map((item, index) => {
@@ -34,4 +34,3 @@ export const thenRules = [{
     return Promise.resolve();
   }
 }]
-

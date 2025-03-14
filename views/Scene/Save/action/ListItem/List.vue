@@ -57,7 +57,7 @@ const props = defineProps({
       default: 0
     },
     type: {
-        type: String as PropType<ListProps['type']>,
+        type: String,
         default: 'serial',
     },
     actions: {
