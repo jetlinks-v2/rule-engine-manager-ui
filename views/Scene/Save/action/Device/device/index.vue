@@ -55,12 +55,9 @@
           @select="onVariableChange"
           :fieldNames="{ label: 'name', value: 'id' }"
         >
-          <template #title="{ name, description }">
+          <template #title="{ fullName }">
             <a-space>
-              {{ name }}
-              <span style="color: grey; margin-left: 5px">{{
-                description
-              }}</span>
+              {{ fullName }}
             </a-space>
           </template>
         </a-tree-select>
