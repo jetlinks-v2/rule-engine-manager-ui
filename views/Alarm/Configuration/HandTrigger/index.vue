@@ -8,7 +8,7 @@
     @cancel="closeModal"
     @ok="saveCorrelation"
   >
-    <pro-search :columns="columns" @search="handleSearch" />
+    <pro-search :columns="columns"  type="simple" @search="handleSearch" />
     <div style="height: 500px; overflow-y: auto">
       <JProTable
         mode="CARD"
