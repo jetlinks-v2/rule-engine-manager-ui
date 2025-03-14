@@ -119,7 +119,7 @@ import { storeToRefs } from "pinia";
 import { iconMap} from "./util";
 import FilterGroup from "./FilterGroup.vue";
 import { randomString } from "@jetlinks-web/utils";
-import { EventEmitter, EventEmitterKeys } from "../../util";
+import { EventEmitter, EventEmitterKeys, EventSubscribeKeys } from "../../util";
 import CheckItem from "./CheckItem.vue";
 import { useI18n } from 'vue-i18n'
 import ComponentsMap from './detail'
@@ -304,6 +304,12 @@ const onSave = (data: ActionsType, options: any) => {
   checkItemRef.value?.formTouchOff?.();
   visible.value = false;
   EventEmitter.emit(key!, data); // 发布消息
+  const onKeys =  EventSubscribeKeys({
+    branch: props.branchesName,
+    branchGroup: props.thenName,
+    action: props.name,
+  })
+  EventEmitter.emit(onKeys, data);
 };
 
 /**
