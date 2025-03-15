@@ -24,6 +24,7 @@
             :parallel="parallel"
             :name="actions.length"
             :branchGroup="thenName"
+            :thenName="thenName"
             :branchesName="branchesName"
             @save="onSave"
             @cancel="onCancel"

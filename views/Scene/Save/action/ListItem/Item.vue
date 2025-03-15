@@ -72,6 +72,7 @@
       <Modal
         :name="name"
         :branchGroup="thenName"
+        :thenName="thenName"
         :branchesName="branchesName"
         :data="data"
         :options="
@@ -88,6 +89,7 @@
       :name="name"
       :branchGroup="thenName"
       :branchesName="branchesName"
+      :thenName="thenName"
       :actionType="actionType"
       :options="
           _data.branches[branchesName].then[thenName].actions[name].options
