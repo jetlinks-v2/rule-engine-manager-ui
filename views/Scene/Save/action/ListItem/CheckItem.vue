@@ -344,7 +344,7 @@ const checkNoticeDelete = async () => {
   );
   if (templateDetailResp.success) {
     const variableDefinitionsMap = new Map();
-    const itemVariableKeys = Object.keys(item!.variables);
+    const itemVariableKeys = Object.keys(item!.variables || {});
     const notifyType = item!.notifyType;
     templateDetailResp.result.variableDefinitions.map((dItem: any) => {
       variableDefinitionsMap.set(dItem.id, dItem.expands?.businessType);

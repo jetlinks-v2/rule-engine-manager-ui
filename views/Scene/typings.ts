@@ -212,7 +212,7 @@ export type TriggerType = {
 export interface TermsVale {
   source: string;
   /** 手动输入值,source为 manual 时不能为空 */
-  value?: Record<string, any> | any[];
+  value?: Record<string, any> | any[] | any;
   /** 指标值,source为 metric 时不能为空 */
   metric?: Record<string, any>;
 }

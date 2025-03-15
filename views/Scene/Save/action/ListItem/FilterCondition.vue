@@ -247,6 +247,7 @@ const handOptionByColumn = (option: any) => {
     const _showAlarmSelect = showAlarmSelectKey.includes(
       option.column?.split(".")?.[1]
     );
+
     const _type = _showAlarmSelect ? "select" : option.type;
     tabsOptions.value[0].component = _type;
     columnType.value = option.type;
@@ -259,12 +260,14 @@ const handOptionByColumn = (option: any) => {
           {
             label: bool.falseText,
             name: bool.falseText,
+            fullName: bool.falseText,
             value: bool.falseValue,
             id: bool.falseValue,
           },
           {
             label: bool.trueText,
             name: bool.trueText,
+            fullName: bool.trueText,
             value: bool.trueValue,
             id: bool.trueValue,
           },
@@ -275,14 +278,27 @@ const handOptionByColumn = (option: any) => {
           label: item.name,
           value: item.id,
         })) || [
-          { label: $t('ListItem.FilterCondition.9667711-9'), name: $t('ListItem.FilterCondition.9667711-9'), value: "true", id: "true" },
-          { label: $t('ListItem.FilterCondition.9667711-10'), name: $t('ListItem.FilterCondition.9667711-10'), value: "false", id: "false" },
+          {
+            label: $t('ListItem.FilterCondition.9667711-9'),
+            fullName: $t('ListItem.FilterCondition.9667711-9'),
+            name: $t('ListItem.FilterCondition.9667711-9'),
+            value: "true",
+            id: "true"
+          },
+          {
+            label: $t('ListItem.FilterCondition.9667711-10'),
+            fullName: $t('ListItem.FilterCondition.9667711-10'),
+            name: $t('ListItem.FilterCondition.9667711-10'),
+            value: "false",
+            id: "false"
+          },
         ];
       }
     } else if (_type === "enum") {
       valueOptions.value =
         _options?.elements?.map((item: any) => ({
           ...item,
+          fullName: item.text,
           label: item.text,
           value: item.value,
         })) || [];
@@ -290,6 +306,7 @@ const handOptionByColumn = (option: any) => {
       valueOptions.value =
         (isObject(_options) ? [] : _options)?.map((item: any) => ({
           ...item,
+          fullName: item.name,
           label: item.name,
           value: item.id,
         })) || [];
@@ -389,7 +406,6 @@ const columnSelect = (e: any) => {
       value: value,
     };
   }
-
   const columns = e.metadata === true ? [e.column] : [];
   const _options =
     formModel.value.branches![props.branchName].then[props.thenName].actions[
@@ -464,7 +480,6 @@ const valueSelect = (_: any, label: string, labelObj: Record<number, any>) => {
     paramsValue,
     !showAlarm.value ? ["alarm", "terms"] : []
   );
-  console.log(updateValue, showAlarm.value);
   emit("update:value", handleFilterTerms({ ...updateValue }));
   valueChangeAfter();
   formModel.value.branches![props.branchName].then[props.thenName].actions[
@@ -558,6 +573,7 @@ const getAlarmOptions = () => {
           return {
             ...item,
             label: item.name,
+            fullName: item.name,
             value: item.id,
           };
         }) || [];

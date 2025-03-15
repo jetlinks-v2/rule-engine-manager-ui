@@ -188,7 +188,8 @@ const addWhen = () => {
   if(FormModel.value.branches?.length <= props.name + 1){
     FormModel.value.branches?.splice(props.groupLen, 0, null)
   }
-  FormModel.value.options!.when[props.branches_Index]?.terms.push({ termType: $t('Terms.Branches.9093534-5'), terms: [['','eq','','and']]})
+
+  FormModel.value.options!.when[props.branches_Index]!.terms = [{ termType: $t('Terms.Branches.9093534-5'), terms: [['','eq','','and']]}]
 }
 
 const optionsClass = computed(() => {

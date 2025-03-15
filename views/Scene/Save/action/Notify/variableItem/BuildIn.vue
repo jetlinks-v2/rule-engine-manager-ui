@@ -188,12 +188,12 @@ watch(
             const params: Record<string, Number> = {
                 branch: props.branchesName,
                 branchGroup: props.thenName,
+                action: props.name - 1, // action
             }
-            const lastIndex = props.name - 1
-
-            if (lastIndex >= 0) {
-              params.action = lastIndex
-            }
+            // const lastIndex = props.name - 1
+            // if (lastIndex >= 0) { // 没有action，接口报错
+            //   params.action = props.name - 1
+            // }
 
             queryBuiltInParams(unref(data), params).then((resp) => {
                 if (resp.status === 200) {

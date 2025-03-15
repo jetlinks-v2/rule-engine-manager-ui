@@ -1,12 +1,15 @@
 import {cloneDeep, isArray} from "lodash-es";
 export const treeFilter = (data: any[], value: any, key: string = 'name'): any[] => {
     if (!data) return []
-  
+
     return data.filter(item => {
       if (item.children && item.children.length) {
         item.children = treeFilter(item.children || [], value, key)
         return !!item.children.length
       } else {
+        if (!item.hasOwnProperty('fullName')) {
+          item.fullName = item.label || item.name
+        }
         return item[key] === value
       }
     })

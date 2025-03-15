@@ -224,7 +224,8 @@ const addBranches = (len: number) => {
     };
     // const lastIndex = data.value.branches!.length - 1 || 0
     data.value.branches?.splice(len - 1, 1, branchesItem);
-    data.value.options!.when.splice(len - 1, 1, {
+    // branches中会有null占位，而options.when中不会，所以是插入，而不是替换
+    data.value.options!.when.splice(len - 1, 0, {
         terms: [],
         key,
     });
@@ -492,7 +493,7 @@ watchEffect(() => {
             }
 
             if (item) {
-                item.branches_Index = _branchesIndex;
+                item.branches_Index = _branchesIndex; // 真实branches中的下标位置
                 _branchesIndex += 1;
             }
         });

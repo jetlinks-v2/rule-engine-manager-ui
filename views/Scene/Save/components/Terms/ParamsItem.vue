@@ -114,7 +114,7 @@ import {
   ContextKey,
   arrayParamsKey,
   timeTypeKeys,
-  doubleParamsKey,
+  doubleParamsKey, nullKeys,
 } from "./util";
 import { useSceneStore } from "../../../../../store/scene";
 import { storeToRefs } from "pinia";
@@ -247,13 +247,6 @@ const handOptionByColumn = (option: any) => {
           { label: $t('Terms.ParamsItem.9093430-10'), value: "false" },
         ];
       }
-    } else if (option.dataType === "enum") {
-      valueOptions.value =
-        option.options?.map((item: any) => ({
-          ...item,
-          label: item.name,
-          value: item.id,
-        })) || [];
     } else {
       valueOptions.value = (option.options || []).map((item: any) => ({
         ...item,
@@ -268,53 +261,20 @@ const handOptionByColumn = (option: any) => {
   }
 };
 
-const showDouble = computed(() => {
-  const isRange = paramsValue.termType
-    ? doubleParamsKey.includes(paramsValue.termType)
-    : false;
-  const isSourceMetric = paramsValue.value?.source === "metric";
-  if (metricsCacheOption.value.length) {
-    metricOption.value = metricsCacheOption.value.filter((item) =>
-      isRange ? item.range : !item.range
-    );
-  } else {
-    metricOption.value = [];
-  }
+const handleRangeFn = (array: Array<string| undefined>) => {
+  const isRange = array.includes(paramsValue.termType);
 
-  if (isRange) {
-    if (isMetric.value) {
-      return !isSourceMetric;
-    }
-    return true;
-  }
-  return false;
-});
+  const isSourceMetric = paramsValue.value?.source === "metric"; // 来源是否为指标
+  metricOption.value = metricsCacheOption.value?.filter(item => item.range === isRange) || []; // 过滤是否为范围的options
 
-const showArray = computed(() => {
-  const isRange = paramsValue.termType
-    ? arrayParamsKey.includes(paramsValue.termType)
-    : false;
-  const isSourceMetric = paramsValue.value?.source === "metric";
-  if (metricsCacheOption.value.length) {
-    metricOption.value = metricsCacheOption.value.filter((item) =>
-      isRange ? item.range : !item.range
-    );
-  } else {
-    metricOption.value = [];
-  }
+  return isRange && (isMetric.value ? !isSourceMetric : true);
+}
 
-  if (isRange) {
-    if (isMetric.value) {
-      return !isSourceMetric;
-    }
-    return true;
-  }
-  return false;
-});
+const showDouble = computed(() => handleRangeFn(doubleParamsKey));
 
-const showFulfill = computed(() => {
-  return paramsValue.termType === "complex_exists";
-})
+const showArray = computed(() => handleRangeFn(arrayParamsKey));
+
+const showFulfill = computed(() => paramsValue.termType === "complex_exists")
 
 const mouseover = () => {
   if (props.showDeleteBtn) {
@@ -339,13 +299,14 @@ const columnSelect = (option: any) => {
   if  (dataType === 'array') {
     paramsValue.value!.value = {};
   }
+
   if (
     !termTypes.some((item: { id: string }) => paramsValue.termType === item.id)
   ) {
     // 修改操作符
     termTypeChange = true;
     paramsValue.termType = termTypes?.length ? termTypes[0].id : "eq";
-    if(['isnull', 'notnull'].includes(paramsValue.termType)) {
+    if(nullKeys.includes(paramsValue.termType)) {
       paramsValue.value = {
         source: tabsOptions.value[0].key,
         value: 1
@@ -358,17 +319,10 @@ const columnSelect = (option: any) => {
   ) {
     // 类型发生变化
     paramsValue.termType = termTypes?.length ? termTypes[0].id : "eq";
-    if(['isnull', 'notnull'].includes(paramsValue.termType)) {
-      paramsValue.value = {
-        source: tabsOptions.value[0].key,
-        value: 1
-      }
-    } else {
-      paramsValue.value = {
-        source: tabsOptions.value[0].key,
-        value: undefined,
-      };
-    }
+    paramsValue.value = {
+      source: tabsOptions.value[0].key,
+      value: nullKeys.includes(paramsValue.termType) ? 1 : undefined
+    };
   } else if (termTypeChange) {
     const oldValue = isArray(paramsValue.value!.value)
       ? paramsValue.value!.value[0]
@@ -438,14 +392,9 @@ const termsTypeSelect = (e: { key: string; name: string }) => {
     const isArray = isString(paramsValue.value!.value)
       ? paramsValue.value!.value?.includes?.(",")
       : false;
-    if (arrayParamsKey.includes(e.key) !== isArray) {
-      // 有变化
-      newValue.value = undefined;
-    } else {
-      newValue.value = paramsValue.value!.value;
-    }
+    newValue.value = arrayParamsKey.includes(e.key) !== isArray ? undefined: paramsValue.value!.value;
   }
-  if (["isnull", "notnull"].includes(e.key)) {
+  if (nullKeys.includes(e.key)) {
     newValue.value = 1;
     newValue.source = tabsOptions.value[0].key;
   }
@@ -479,6 +428,7 @@ const valueSelect = (
 
 const typeSelect = (e: any) => {
   emit("update:value", { ...paramsValue });
+  debugger
   formModel.value.options!.when[props.branches_Index].terms[
     props.whenName
   ].terms[props.termsName][3] = e.label;
@@ -499,7 +449,7 @@ const termAdd = () => {
     props.whenName
   ]?.terms?.push(termsData);
 
-  formModel.value.options!.when[props.branchName / 2].terms[
+  formModel.value.options!.when[props.branches_Index].terms[
     props.whenName
   ].terms.push(["", "", "", $t('Terms.ParamsItem.9093430-0')]);
 };
@@ -537,14 +487,11 @@ watch(
       }
       //数据类型为date时判断是选择还是手动输入
       if (option?.dataType === "date") {
-        if (timeTypeKeys.includes(paramsValue.termType || "")) {
-          if (tabsOptions.value[0].component !== "int") {
-          }
+        const isTimeType = timeTypeKeys.includes(paramsValue.termType || "");
+        const currentComponent = tabsOptions.value[0].component;
+        if (isTimeType) {
           tabsOptions.value[0].component = "int";
-        } else if (
-          !timeTypeKeys.includes(paramsValue.termType || "") &&
-          tabsOptions.value[0].component === "int"
-        ) {
+        } else if (!isTimeType && currentComponent === "int") {
           tabsOptions.value[0].component = "date";
         }
       }
@@ -553,27 +500,27 @@ watch(
   { immediate: true }
 );
 
-watchEffect(() => {
-  const isRange = paramsValue.termType
-    ? arrayParamsKey.includes(paramsValue.termType)
-    : false;
-  const isSourceMetric = paramsValue.value?.source === "metric";
-  if (metricsCacheOption.value.length) {
-    metricOption.value = metricsCacheOption.value.filter((item) =>
-      isRange ? item.range : !item.range
-    );
-  } else {
-    metricOption.value = [];
-  }
-
-  if (isRange) {
-    if (isMetric.value) {
-      return !isSourceMetric;
-    }
-    return true;
-  }
-  return false;
-});
+// watchEffect(() => {
+//   const isRange = paramsValue.termType
+//     ? arrayParamsKey.includes(paramsValue.termType)
+//     : false;
+//   const isSourceMetric = paramsValue.value?.source === "metric";
+//   if (metricsCacheOption.value.length) {
+//     metricOption.value = metricsCacheOption.value.filter((item) =>
+//       isRange ? item.range : !item.range
+//     );
+//   } else {
+//     metricOption.value = [];
+//   }
+//
+//   if (isRange) {
+//     if (isMetric.value) {
+//       return !isSourceMetric;
+//     }
+//     return true;
+//   }
+//   return false;
+// });
 
 nextTick(() => {
   Object.assign(
