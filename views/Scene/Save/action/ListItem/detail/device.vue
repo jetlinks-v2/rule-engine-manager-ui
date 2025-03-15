@@ -45,16 +45,19 @@ const icon = computed(() => typeIconMap[props.data?.device?.message?.messageType
       </j-ellipsis>
     </div>
     <div v-else-if="data?.device?.selector === 'tag'">
-      <AIcon :type="icon" />
-      {{ data?.options?.type }}
-      <span>{{ data?.options?.tagName }}</span>
-      {{ $t('ListItem.Item.637563-13') }}{{ data?.options?.productName }}
-      {{ data?.options?.propertiesName }}
-      {{ $t('ListItem.Item.637563-12')}}
-      {{ data?.options?.propertiesValue }}
+      <j-ellipsis>
+        <AIcon :type="icon" />
+        {{ data?.options?.type }}
+        <span>{{ data?.options?.tagName }}</span>
+        {{ $t('ListItem.Item.637563-13') }}{{ data?.options?.productName }}
+        {{ data?.options?.propertiesName }}
+        {{ $t('ListItem.Item.637563-12')}}
+        {{ data?.options?.propertiesValue }}
+      </j-ellipsis>
     </div>
     <div v-else-if="data?.device?.selector === 'relation'">
-      <AIcon :type="icon" />
+      <j-ellipsis>
+        <AIcon :type="icon" />
       {{ data?.options?.type }}{{ $t('ListItem.Item.637563-14') }}<span>{{
         data?.options?.triggerName
       }}</span
@@ -64,6 +67,7 @@ const icon = computed(() => typeIconMap[props.data?.device?.message?.messageType
       {{ data?.options?.propertiesName }}
       {{ $t('ListItem.Item.637563-12')}}
       {{ data?.options?.propertiesValue }}
+      </j-ellipsis>
     </div>
 </template>
 
