@@ -24,9 +24,10 @@
                 }}{{ $t('Save.Actions.0214511-3') }}
               </span>
 
-              <a-button
+              <j-permission-button
                 v-if="!showUnbindBtn"
                 type="link"
+                hasPermission="rule-engine/Alarm/Configuration:update"
                 @click.stop="onBind(item)"
                 :disabled="
                   activeKeys.some((active) => active === item.actionId)
@@ -40,21 +41,22 @@
                     ? $t('Save.Actions.0214511-4')
                     : $t('Save.Actions.0214511-5')
                 }}
-              </a-button>
-              <a-button
+              </j-permission-button>
+              <j-permission-button
                 v-else-if="
                   activeKeys.some(
                     (active) => active === item.actionId || active === -1
                   )
                 "
                 type="link"
+                hasPermission="rule-engine/Alarm/Configuration:update"
                 @click.stop="onSelect(item)"
               >
                 <template #icon>
                   <AIcon type="icon-jiebang" />
                 </template>
                 {{ $t('Save.Actions.0214511-6') }}
-              </a-button>
+              </j-permission-button>
             </template>
             <template v-if="item.executor === 'notify' && show">
               <template v-if="item.notify?.notifyType === 'dingTalk'">
