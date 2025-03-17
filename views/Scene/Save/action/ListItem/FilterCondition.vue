@@ -352,7 +352,7 @@ const mouseout = () => {
 
 const handleOptionsColumnsValue = (termsColumns: any[], _options: any) => {
   formModel.value.branches![props.branchName].then[props.thenName].actions[
-    props.name
+    props.actionName
   ].options!.termsColumns = termsColumns;
   const flatten = new Set(flattenDeep(termsColumns));
   let newColumns = [...flatten.values()];
@@ -360,7 +360,7 @@ const handleOptionsColumnsValue = (termsColumns: any[], _options: any) => {
     newColumns = [..._options?.otherColumns, ...newColumns];
   }
   formModel.value.branches![props.branchName].then[props.thenName].actions[
-    props.name
+    props.actionName
   ].options!.columns = newColumns;
 };
 
@@ -533,9 +533,11 @@ const onDelete = () => {
   formModel.value.branches![props.branchName].then[props.thenName].actions[
     props.actionName
   ].terms[props.termsName].terms?.splice(props.name, 1);
+  console.log(formModel.value.branches![props.branchName].then[props.thenName])
+  console.log(props.actionName)
   const _options =
     formModel.value.branches![props.branchName].then[props.thenName].actions[
-      props.name
+      props.actionName
     ].options;
   const termsColumns = _options?.termsColumns || [];
   set(termsColumns, [props.termsName, props.name], []);
