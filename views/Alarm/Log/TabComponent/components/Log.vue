@@ -130,7 +130,7 @@ const queryData = async (e = {}) => {
   const params = {
     ...e,
     pageIndex: 0,
-    pageSize: 51,
+    pageSize: 50,
     sorts: [
       {
         name: "alarmTime",
