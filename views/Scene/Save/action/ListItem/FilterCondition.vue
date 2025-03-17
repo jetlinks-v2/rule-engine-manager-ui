@@ -54,6 +54,16 @@
           v-model:source="paramsValue.value.source"
           @select="valueSelect"
         />
+        <ArrayParamsDropdown
+          v-else-if="showArray"
+          icon="icon-canshu"
+          :placeholder="$t('Terms.ParamsItem.9093430-4')"
+          :options="valueOptions"
+          :tabsOptions="tabsOptions"
+          v-model:value="paramsValue.value.value"
+          v-model:source="paramsValue.value.source"
+          @select="valueSelect"
+        />
         <FulfillParamsDropdown
           v-else-if="showFulfill"
           icon="icon-canshu"
@@ -70,6 +80,7 @@
           :options="showAlarmSelect ? alarmOptions : valueOptions"
           :metricOptions="valueColumnOptions"
           :tabsOptions="tabsOptions"
+          :multiple="['in', 'nin'].includes(paramsValue.termType)"
           v-model:value="paramsValue.value.value"
           v-model:source="paramsValue.value.source"
           @select="valueSelect"
@@ -99,7 +110,9 @@ import type { TermsType } from "../../../typings";
 import DropdownButton from "../../components/DropdownButton";
 import { getOption } from "../../components/DropdownButton/util";
 import ParamsDropdown, {
-  DoubleParamsDropdown, FulfillParamsDropdown,
+  DoubleParamsDropdown,
+  FulfillParamsDropdown,
+  ArrayParamsDropdown
 } from "../../components/ParamsDropdown";
 import { inject } from "vue";
 import { useSceneStore } from "../../../../../store/scene";
@@ -199,8 +212,6 @@ const valueOptions = ref<any[]>([]); // 默认手动输入下拉
 const arrayParamsKey = [
   "nbtw",
   "btw",
-  "in",
-  "nin",
   "contains_all",
   "contains_any",
   "not_contains",
@@ -219,11 +230,17 @@ const alarmOptions = ref([]);
 
 const checkFilter = useCheckFilter();
 
+const handleRangeFn = (array: Array<string| undefined>) => {
+  return array.includes(paramsValue.termType) && ['int', 'float','short', 'double', 'long'].includes(tabsOptions.value[0].component);
+}
+
 const showDouble = computed(() => {
   return paramsValue.termType
-    ? arrayParamsKey.includes(paramsValue.termType)
+    ? arrayParamsKey.includes(paramsValue.termType) && ['int', 'float', 'short', 'double', 'long'].includes(tabsOptions.value[0].component)
     : false;
 });
+
+const showArray = computed(() => handleRangeFn(['nin', 'in']));
 
 const showAlarm = computed(() => {
   return showAlarmKey.includes(paramsValue.column?.split(".")?.[1]);
@@ -299,8 +316,8 @@ const handOptionByColumn = (option: any) => {
         _options?.elements?.map((item: any) => ({
           ...item,
           fullName: item.text,
-          label: item.text,
-          value: item.value,
+          name: item.text,
+          id: item.value,
         })) || [];
     } else {
       valueOptions.value =
@@ -352,7 +369,7 @@ const mouseout = () => {
 
 const handleOptionsColumnsValue = (termsColumns: any[], _options: any) => {
   formModel.value.branches![props.branchName].then[props.thenName].actions[
-    props.name
+    props.actionName
   ].options!.termsColumns = termsColumns;
   const flatten = new Set(flattenDeep(termsColumns));
   let newColumns = [...flatten.values()];
@@ -360,13 +377,13 @@ const handleOptionsColumnsValue = (termsColumns: any[], _options: any) => {
     newColumns = [..._options?.otherColumns, ...newColumns];
   }
   formModel.value.branches![props.branchName].then[props.thenName].actions[
-    props.name
+    props.actionName
   ].options!.columns = newColumns;
 };
 
 const columnSelect = (e: any) => {
   const dataType = e.type;
-  const hasTypeChange = dataType !== tabsOptions.value[0].component;
+  const hasTypeChange = dataType === 'enum' || dataType !== tabsOptions.value[0].component;
   let termTypeChange = false;
 
   if (showAlarmKey.includes(paramsValue.column?.split(".")?.[1])) {
@@ -533,9 +550,11 @@ const onDelete = () => {
   formModel.value.branches![props.branchName].then[props.thenName].actions[
     props.actionName
   ].terms[props.termsName].terms?.splice(props.name, 1);
+  console.log(formModel.value.branches![props.branchName].then[props.thenName])
+  console.log(props.actionName)
   const _options =
     formModel.value.branches![props.branchName].then[props.thenName].actions[
-      props.name
+      props.actionName
     ].options;
   const termsColumns = _options?.termsColumns || [];
   set(termsColumns, [props.termsName, props.name], []);

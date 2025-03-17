@@ -259,7 +259,7 @@ const checkDeviceDelete = async () => {
     if (_value.source === "upper") {
       const _params = {
         branch: props.branchesName,
-        branchGroup: props.branchesGroup,
+        branchGroup: props.thenName,
         action: props.name - 1,
       };
       const option = (await getBuildInData(_params, _data.value))(
