@@ -61,5 +61,9 @@ export const defaultSetting = {
   treeKey: {
     type: String,
     default: 'key'
+  },
+  multiple: {
+    type: Boolean,
+    default: false
   }
 }

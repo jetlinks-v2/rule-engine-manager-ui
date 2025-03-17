@@ -77,7 +77,8 @@ const emit = defineEmits(['delete', 'add']);
 const visible = ref<boolean>(false);
 
 const thenName = computed(() => {
-  return _data.value.branches![props.branchesName].then.findIndex(item => item.parallel === props.parallel)
+    const index =  _data.value.branches![props.branchesName].then.findIndex(item => item.parallel === props.parallel)
+    return index === -1 ? 0 : index;
 })
 
 const onAdd = () => {
