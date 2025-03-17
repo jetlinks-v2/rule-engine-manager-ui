@@ -156,8 +156,8 @@ const checkDeviceDelete = async () => {
     // }
     const _upperKey = item!.upperKey;
     const _params = {
-      branch: props.thenName,
-      branchGroup: props.branchesName,
+      branch: props.branchesName,
+      branchGroup: props.thenName,
       action: props.name - 1,
     };
     const upperData = await getParams(_params, unref(_data.value));
@@ -258,8 +258,8 @@ const checkDeviceDelete = async () => {
 
     if (_value.source === "upper") {
       const _params = {
-        branch: props.thenName,
-        branchGroup: props.branchesName,
+        branch: props.branchesName,
+        branchGroup: props.branchesGroup,
         action: props.name - 1,
       };
       const option = (await getBuildInData(_params, _data.value))(

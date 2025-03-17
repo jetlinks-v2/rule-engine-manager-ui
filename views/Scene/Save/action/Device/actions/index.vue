@@ -257,8 +257,8 @@ const _function = computed(() => {
 
 const queryBuiltIn = async () => {
     const _params = {
-        branch: props.thenName,
-        branchGroup: props.branchesName,
+        branch: props.branchesName,
+        branchGroup: props.thenName,
         action: props.name - 1,
     };
     const _data = await getParams(_params, unref(data));

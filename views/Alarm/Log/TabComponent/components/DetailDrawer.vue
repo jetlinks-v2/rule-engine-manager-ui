@@ -42,11 +42,12 @@
             ><span>
               {{ AlarmData?.state.text }}
             </span>
-            <a-button
+            <j-permission-button
               v-if="AlarmData?.state.value === 'warning'"
+              hasPermission="rule-engine/Alarm/Log:action"
               type="link"
               @click="dealAlarm"
-              >{{ $t('components.DetailDrawer.488913-1') }}</a-button
+              >{{ $t('components.DetailDrawer.488913-1') }}</j-permission-button
             >
           </div>
         </div>
