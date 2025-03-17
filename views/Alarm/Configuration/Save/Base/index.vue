@@ -112,6 +112,7 @@ import { configImages } from "../../../../../assets/index";
 import { isNoCommunity } from "@/utils/utils";
 import { useI18n } from "vue-i18n";
 import { useAlarmConfigType } from "@ruleEngine/hook/useAlarmConfigType";
+import { cloneDeep } from "lodash-es";
 
 const { t: $t } = useI18n();
 const route = useRoute();
@@ -126,7 +127,7 @@ const queryData = () => {
     detail(route.query?.id).then((res) => {
       if (res.status === 200) {
         emit("change", res?.result?.targetType);
-        form.value = res?.result;
+        form.value = cloneDeep(res?.result);
         configurationData.value.current = res.result;
         query({
           terms: [
