@@ -61,7 +61,7 @@
 </template>
 
 <script lang="ts" setup>
-import { detail, queryLogList } from "@ruleEngine/api/log";
+import { queryAlarmRecordNoPaging, queryLogList } from "@ruleEngine/api/log";
 import { useRoute } from "vue-router";
 import dayjs from "dayjs";
 import { useAlarmStore } from "../../../../store/alarm";
@@ -165,11 +165,19 @@ const gotoDevice = (id) => {
 watch(
   () => id,
   async () => {
-    const res = await detail(id);
-    if (res.status === 200) {
-      data.current = res.result || {};
+    const res = await queryAlarmRecordNoPaging({
+      "terms": [
+          {
+            "column": "id",
+            "value": id,
+            "termType": "eq"
+          }
+      ]
+    });
+    if (res.success) {
+      data.current = res.result?.[0] || {};
       tableRef.value?.reload();
-      alarmType.value = res.result?.targetType;
+      alarmType.value = data.current?.targetType;
       if (alarmType.value === "device") {
         columns.value = [
           {
