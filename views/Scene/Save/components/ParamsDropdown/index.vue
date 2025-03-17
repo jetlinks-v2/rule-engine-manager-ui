@@ -38,8 +38,21 @@
                   ['select', 'enum', 'boolean'].includes(item.component)
                 "
               >
+                <j-value-item
+                  v-if="multiple"
+                  v-model:modelValue="myValue"
+                  :itemType="item.component"
+                  mode="multiple"
+                  :options="item.key === 'upper' ? metricOptions : options"
+                  :extra="props"
+                  :extraProps="{
+                    fieldNames: {label: 'name', value: 'id'}
+                  }"
+                  @change="multipleChange"
+                  style="width: 100%"
+                />
                 <DropdownMenus
-                  v-if="
+                  v-else-if="
                     (['metric', 'upper'].includes(item.key)
                       ? metricOptions
                       : options
@@ -178,6 +191,12 @@ const valueItemChange = (e: string) => {
   emit("select", e, label.value, { 0: label.value });
 };
 
+const multipleChange = (e: {fullName: string, value: any}[]) => {
+  label.value = e.map(item => item.fullName);
+  emit("update:value", e.map(item => item.value));
+  emit("select", e.map(item => item.value), label.value, { 0: label.value });
+};
+
 const onSelect = (e: string, option: any) => {
   visible.value = false;
   label.value = option[props.labelName];
@@ -204,7 +223,7 @@ watchEffect(() => {
   const _value = isMetric ? props.metric : props.value;
   const _valueName = isMetric ? "id" : props.valueName;
   const option = getOption(_options, _value as string, _valueName); // 回显label值
-  myValue.value = isMetric ? props.metric : props.value;
+  myValue.value = isMetric ? props.metric : props.value || [];
   mySource.value = props.source;
 
   if (option) {
@@ -218,7 +237,11 @@ watchEffect(() => {
           ? props.value || props.placeholder
           : props.placeholder;
     } else {
-      label.value = props.value !== undefined ? props.value : props.placeholder;
+      if(props.multiple && props.source === 'fixed') {
+        label.value = props.options?.filter(item => props.value?.includes(item.value)).map(item => item.fullName);
+      } else {
+        label.value = props.value!== undefined? props.value : props.placeholder;
+      }
     }
   }
 });
