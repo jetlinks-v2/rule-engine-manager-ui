@@ -247,8 +247,9 @@
                   }}
                 </j-ellipsis>
               </div>
-              <div v-else-if="item.device?.selector === 'tag'">
-                <AIcon
+              <div v-else-if="item.device?.selector === 'tag'" style="display: flex">
+                <j-ellipsis>
+                  <AIcon
                   :type="
                     typeIconMap[
                       item.device?.message?.messageType || 'INVOKE_FUNCTION'
@@ -259,22 +260,25 @@
                 <span>{{ item.options?.tagName }}</span>
                 {{ $t('Save.Actions.0214511-17') }}{{ item.options?.productName }}
                 {{ item.options?.propertiesName }}
+                </j-ellipsis>
               </div>
               <div v-else-if="item.device?.selector === 'relation'">
-                <AIcon
-                  :type="
-                    typeIconMap[
-                      item.device?.message?.messageType || 'INVOKE_FUNCTION'
-                    ]
-                  "
-                />
-                {{ item.options?.type }}
-                {{ $t('Save.Actions.0214511-18') }}
-                <span>{{ item.options?.triggerName }}</span>
-                {{ $t('Save.Actions.0214511-19') }} {{ item.options?.relationName }} {{ $t('Save.Actions.0214511-17') }}{{
-                  item.options?.productName
-                }}
-                {{ $t('Save.Actions.0214511-20') }} {{ item.options?.propertiesName }}
+                <j-ellipsis>
+                    <AIcon
+                    :type="
+                      typeIconMap[
+                        item.device?.message?.messageType || 'INVOKE_FUNCTION'
+                      ]
+                    "
+                  />
+                  {{ item.options?.type }}
+                  {{ $t('Save.Actions.0214511-18') }}
+                  <span>{{ item.options?.triggerName }}</span>
+                  {{ $t('Save.Actions.0214511-19') }} {{ item.options?.relationName }} {{ $t('Save.Actions.0214511-17') }}{{
+                    item.options?.productName
+                  }}
+                  {{ $t('Save.Actions.0214511-20') }} {{ item.options?.propertiesName }}
+                </j-ellipsis>
               </div>
             </template>
             <template v-if="item.executor === 'device-data' && show">
@@ -283,6 +287,7 @@
                 style="display: flex; align-items: center"
               >
                 <AIcon type="icon-mubiao" style="padding: 0 4px" />
+                <span>获取</span>
                 <j-ellipsis style="max-width: 120px; margin-right: 12px">
                   {{ Array.isArray(item?.options?.name) ? item?.options?.name?.join(',') : item.options?.name }}
                 </j-ellipsis>
@@ -339,9 +344,10 @@
                 }}
                 {{ $t('Save.Actions.0214511-20') }} {{ item.options?.propertiesName }}
               </div>
+              <span>的设备信息</span>
             </template>
             <template v-if="item.executor === 'collector' && show">
-              <a-space>
+              <j-ellipsis>
                 <span>{{item?.options?.type}}</span>
                 <span>
                     <AIcon type="icon-mubiao" style="padding: 0 4px" />
@@ -352,7 +358,7 @@
                   <span>为</span>
                   <span>{{item?.options?.propertiesName}}</span>
                 </template>
-              </a-space>
+              </j-ellipsis>
             </template>
           </div>
         </div>
