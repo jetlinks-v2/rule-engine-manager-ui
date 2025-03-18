@@ -23,7 +23,7 @@
         <j-value-item
             v-else
             v-model:modelValue="myValue"
-            :itemType="props.component"
+            :itemType="itemType"
             :options="options"
             @change="valueItemChange"
         />
@@ -56,6 +56,12 @@ type Emit = {
 const emit = defineEmits<Emit>();
 const label = ref();
 const myValue = ref<ValueType>(props.value);
+const itemType = computed(() => {
+  if (props.component === 'file') {
+    return 'string'
+  }
+  return props.component
+})
 const valueItemChange = (e: string) => {
     label.value = e;
     emit('update:value', e);

@@ -34,7 +34,7 @@
         <div style='max-width: 260px'>
           <j-value-item
             v-model:modelValue='record.value'
-            :itemType="record.type === 'date'? 'time' : ['short', 'byte', 'word'].includes(record.type) ? 'int' : record.type"
+            :itemType="itemType(record.type)"
             :options="record.options"
             :extraProps="{
               style: { width: '100%'}
@@ -91,6 +91,23 @@ const columns = [
     width: 260
   },
 ]
+
+const itemType = (type: string) => {
+
+  if (type === 'date') {
+    return 'time'
+  }
+
+  if (['short', 'byte', 'word'].includes(type)) {
+    return 'int'
+  }
+
+  if (type === 'file') {
+    return 'string'
+  }
+
+  return type
+}
 
 const valueChange = () => {
   const _value = dataSource.value.map(item => {

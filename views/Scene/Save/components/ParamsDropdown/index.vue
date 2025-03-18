@@ -41,7 +41,7 @@
                 <j-value-item
                   v-if="multiple"
                   v-model:modelValue="myValue"
-                  :itemType="item.component"
+                  :itemType="item.component === 'file' ? 'string' : item.component"
                   mode="multiple"
                   :options="item.key === 'upper' ? metricOptions : options"
                   :extra="props"
@@ -117,7 +117,7 @@
               <j-value-item
                 v-else
                 v-model:modelValue="myValue"
-                :itemType="['short', 'byte', 'word'].includes(item.component) ? 'int' : item.component"
+                :itemType="itemType(item.component)"
                 :options="item.key === 'upper' ? metricOptions : options"
                 :extraProps="props"
                 @change="valueItemChange"
@@ -162,6 +162,18 @@ const mySource = ref<string>(props.source);
 const label = ref<any>(props.placeholder);
 const treeOpenKeys = ref<(string | number)[]>([]);
 const visible = ref(false);
+
+const itemType = (type: string) => {
+  if (['short', 'byte', 'word'].includes(type)) {
+    return 'int'
+  }
+
+  if (type === 'file') {
+    return 'string'
+  }
+
+  return type
+}
 
 nextTick(() => {
   mySource.value = props.source;

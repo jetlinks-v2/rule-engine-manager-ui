@@ -34,7 +34,7 @@
                         <a-col flex="auto">
                             <j-value-item
                                 v-model:modelValue="item.value"
-                                :itemType="item.valueType"
+                                :itemType="item.valueType === 'file' ? 'string' : item.valueType"
                                 style="width: 100%;"
                                 @change="onValueChange"
                                 :options="
