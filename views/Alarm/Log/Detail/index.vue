@@ -84,34 +84,77 @@ const { data } = alarmStore;
 const current = ref(); // 当前告警记录信息
 const details = ref(); // 告警记录的详情
 const alarmType = ref();
-const columns = ref([
-  {
-    title: $t('Detail.index.165158-1'),
-    dataIndex: "alarmTime",
-    key: "alarmTime",
-    scopedSlots: true,
-    search: {
-      type: "date",
-    },
-  },
-  {
-    title: $t('Detail.index.165158-2'),
-    dataIndex: "alarmConfigName",
-    key: "alarmConfigName",
-  },
-  {
-    title: $t('Detail.index.165158-3'),
-    dataIndex: "description",
-    key: "description",
-  },
-  {
-    title: $t('Detail.index.165158-4'),
-    dataIndex: "action",
-    key: "action",
-    width: 100,
-    scopedSlots: true,
-  },
-]);
+const columns = ref(
+    [
+      {
+        title: $t('Detail.index.165158-1'),
+        dataIndex: "alarmTime",
+        key: "alarmTime",
+        scopedSlots: true,
+        search: {
+          type: "date",
+        },
+      },
+      {
+        title: $t('Detail.index.165158-6'),
+        dataIndex: "triggerDesc",
+        key: "triggerDesc",
+      },
+      {
+        title: $t('Detail.index.165158-7'),
+        dataIndex: "sourceName",
+        key: "sourceName",
+        scopedSlots: true,
+        search: {
+          type: "string",
+        },
+      },
+      {
+        title: $t('Detail.index.165158-8'),
+        dataIndex: "actualDesc",
+        key: "actualDesc",
+        scopedSlots: true,
+        search: {
+          type: "string",
+        },
+      },
+      {
+        title: $t('Detail.index.165158-4'),
+        dataIndex: "action",
+        key: "action",
+        width: 100,
+        scopedSlots: true,
+      },
+    ]
+//     [
+//   {
+//     title: $t('Detail.index.165158-1'),
+//     dataIndex: "alarmTime",
+//     key: "alarmTime",
+//     scopedSlots: true,
+//     search: {
+//       type: "date",
+//     },
+//   },
+//   {
+//     title: $t('Detail.index.165158-2'),
+//     dataIndex: "alarmConfigName",
+//     key: "alarmConfigName",
+//   },
+//   {
+//     title: $t('Detail.index.165158-3'),
+//     dataIndex: "description",
+//     key: "description",
+//   },
+//   {
+//     title: $t('Detail.index.165158-4'),
+//     dataIndex: "action",
+//     key: "action",
+//     width: 100,
+//     scopedSlots: true,
+//   },
+// ]
+);
 const getActions = (
   data: Partial<Record<string, any>>,
   type?: "table"
@@ -153,7 +196,7 @@ const queryList = (params: any) => {
     })
   }
 };
-const gotoDevice = (id) => {
+const gotoDevice = (id: string) => {
   menuStory.jumpPage("device/Instance/Detail", {
     params: { id, tab: "Running" },
   });
@@ -178,49 +221,9 @@ watch(
       data.current = res.result?.[0] || {};
       tableRef.value?.reload();
       alarmType.value = data.current?.targetType;
-      if (alarmType.value === "device") {
-        columns.value = [
-          {
-            title: $t('Detail.index.165158-1'),
-            dataIndex: "alarmTime",
-            key: "alarmTime",
-            scopedSlots: true,
-            search: {
-              type: "date",
-            },
-          },
-          {
-            title: $t('Detail.index.165158-6'),
-            dataIndex: "triggerDesc",
-            key: "triggerDesc",
-          },
-          {
-            title: $t('Detail.index.165158-7'),
-            dataIndex: "sourceName",
-            key: "sourceName",
-            scopedSlots: true,
-            search: {
-              type: "string",
-            },
-          },
-          {
-            title: $t('Detail.index.165158-8'),
-            dataIndex: "actualDesc",
-            key: "actualDesc",
-            scopedSlots: true,
-            search: {
-              type: "string",
-            },
-          },
-          {
-            title: $t('Detail.index.165158-4'),
-            dataIndex: "action",
-            key: "action",
-            width: 100,
-            scopedSlots: true,
-          },
-        ];
-      }
+      // if (alarmType.value === "device") {
+      //   columns.value =
+      // }
     }
   },
   {
