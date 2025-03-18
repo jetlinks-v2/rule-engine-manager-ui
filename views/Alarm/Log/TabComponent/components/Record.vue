@@ -142,10 +142,10 @@ const queryList = async (params = {}) => {
     sorts: [{ name: "createTime", order: "desc" }],
     ...params,
     pageIndex: 0,
-    pageSize: 51,
+    pageSize: 50,
   });
   if (res.success) {
-    if (res.result.data?.length > 50) {
+    if (res.result.total > 50) {
       exceed.value = true;
       dataSource.value = res.result.data.slice(0, 50);
     } else {
