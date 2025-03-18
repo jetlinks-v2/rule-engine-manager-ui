@@ -48,7 +48,7 @@
       <a-descriptions-item :label="$t('components.LogDetail.1651510-8')" :span="2"
         ><div style="max-height: 500px; overflow-y: auto">
           <JsonViewer
-            :value="JSON.parse(data?.alarmInfo)"
+            :value="runningWater"
             :expanded="true"
             :expandDepth="4"
           ></JsonViewer></div
