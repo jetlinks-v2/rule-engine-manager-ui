@@ -12,7 +12,7 @@
           :tab="group.branchName"
           :key="group.key"
         >
-          <div v-for="(branch, index) in group.children">
+          <div v-for="(branch, index) in group.children" :key="branch.branchId">
             <div style="display: flex;align-items: center" v-if="show">
               <div style="padding-right: 12px;font-weight: bold;font-size: 16px;width: 46px; white-space: nowrap;">{{ index === 0 ? $t('Save.BranchesTabs.0214510-2') : $t('Save.BranchesTabs.0214510-3') }}</div>
               <Terms :when="branch.whenOptions" :data="branch.when" />
