@@ -92,6 +92,19 @@ const columns = [
         dataIndex: 'state',
         key: 'state',
         width: 100,
+        search: {
+          type: 'select',
+          options: [
+            {
+              label: $t('components.Record.165159-8'),
+              value: 'processed',
+            },
+            {
+              label: $t('components.Record.165159-9'),
+              value: 'unprocessed',
+            },
+          ],
+        },
         scopedSlots: true,
     },
     {
