@@ -42,19 +42,8 @@ const rules = [{
   validator(_: any, v: any) {
     if (!v) {
       return Promise.reject(new Error($t('Collector.actions.index-6100078-12')));
-    } else {
-      if (
-          !v.pointSelectInfo.collectorId ||
-          (v.operation?.operator === 'readProperty' && !v.operation!.readProperties.length) ||
-          (v.operation?.operator === 'writeProperty' && !Object.keys(v.operation!.writeProperties).length) ||
-          (v.operation?.operator === 'invokeFunction' && !v.operation.functionId) ||
-          (v.operation?.operator === 'reportEvent' && !v.operation.eventId)
-      ) {
-        return Promise.reject(new Error($t('Collector.actions.index-6100078-13')));
-      }
-      //  判断产品
-      //  判断设备或者组织
-      //  判断属性、事件、功能
+    } else if (!v.pointSelectInfo.pointIds.length) {
+      return Promise.reject(new Error($t('Collector.actions.index-6100078-13')));
     }
     return Promise.resolve();
   },

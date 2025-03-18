@@ -193,7 +193,7 @@ const checkCollector = async (): Promise<boolean> => {
     const pointSet = new Set(pointResp.result.map((item: any) => item.id))
 
     const result = data.value.trigger?.collector?.pointSelectInfo.pointIds.every(p => pointSet.has(p))
-    data.value.trigger.collector.pointSelectInfo.pointIds = []
+    data.value.trigger.collector!.pointSelectInfo.pointIds = []
 
     return !!result
   }
