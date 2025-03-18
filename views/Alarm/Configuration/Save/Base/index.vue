@@ -81,12 +81,18 @@
         </a-form-item>
         <j-permission-button
           type="primary"
+          v-if="!route.query?.id"
           :loading="loading"
           @click="handleSave"
-          :hasPermission="[
-            'rule-engine/Alarm/Configuration:add',
-            'rule-engine/Alarm/Configuration:update',
-          ]"
+          hasPermission="rule-engine/Alarm/Configuration:add"
+          >{{ $t("Base.index.021452-9") }}</j-permission-button
+        >
+        <j-permission-button
+          type="primary"
+          v-else
+          :loading="loading"
+          @click="handleSave"
+          hasPermission="rule-engine/Alarm/Configuration:update"
           >{{ $t("Base.index.021452-9") }}</j-permission-button
         >
       </a-form>
@@ -228,9 +234,7 @@ const handleSave = async () => {
             query: { id: res.result?.id },
           });
         }
-        if (!route.query?.id) {
-          configurationData.value.current = res.result;
-        }
+        configurationData.value.current = cloneDeep(form.value);
       }
     })
     .catch((error) => {
@@ -245,6 +249,10 @@ watch(
     queryData();
   }
 );
+
+defineExpose({
+  data: () => form.value
+})
 </script>
 <style lang="less" scoped>
 .ant-radio-button-wrapper {
