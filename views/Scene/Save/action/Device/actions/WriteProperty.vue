@@ -39,6 +39,7 @@
                         v-model:value="propertyModelRef.propertiesValue"
                         v-model:source="propertyModelRef.source"
                         valueName="id"
+                        labelName="fullName"
                         treeKey="id"
                         @select="onValueChange"
                     >

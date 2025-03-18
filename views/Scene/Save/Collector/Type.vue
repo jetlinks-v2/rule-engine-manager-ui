@@ -59,7 +59,7 @@ const props = defineProps({
 
 const { t: $t } = useI18n()
 const formModel = reactive({
-    operator: props.operator || 'read',
+    operator: props.operator.operator || 'read',
     timer: {},
     readPoints: props.collectorId !== props.collectorConfig?.pointSelectInfo?.collectorId ? [] : props.collectorConfig?.pointSelectInfo?.pointIds || [],
     writePoints: props.collectorId !== props.collectorConfig?.pointSelectInfo?.collectorId ? {} : props.collectorConfig?.pointSelectInfo?.pointIds[0] ?  {

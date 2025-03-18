@@ -158,7 +158,7 @@ const deviceQuery = (p: any) => {
     props.rowKeys.forEach((rowKey) => {
       sorts.push({
         name: "id",
-        value: rowKey,
+        value: rowKey.value,
       });
     });
   }
