@@ -231,8 +231,8 @@ const columns = ref([
   },
   {
     title: $t("TabComponent.index.165152-1"),
-    dataIndex: "alarmTime",
-    key: "alarmTime",
+    dataIndex: "lastAlarmTime",
+    key: "lastAlarmTime",
     search: {
       type: "date",
     },
@@ -370,7 +370,7 @@ const newColumns = computed(() => {
 });
 
 let params: any = ref({
-  sorts: [{ name: "alarmTime", order: "desc" }],
+  sorts: [{ name: "lastAlarmTime", order: "desc" }],
   terms: [],
 });
 const handleSearch = async (params: any) => {

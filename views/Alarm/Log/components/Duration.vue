@@ -24,6 +24,7 @@ const calculateDuration = (startTime, endTime) => {
     }
     return result;
 };
+
 watch(
     () => props.data,
     () => {
