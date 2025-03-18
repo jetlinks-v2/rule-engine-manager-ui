@@ -37,7 +37,7 @@
                 ref='typeRef'
                 v-else-if='addModel.stepNumber === 2'
                 :operator='addModel.operator'
-                :collectorConfig="value"
+                :collectorConfig="omit(addModel, ['operator'])"
                 :collectorId="addModel.pointSelectInfo?.collectorId"
                 :pointList="pointList"
             />
@@ -68,7 +68,7 @@ import { handleTimerOptions } from '../components/Timer/util'
 import { Form } from 'ant-design-vue'
 import {queryPointNoPaging, queryPointNoPagingV2} from '@ruleEngine/api/collector'
 import { useI18n } from 'vue-i18n'
-import {cloneDeep} from "lodash-es";
+import {cloneDeep, omit} from "lodash-es";
 
 type Emit = {
     (e: 'cancel'): void
