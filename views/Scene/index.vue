@@ -128,8 +128,7 @@
 <script setup lang="ts" name="Scene">
 import SaveModal from "./Save/save.vue";
 import { useMenuStore } from "@/store/menu";
-import { query, _delete, _action, _execute, queryType } from "../../api/scene";
-import { queryList } from "../../api/configuration";
+import {query, _delete, _action, _execute, queryType, queryAlarmPage} from "../../api/scene";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { Modal } from "ant-design-vue";
 import { sceneImages } from "../../assets/index";
@@ -316,34 +315,27 @@ const getActions = (
         title:
           data.state.value !== "disable" ? $t('Scene.index.895630-23') : $t('Scene.index.895630-22'),
       },
-      popConfirm: {
-        title: $t('Scene.index.895630-24'),
-        onConfirm: async () => {
-          // 查询该场景是否绑定告警
-          const resp = await queryList({
-            pageSize: 10,
-            pageIndex: 0,
-            terms: [
-              {
-                terms: [
-                  {
-                    column: "id",
-                    termType: "rule-bind-alarm",
-                    value: {
-                      ruleId: [data.id],
-                      branchId: [-1],
-                    },
-                  },
-                ],
-              },
-            ],
-          });
-          if (resp.success && resp.result?.total) {
-            await deleteModal(data.id);
-          } else {
+      onClick: async () => {
+        const resp = await queryAlarmPage({
+          pageSize: 10,
+          pageIndex: 0,
+          terms: [
+            {
+              column: "id$rule-bind-alarm",
+              value: `${data.id}`
+            },
+          ],
+        });
+
+        const bindAlarm = resp.success && resp.result?.total
+
+        const title = bindAlarm ? $t('Scene.index.895630-17') : $t('Scene.index.895630-24');
+        Modal.confirm({
+          title: title,
+          onOk: async () => {
             await deleteScene(data.id);
-          }
-        },
+          },
+        });
       },
       icon: "DeleteOutlined",
     },

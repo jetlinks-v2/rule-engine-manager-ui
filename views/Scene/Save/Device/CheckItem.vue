@@ -10,9 +10,11 @@ import {
   queryProductList,
   detail as deviceDetailQuery,
   queryNoPagingPost,
-  queryDetailListNoPaging
 } from "../../../../api/others";
 import { getTreeData_api } from "@/api/system/department";
+import {query as channelQuery, getProviders} from '@ruleEngine/api/channel'
+import {queryCollector, queryPointNoPagingV2} from '@ruleEngine/api/collector'
+import {difference} from "lodash-es";
 
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
@@ -162,12 +164,54 @@ const check = async (): Promise<boolean> => {
   return true;
 };
 
+const checkCollector = async (): Promise<boolean> => {
+
+  const channelResp = await channelQuery({ terms: [{ column: 'id', value: data.value.options.channelId }] })
+
+  if (channelResp.success && !channelResp.result.data.length) {
+    data.value.options.channelId = ""
+    return false
+  }
+
+  const collectorResp = await queryCollector({ terms: [{ column: 'id', value: data.value.trigger!.collector!.pointSelectInfo.collectorId }] });
+
+  if (collectorResp.success && !collectorResp.result.data.length) {
+    data.value.trigger!.collector!.pointSelectInfo.collectorId = ''
+    return true
+  }
+
+  const pointResp = await queryPointNoPagingV2({
+    terms: [
+      {
+        column: 'collectorId',
+        value: data.value.trigger!.collector!.pointSelectInfo.collectorId,
+      }
+    ]
+  })
+
+  if (pointResp.success && data.value.trigger?.collector) {
+    const pointSet = new Set(pointResp.result.map((item: any) => item.id))
+
+    const result = data.value.trigger?.collector?.pointSelectInfo.pointIds.every(p => pointSet.has(p))
+    data.value.trigger.collector!.pointSelectInfo.pointIds = []
+
+    return !!result
+  }
+
+  return true
+}
+
 const checkInit = async () => {
+  let checkStatus = true
   if (data.value.trigger?.device) {
-    const checkStatus = await check();
-    if (!checkStatus) {
-      formTouchOff();
-    }
+    checkStatus = await check();
+
+  } else if (data.value.trigger?.collector) {
+    checkStatus = await checkCollector();
+  }
+  console.log('checkStatus', checkStatus)
+  if (!checkStatus) {
+    formTouchOff();
   }
 };
 

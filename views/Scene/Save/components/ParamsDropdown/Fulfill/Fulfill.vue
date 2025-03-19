@@ -110,7 +110,8 @@ const onSelect = async () => {
     return
   }
   let obj = cloneDeep(dataCache.value)
-  if (!dataCache.value?.aggregation?.[0]?.value.value) {
+  const oldValue = dataCache.value?.aggregation?.[0]?.value.value
+  if (oldValue === null || oldValue === undefined) {
     obj.aggregation = [];
   }
   emit('update:value', obj)
@@ -197,7 +198,7 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
     if (Object.keys(obj).length) {
       Object.assign(dataCache.value, Object.keys(obj).length ? cloneDeep(obj) : { filter: []})
     }
-    if (props.value && props.value.aggregation?.length) {
+    if ((props.value !== null && props.value !== undefined) && props.value.aggregation?.length) {
       showPropertyList.value = true
     }
   }

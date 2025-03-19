@@ -11,7 +11,6 @@
         <span>{{ item.tip}}</span>
       </div>
       <div class='way-item-image'>
-<!--        <img width='40' :src='item.image' />-->
         <div class="way-item-icon">
             <AIcon :type="item.image" style="font-size: 20px"></AIcon>
         </div>
@@ -21,20 +20,10 @@
 </template>
 
 <script lang='ts' setup name='TriggerWay'>
-import { sceneImages } from '../../../../assets/index';
-import { useI18n } from 'vue-i18n'
 
 type Emit = {
   (e: 'update:modelValue', data: string): void
 }
-
-const { t: $t } = useI18n()
-
-// const options = [
-//   { value: 'device', label: $t('components.TriggerWay.909349-0'), tip: $t('components.TriggerWay.909349-1'), image: sceneImages.deviceTrigger },
-//   { value: 'manual', label: $t('components.TriggerWay.909349-2'), tip: $t('components.TriggerWay.909349-3'), image: sceneImages.manualTrigger },
-//   { value: 'timer', label: $t('components.TriggerWay.909349-4'), tip: $t('components.TriggerWay.909349-5'), image: sceneImages.timingTrigger },
-// ]
 
 const props = defineProps({
   modelValue: {
@@ -50,7 +39,7 @@ const props = defineProps({
     default: false
   },
   options: {
-    type: Array as PropType<any[]>,
+    type: Array,
     default: () => []
   }
 })

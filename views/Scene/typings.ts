@@ -157,6 +157,7 @@ export interface TriggerCollector {
     collectorName: string,
     pointIds: string[],
   },
+  collectorConfig?: any
   timer?: OperationTimer;
 }
 
@@ -207,6 +208,8 @@ export type TriggerType = {
    * 定时触发配置
    */
   timer?: OperationTimer;
+
+  collector?: TriggerCollector
 };
 
 export interface TermsVale {
