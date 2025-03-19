@@ -6,7 +6,7 @@
     class="scene-search"
     target="scene-triggrt-device-device"
   />
-  <j-divider style="margin: 0" />
+  <a-divider style="margin: 0" />
   <j-pro-table
     ref="actionRef"
     mode="CARD"

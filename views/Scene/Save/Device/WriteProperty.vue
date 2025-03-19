@@ -23,16 +23,11 @@
         </span>
       </a-col>
       <a-col :span='24' v-if='showTable'>
-        <a-form-item
-          name='data'
-          :rules="rules"
-        >
-          <FunctionCall
-            v-model:value='formModel.data'
-            :data='callDataOptions'
-            @change='callDataChange'
-          />
-        </a-form-item>
+        <FunctionCall
+          ref="functionRef"
+          :data='callDataOptions'
+          @change='callDataChange'
+        />
       </a-col>
     </a-row>
   </a-form>
@@ -67,7 +62,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits<Emit>()
-
+const functionRef = ref()
 const formModel = reactive<{ reportKey: string | undefined, data: any[] }>({
   reportKey: undefined,
   data: Object.keys(props.value).map(key => ({ name: key, value: props.value[key] })) || []
@@ -141,32 +136,14 @@ const callDataChange = (v: any[]) => {
   })
 }
 
-const rules = [{
-  validator(_: string, value: any) {
-    if (!value?.length && callDataOptions.value.length) {
-      return Promise.reject($t('Device.WriteProperty.372527-4'))
-    } else {
-      let hasValue = value.find((item: { name: string, value: any}) => !item.value)
-      if (hasValue) {
-        const item = callDataOptions.value.find((item: any) => item.id === hasValue.name)
-        return Promise.reject(item?.name ? $t('Device.WriteProperty.372527-5', [item?.name]) : $t('Device.WriteProperty.372527-6'))
-      }
-    }
-    return Promise.resolve();
-  }
-}]
-
-const initRowKey = () => {
-  if (props.value.length) {
-    const keys = Object.keys(props.value)
-    formModel.reportKey = keys[0]
-  }
-}
-
 defineExpose({
   validateFields: () => new Promise(async (resolve)  => {
     const data = await writeForm.value?.validateFields()
-    resolve(data)
+    const data2 = await functionRef.value?.validate()
+    resolve({
+      ...data,
+      data: data2.map(item => ({ name: item.id, value: item.value}))
+    })
   })
 })
 

@@ -1,55 +1,59 @@
 <template>
-  <a-table
-    mode='TABLE'
-    :pagination='false'
+  <EditTable
+    ref="tableRef"
     :data-source='dataSource.value'
     :columns='columns'
-    :bodyStyle='{ padding: 0}'
+    :height='300'
+    :scroll="{x: 'max-content'}"
+    :disableMenu="false"
+    :validateRowKey="true"
   >
-    <template #bodyCell="{ column, record, index }">
-      <template v-if='column.dataIndex === "name"'>
-        <j-ellipsis>
-         {{ record.name }}
-        </j-ellipsis>
-      </template>
-      <template v-if='column.dataIndex === "type"'>
-        {{ record.type }}
-        <a-tooltip
-          v-if="record.type === 'object'"
-        >
-          <template slot="title">
-            {{ $t('FunctionCall.FunctionCall.9093413-0') }}
-          </template>
+    <template #name="{record}">
+      <j-ellipsis>
+        {{ record.name }}
+      </j-ellipsis>
+    </template>
+    <template #type="{record}">
+      {{ record.type }}
+      <a-tooltip
+        v-if="record.type === 'object'"
+      >
+        <template slot="title">
+          {{ $t('FunctionCall.FunctionCall.9093413-0') }}
+        </template>
 
-          <AIcon
-            type="QuestionCircleOutlined"
-            :style="{
+        <AIcon
+          type="QuestionCircleOutlined"
+          :style="{
                marginLeft: '5px',
                cursor: 'help',
             }"
-          />
-        </a-tooltip>
-      </template>
-      <template v-if='column.dataIndex === "value"'>
-        <div style='max-width: 260px'>
-          <j-value-item
-            v-model:modelValue='record.value'
-            :itemType="itemType(record.type)"
-            :options="record.options"
-            :extraProps="{
+        />
+      </a-tooltip>
+    </template>
+    <template #value="{record, index}">
+      <EditTableFormItem
+        :name="[index, 'value']"
+        :required="record.required"
+      >
+        <j-value-item
+          v-model:modelValue='record.value'
+          :itemType="itemType(record.type)"
+          :options="record.options"
+          :extraProps="{
               style: { width: '100%'}
             }"
-            @change='valueChange'
-          />
-        </div>
-      </template>
+          @change='valueChange'
+        />
+      </EditTableFormItem>
     </template>
-  </a-table>
+  </EditTable>
 </template>
 
 <script setup lang='ts' name='FunctionCall'>
 import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
+import {EditTable, EditTableFormItem} from '@jetlinks-web/components'
 
 const { t: $t } = useI18n()
 type Emit = {
@@ -58,6 +62,7 @@ type Emit = {
 }
 
 const emit = defineEmits<Emit>()
+const tableRef = ref()
 
 const props = defineProps({
   value: {
@@ -88,6 +93,19 @@ const columns = [
     title: $t('FunctionCall.FunctionCall.9093413-3'),
     dataIndex: 'value',
     align: 'center',
+    form: {
+      required: true,
+      rules:[{
+        asyncValidator(rule: any, value: any, ...setting: any){
+          const record = setting[1]
+          if (value !== undefined && value !== null && value !== '' || record.required === false) {
+            return Promise.resolve();
+          }
+          const errorMsg = ['enum',].includes(record.type) ? $t('Device.InvokeFunction.372523-7') : $t('Device.InvokeFunction.372523-4')
+          return Promise.reject(errorMsg)
+        }
+      }]
+    },
     width: 260
   },
 ]
@@ -100,6 +118,10 @@ const itemType = (type: string) => {
 
   if (['short', 'byte', 'word'].includes(type)) {
     return 'int'
+  }
+
+  if (['array','object'].includes(type)) {
+    return 'object'
   }
 
   if (type === 'file') {
@@ -125,6 +147,10 @@ watch(() => props.data, () => {
     return oldValue ? { ...item, value: oldValue.value } : item
   })
 }, { immediate: true, deep: true })
+
+defineExpose({
+  validate: async () => await tableRef.value.validate()
+})
 
 </script>
 
