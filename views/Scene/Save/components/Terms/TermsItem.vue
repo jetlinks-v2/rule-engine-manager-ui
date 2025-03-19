@@ -75,7 +75,6 @@ const props = defineProps({
 const rules = [
   {
     validator: async (_: any, v: any) => {
-      debugger
       if (v !== undefined && !v.error) {
         if (!Object.keys(v).length) {
           return Promise.reject(new Error($t('Terms.TermsItem.9093428-0')));
