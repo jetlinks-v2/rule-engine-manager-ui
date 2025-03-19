@@ -141,10 +141,10 @@ const onCancel = () => {
 const onSave = (_data: any, _columnMap: any = {}) => {
     const item: any = {
         selector: DeviceModel.selector,
-        source: _data.message.messageType === 'WRITE_PROPERTY' ? _data.message.properties[Object.keys(_data.message.properties)[0]]?.source : undefined,
+        source: DeviceModel.source,
         selectorValues: DeviceModel.selectorValues,
         productId: DeviceModel.productId,
-        upperKey: _data.message.messageType === 'WRITE_PROPERTY' ? _data.message.properties[Object.keys(_data.message.properties)[0]]?.upperKey : undefined,
+        upperKey: DeviceModel.upperKey,
         message: _data.message,
     };
     if (DeviceModel.selector === 'relation') {
