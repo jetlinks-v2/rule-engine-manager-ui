@@ -428,7 +428,6 @@ const valueSelect = (
 
 const typeSelect = (e: any) => {
   emit("update:value", { ...paramsValue });
-  debugger
   formModel.value.options!.when[props.branches_Index].terms[
     props.whenName
   ].terms[props.termsName][3] = e.label;
