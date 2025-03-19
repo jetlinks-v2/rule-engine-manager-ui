@@ -189,7 +189,7 @@ const hideVisible = () => {
 }
 
 const tips = computed(() => {
-  return props.value.aggregation?.[0]?.value.value || props.value.filter?.length ? $t('Save.utils.021456-40') : $t('ParamsDropdown.FulFill-3147419-3')
+  return !isNil(props.value.aggregation?.[0]?.value.value) || props.value.filter?.length ? $t('Save.utils.021456-40') : $t('ParamsDropdown.FulFill-3147419-3')
 })
 
 watch(() => [JSON.stringify(props.value), visible.value], () => {

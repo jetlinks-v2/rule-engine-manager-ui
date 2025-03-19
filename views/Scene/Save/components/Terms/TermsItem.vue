@@ -22,7 +22,7 @@ import type { TermsType } from '../../../typings';
 import { storeToRefs } from 'pinia';
 import { useSceneStore } from '../../../../../store/scene'
 import ParamsItem from './ParamsItem.vue'
-import { isArray } from 'lodash-es'
+import { isArray, isNil } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
@@ -75,6 +75,7 @@ const props = defineProps({
 const rules = [
   {
     validator: async (_: any, v: any) => {
+      debugger
       if (v !== undefined && !v.error) {
         if (!Object.keys(v).length) {
           return Promise.reject(new Error($t('Terms.TermsItem.9093428-0')));
@@ -89,7 +90,8 @@ const rules = [
           if(Object.keys(v.value.value).length === 0) {
             return Promise.reject(new Error($t('Terms.TermsItem.9093428-3-1')));
           }
-          if(!v.value?.value?.aggregation?.[0]?.value?.value && !v.value?.value?.filter?.length) {
+          if(isNil(v.value?.value?.aggregation?.[0]?.value?.value) && !v.value?.value?.filter?.length) {
+            debugger
             return Promise.reject(new Error($t('Terms.TermsItem.9093428-3-1')));
           }
         }
