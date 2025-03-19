@@ -347,18 +347,23 @@
               <span>的设备信息</span>
             </template>
             <template v-if="item.executor === 'collector' && show">
-              <j-ellipsis>
-                <span>{{item?.options?.type}}</span>
-                <span>
-                    <AIcon type="icon-mubiao" style="padding: 0 4px" />
-                    <span>{{item?.options?.triggerName}}</span>
-                  </span>
-                <span>{{item?.options?.pointName}}</span>
-                <template v-if="item.collector?.handlerType === 'write'">
-                  <span>为</span>
-                  <span>{{item?.options?.propertiesName}}</span>
-                </template>
-              </j-ellipsis>
+              <div>
+                <j-ellipsis>
+                  <AIcon
+                    type="icon-zhihangdongzuoxie"
+                  />
+                  <span style="padding-left: 4px">{{item?.options?.type}}</span>
+                  <span>
+                      <AIcon type="icon-mubiao" style="padding: 0 4px" />
+                      <span>{{item?.options?.triggerName}}</span>
+                    </span>
+                  <span>{{item?.options?.pointName}}</span>
+                  <template v-if="item.collector?.handlerType === 'write'">
+                    <span>为</span>
+                    <span>{{item?.options?.propertiesName}}</span>
+                  </template>
+                </j-ellipsis>
+              </div>
             </template>
           </div>
         </div>
@@ -458,6 +463,7 @@ const onSelect = (record) => {
 
     .item-options-content {
       display: flex;
+      flex: 1;
       align-items: center;
       padding: 0 8px;
       background: #fafafa;
