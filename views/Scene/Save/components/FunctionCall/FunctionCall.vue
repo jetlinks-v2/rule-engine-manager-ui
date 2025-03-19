@@ -1,7 +1,7 @@
 <template>
   <EditTable
     ref="tableRef"
-    :data-source='dataSource.value'
+    :data-source='dataSource'
     :columns='columns'
     :height='300'
     :scroll="{x: 'max-content'}"
@@ -32,7 +32,7 @@
       </a-tooltip>
     </template>
     <template #value="{record, index}">
-      <EditTableFormItem
+      <JEditTableFormItem
         :name="[index, 'value']"
         :required="record.required"
       >
@@ -45,7 +45,7 @@
             }"
           @change='valueChange'
         />
-      </EditTableFormItem>
+      </JEditTableFormItem>
     </template>
   </EditTable>
 </template>
@@ -53,7 +53,7 @@
 <script setup lang='ts' name='FunctionCall'>
 import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {EditTable, EditTableFormItem} from '@jetlinks-web/components'
+import {EditTable} from '@jetlinks-web/components'
 
 const { t: $t } = useI18n()
 type Emit = {
@@ -75,11 +75,9 @@ const props = defineProps({
   }
 })
 
-const dataSource = reactive<{value: any[]}>({
-  value: []
-})
+const dataSource = ref([])
 
-const columns = [
+const columns = reactive([
   {
     title: $t('FunctionCall.FunctionCall.9093413-1'),
     dataIndex: 'name',
@@ -101,14 +99,14 @@ const columns = [
           if (value !== undefined && value !== null && value !== '' || record.required === false) {
             return Promise.resolve();
           }
-          const errorMsg = ['enum',].includes(record.type) ? $t('Device.InvokeFunction.372523-7') : $t('Device.InvokeFunction.372523-4')
+          const errorMsg = ['enum', 'boolean', 'time', 'date'].includes(record.type) ? $t('Device.InvokeFunction.372523-7') : $t('Device.InvokeFunction.372523-4')
           return Promise.reject(errorMsg)
         }
       }]
     },
     width: 260
   },
-]
+])
 
 const itemType = (type: string) => {
 

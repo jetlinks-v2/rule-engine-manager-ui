@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts" setup name="ActionList">
-import { PropType } from 'vue';
+import type { PropType } from 'vue';
 import type { ActionsType, ParallelType } from '@ruleEngine/Scene/typings';
 import Modal from '../Modal/index.vue';
 import Item from './Item.vue';

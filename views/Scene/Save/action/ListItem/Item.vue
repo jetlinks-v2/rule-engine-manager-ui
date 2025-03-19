@@ -69,7 +69,7 @@
     </template>
 
     <template v-if="visible">
-      <Modal
+      <EditModal
         :name="name"
         :branchGroup="thenName"
         :thenName="thenName"
@@ -113,7 +113,7 @@
 <script lang="ts" setup name="ActionItem">
 import { PropType } from "vue";
 import { ActionsType, ParallelType } from "../../../typings";
-import Modal from "../Modal/index.vue";
+import EditModal from "../Modal/index.vue";
 import ActionTypeComponent from "../Modal/ActionTypeComponent.vue";
 import TriggerAlarm from "../TriggerAlarm/index.vue";
 import { useSceneStore } from "@ruleEngine/store/scene";
@@ -125,6 +125,9 @@ import { EventEmitter, EventEmitterKeys, EventSubscribeKeys } from "../../util";
 import CheckItem from "./CheckItem.vue";
 import { useI18n } from 'vue-i18n'
 import ComponentsMap from './detail'
+import { queryAlarmPage } from "@ruleEngine/api/scene";
+import { unBindAlarmMultiple } from "@ruleEngine/api/configuration";
+import { Modal } from 'ant-design-vue'
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -262,11 +265,61 @@ const addFilterParams = () => {
   ];
 };
 
+
+const deleteAlarm = async () =>{
+  const _branchId = _data.value.branches?.[props.name].branchId;
+  const resp = await queryAlarmPage({
+    terms: [
+      {
+        terms: [
+          {
+            column: "id$rule-bind-alarm",
+            value: `${_data.value.id}:${
+              props.data?.actionId || _branchId
+            }`,
+          },
+          {
+            column: "id$rule-bind-alarm",
+            value: `${_data.value.id}:${-1}`,
+            type: "or",
+          },
+        ],
+      },
+    ],
+  });
+
+  if (resp.success && resp.result.total) {
+    Modal.confirm({
+      title: $t('action.index.966779-6', [resp.result.total]),
+      onOk() {
+        unBindAlarmMultiple(
+          resp.result.data.map((item) => {
+            return {
+              alarmId: item.id,
+              ruleId: _data.value.id,
+              branchIndex: props.data?.actionId,
+            };
+          })
+        ).then(unResp => {
+          if (unResp.success) {
+            visible.value = true;
+          }
+        })
+      },
+    });
+  }
+}
+
 const onAdd = () => {
-  visible.value = true;
+  if (props.data?.executor === 'alarm') {
+    deleteAlarm()
+  } else {
+    visible.value = true;
+  }
 };
 
 const onType = (_type: string) => {
+
   actionType.value = _type;
 };
 
