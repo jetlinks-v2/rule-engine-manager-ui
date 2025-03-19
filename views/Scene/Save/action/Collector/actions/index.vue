@@ -16,7 +16,7 @@
                 <a-form-item
                     :name="['message', 'properties']"
                     :label="$t('Collector.actions.index-6100078-0')"
-                    :rules="[{ required: true, message: $t('Collector.actions.index-6100078-1') }]"
+                    :rules="[{validator: validator, trigger: 'change'}]"
                 >
                     <a-select
                         showSearch
@@ -183,6 +183,18 @@ const onFormSave = () => {
 const getColumnMap = () => {
     return columnMap.value;
 };
+
+const validator = (_rule, value) => {
+    if(!value) {
+        return Promise.reject($t('Collector.actions.index-6100078-2'));
+    } else {
+        if (!props.pointList?.find((item: any) => item.id === value)) {
+            return Promise.reject($t('Terms.TermsItem.9093428-0'));
+        } else {
+            return Promise.resolve();
+        }
+    }
+}
 
 const queryBuiltIn = async () => {
   const _params = {
