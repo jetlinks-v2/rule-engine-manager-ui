@@ -119,19 +119,28 @@ const functionData = computed(() => {
 
 const rules = [{
   validator(_: string, value: any) {
-    const arr = functionData.value.filter((i: any) => i?.required)
-    if(arr.length){
-      if (!value?.length) {
-        return Promise.reject($t('Device.InvokeFunction.372523-4'))
-      } else {
-        let hasValue = value.find((item: { name: string, value: any}) => item.value === undefined)
-        if (hasValue) {
-          const functionItem = arr.find((item: any) => item.id === hasValue.name)
-          return Promise.reject(functionItem?.name ? $t('Device.InvokeFunction.372523-5', [functionItem?.name]) : $t('Device.InvokeFunction.372523-4'))
-        }
-      }
+    const requiredFields = functionData.value.filter((i: any) => i?.required)
+    if (!requiredFields.length) return Promise.resolve()
+    
+    if (!value?.length) {
+      return Promise.reject($t('Device.InvokeFunction.372523-4'))
     }
-    return Promise.resolve();
+
+    // 检查所有必填字段是否都有值
+    const missingField = requiredFields.find(field => {
+      const inputValue = value.find((v: any) => v.name === field.id)
+      return !inputValue?.value
+    })
+
+    if (missingField) {
+      return Promise.reject(
+        missingField.name 
+          ? $t('Device.InvokeFunction.372523-5', [missingField.name]) 
+          : $t('Device.InvokeFunction.372523-4')
+      )
+    }
+
+    return Promise.resolve()
   }
 }]
 

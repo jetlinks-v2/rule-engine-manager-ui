@@ -284,10 +284,10 @@
             <template v-if="item.executor === 'device-data' && show">
               <div
                 v-if="['fixed', 'context'].includes(item.configuration?.selector?.selector)"
-                style="display: flex; align-items: center"
+                class="device-data-info"
               >
                 <AIcon type="icon-mubiao" style="padding: 0 4px" />
-                <span>获取</span>
+                <span>{{$t('Save.Actions.0214511-22')}}</span>
                 <j-ellipsis style="max-width: 120px; margin-right: 12px">
                   {{ Array.isArray(item?.options?.name) ? item?.options?.name?.join(',') : item.options?.name }}
                 </j-ellipsis>
@@ -314,37 +314,43 @@
                     }`
                   }}
                 </j-ellipsis>
+                <span>{{$t('Save.Actions.0214511-23')}}</span>
               </div>
-              <div v-else-if="item.configuration?.selector.selector === 'tag'">
-                <AIcon
-                  :type="
-                    typeIconMap[
-                      item.configuration?.message?.messageType || 'INVOKE_FUNCTION'
-                    ]
-                  "
-                />
-                {{ item.options?.type }}
-                <span>{{ item.options?.tagName }}</span>
-                {{ $t('Save.Actions.0214511-17') }}{{ item.options?.productName }}
-                {{ item.options?.propertiesName }}
+              <div v-else-if="item.configuration?.selector.selector === 'tag'" class="device-data-info">
+                <j-ellipsis>
+                  <AIcon
+                    :type="
+                      typeIconMap[
+                        item.configuration?.message?.messageType || 'INVOKE_FUNCTION'
+                      ]
+                    "
+                  />
+                  {{ item.options?.type }}
+                  <span>{{ item.options?.tagName }}</span>
+                  {{ $t('Save.Actions.0214511-17') }}{{ item.options?.productName }}
+                  {{ item.options?.propertiesName }}
+                  <span>{{$t('Save.Actions.0214511-23')}}</span>
+                </j-ellipsis>
               </div>
-              <div v-else-if="item.configuration?.selector?.selector === 'relation'">
-                <AIcon
-                  :type="
-                    typeIconMap[
-                      item.configuration?.message?.messageType || 'INVOKE_FUNCTION'
-                    ]
-                  "
-                />
-                {{ item.options?.type }}
-                {{ $t('Save.Actions.0214511-18') }}
-                <span>{{ item.options?.triggerName }}</span>
-                {{ $t('Save.Actions.0214511-19') }} {{ item.options?.relationName }} {{ $t('Save.Actions.0214511-17') }}{{
-                  item.options?.productName
-                }}
-                {{ $t('Save.Actions.0214511-20') }} {{ item.options?.propertiesName }}
+              <div v-else-if="item.configuration?.selector?.selector === 'relation'" class="device-data-info">
+                <j-ellipsis>
+                  <AIcon
+                    :type="
+                      typeIconMap[
+                        item.configuration?.message?.messageType || 'INVOKE_FUNCTION'
+                      ]
+                    "
+                  />
+                  {{ item.options?.type }}
+                  {{ $t('Save.Actions.0214511-18') }}
+                  <span>{{ item.options?.triggerName }}</span>
+                  {{ $t('Save.Actions.0214511-19') }} {{ item.options?.relationName }} {{ $t('Save.Actions.0214511-17') }}{{
+                    item.options?.productName
+                  }}
+                  {{ $t('Save.Actions.0214511-20') }} {{ item.options?.propertiesName }}
+                  <span>{{$t('Save.Actions.0214511-23')}}</span>
+                </j-ellipsis>
               </div>
-              <span>的设备信息</span>
             </template>
             <template v-if="item.executor === 'collector' && show">
               <div>
@@ -359,7 +365,7 @@
                     </span>
                   <span>{{item?.options?.pointName}}</span>
                   <template v-if="item.collector?.handlerType === 'write'">
-                    <span>为</span>
+                    <span>{{$t('Save.Actions.0214511-16')}}</span>
                     <span>{{item?.options?.propertiesName}}</span>
                   </template>
                 </j-ellipsis>
@@ -487,6 +493,10 @@ const onSelect = (record) => {
           margin: 0 10px;
           color: rgba(0, 0, 0, 0.8);
         }
+      }
+      .device-data-info {
+        display: flex;
+        align-items: center;
       }
     }
   }
