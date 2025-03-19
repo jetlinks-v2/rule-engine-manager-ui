@@ -65,7 +65,10 @@ const emit = defineEmits<Emit>()
 const functionRef = ref()
 const formModel = reactive<{ reportKey: string | undefined, data: any[] }>({
   reportKey: undefined,
-  data: Object.keys(props.value).map(key => ({ name: key, value: props.value[key] })) || []
+  data: Object.keys(props.value).map(key => {
+    debugger
+    return { name: key, value: props.value[key] }
+  }) || []
 })
 
 const callData = ref<Array<{ id: string, value: string | undefined }>>()
@@ -140,9 +143,12 @@ defineExpose({
   validateFields: () => new Promise(async (resolve)  => {
     const data = await writeForm.value?.validateFields()
     const data2 = await functionRef.value?.validate()
+    debugger
     resolve({
       ...data,
-      data: data2.map(item => ({ name: item.id, value: item.value}))
+      data: {
+        [formModel.reportKey!]: data2[0]?.value
+      }
     })
   })
 })

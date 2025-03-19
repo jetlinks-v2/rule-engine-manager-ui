@@ -125,14 +125,17 @@ const callDataChange = (v: any[]) => {
   emit('update:functionParameters', v)
 }
 
+const isEmpty = (v) => {
+  return v.value !== null && v.value !== undefined && v.value !== ''
+}
+
 defineExpose({
   validateFields: () => new Promise(async (resolve)  => {
     const data = await invokeForm.value?.validateFields()
     const data2 = await functionRef.value?.validate()
-
     resolve({
       ...data,
-      functionData:data2.map(item => ({ name: item.id, value: item.value}))
+      functionData: data2.filter(isEmpty).map(item => ({ name: item.id, value: item.value}))
     })
   })
 })

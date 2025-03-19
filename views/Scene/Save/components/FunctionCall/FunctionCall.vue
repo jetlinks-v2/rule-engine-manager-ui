@@ -43,7 +43,6 @@
           :extraProps="{
               style: { width: '100%'}
             }"
-          @change='valueChange'
         />
       </JEditTableFormItem>
     </template>
@@ -77,7 +76,7 @@ const props = defineProps({
 
 const dataSource = ref([])
 
-const columns = reactive([
+const columns = [
   {
     title: $t('FunctionCall.FunctionCall.9093413-1'),
     dataIndex: 'name',
@@ -96,17 +95,17 @@ const columns = reactive([
       rules:[{
         asyncValidator(rule: any, value: any, ...setting: any){
           const record = setting[1]
-          if (value !== undefined && value !== null && value !== '' || record.required === false) {
-            return Promise.resolve();
+          if (record.required && (value === null || value === undefined || value === '')) {
+            const errorMsg = ['enum', 'boolean', 'time', 'date'].includes(record.type) ? $t('Device.InvokeFunction.372523-7') : $t('Device.InvokeFunction.372523-4')
+            return Promise.reject(errorMsg)
           }
-          const errorMsg = ['enum', 'boolean', 'time', 'date'].includes(record.type) ? $t('Device.InvokeFunction.372523-7') : $t('Device.InvokeFunction.372523-4')
-          return Promise.reject(errorMsg)
+          return Promise.resolve();
         }
       }]
     },
     width: 260
   },
-])
+]
 
 const itemType = (type: string) => {
 
@@ -139,7 +138,7 @@ const valueChange = () => {
   emit('change', _value)
 }
 
-watch(() => props.data, () => {
+watch(() => props.data, (v,old) => {
   dataSource.value = props.data.map((item: any) => {
     const oldValue = props.value.find((oldItem: any) => oldItem.name === item.id)
     return oldValue ? { ...item, value: oldValue.value } : item
@@ -147,7 +146,13 @@ watch(() => props.data, () => {
 }, { immediate: true, deep: true })
 
 defineExpose({
-  validate: async () => await tableRef.value.validate()
+  validate: async () => {
+    const resp = await tableRef.value.validate()
+    if (resp) {
+      valueChange()
+    }
+    return resp
+  }
 })
 
 </script>

@@ -232,6 +232,7 @@ defineExpose({
   vail: () => {
     return new Promise(async (resolve, reject) => {
       const cloneModel = cloneDeep(formModel);
+
       const filterKey: string[] = [];
       const typeData = await typeForm.value?.validateFields();
 
@@ -243,7 +244,11 @@ defineExpose({
 
       if (showInvokeFunction.value) {
         const invokeData = await invokeRef.value?.validateFields();
-        if (!invokeData) return resolve(false);
+        if (!invokeData) {
+          return resolve(false);
+        } else {
+          cloneModel.functionParameters = invokeData.functionData
+        }
       } else {
         filterKey.push("functionId");
         filterKey.push("functionParameters");
@@ -261,7 +266,11 @@ defineExpose({
       }
       if (showWriteProperty.value) {
         const writeData = await writeRef.value?.validateFields();
-        if (!writeData) return resolve(false);
+        if (!writeData) {
+          return resolve(false);
+        } else {
+          cloneModel.writeProperties = writeData.data
+        }
       } else {
         filterKey.push("writeProperties");
       }
