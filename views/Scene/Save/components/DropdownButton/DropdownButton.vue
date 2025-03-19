@@ -159,6 +159,7 @@ watchEffect(() => {
     treeOpenKeys.value = openKeysByTree(
       props.options,
       props.value,
+      props.valueName,
       props.valueName
     );
   } else {
