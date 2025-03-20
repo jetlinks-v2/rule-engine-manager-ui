@@ -29,6 +29,7 @@
 
 <script setup lang='ts' name='DropdownTime'>
 import dayjs from 'dayjs'
+import {isNumber, isString} from "lodash-es";
 
 type Emit = {
   (e: 'update:value', value: string) : void
@@ -53,7 +54,8 @@ const props = defineProps({
 const emit = defineEmits<Emit>()
 const myFormat = props.format || ( props.type === 'time' ? 'HH:mm:ss' : 'YYYY-MM-DD HH:mm:ss')
 // const myValue = ref<Dayjs>(dayjs(props.value || new Date(), myFormat))
-const myValue = ref<string>(props.value || dayjs(new Date()).format(myFormat))
+console.log('Time', props.value, myFormat)
+const myValue = ref<string|number>()
 
 const getPopupContainer = (trigger: HTMLElement) => {
   return trigger?.parentNode || document.body
@@ -64,6 +66,14 @@ const change = (e: string) => {
   emit('update:value', e)
   emit('change', e)
 }
+
+onMounted(() => {
+  if (isNumber(props.value) || isString(props.value)) {
+    myValue.value = props.value
+  } else {
+    dayjs(new Date()).format(myFormat)
+  }
+})
 
 </script>
 
