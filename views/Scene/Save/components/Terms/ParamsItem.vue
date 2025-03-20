@@ -499,6 +499,11 @@ watch(
   { immediate: true }
 );
 
+watch(() => paramsValue?.termType, (newVal, oldValue) => {
+  if(oldValue === 'complex_exists') {
+    paramsValue.value.value = arrayParamsKey.includes(newVal) ? [undefined, undefined] : undefined;
+  }
+})
 // watchEffect(() => {
 //   const isRange = paramsValue.termType
 //     ? arrayParamsKey.includes(paramsValue.termType)
