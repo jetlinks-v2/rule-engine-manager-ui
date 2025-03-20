@@ -14,7 +14,6 @@
       </AddButton>
       <AddModel v-if='visible && formData.triggerType==="collector"' @cancel='visible = false' @save='save'
                 :value='formData.trigger.collector' :options='formData.options.trigger'/>
-      <CheckItem/>
     </a-form-item>
     <Terms ref="termsRef"/>
   </div>

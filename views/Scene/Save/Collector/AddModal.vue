@@ -32,6 +32,7 @@
                 v-model:rowKey='addModel.pointSelectInfo.collectorId'
                 v-model:collectorName='addModel.pointSelectInfo.collectorName'
                 v-model:detail='addModel.collectorDetail'
+                @change='collectorChange'
             />
             <Type
                 ref='typeRef'
@@ -189,6 +190,10 @@ const channelChange = () => {
         collectorId: '',
         pointIds: [],
     }
+}
+
+const collectorChange = (e) => {
+    addModel.pointSelectInfo.pointIds = []
 }
 
 const getDeviceDetailByMetadata = async (deviceId: string) => {

@@ -196,6 +196,9 @@ const productQuery = async (p: any) => {
 };
 
 const handleClick = (detail: any) => {
+  if (props.rowKey === detail.id) {
+    return;
+  }
   emit("update:rowKey", detail.id);
   emit("update:collectorName", detail.name);
   emit("update:detail", detail);

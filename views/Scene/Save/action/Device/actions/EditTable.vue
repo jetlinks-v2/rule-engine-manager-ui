@@ -1,36 +1,58 @@
 <template>
-    <a-table
+    <EditTable
+        ref="tableRef"
         rowKey="id"
         :columns="columns"
         :data-source="dataSource"
         bordered
         :pagination="false"
     >
-        <template #bodyCell="{ column, text, record }">
-            <template v-if="column.dataIndex === 'name'">
-                <span>{{ text }}</span>
-            </template>
-            <template v-else-if="column.dataIndex === 'valueType'">
-                <span>{{ record.valueType.type }}</span>
-            </template>
-            <template v-else>
-                <FunctionItem
-                    :builtInList="builtInList"
-                    v-model:source="record.source"
-                    v-model:value="record.value"
-                    v-model:upperKey="record.upperKey"
-                    :data="record"
-                    @change="onChange"
-                />
-            </template>
+        <template #name="{record}">
+            <j-ellipsis>
+                {{ record.name }}
+            </j-ellipsis>
         </template>
-    </a-table>
+        <template #valueType="{record}">
+            {{ record.valueType.type }}
+            <a-tooltip
+                v-if="record.type === 'object'"
+            >
+                <template slot="title">
+                {{ $t('FunctionCall.FunctionCall.9093413-0') }}
+                </template>
+
+                <AIcon
+                type="QuestionCircleOutlined"
+                :style="{
+                    marginLeft: '5px',
+                    cursor: 'help',
+                    }"
+                />
+            </a-tooltip>
+        </template>
+        <template #value="{record, index}">
+            <JEditTableFormItem
+                :name="[index, 'value']"
+                :required="record.expands.required"
+            >
+                <j-value-item
+                    v-model:modelValue='record.value'
+                    :itemType="itemType(record.valueType.type)"
+                    :options="record.options"
+                    :extraProps="{
+                        style: { width: '100%'}
+                    }"
+                />
+            </JEditTableFormItem>
+        </template>
+    </EditTable>
 </template>
 
 <script lang="ts" setup>
 import { PropType } from 'vue';
 import FunctionItem from './FunctionItem.vue';
 import { useI18n } from 'vue-i18n'
+import {EditTable} from '@jetlinks-web/components'
 
 const { t: $t } = useI18n()
 const _props = defineProps({
@@ -52,6 +74,7 @@ const _props = defineProps({
     }
 });
 
+const tableRef = ref()
 const emit = defineEmits(['update:value', 'update:columnMap']);
 
 const columns = [
@@ -68,7 +91,20 @@ const columns = [
     {
         title: $t('actions.EditTable.9667833-2'),
         dataIndex: 'value',
-        with: '34%',
+        algin: 'center',
+        form: {
+            required: true,
+            rules:[{
+                asyncValidator(rule: any, value: any, ...setting: any){
+                    const record = setting[1]
+                    if (value !== undefined && value !== null && value !== '' || record.expands.required === false) {
+                        return Promise.resolve();
+                    }
+                    const errorMsg = ['enum',].includes(record.valueType.type) ? $t('Device.InvokeFunction.372523-7') : $t('Device.InvokeFunction.372523-4')
+                    return Promise.reject(errorMsg);
+                }
+            }]
+        },
     },
 ];
 
@@ -90,10 +126,29 @@ watchEffect(() => {
     dataSource.value = list;
 });
 
-const onChange = (v: any, obj: any, option: any, record: any) => {
 
-  columnMap.value[record.id] = v.source === 'fixed' ? undefined : obj.column
+const itemType = (type: string) => {
 
+if (type === 'date') {
+  return 'time'
+}
+
+if (['short', 'byte', 'word'].includes(type)) {
+  return 'int'
+}
+
+if (['array','object'].includes(type)) {
+  return 'object'
+}
+
+if (type === 'file') {
+  return 'string'
+}
+
+return type
+}
+
+const onChange = () => {
     const arr = [...dataSource.value]
       .filter((item) => {
         return item.value
@@ -110,4 +165,14 @@ const onChange = (v: any, obj: any, option: any, record: any) => {
     emit('update:value', arr);
     emit('update:columnMap', columnMap.value);
 };
+
+defineExpose({
+  validate: async () => {
+    const resp = await tableRef.value.validate()
+    if (resp) {
+        onChange()
+    }
+    return resp
+  }
+})
 </script>
