@@ -58,8 +58,9 @@ const props = defineProps({
 });
 
 const { t: $t } = useI18n()
+
 const formModel = reactive({
-    operator: props.operator.operator || 'read',
+    operator: props.operator || 'read',
     timer: {},
     readPoints: props.collectorId !== props.collectorConfig?.pointSelectInfo?.collectorId ? [] : props.collectorConfig?.pointSelectInfo?.pointIds || [],
     writePoints: props.collectorId !== props.collectorConfig?.pointSelectInfo?.collectorId ? {} : props.collectorConfig?.pointSelectInfo?.pointIds[0] ?  {
@@ -176,7 +177,11 @@ defineExpose({
             if (showWriteProperty.value) {
                 const writeData = await writeRef.value?.validateFields();
                 cloneModel.value = writeData[Object.keys(writeData)[0]];
-                if (!writeData) return resolve(false);
+                if (!writeData) {
+                  return resolve(false);
+                } else {
+                  cloneModel.writePoints = writeData.data
+                }
             } else {
                 filterKey.push("writePoints");
             }

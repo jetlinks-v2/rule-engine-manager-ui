@@ -195,6 +195,7 @@ const checkCollector = async (): Promise<boolean> => {
     if (!result) {
       data.value.trigger.collector!.pointSelectInfo.pointIds = []
     }
+
     return !!result
   }
 

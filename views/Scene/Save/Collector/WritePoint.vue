@@ -140,9 +140,10 @@ defineExpose({
     validateFields: () => new Promise(async (resolve)  => {
         const data = await writeForm.value?.validateFields()
         const data2 = await functionRef.value?.validate()
+        const item = data2?.[0]
         resolve({
           ...data,
-          data: data2.map(item => ({ name: item.id, value: item.value}))
+          data: item ? { [item.id]: item.value} : undefined
         })
     })
 })
