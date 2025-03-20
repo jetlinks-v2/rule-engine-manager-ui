@@ -22,16 +22,11 @@
         <a-form-item>{{ $t('Device.InvokeFunction.372523-1') }}</a-form-item>
       </a-col>
       <a-col :span='24'>
-        <a-form-item
-          name='functionData'
-          :rules="rules"
-        >
         <FunctionCall
-          v-model:value='formModel.functionData'
+          ref="functionRef"
           :data='functionData'
           @change='callDataChange'
         />
-        </a-form-item>
       </a-col>
     </a-row>
   </a-form>
@@ -76,6 +71,7 @@ const formModel = reactive({
   functionId: props.functionId,
   functionData: props.functionParameters
 })
+const functionRef = ref()
 
 const handlePropertiesOptions = (propertiesValueType: any) => {
   const _type = propertiesValueType?.type
@@ -101,6 +97,7 @@ const functionData = computed(() => {
   if (functionItem) {
     const properties = functionItem.input?.properties || functionItem.inputs;
     for (const datum of properties) {
+      const oldItem = props.functionParameters.find(item => item.name === datum.id)
       arrCache.push({
         id: datum.id,
         name: datum.name,
@@ -108,7 +105,7 @@ const functionData = computed(() => {
         type: datum.valueType?.type || '-',
         format: datum.valueType?.format || undefined,
         options: handlePropertiesOptions(datum.valueType),
-        value: undefined,
+        value: oldItem?.value,
         required: datum.expands?.required
       });
     }
@@ -116,33 +113,6 @@ const functionData = computed(() => {
 
   return arrCache
 })
-
-const rules = [{
-  validator(_: string, value: any) {
-    const requiredFields = functionData.value.filter((i: any) => i?.required)
-    if (!requiredFields.length) return Promise.resolve()
-    
-    if (!value?.length) {
-      return Promise.reject($t('Device.InvokeFunction.372523-4'))
-    }
-
-    // 检查所有必填字段是否都有值
-    const missingField = requiredFields.find(field => {
-      const inputValue = value.find((v: any) => v.name === field.id)
-      return !inputValue?.value
-    })
-
-    if (missingField) {
-      return Promise.reject(
-        missingField.name 
-          ? $t('Device.InvokeFunction.372523-5', [missingField.name]) 
-          : $t('Device.InvokeFunction.372523-4')
-      )
-    }
-
-    return Promise.resolve()
-  }
-}]
 
 const onSelect = (v: string, item: any) => {
   formModel.functionData = []
@@ -158,7 +128,12 @@ const callDataChange = (v: any[]) => {
 defineExpose({
   validateFields: () => new Promise(async (resolve)  => {
     const data = await invokeForm.value?.validateFields()
-    resolve(data)
+    const data2 = await functionRef.value?.validate()
+
+    resolve({
+      ...data,
+      functionData:data2.map(item => ({ name: item.id, value: item.value}))
+    })
   })
 })
 
