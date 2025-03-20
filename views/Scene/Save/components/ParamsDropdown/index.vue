@@ -140,6 +140,7 @@ import { openKeysByTree } from "../../../../../utils/comm";
 
 type Emit = {
   (e: "update:value", data: ValueType): void;
+  (e: "valueBackups:value", data: ValueType): void;
   (e: "update:source", data: string): void;
   (
     e: "select",
@@ -157,7 +158,7 @@ const props = defineProps({
 
 const emit = defineEmits<Emit>();
 
-const myValue = ref<ValueType>(props.value);
+const myValue = ref<ValueType>(props.valueBackups || props.value);
 const mySource = ref<string>(props.source);
 const label = ref<any>(props.placeholder);
 const treeOpenKeys = ref<(string | number)[]>([]);
@@ -177,7 +178,7 @@ const itemType = (type: string) => {
 
 nextTick(() => {
   mySource.value = props.source;
-  myValue.value = props.source === "metric" ? props.metric : props.value;
+  myValue.value = props.source === "metric" ? props.metric : (props.valueBackups || props.value);
 });
 
 const tabsChange = (e: string) => {
@@ -185,6 +186,7 @@ const tabsChange = (e: string) => {
   myValue.value = undefined;
   emit("update:source", mySource.value);
   emit("update:value", undefined);
+  emit("valueBackups:value", undefined);
   emit("tabChange", e);
   emit("select", {}, "", { 0: undefined });
 };
@@ -194,32 +196,37 @@ const treeSelect = (v: any, option: any) => {
   visible.value = false;
   label.value = node[props.labelName] || node.name || node.fullName;
   emit("update:value", node[props.valueName]);
+  emit("valueBackups:value", node[props.valueName]);
   emit("select", node, label.value, { 0: label.value });
 };
 
 const valueItemChange = (e: string) => {
   label.value = e;
   emit("update:value", e);
+  emit("valueBackups:value", e);
   emit("select", e, label.value, { 0: label.value });
 };
 
 const multipleChange = (e: {fullName: string, value: any}[]) => {
   label.value = e.map(item => item.fullName);
   emit("update:value", e.map(item => item.value));
+  emit("valueBackups:value", e.map(item => item.value));
   emit("select", e.map(item => item.value), label.value, { 0: label.value });
 };
 
 const onSelect = (e: string, option: any) => {
   visible.value = false;
   label.value = option[props.labelName];
-  emit("update:value", e);
-  emit("select", e, label.value, { 0: label.value }, option);
+  emit("update:value", option[props.valueParamsName]);
+  emit("valueBackups:value", e);
+  emit("select", option[props.valueParamsName], label.value, { 0: label.value }, option);
 };
 
 const timeChange = (e: any) => {
   label.value = e;
   visible.value = false;
   emit("update:value", e);
+  emit("valueBackups:value", e);
   emit("select", e, label.value, { 0: label.value });
 };
 
@@ -231,28 +238,29 @@ watchEffect(() => {
   const _options = ["metric", "upper"].includes(props.source)
     ? props.metricOptions
     : props.options;
+  const pValue = props.valueBackups || props.value
   const isMetric = props.source === "metric"; // 是否为指标值
-  const _value = isMetric ? props.metric : props.value;
+  const _value = isMetric ? props.metric : pValue;
   const _valueName = isMetric ? "id" : props.valueName;
   const option = getOption(_options, _value as string, _valueName); // 回显label值
-  myValue.value = isMetric ? props.metric : props.value || [];
+  myValue.value = isMetric ? props.metric : pValue || [];
   mySource.value = props.source;
 
   if (option) {
     label.value = option[props.labelName] || option.name || option.fullName;
-    treeOpenKeys.value = openKeysByTree(_options, props.value, props.valueName);
+    treeOpenKeys.value = openKeysByTree(_options, pValue, props.valueName);
   } else {
     if (isMetric) {
       // 处理指标值回显
       label.value =
         props.metric !== undefined
-          ? props.value || props.placeholder
+          ? pValue || props.placeholder
           : props.placeholder;
     } else {
       if(props.multiple && props.source === 'fixed') {
-        label.value = props.options?.filter(item => props.value?.includes(item.value)).map(item => item.fullName);
+        label.value = props.options?.filter(item => pValue?.includes(item.value)).map(item => item.fullName);
       } else {
-        label.value = props.value!== undefined? props.value : props.placeholder;
+        label.value = pValue!== undefined? pValue : props.placeholder;
       }
     }
   }

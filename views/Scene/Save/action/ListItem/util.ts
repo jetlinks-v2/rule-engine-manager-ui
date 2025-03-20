@@ -79,8 +79,7 @@ export const analysisFilterTerms = (terms: any) => {
 }
 
 export const handleFilterTerms = (terms: any) => {
-  const {alarm, ...extra} = cloneDeep(terms)
-  console.log('handleFilterTerms', terms)
+  const {alarm, valueBackups,...extra} = cloneDeep(terms)
   if (terms.hasOwnProperty('alarm')) {
     const column = extra.column
     const identifying = column.split('.')[0]
@@ -91,7 +90,8 @@ export const handleFilterTerms = (terms: any) => {
           column: `${identifying}.alarmConfigId`,
           value: {
             source: 'fixed',
-            value: alarm
+            value: alarm,
+            valueBackups: valueBackups
           },
           type: 'and',
           termType: 'eq'
