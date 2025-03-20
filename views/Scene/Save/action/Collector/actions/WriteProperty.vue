@@ -9,7 +9,7 @@
                 <a-form-item
                     name="properties"
                     :label="$t('Collector.actions.index-6100078-3')"
-                    :rules="[{ required: true, message: $t('Collector.actions.index-6100078-4') }]"
+                    :rules="[{ validator: validator, trigger: 'change' }]"
                 >
                     <a-select
                         showSearch
@@ -119,6 +119,19 @@ const getType = computed(() => {
         (item: any) => item.id === propertyModelRef.properties,
     );
 });
+
+//校验
+const validator = (_rule: any, value: string) => {
+    if(!value) {
+        return Promise.reject($t('Collector.actions.index-6100078-2'));
+    } else {
+        if (!writePointList.value?.find((item: any) => item.id === value)) {
+            return Promise.reject($t('Terms.TermsItem.9093428-0'));
+        } else {
+            return Promise.resolve();
+        }
+    }
+}
 
 const tabOptions = computed(() => {
     return [

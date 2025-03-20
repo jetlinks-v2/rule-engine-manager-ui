@@ -53,11 +53,11 @@
           v-model:value="modelRef.selector.upperKey"
           :placeholder="$t('device.index.9667835-7')"
           @select="onVariableChange"
-          :fieldNames="{ label: 'name', value: 'id' }"
+          :fieldNames="{ label: 'fullName', value: 'id' }"
         >
-          <template #title="{ name, description }">
+          <template #title="{ fullName, description }">
             <a-space>
-              {{ name }}
+              {{ fullName }}
               <span style="color: grey; margin-left: 5px">{{
                 description
               }}</span>
