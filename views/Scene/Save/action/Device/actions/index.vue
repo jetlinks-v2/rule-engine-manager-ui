@@ -33,18 +33,13 @@
                         >
                     </a-select>
                 </a-form-item>
-                <a-form-item
-                    v-if="modelRef.message.functionId && functions.length"
-                    :name="['message', 'inputs']"
-                    :rules="functionRules"
-                >
-                    <EditTable
-                        v-model:value="modelRef.message.inputs"
-                        v-model:columnMap="columnMap"
-                        :functions="functions"
-                        :builtInList="builtInList"
-                    />
-                </a-form-item>
+                <EditTable
+                    ref="functionRef"
+                    v-model:value="modelRef.message.inputs"
+                    v-model:columnMap="columnMap"
+                    :functions="functions"
+                    :builtInList="builtInList"
+                />
             </template>
             <template v-else-if="deviceMessageType === 'READ_PROPERTY'">
                 <a-form-item
@@ -166,6 +161,7 @@ const modelRef = reactive({
 });
 
 const writeFormRef = ref();
+const functionRef = ref();
 
 const functionSelect = (val: any, options?: any) => {
     columnMap.value = {};
@@ -304,6 +300,10 @@ const onFormSave = () => {
                     if (!_val) {
                         reject(false);
                     }
+                }
+                if (functionRef.value) {
+                    const _val = await functionRef.value?.validate();
+                    debugger
                 }
                 resolve({
                     message: {
