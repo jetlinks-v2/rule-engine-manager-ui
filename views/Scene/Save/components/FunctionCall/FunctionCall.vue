@@ -1,7 +1,7 @@
 <template>
   <EditTable
     ref="tableRef"
-    :data-source='dataSource.value'
+    :data-source='dataSource'
     :columns='columns'
     :height='300'
     :scroll="{x: 'max-content'}"
@@ -32,7 +32,7 @@
       </a-tooltip>
     </template>
     <template #value="{record, index}">
-      <EditTableFormItem
+      <JEditTableFormItem
         :name="[index, 'value']"
         :required="record.required"
       >
@@ -43,9 +43,8 @@
           :extraProps="{
               style: { width: '100%'}
             }"
-          @change='valueChange'
         />
-      </EditTableFormItem>
+      </JEditTableFormItem>
     </template>
   </EditTable>
 </template>
@@ -53,7 +52,7 @@
 <script setup lang='ts' name='FunctionCall'>
 import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {EditTable, EditTableFormItem} from '@jetlinks-web/components'
+import {EditTable} from '@jetlinks-web/components'
 
 const { t: $t } = useI18n()
 type Emit = {
@@ -75,9 +74,7 @@ const props = defineProps({
   }
 })
 
-const dataSource = reactive<{value: any[]}>({
-  value: []
-})
+const dataSource = ref([])
 
 const columns = [
   {
@@ -98,11 +95,11 @@ const columns = [
       rules:[{
         asyncValidator(rule: any, value: any, ...setting: any){
           const record = setting[1]
-          if (value !== undefined && value !== null && value !== '' || record.required === false) {
-            return Promise.resolve();
+          if (record.required && (value === null || value === undefined || value === '')) {
+            const errorMsg = ['enum', 'boolean', 'time', 'date'].includes(record.type) ? $t('Device.InvokeFunction.372523-7') : $t('Device.InvokeFunction.372523-4')
+            return Promise.reject(errorMsg)
           }
-          const errorMsg = ['enum',].includes(record.type) ? $t('Device.InvokeFunction.372523-7') : $t('Device.InvokeFunction.372523-4')
-          return Promise.reject(errorMsg)
+          return Promise.resolve();
         }
       }]
     },
@@ -141,7 +138,7 @@ const valueChange = () => {
   emit('change', _value)
 }
 
-watch(() => props.data, () => {
+watch(() => props.data, (v,old) => {
   dataSource.value = props.data.map((item: any) => {
     const oldValue = props.value.find((oldItem: any) => oldItem.name === item.id)
     return oldValue ? { ...item, value: oldValue.value } : item
@@ -149,7 +146,13 @@ watch(() => props.data, () => {
 }, { immediate: true, deep: true })
 
 defineExpose({
-  validate: async () => await tableRef.value.validate()
+  validate: async () => {
+    const resp = await tableRef.value.validate()
+    if (resp) {
+      valueChange()
+    }
+    return resp
+  }
 })
 
 </script>

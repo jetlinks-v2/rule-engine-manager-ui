@@ -585,6 +585,7 @@
 	"action.index.966779-3": "Parallel",
 	"action.index.966779-4": "Simultaneously execute all actions, suitable for scenarios where there is no need to focus on the order and results of executing actions",
 	"action.index.966779-5": "{0} alarms have been associated. Deleting this execution action will synchronously release the corresponding associated alarms. Are you sure you want to delete them?",
+	"action.index.966779-6": "{0} alarms have been associated. Switching this execution action will synchronously release the corresponding associated alarms. Are you sure to switch?",
 	"Terms.WhenItem.9093425-0": "also",
 	"Terms.WhenItem.9093425-1": "perhaps",
 	"Terms.WhenItem.9093425-2": "Are you sure to delete?",
