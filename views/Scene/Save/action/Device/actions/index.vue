@@ -303,7 +303,6 @@ const onFormSave = () => {
                 }
                 if (functionRef.value) {
                     const _val = await functionRef.value?.validate();
-                    debugger
                 }
                 resolve({
                     message: {

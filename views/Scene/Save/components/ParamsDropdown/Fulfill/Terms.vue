@@ -60,22 +60,36 @@ const {show, mouseover, mouseout} = useMouseEvent(toRefs(props).showDeleteBtn)
 const { t: $t} = useI18n()
 const columnOptions = useColumnOptions()
 const aggregationOption = useAggOptions()
+const numberOptions = ['int', 'long', 'double', 'float', 'short', 'byte']
+const notNumberAggregationOption = ['LAST', 'FIRST', 'COUNT', 'DISTINCT_COUNT']
+
+const aggregationOptionFilter = computed(() => {
+  return aggregationOption.value.filter(item => {
+    const columnOption = columnOptions.value.find(i => i.column === paramsValue.column)
+    if(!numberOptions.includes(columnOption?.dataType)) {
+      return notNumberAggregationOption.includes(item.id)
+    } else {
+      return true
+    }
+  })
+})
 const fulFillData = useFulfillData()
 const columnType = ref();
 const termTypeOptions = ref([])
 const valueOptions = ref([])
-const tabsOptions = ref([
-  { label: $t('Terms.ParamsItem.9093430-7'), key: "fixed", component: "int" },
-]);
+const tabsOptions = computed(() => {
+  let arr = [{ label: $t('Terms.ParamsItem.9093430-7'), key: "fixed", component: columnOptions.value.find(i => i.column === paramsValue.column)?.dataType }]
+  if (props.showBuildIn) {
+    arr = arr.filter(item => item.key !== 'upper')
+    arr.push({
+      label: $t('variableItem.BuildIn.910899-1'),
+      key: 'upper',
+      component: 'tree'
+    })
+  }
+  return arr;
+});
 
-if (props.showBuildIn) {
-  tabsOptions.value = tabsOptions.value.filter(item => item.key !== 'upper')
-  tabsOptions.value.push({
-    label: $t('variableItem.BuildIn.910899-1'),
-    key: 'upper',
-    component: 'tree'
-  })
-}
 
 const paramsValue = reactive({
   column: props.value?.column,
@@ -303,7 +317,7 @@ watch(() => JSON.stringify(paramsValue), () => {
       </DropdownButton>
       <DropdownButton
         v-if="showAggregationOption"
-        :options="aggregationOption"
+        :options="aggregationOptionFilter"
         type="termType"
         value-name="id"
         label-name="name"
