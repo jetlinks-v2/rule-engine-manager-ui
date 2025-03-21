@@ -76,12 +76,14 @@
           icon="icon-canshu"
           :placeholder="$t('ListItem.FilterCondition.9667711-5')"
           value-name="id"
+          :value-params-name="valueParamsKey"
           label-name="fullName"
           :options="showAlarmSelect ? alarmOptions : valueOptions"
           :metricOptions="valueColumnOptions"
           :tabsOptions="tabsOptions"
           :multiple="['in', 'nin'].includes(paramsValue.termType)"
           v-model:value="paramsValue.value.value"
+          v-model:valueBackups="paramsValue.value.valueBackups"
           v-model:source="paramsValue.value.source"
           @select="valueSelect"
         />
@@ -220,6 +222,7 @@ const valueColumnOptions = ref<any[]>([]);
 
 const showAlarmKey = ["lastAlarmTime", "firstAlarm", "alarmTime", "level"];
 const showAlarmSelectKey = ["alarmConfigId", "alarmName"];
+const valueParamsKey = ref('id')
 
 const tabsOptions = ref<Array<TabsOption>>([
   { label: $t('ListItem.FilterCondition.9667711-7'), key: "fixed", component: "string" },
@@ -264,6 +267,8 @@ const handOptionByColumn = (option: any) => {
     const _showAlarmSelect = showAlarmSelectKey.includes(
       option.column?.split(".")?.[1]
     );
+
+    valueParamsKey.value = option.options?.parameter || 'id'
 
     const _type = _showAlarmSelect ? "select" : option.type;
     tabsOptions.value[0].component = _type;
@@ -386,6 +391,8 @@ const columnSelect = (e: any) => {
   const hasTypeChange = dataType === 'enum' || dataType !== tabsOptions.value[0].component;
   let termTypeChange = false;
 
+  valueParamsKey.value = e.options?.parameter || 'id'
+
   if (showAlarmKey.includes(paramsValue.column?.split(".")?.[1])) {
     if (!paramsValue.alarm) {
       paramsValue.alarm = undefined;
@@ -410,6 +417,7 @@ const columnSelect = (e: any) => {
     paramsValue.value = {
       source: tabsOptions.value[0].key,
       value: undefined,
+      valueBackups: undefined,
     };
   } else if (termTypeChange) {
     const oldValue = isArray(paramsValue.value!.value)
@@ -421,6 +429,7 @@ const columnSelect = (e: any) => {
     paramsValue.value = {
       source: paramsValue.value?.source || tabsOptions.value[0].key,
       value: value,
+      valueBackups: paramsValue.value.valueBackups,
     };
   }
   const columns = e.metadata === true ? [e.column] : [];
@@ -465,12 +474,14 @@ const termsTypeSelect = (e: { key: string; name: string }) => {
   if(['isnull', 'notnull'].includes(e.key)){
     paramsValue.value = {
       source: tabsOptions.value[0].key,
-      value: 1
+      value: 1,
+      valueBackups: 1
     }
   }else{
     paramsValue.value = {
       source: paramsValue.value?.source || tabsOptions.value[0].key,
       value: value,
+      valueBackups: paramsValue.value.valueBackups,
     };
   }
 
@@ -492,12 +503,17 @@ const alarmSelect = (e: { key: string; label: string }) => {
     props.actionName
   ].options!.terms[props.termsName].terms[props.name][4] = e.label;
 };
-const valueSelect = (_: any, label: string, labelObj: Record<number, any>) => {
+const valueSelect = (_: any, label: string, labelObj: Record<number, any>, options: any) => {
+
+  paramsValue.value.valueBackups = options.id
+
   const updateValue = omit(
     paramsValue,
     !showAlarm.value ? ["alarm", "terms"] : []
   );
-  emit("update:value", handleFilterTerms({ ...updateValue }));
+
+
+  emit("update:value", handleFilterTerms(updateValue));
   valueChangeAfter();
   formModel.value.branches![props.branchName].then[props.thenName].actions[
     props.actionName
@@ -550,8 +566,6 @@ const onDelete = () => {
   formModel.value.branches![props.branchName].then[props.thenName].actions[
     props.actionName
   ].terms[props.termsName].terms?.splice(props.name, 1);
-  console.log(formModel.value.branches![props.branchName].then[props.thenName])
-  console.log(props.actionName)
   const _options =
     formModel.value.branches![props.branchName].then[props.thenName].actions[
       props.actionName
@@ -606,7 +620,6 @@ const subscribe = () => {
     ].actionId;
   const _key = actionId || formModel.value.branches![props.branchName].branchId;
   EventEmitter.subscribe([`${_key}_alarm`], () => {
-    console.log("subscribe");
     getAlarmOptions();
   });
 };
@@ -660,7 +673,6 @@ watch(
   () => props.value,
   () => {
     const terms = analysisFilterTerms(props.value);
-    console.log(props.value, terms);
     paramsValue.value = terms.value;
     paramsValue.column = terms.column;
     paramsValue.type = terms.type;

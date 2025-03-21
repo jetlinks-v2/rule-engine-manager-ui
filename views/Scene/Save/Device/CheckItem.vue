@@ -12,9 +12,8 @@ import {
   queryNoPagingPost,
 } from "../../../../api/others";
 import { getTreeData_api } from "@/api/system/department";
-import {query as channelQuery, getProviders} from '@ruleEngine/api/channel'
+import {query as channelQuery} from '@ruleEngine/api/channel'
 import {queryCollector, queryPointNoPagingV2} from '@ruleEngine/api/collector'
-import {difference} from "lodash-es";
 
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
@@ -191,9 +190,11 @@ const checkCollector = async (): Promise<boolean> => {
 
   if (pointResp.success && data.value.trigger?.collector) {
     const pointSet = new Set(pointResp.result.map((item: any) => item.id))
-
     const result = data.value.trigger?.collector?.pointSelectInfo.pointIds.every(p => pointSet.has(p))
-    data.value.trigger.collector!.pointSelectInfo.pointIds = []
+
+    if (!result) {
+      data.value.trigger.collector!.pointSelectInfo.pointIds = []
+    }
 
     return !!result
   }

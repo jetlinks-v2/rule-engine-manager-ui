@@ -128,7 +128,6 @@ export const useSceneStore = defineStore('scene', () => {
           const len = branches.length
           const newBranches: any[] = []
 
-
           branches.forEach((item, index) => {
 
             if (item?.executeAnyway && index > 0 && branches[index - 1]?.when?.length) {

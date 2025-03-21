@@ -30,7 +30,15 @@ export const defaultSetting = {
     type: [String, Number, Array] as PropType<ValueType>,
     default: undefined
   },
+  valueBackups: {
+    type: [String, Number, Array] as PropType<ValueType>,
+    default: undefined
+  },
   valueName: {
+    type: String,
+    default: 'value'
+  },
+  valueParamsName: {
     type: String,
     default: 'value'
   },

@@ -85,7 +85,12 @@ const optionDisabled = Object.keys(props.data).length > 2 && props.data?.executo
 const options = inject('action-options', [])
 
 const actionList = computed(() => {
-  return options.value.filter(item => !(item.value === 'delay' && props.parallel))
+  return options.value.filter(item => !(item.value === 'delay' && props.parallel)).map(item => {
+    return {
+      ...item,
+      disabled: !['trigger', 'relieve'].includes(item.value)
+    }
+  })
 })
 // const options = [
 //   {

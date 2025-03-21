@@ -117,7 +117,8 @@ const addModel = reactive<AddModelType>({
     },
     stepNumber: 0,
     metadata: {},
-    operator: props.value.operator || 'readPoints',
+  collectorConfig: props.value?.collectorConfig || {},
+  operator: props.value.operator || 'readPoints',
 })
 
 const optionsCache = ref(cloneDeep(props.options))
