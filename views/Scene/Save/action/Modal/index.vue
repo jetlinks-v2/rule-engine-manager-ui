@@ -88,7 +88,7 @@ const actionList = computed(() => {
   return options.value.filter(item => !(item.value === 'delay' && props.parallel)).map(item => {
     return {
       ...item,
-      disabled: !['trigger', 'relieve'].includes(item.value)
+      disabled: !['trigger', 'relieve'].includes(item.value) && props.data.executor === 'alarm'
     }
   })
 })
