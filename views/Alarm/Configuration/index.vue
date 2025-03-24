@@ -107,7 +107,7 @@
 
           <template #state="slotProps">
             <j-badgeStatus
-              :text="slotProps.state?.value === 'enabled' ? $t('Configuration.index.021440-3') : $t('Configuration.index.021440-4')"
+              :text="slotProps.state?.text"
               :status="slotProps.state?.value"
               :statusNames="{
                 enabled: 'processing',

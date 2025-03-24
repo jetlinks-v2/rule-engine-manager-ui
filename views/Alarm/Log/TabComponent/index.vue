@@ -184,7 +184,7 @@ const titleMap = computed(() => {
 
 const columns = ref([
   {
-    title: '告警源',
+    title: $t('components.Log.165155-6'),
     dataIndex: 'sourceId',
     key: 'sourceId',
     search: {
