@@ -98,11 +98,7 @@
                     </template>
                     <template #state="slotProps">
                         <JBadgeStatus
-                            :text="
-                                slotProps.state?.value === 'started'
-                                    ? $t('Instance.index.020452-1')
-                                    : $t('Instance.index.020452-2')
-                            "
+                            :text="slotProps.state?.text "
                             :status="slotProps.state?.value"
                             :statusNames="{
                                 started: 'processing',
