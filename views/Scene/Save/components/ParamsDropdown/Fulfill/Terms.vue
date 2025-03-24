@@ -170,7 +170,7 @@ const columnSelect = (option) => {
   let termTypeChange = false;
   // 如果参数类型未发生变化，则不修改操作符以及值
   const termTypes = option.termTypes;
-
+  paramsValue.function = undefined;
   if (
     !termTypes.some((item) => paramsValue.termType === item.id)
   ) {
