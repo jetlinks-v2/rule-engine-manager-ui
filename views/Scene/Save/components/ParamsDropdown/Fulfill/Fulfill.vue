@@ -123,6 +123,7 @@ const showVisible = async () => {
   visible.value = true
   if (sceneStore.data.trigger.type === 'device') {
     const propertyId = props.column.split('.')[1]
+    const columnId = props.column.split('.')?.[props.column.split('.').length - 3]
     let resp
     if (sceneStore.data.trigger.device.selectorValues.length === 1 ) {
       resp = await detail(sceneStore.data.trigger.device.selectorValues[0].value)
@@ -133,7 +134,11 @@ const showVisible = async () => {
     if (resp.result.metadata) {
       const _metadata = JSON.parse(resp.result.metadata)
       const property = _metadata.properties?.find(item => item.id === propertyId)
-      run(property)
+      if(propertyId !== columnId ) {
+        run(property.valueType?.properties.find(item => item.id === columnId))
+      } else {
+        run(property)
+      }
     }
   }
 
