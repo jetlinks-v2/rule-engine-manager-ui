@@ -11,6 +11,8 @@ import {Form} from "ant-design-vue";
 import {arrayParamsKey, doubleParamsKey, timeTypeKeys} from "../../../components/Terms/util";
 import {watch} from "vue";
 import {getOption} from "../../../components/DropdownButton/util";
+import { storeToRefs } from "pinia";
+import { useSceneStore } from "@ruleEngine/store/scene";
 
 const props = defineProps({
   isLast: {
@@ -49,11 +51,24 @@ const props = defineProps({
   },
   index: {
     type: Number
+  },
+  branchName: {
+    type: Number,
+    default: 0
+  },
+  whenName: {
+    type: Number,
+    default: 0
+  },
+  termsName: {
+    type: Number,
+    default: 9
   }
 })
 
 const _defaultValue = defaultTermsValue()
-
+const sceneStore = useSceneStore();
+const { data: formModel } = storeToRefs(sceneStore);
 const emit = defineEmits(['update:value', 'add', 'delete'])
 const formItemContext = Form.useInjectFormItemContext();
 const {show, mouseover, mouseout} = useMouseEvent(toRefs(props).showDeleteBtn)
@@ -232,9 +247,34 @@ const termsTypeSelect = (e) => {
   valueSelect()
 }
 
-const valueSelect = () => {
+const findTreeNode = (tree, id) => {
+  for (let i = 0; i < tree.length; i++) {
+    if (tree[i].id === id) {
+      return tree[i]; 
+    } else if (tree[i].children) {
+      const node = findTreeNode(tree[i].children, id);
+      if (node) {
+        return node;
+      }
+    }
+  } 
+}
+const valueSelect = (e) => {
   if(props.showAggregationOption) {
     fulFillData.value.aggregation = [{...paramsValue}]
+    const arr = [];
+    formModel.value.branches[props.branchName]?.when.forEach((item) => {
+      item.terms.forEach((term, index) => {
+        const _value = term?.value?.value?.aggregation?.[0]?.value?.value;
+        if(_value && index !== props.termsName) {
+          arr.push(findTreeNode(props.builtInOptions, _value)?.column)
+        }
+      })
+    })
+    debugger
+    formModel.value.branches[props.branchName].options = {
+      columns: [...new Set([...arr, e.column])]
+    }
   } else {
     fulFillData.value.filter[props.whenIndex].terms[props.index] = {...paramsValue}
   }

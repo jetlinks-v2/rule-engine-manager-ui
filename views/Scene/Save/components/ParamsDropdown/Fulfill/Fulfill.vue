@@ -28,6 +28,18 @@ const props = defineProps({
   },
   branchParams: {
     type: Object
+  },
+  branchName: {
+    type: Number,
+    default: 0
+  },
+  whenName: {
+    type: Number,
+    default: 0
+  },
+  termsName: {
+    type: Number,
+    default: 0
   }
 })
 const emit = defineEmits(['select', 'update:value'])
@@ -283,6 +295,9 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
                 :builtInOptions="builtInOptions"
                 :showBuildIn="true"
                 :whenIndex="0"
+                :branchName="branchName"
+                :whenName="whenName"
+                :termsName="termsName"
                 :index="0"
                 v-model:value="dataCache.aggregation[0]"
               />
