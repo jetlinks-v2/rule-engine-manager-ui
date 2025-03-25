@@ -21,9 +21,14 @@
                 <template #label>
                   <div style="position: relative">
                     {{ $t('Modal.index.966774-0') }}
-                    <div v-if="optionDisabled" class="action-tip">
-                      {{ $t('Modal.index.966774-2') }}
-                    </div>
+                    <template v-if="data.executor">
+                        <div v-if="optionDisabled" class="action-tip">
+                            {{ $t('Modal.index.966774-2') }}
+                        </div>
+                        <div v-else class="action-tip">
+                            {{ $t('Modal.index.966774-2-1') }}
+                        </div>
+                    </template>
                   </div>
                 </template>
                 <CardSelect v-model:value="formModel.type" :options="actionList"/>
@@ -88,7 +93,7 @@ const actionList = computed(() => {
   return options.value.filter(item => !(item.value === 'delay' && props.parallel)).map(item => {
     return {
       ...item,
-      disabled: !['trigger', 'relieve'].includes(item.value) && props.data.executor === 'alarm'
+      disabled: (!['trigger', 'relieve'].includes(item.value) && props.data.executor === 'alarm') || (['trigger', 'relieve'].includes(item.value) && props.data.executor && props.data.executor !== 'alarm')
     }
   })
 })

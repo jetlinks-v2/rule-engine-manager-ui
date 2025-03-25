@@ -49,6 +49,7 @@
       >
         <a-tree-select
           style="width: 100%; height: 100%"
+          v-model:treeDefaultExpandedKeys="expandedKeys"
           :tree-data="builtInList"
           v-model:value="modelRef.upperKey"
           :placeholder="$t('device.index.9667835-7')"
@@ -80,6 +81,7 @@ import { handleParamsData } from "../../../components/Terms/util";
 import { map } from "lodash-es";
 import { TypeMap } from "./util";
 import { useI18n } from 'vue-i18n'
+import { openKeysByTree } from "../../../../../../utils/comm";
 
 const { t: $t } = useI18n()
 const props = defineProps({
@@ -132,6 +134,10 @@ const modelRef = reactive({
 const list = ref<any[]>([]);
 const builtInList = ref<any[]>([]);
 const tagList = ref<any[]>([]);
+const expandedKeys = computed(() => {
+  console.log(openKeysByTree(builtInList.value, modelRef.upperKey))
+  return openKeysByTree(builtInList.value, modelRef.upperKey);
+})
 
 const filterTree = (nodes: any[]) => {
   if (!nodes?.length) {

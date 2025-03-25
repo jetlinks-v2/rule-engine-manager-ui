@@ -225,7 +225,7 @@ const save = async (step?: number) => {
         if (deviceRef.value) {
             await deviceRef.value?.onFormSave();
             current.value = 2;
-        } else if (DeviceModel.selectorValues?.length) {
+        } else if (DeviceModel.selectorValues?.length || DeviceModel.upperKey) {
             current.value = 2;
         } else {
             onlyMessage($t('Device.index.9667820-12'), 'error');

@@ -24,7 +24,7 @@
           type="primary"
           hasPermission="rule-engine/Scene:update"
           :loading="loading"
-          @click="save"
+          @click="save()"
         >
           {{ $t('Save.index.766438-0') }}
         </j-permission-button>
@@ -37,7 +37,7 @@
 import { storeToRefs } from "pinia";
 import { useSceneStore } from "../../../store/scene";
 import { TriggerHeaderIcon } from "./asstes";
-import {modify, queryActionType} from "../../../api/scene";
+import {modify, queryActionType, detail, queryAlarmList} from "../../../api/scene";
 import { useMenuStore } from "@/store/menu";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { handleFeatures, actionIconMap } from "./util";
@@ -48,6 +48,9 @@ import Manual from "./Manual/index.vue";
 import Timer from "./Timer/index.vue";
 import Collector from "./Collector/index.vue";
 import Description from "./components/Description.vue";
+import { Modal } from 'ant-design-vue';
+import { unBindAlarm, unbindScene } from "../../..//api/configuration";
+import { omit } from "lodash-es";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -67,7 +70,7 @@ const deviceRef = ref();
 
 provide('action-options', actionOptions)
 
-const save = async () => {
+const save = async (next?: Function) => {
   const formData = await sceneForm.value.validateFields().catch((err) => {
     const names = err.errorFields[0].name;
     const index = Math.floor(names[1] / 2) + 1
@@ -92,7 +95,7 @@ const save = async () => {
         (window as any).onTabSaveSuccess(resp);
         setTimeout(() => window.close(), 300);
       } else {
-        menuStore.jumpPage("rule-engine/Scene", {});
+        next ? next?.() : menuStore.jumpPage("rule-engine/Scene", {});
       }
       onlyMessage($t('Save.index.766438-1'));
     }
@@ -104,6 +107,114 @@ getDetail(route.query.id as string);
 onUnmounted(() => {
   refresh?.();
 });
+
+onBeforeRouteUpdate((to, from, next) => { // 设备管理内路由跳转
+  if(to.name === 'rule-engine/Scene') {
+    return next();
+  }
+  beforeRouteLeave(next)
+})
+
+onBeforeRouteLeave((to, from, next) => { // 设备管理外路由跳转
+  beforeRouteLeave(next)
+})
+
+/**
+ * 路由跳转前校验是否存在未保存的数据，
+ * 若存在则弹出确认框，
+ * 若确认保存，则执行保存操作，
+ * 若确认不保存，则执行跳转操作，
+ * 若确认不保存且存在关联告警，则同步解除关联告警
+ * @param next 
+ */
+const beforeRouteLeave = async (next: Function) => {
+  const res = await detail(route.query.id as string);
+  if (res.success) {
+    // 重新组装数据
+    const _data = {...data.value, branches: data.value?.branches?.filter((item) => item).map(branch => {
+      return {
+        ...omit(branch, ['branches_Index', 'key']),
+        then: branch?.then?.map(then => {
+          return {
+            ...omit(then, ['key']),
+            actions: then?.actions?.map(action => {
+              return {
+                ...omit(action, ['key']),
+                terms: action?.terms?.map(term => {
+                  return {
+                    ...omit(term, ['key', 'error']),
+                    terms: term?.terms?.map(term => {
+                      return {
+                      ...omit(term, ['key', 'error']),
+                      }
+                    })
+                  }
+                })
+              } 
+            })
+          }
+        }),
+        when: branch?.when?.map(when => {
+          return {
+           ...omit(when, ['key']),
+            terms: when?.terms?.map(term => {
+              return {
+               ...omit(term, ['key', 'error']),
+              }
+            })
+          }
+        })
+      }
+    })}
+    // 数据对比
+    if(JSON.stringify(_data) === JSON.stringify(res.result)) {
+      next?.();
+      return;
+    }
+    // 数据对比后，若存在未保存的数据且动作绑定了告警配置，则弹出确认框
+    const unBindAction: string[] = [];
+    data.value.branches?.forEach((branch, branchIndex) => {
+      branch?.then?.forEach((then, _thenIndex) => {
+        then?.actions?.forEach((action, _actionIndex) => {
+          if(!res.result.branches?.[branchIndex]?.then?.[_thenIndex]?.actions.find(item => item.actionId === action.actionId)) {
+            unBindAction.push(action.actionId);
+          }
+        })
+      });
+    });
+    Modal.confirm({
+      title: $t('Save.index.766438-2'),
+      content: $t('Save.index.766438-3'),
+      okText: $t('Save.index.766438-0'),
+      cancelText: $t('Save.index.766438-4'),
+      onOk: async () => {
+        return await save(next);
+      },
+      onCancel: async () => {
+        if(unBindAction.length) {
+          const alarmRes = await queryAlarmList({
+            terms: [
+              {
+                terms: unBindAction.map(item => {
+                  return {
+                    column: 'id$rule-bind-alarm',
+                    value: `${route.query.id}:${item}`
+                  }
+                })
+              }
+            ]
+          })
+          if(alarmRes.success) {
+            await Promise.all(alarmRes.result.map(item => unBindAlarm(route.query.id as string, item.id, unBindAction)))
+            next?.();
+          } 
+        } else {
+          next?.();
+        }
+      }
+    })
+  } 
+};
 </script>
 
 <style scoped lang="less">
