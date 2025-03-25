@@ -62,6 +62,9 @@
           v-else-if="showFulfill"
           icon="icon-canshu"
           :column="paramsValue.column"
+          :whenName="whenName"
+          :termsName="termsName"
+          :branchName="branchName"
           v-model:value="paramsValue.value.value"
           @select="valueSelect"
         />
