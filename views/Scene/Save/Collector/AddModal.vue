@@ -148,7 +148,7 @@ const handleOptions = (data: TriggerCollector) => {
     };
     _options.name = addModel.collectorDetail?.name;
     if (data.operator === 'sub') {
-        _options.type = $t('Collector.actions.index-6100078-9');
+        _options.action = $t('Collector.actions.index-6100078-9');
     }
 
     if (data.timer) {
