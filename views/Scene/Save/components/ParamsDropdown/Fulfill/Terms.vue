@@ -271,7 +271,6 @@ const valueSelect = (e) => {
         }
       })
     })
-    debugger
     formModel.value.branches[props.branchName].options = {
       columns: [...new Set([...arr, e.column])]
     }
