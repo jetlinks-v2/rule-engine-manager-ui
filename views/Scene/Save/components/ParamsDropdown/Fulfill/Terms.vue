@@ -112,6 +112,13 @@ const showArray = computed(() => {
     : false;
 });
 
+const filterTermTypeOptions = computed(() => {
+  if(['COUNT', 'DISTINCT_COUNT'].includes(paramsValue.function)) {
+    return termTypeOptions.value.filter(item => item.id !== 'time_gt_now' && item.id !== 'time_lt_now')
+  } else {
+    return termTypeOptions.value
+  }
+})
 const handOptionByColumn = (option) => {
   if (option) {
     termTypeOptions.value = option.termTypes || [];
@@ -330,7 +337,7 @@ watch(() => JSON.stringify(paramsValue), () => {
         @select="functionSelect"
       />
       <DropdownButton
-        :options="termTypeOptions"
+        :options="filterTermTypeOptions"
         type="termType"
         value-name="id"
         label-name="name"
