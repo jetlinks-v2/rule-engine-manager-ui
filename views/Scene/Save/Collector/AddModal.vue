@@ -108,7 +108,7 @@ const props = defineProps({
 
 const addModel = reactive<AddModelType>({
     channelDetail: {},
-    collectorDetail: props.value?.collectorDetail,
+    collectorDetail: props.value?.collectorDetail || {id: props.value?.pointSelectInfo?.collectorId, name: props.value?.pointSelectInfo?.collectorName},
     pointSelectInfo: {
         channelId: props.options?.channelId || '',
         collectorId: props.value?.pointSelectInfo?.collectorId || '',
