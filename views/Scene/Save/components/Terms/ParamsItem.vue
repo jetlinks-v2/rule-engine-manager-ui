@@ -502,6 +502,9 @@ watch(
 watch(() => paramsValue?.termType, (newVal, oldValue) => {
   if(oldValue === 'complex_exists') {
     paramsValue.value.value = arrayParamsKey.includes(newVal) ? [undefined, undefined] : undefined;
+    if(['notnull', 'isnull'].includes(newVal) ) {
+      paramsValue.value.value = 1;
+    }
   }
 })
 // watchEffect(() => {

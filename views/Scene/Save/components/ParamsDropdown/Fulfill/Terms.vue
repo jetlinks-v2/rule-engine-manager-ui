@@ -65,7 +65,7 @@ const notNumberAggregationOption = ['LAST', 'FIRST', 'COUNT', 'DISTINCT_COUNT']
 
 const aggregationOptionFilter = computed(() => {
   return aggregationOption.value.filter(item => {
-    const columnOption = columnOptions.value.find(i => i.column === paramsValue.column)
+    const columnOption = columnOptions.value?.find(i => i.column === paramsValue.column)
     if(!numberOptions.includes(columnOption?.dataType)) {
       return notNumberAggregationOption.includes(item.id)
     } else {
@@ -78,7 +78,7 @@ const columnType = ref();
 const termTypeOptions = ref([])
 const valueOptions = ref([])
 const tabsOptions = computed(() => {
-  let arr = [{ label: $t('Terms.ParamsItem.9093430-7'), key: "fixed", component: ['COUNT', 'DISTINCT_COUNT'].includes(paramsValue.function) ? 'int' : columnOptions.value.find(i => i.column === paramsValue.column)?.dataType }]
+  let arr = [{ label: $t('Terms.ParamsItem.9093430-7'), key: "fixed", component: ['COUNT', 'DISTINCT_COUNT'].includes(paramsValue.function) ? 'int' : columnOptions.value?.find(i => i.column === paramsValue.column)?.dataType }]
   if (props.showBuildIn) {
     arr = arr.filter(item => item.key !== 'upper')
     arr.push({
