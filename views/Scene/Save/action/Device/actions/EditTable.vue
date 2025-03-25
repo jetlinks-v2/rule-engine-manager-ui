@@ -35,14 +35,21 @@
                 :name="[index, 'value']"
                 :required="record.expands.required"
             >
-                <j-value-item
-                    v-model:modelValue='record.value'
-                    :itemType="itemType(record.valueType.type)"
-                    :options="record.options"
-                    :extraProps="{
-                        style: { width: '100%'}
-                    }"
-                />
+              <FunctionItem
+                :builtInList="builtInList"
+                v-model:source="record.source"
+                v-model:value="record.value"
+                v-model:upperKey="record.upperKey"
+                :data="record"
+              />
+<!--                <j-value-item-->
+<!--                    v-model:modelValue='record.value'-->
+<!--                    :itemType="itemType(record.valueType.type)"-->
+<!--                    :options="record.options"-->
+<!--                    :extraProps="{-->
+<!--                        style: { width: '100%'}-->
+<!--                    }"-->
+<!--                />-->
             </JEditTableFormItem>
         </template>
     </EditTable>
