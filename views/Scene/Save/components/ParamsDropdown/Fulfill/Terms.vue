@@ -78,7 +78,7 @@ const columnType = ref();
 const termTypeOptions = ref([])
 const valueOptions = ref([])
 const tabsOptions = computed(() => {
-  let arr = [{ label: $t('Terms.ParamsItem.9093430-7'), key: "fixed", component: columnOptions.value.find(i => i.column === paramsValue.column)?.dataType }]
+  let arr = [{ label: $t('Terms.ParamsItem.9093430-7'), key: "fixed", component: ['COUNT', 'DISTINCT_COUNT'].includes(paramsValue.function) ? 'int' : columnOptions.value.find(i => i.column === paramsValue.column)?.dataType }]
   if (props.showBuildIn) {
     arr = arr.filter(item => item.key !== 'upper')
     arr.push({
@@ -236,6 +236,10 @@ const valueSelect = () => {
   })
 }
 
+const functionSelect = () => {
+  paramsValue.value.value = undefined;
+}
+
 const onDelete = () => {
   emit('delete')
 }
@@ -323,7 +327,7 @@ watch(() => JSON.stringify(paramsValue), () => {
         label-name="name"
         :placeholder="$t('FulFill.Terms-4029416-0')"
         v-model:value="paramsValue.function"
-        @select="valueSelect"
+        @select="functionSelect"
       />
       <DropdownButton
         :options="termTypeOptions"
@@ -364,7 +368,7 @@ watch(() => JSON.stringify(paramsValue), () => {
           v-else
           icon="icon-canshu"
           :placeholder="$t('Terms.ParamsItem.9093430-4')"
-          :options="valueOptions"
+          :options="valueOptions.map(item => ({...item, id: item.value, fullName: item.label}))"
           :tabsOptions="tabsOptions"
           :metricOptions="builtInOptions"
           valueName="id"
