@@ -39,6 +39,7 @@ import type { ValueType } from './typings';
 import { defaultSetting } from './typings';
 import { useI18n } from 'vue-i18n'
 import {onlyMessage} from "@jetlinks-web/utils";
+import { isNil } from "lodash-es";
 
 const { t: $t } = useI18n()
 type Emit = {
@@ -99,7 +100,7 @@ watch(()=>props.value,(val) => {
     } else {
       if (Array.isArray(val)) {
         myValue.value = JSON.stringify(val)
-        label.value = val.every(item => !item) ? '[]' : JSON.stringify(val)
+        label.value = val.every(item => isNil(item)) ? '[]' : JSON.stringify(val)
       } else {
         myValue.value = JSON.stringify(val)
         label.value = JSON.stringify(val)

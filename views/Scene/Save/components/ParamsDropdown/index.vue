@@ -3,9 +3,6 @@
     class="scene-select-value"
     trigger="click"
     v-model:visible="visible"
-    :overlayStyle="{
-      maxWidth: '300px',
-    }"
     @visibleChange="visibleChange"
   >
     <div @click.prevent="visible = true">
@@ -81,9 +78,9 @@
                       v-model:expandedKeys="treeOpenKeys"
                       :selectedKeys="myValue ? [myValue] : []"
                       :treeData="item.key === 'upper' ? metricOptions : options"
-                      :height="450"
                       :virtual="true"
                       :fieldNames="{ key: treeKey }"
+                      style="width: auto;height: 350px;overflow: auto"
                       @select="treeSelect"
                     >
                       <template #title="{ name, description }">

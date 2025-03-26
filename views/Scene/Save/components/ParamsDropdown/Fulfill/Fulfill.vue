@@ -293,7 +293,6 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
                 :showDeleteBtn="false"
                 :showAggregationOption="true"
                 :builtInOptions="builtInOptions"
-                :showBuildIn="true"
                 :whenIndex="0"
                 :branchName="branchName"
                 :whenName="whenName"
