@@ -119,6 +119,12 @@ const tabsOptions = computed(() => {
   return arr;
 });
 
+const _columnOptions = computed(() => {
+  return columnOptions.value?.map(item => ({
+    ...item,
+    children: item.column !== 'array' ? [] : item.children
+  }))
+})
 
 const paramsValue = reactive({
   column: props.value?.column,
@@ -362,7 +368,7 @@ watch(() => JSON.stringify(paramsValue), () => {
         <AIcon type="CloseOutlined" />
       </ConfirmModal>
       <DropdownButton
-        :options="columnOptions"
+        :options="_columnOptions"
         icon="icon-zhihangdongzuoxie-1"
         type="column"
         value-name="column"
