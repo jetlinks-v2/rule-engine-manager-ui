@@ -77,6 +77,20 @@ const columnOptions = useColumnOptions()
 const aggregationOption = useAggOptions()
 const numberOptions = ['int', 'long', 'double', 'float', 'short', 'byte']
 const notNumberAggregationOption = ['LAST', 'FIRST', 'COUNT', 'DISTINCT_COUNT']
+const numberTermTypeOptions = [
+  { id: 'eq', name: $t('Terms.ParamsItem.9093430-11') },
+  { id: 'neq', name: $t('Terms.ParamsItem.9093430-12') },
+  { id: 'notnull', name: $t('Terms.ParamsItem.9093430-13') },
+  { id: 'isnull', name: $t('Terms.ParamsItem.9093430-14') },
+  { id: 'gt', name: $t('Terms.ParamsItem.9093430-15') },
+  { id: 'gte', name: $t('Terms.ParamsItem.9093430-16') },
+  { id: 'lt', name: $t('Terms.ParamsItem.9093430-17') },
+  { id: 'lte', name: $t('Terms.ParamsItem.9093430-18') },
+  { id: 'btw', name: $t('Terms.ParamsItem.9093430-19') },
+  { id: 'nbtw', name: $t('Terms.ParamsItem.9093430-20') },
+  { id: 'in', name: $t('Terms.ParamsItem.9093430-21') },
+  { id: 'nin', name: $t('Terms.ParamsItem.9093430-22') },
+]
 
 const aggregationOptionFilter = computed(() => {
   return aggregationOption.value.filter(item => {
@@ -105,6 +119,12 @@ const tabsOptions = computed(() => {
   return arr;
 });
 
+const _columnOptions = computed(() => {
+  return columnOptions.value?.map(item => ({
+    ...item,
+    children: item.column !== 'array' ? [] : item.children
+  }))
+})
 
 const paramsValue = reactive({
   column: props.value?.column,
@@ -129,7 +149,7 @@ const showArray = computed(() => {
 
 const filterTermTypeOptions = computed(() => {
   if(['COUNT', 'DISTINCT_COUNT'].includes(paramsValue.function)) {
-    return termTypeOptions.value.filter(item => item.id !== 'time_gt_now' && item.id !== 'time_lt_now')
+    return numberTermTypeOptions
   } else {
     return termTypeOptions.value
   }
@@ -272,7 +292,7 @@ const valueSelect = (e) => {
       })
     })
     formModel.value.branches[props.branchName].options = {
-      columns: [...new Set([...arr, e.column])]
+      columns: [...new Set([...arr, e?.column])]
     }
   } else {
     fulFillData.value.filter[props.whenIndex].terms[props.index] = {...paramsValue}
@@ -348,7 +368,7 @@ watch(() => JSON.stringify(paramsValue), () => {
         <AIcon type="CloseOutlined" />
       </ConfirmModal>
       <DropdownButton
-        :options="columnOptions"
+        :options="_columnOptions"
         icon="icon-zhihangdongzuoxie-1"
         type="column"
         value-name="column"
