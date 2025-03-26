@@ -37,7 +37,7 @@
               :treeData="options"
               style="width: auto;  height: 350px;overflow: auto;"
               :virtual="true"
-              :fieldNames="{ key: 'column' }"
+              :fieldNames="{ key: valueName }"
               @select="treeSelect"
             >
               <template #title="{ column, name, fullName, description }">
