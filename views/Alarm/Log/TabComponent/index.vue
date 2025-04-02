@@ -378,24 +378,25 @@ const handleSearch = async (params: any) => {
     props.type !== "all"
       ? await queryAlarmRecordByType(props.type, params)
       : await query(params);
-  if (resp.status === 200) {
-    const res: any = await getOrgList();
-    if (res.status === 200) {
-      resp.result.data.map((item: any) => {
-        if (item.targetType === "org") {
-          res.result.forEach((item2: any) => {
-            if (item2.id === item.targetId) {
-              item.targetName = item2.name;
-            }
-            //targetName处理之后的
-            if (item.targetId === item.targetName) {
-              item.targetName = $t("TabComponent.index.165152-22");
-            }
-          });
-        }
-      });
-      return resp;
-    }
+  if (resp.success) {
+    return resp;
+    // const res: any = await getOrgList();
+    // if (res.success) {
+    //   resp.result.data.map((item: any) => {
+    //     if (item.targetType === "org") {
+    //       res.result.forEach((item2: any) => {
+    //         if (item2.id === item.targetId) {
+    //           item.targetName = item2.name;
+    //         }
+    //         //targetName处理之后的
+    //         if (item.targetId === item.targetName) {
+    //           item.targetName = $t("TabComponent.index.165152-22");
+    //         }
+    //       });
+    //     }
+    //   });
+    //   return resp;
+    // }
   }
 };
 
