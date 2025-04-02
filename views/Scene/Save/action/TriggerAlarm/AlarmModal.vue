@@ -82,7 +82,7 @@
                 "
               >
                 <LevelIcon :level="slotProps.level" />
-                <div style="flex: 1 1 0; min-width: 0">
+                <div style="flex: 1 1 0; min-width: 0;line-height: 1.15">
                   <j-ellipsis>
                     {{ slotProps.name }}
                   </j-ellipsis>
