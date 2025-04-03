@@ -49,7 +49,7 @@ import Timer from "./Timer/index.vue";
 import Collector from "./Collector/index.vue";
 import Description from "./components/Description.vue";
 import { Modal } from 'ant-design-vue';
-import { unBindAlarm, unbindScene } from "../../..//api/configuration";
+import { unBindAlarm } from "../../..//api/configuration";
 import { omit } from "lodash-es";
 
 const { t: $t } = useI18n()
@@ -125,7 +125,7 @@ onBeforeRouteLeave((to, from, next) => { // 设备管理外路由跳转
  * 若确认保存，则执行保存操作，
  * 若确认不保存，则执行跳转操作，
  * 若确认不保存且存在关联告警，则同步解除关联告警
- * @param next 
+ * @param next
  */
 const beforeRouteLeave = async (next: Function) => {
   const res = await detail(route.query.id as string);
@@ -150,7 +150,7 @@ const beforeRouteLeave = async (next: Function) => {
                     })
                   }
                 })
-              } 
+              }
             })
           }
         }),
@@ -207,13 +207,13 @@ const beforeRouteLeave = async (next: Function) => {
           if(alarmRes.success) {
             await Promise.all(alarmRes.result.map(item => unBindAlarm(route.query.id as string, item.id, unBindAction)))
             next?.();
-          } 
+          }
         } else {
           next?.();
         }
       }
     })
-  } 
+  }
 };
 </script>
 

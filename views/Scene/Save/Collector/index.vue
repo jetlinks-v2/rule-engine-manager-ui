@@ -25,7 +25,6 @@ import AddButton from '../components/AddButton.vue'
 import Title from './Title.vue'
 import type {TriggerCollector} from '../../typings';
 import {EventEmitter, DeviceEmitterKey} from '../util';
-import CheckItem from '../Device/CheckItem.vue'
 import Terms from "../components/Terms";
 import {useSceneStore} from "@ruleEngine/store/scene";
 import {storeToRefs} from "pinia";

@@ -8,7 +8,7 @@ import {
 import ParamsDropdown, {ArrayParamsDropdown, DoubleParamsDropdown} from "../../../components/ParamsDropdown/index";
 import {isArray, isObject} from "lodash-es";
 import {Form} from "ant-design-vue";
-import {arrayParamsKey, doubleParamsKey, timeTypeKeys} from "../../../components/Terms/util";
+import {arrayParamsKey, doubleParamsKey} from "../../../components/Terms/util";
 import {watch} from "vue";
 import {getOption} from "../../../components/DropdownButton/util";
 import { storeToRefs } from "pinia";
@@ -270,14 +270,14 @@ const termsTypeSelect = (e) => {
 const findTreeNode = (tree, id) => {
   for (let i = 0; i < tree.length; i++) {
     if (tree[i].id === id) {
-      return tree[i]; 
+      return tree[i];
     } else if (tree[i].children) {
       const node = findTreeNode(tree[i].children, id);
       if (node) {
         return node;
       }
     }
-  } 
+  }
 }
 const valueSelect = (e) => {
   if(props.showAggregationOption) {

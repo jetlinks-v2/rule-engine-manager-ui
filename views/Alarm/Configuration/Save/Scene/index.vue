@@ -73,21 +73,17 @@
 
 <script lang="ts" setup>
 import { query } from "../../../../../api/scene";
-import { queryBindScene, unbindScene } from "../../../../../api/configuration";
+import { queryBindScene } from "../../../../../api/configuration";
 import { useRoute } from "vue-router";
-// import type {ActionsType} from '@/components/Table';
-// import {onlyMessage} from '@/utils/comm';
 import Save from "./Save/index.vue";
 import { useAlarmConfigurationStore } from "../../../../../store/alarm";
 import { storeToRefs } from "pinia";
-import { useMenuStore } from "@/store/menu";
 import SceneDrawer from "./SceneDrawer.vue";
 import SceneCardBox from "./Save/CardBox.vue";
 import { useRequest } from "@jetlinks-web/hooks";
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
-const menuStory = useMenuStore();
 const route = useRoute();
 const id = route.query?.id;
 

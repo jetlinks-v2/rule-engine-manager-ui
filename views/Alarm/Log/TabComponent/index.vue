@@ -133,7 +133,6 @@
 
 <script lang="ts" setup>
 import {
-  getOrgList,
   query,
   getAlarmProduct,
   queryAlarmRecordByType,

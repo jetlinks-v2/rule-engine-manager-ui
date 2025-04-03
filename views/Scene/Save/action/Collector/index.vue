@@ -72,7 +72,7 @@ import Collector from './Collector.vue';
 import Action from './actions/index.vue';
 import {onlyMessage} from '@jetlinks-web/utils';
 import {useRequest} from "@jetlinks-web/hooks";
-import {queryPointNoPaging, queryPointNoPagingV2} from "@ruleEngine/api/collector";
+import {queryPointNoPagingV2} from "@ruleEngine/api/collector";
 import {cloneDeep} from "lodash-es";
 import { useI18n } from 'vue-i18n'
 

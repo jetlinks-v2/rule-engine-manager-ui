@@ -1,5 +1,3 @@
-import { ActionsDeviceProps } from '../../../typings';
-
 type DeviceModelDataType = {
     productId: string;
     selector: any | {
