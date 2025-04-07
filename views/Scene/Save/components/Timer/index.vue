@@ -141,58 +141,19 @@ const unitMax = ref<number>(99);
 const cronRules = [
     { max: 64, message: $t('Timer.index.9093537-8') },
     {
-        validator: async (_: any, value: string) => {
-            if (!value) {
+        validator: async (_: any, v: string) => {
+            const cronRegex = /^((\*|[0-5]?\d)|\*\/([0-5]?\d)) ((\*|[0-5]?\d)|\*\/([0-5]?\d)) ((\*|1?\d|2[0-3])|\*\/(1?\d|2[0-3])) ((\*|[1-2]?\d|3[0-1])|\*\/([1-2]?\d|3[0-1])) ((\*|[1-9]|1[0-2])|\*\/([1-9]|1[0-2])) ((\*|\?|[0-6]|MON|TUE|WED|THU|FRI|SAT|SUN)|\*\/([0-6]))( (\d{4}|\*|\?|\d{4}-\d{4}|\d{4}\/\d{1,2}))?$/;
+            if (!v) {
                 return Promise.reject(new Error($t('Timer.index.9093537-10')));
+                // try {
+                //     console.log(v, cronstrue.toString(v));
+                // } catch (e) {
+                //     return Promise.reject(new Error($t('Timer.index.9093537-9')));
+                // }
             }
-
-            // 分割cron表达式
-            const parts = value.trim().split(' ');
-            if (parts.length < 6 || parts.length > 7) {
+            if (!cronRegex.test(v)) {
                 return Promise.reject(new Error($t('Timer.index.9093537-9')));
             }
-
-            // 验证每个字段
-            const rules = {
-                seconds: /^(\*|([0-5]?[0-9])(,[0-5]?[0-9])*)$|^([0-5]?[0-9])\/([0-5]?[0-9])$/,
-                minutes: /^(\*|([0-5]?[0-9])(,[0-5]?[0-9])*)$|^([0-5]?[0-9])\/([0-5]?[0-9])$/,
-                hours: /^(\*|([0-1]?[0-9]|2[0-3])(,([0-1]?[0-9]|2[0-3]))*)$|^([0-1]?[0-9]|2[0-3])\/([0-1]?[0-9]|2[0-3])$/,
-                day: /^(\*|\?|([1-2]?[0-9]|3[0-1])(,([1-2]?[0-9]|3[0-1]))*)$|^([1-2]?[0-9]|3[0-1])\/([1-2]?[0-9]|3[0-1])$/,
-                month: /^(\*|([1-9]|1[0-2])(,([1-9]|1[0-2]))*)$|^([1-9]|1[0-2])\/([1-9]|1[0-2])$/,
-                week: /^(\*|\?|[0-6](,[0-6])*|MON|TUE|WED|THU|FRI|SAT|SUN)$/,
-                year: /^(\*|\d{4}|\d{4}-\d{4}|\d{4}\/\d{1,2}|\?)$/
-            };
-
-            const [second, minute, hour, dayOfMonth, month, dayOfWeek, year = '*'] = parts;
-
-            // 检查每个部分是否符合规则
-            if (!rules.seconds.test(second)) {
-                return Promise.reject(new Error($t('Timer.index.9093537-9')));
-            }
-            if (!rules.minutes.test(minute)) {
-                return Promise.reject(new Error($t('Timer.index.9093537-9')));
-            }
-            if (!rules.hours.test(hour)) {
-                return Promise.reject(new Error($t('Timer.index.9093537-9')));
-            }
-            if (!rules.day.test(dayOfMonth)) {
-                return Promise.reject(new Error($t('Timer.index.9093537-9')));
-            }
-            if (!rules.month.test(month)) {
-                return Promise.reject(new Error($t('Timer.index.9093537-9')));
-            }
-            if (!rules.week.test(dayOfWeek)) {
-                return Promise.reject(new Error($t('Timer.index.9093537-9')));
-            }
-            if (!rules.year.test(year)) {
-                return Promise.reject(new Error($t('Timer.index.9093537-9')));
-            }
-
-            // 检查日期和星期的互斥关系
-            if (dayOfMonth !== '?' && dayOfWeek !== '?' && dayOfMonth !== '*' && dayOfWeek !== '*') {
-                return Promise.reject(new Error($t('Timer.index.9093537-9')));
-            }
-
             return Promise.resolve();
         },
     },
