@@ -505,7 +505,7 @@ const alarmSelect = (e: { key: string; label: string }) => {
 };
 const valueSelect = (_: any, label: string, labelObj: Record<number, any>, options: any) => {
 
-  paramsValue.value.valueBackups = options.id
+  paramsValue.value.valueBackups = options?.id
 
   const updateValue = omit(
     paramsValue,

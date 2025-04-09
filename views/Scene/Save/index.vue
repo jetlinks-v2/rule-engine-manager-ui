@@ -49,8 +49,8 @@ import Timer from "./Timer/index.vue";
 import Collector from "./Collector/index.vue";
 import Description from "./components/Description.vue";
 import { Modal } from 'ant-design-vue';
-import { unBindAlarm } from "../../..//api/configuration";
-import { omit } from "lodash-es";
+import { unBindAlarm } from "../../../api/configuration";
+import { debounce, omit } from "lodash-es";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -108,16 +108,6 @@ onUnmounted(() => {
   refresh?.();
 });
 
-onBeforeRouteUpdate((to, from, next) => { // 设备管理内路由跳转
-  if(to.name === 'rule-engine/Scene') {
-    return next();
-  }
-  beforeRouteLeave(next)
-})
-
-onBeforeRouteLeave((to, from, next) => { // 设备管理外路由跳转
-  beforeRouteLeave(next)
-})
 
 /**
  * 路由跳转前校验是否存在未保存的数据，
@@ -215,6 +205,15 @@ const beforeRouteLeave = async (next: Function) => {
     })
   }
 };
+
+const debouncedBeforeRouteLeave = debounce(beforeRouteLeave, 300);
+
+onBeforeRouteUpdate((to, from, next) => { // 设备管理内路由跳转
+  if(to.name === 'rule-engine/Scene') {
+    return next();
+  }
+  debouncedBeforeRouteLeave(next);
+})
 </script>
 
 <style scoped lang="less">
