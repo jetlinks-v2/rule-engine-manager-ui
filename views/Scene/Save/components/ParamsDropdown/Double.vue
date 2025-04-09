@@ -1,17 +1,17 @@
 <template>
-    <ParamsDropdown
-      v-for="(i,index) in myValue"
-      v-model:value='myValue[index]'
-      v-model:source='mySource'
-      :valueName='valueName'
-      :labelName='labelName'
-      :options='options'
-      :icon='icon'
-      :placeholder='placeholder'
-      :tabs-options='tabsOptions'
-      :metricOptions='metricOptions'
-      @select='(v, l) => onSelect(v, l, index)'
-      @tabChange='tabChange'
+  <ParamsDropdown
+    v-for="(i, index) in myValue"
+    v-model:value="myValue[index]"
+    v-model:source="mySource"
+    :valueName="valueName"
+    :labelName="labelName"
+    :options="options"
+    :icon="icon"
+    :placeholder="placeholder"
+    :tabs-options="tabsOptions"
+    :metricOptions="metricOptions"
+    @select="(v, l) => onSelect(v, l, index)"
+    @tabChange="tabChange"
   />
   <!-- <ParamsDropdown
     v-model:value='myValue[1]'
@@ -26,52 +26,56 @@
     @select='(v, l) => onSelect(v, l,1)'
     @tabChange='tabChange'
   /> -->
- 
 </template>
 
-<script lang='ts' setup name='DoubleParamsDropdown'>
-import ParamsDropdown from './index.vue'
-import { defaultSetting, ValueType } from './typings'
-import Array from './Array.vue'
+<script lang="ts" setup name="DoubleParamsDropdown">
+import ParamsDropdown from "./index.vue";
+import { defaultSetting, ValueType } from "./typings";
 
 type Emit = {
-  (e: 'update:value', data: ValueType): void
-  (e: 'update:source', data: string): void
-  (e: 'select', data: any, label?: string, labelObj?: Record<number, any>): void
-}
+  (e: "update:value", data: ValueType): void;
+  (e: "update:source", data: string): void;
+  (
+    e: "select",
+    data: any,
+    label?: string,
+    labelObj?: Record<number, any>,
+  ): void;
+};
 
 const props = defineProps({
   ...defaultSetting,
-  termType:{
+  termType: {
     type: String,
-  }
-})
+  },
+});
 
 const label: Record<number, any> = {
   0: undefined,
-  1: undefined
-}
+  1: undefined,
+};
 
-const emit = defineEmits<Emit>()
+const emit = defineEmits<Emit>();
 
-const myValue = ref<ValueType>(props.value || [undefined, undefined] as any)
-const mySource = ref<string>(props.source)
+const myValue = ref<ValueType>(props.value || ([undefined, undefined] as any));
+const mySource = ref<string>(props.source);
 
 const onSelect = (v: any, _label: string, index: number) => {
-  emit('update:value', myValue.value)
-  label[index] = _label
-  emit('select', myValue.value, _label, label)
-}
+  emit("update:value", myValue.value);
+  label[index] = _label;
+  emit("select", myValue.value, _label, label);
+};
 
 const tabChange = (e: string) => {
-  emit('update:source', e)
-}
+  emit("update:source", e);
+};
 
-watch(() => props.value, () => {
-  myValue.value = props.value
-})
+watch(
+  () => props.value,
+  () => {
+    myValue.value = props.value;
+  },
+);
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

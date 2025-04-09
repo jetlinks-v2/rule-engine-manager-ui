@@ -102,7 +102,6 @@
 
 <script lang="ts" setup>
 import {
-  getTargetTypes,
   save,
   detail,
   update,

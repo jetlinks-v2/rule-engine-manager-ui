@@ -1,8 +1,5 @@
-import { ActionsDeviceProps } from '../../../typings';
-
 type DeviceModelType = {
     productId: string;
-    source: string;
     selector: string;
     selectorValues: any;
     source: string;
@@ -23,6 +20,6 @@ type DeviceOptionType = {
     propertiesName?: any;
     tagName?: string;
     relationName?: string;
-    actionName?: string; 
+    actionName?: string;
 }
 
