@@ -5,7 +5,7 @@
         <!--    <template v-if='open'>-->
         <div>
             <a-tabs
-                type="editable-card"
+                :type="isNoCommunity ? 'editable-card' : 'card'"
                 v-model:activeKey="activeKey"
                 @edit="addGroup"
                 @tabClick="showEditCondition"
@@ -122,7 +122,8 @@ import {
     queryBindScene,
     unBindAlarmMultiple,
 } from '../../../../../api/configuration';
-import { useI18n } from 'vue-i18n'
+import { isNoCommunity } from '@/utils/utils'
+import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
