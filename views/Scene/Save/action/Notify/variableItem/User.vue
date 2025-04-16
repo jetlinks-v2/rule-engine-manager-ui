@@ -197,6 +197,8 @@ const relationData = computed(() => {
                     return i?.relation?.related?.relation
                 })
             }
+        } else {
+            return item?.relation?.objectId
         }
     } else if (item?.source === 'relation') {
         const relation = item?.relation;
