@@ -82,6 +82,7 @@ import { map } from "lodash-es";
 import { TypeMap } from "./util";
 import { useI18n } from 'vue-i18n'
 import { openKeysByTree } from "../../../../../../utils/comm";
+import { isNoCommunity } from "@/utils";
 
 const { t: $t } = useI18n()
 const props = defineProps({
@@ -219,6 +220,9 @@ const filterType = async (newVal: any) => {
     TypeMap.relation,
     TypeMap.tag,
   ];
+  if(!isNoCommunity) {
+    _typeList.splice(2, 1)
+  }
   const triggerType = unref(data)?.trigger?.type;
 
   //标签
