@@ -200,12 +200,7 @@ const columns = ref([
     search: {
       type: "select",
       options: () => {
-        return Object.values(typeMap.value).map((item) => {
-          return {
-            label: item.label,
-            value: item.value,
-          };
-        })
+        return typeOptions.value
       }
     },
   },

@@ -142,7 +142,7 @@ const columns = [
     },
     {
         title: $t('Device.Product.455639-3'),
-        dataIndex: 'accessName',
+        dataIndex: 'accessId',
         width: 150,
         ellipsis: true,
         search: {

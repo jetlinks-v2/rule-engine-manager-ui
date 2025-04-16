@@ -29,7 +29,7 @@
                       <div>
                         {{ $t("Base.index.021452-6") }}
                       </div>
-                      <div>
+                      <div v-if="isNoCommunity">
                         {{ $t("Base.index.021452-15") }}
                       </div>
                     </template>

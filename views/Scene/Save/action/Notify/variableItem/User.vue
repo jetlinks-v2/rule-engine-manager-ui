@@ -146,6 +146,7 @@ import { useSceneStore } from '../../../../../../store/scene';
 import {queryDingTalkUsers , queryWechatUsers , getPlatformUsers , getRelationUsers as queryRelationUsers } from '../../../../../../api/others'
 import { unionBy } from 'lodash-es';
 import { useI18n } from 'vue-i18n'
+import { isNoCommunity } from '@/utils';
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -196,6 +197,8 @@ const relationData = computed(() => {
                     return i?.relation?.related?.relation
                 })
             }
+        } else {
+            return item?.relation?.objectId
         }
     } else if (item?.source === 'relation') {
         const relation = item?.relation;
@@ -274,7 +277,7 @@ const getUser = async (_source: string, _triggerType: string) => {
             };
         });
     }
-    if (relationResp && relationResp.success) {
+    if (relationResp && relationResp.success && isNoCommunity) {
         newTree.push({
             title: $t('variableItem.User.9667821-8'),
             value: 'p2',
