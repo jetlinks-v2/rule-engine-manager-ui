@@ -220,9 +220,7 @@ const filterType = async (newVal: any) => {
     TypeMap.relation,
     TypeMap.tag,
   ];
-  if(!isNoCommunity) {
-    _typeList.splice(2, 1)
-  }
+
   const triggerType = unref(data)?.trigger?.type;
 
   //标签
@@ -278,7 +276,9 @@ const filterType = async (newVal: any) => {
   }
 
   console.log(_typeList);
-
+  if(!isNoCommunity) {
+    _typeList.splice(2, 1)
+  }
   list.value = _typeList;
 };
 
