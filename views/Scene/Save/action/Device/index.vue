@@ -158,8 +158,15 @@ const onSave = (_data: any, _columnMap: any = {}) => {
         selector: DeviceModel.selector, //选择器标识
         triggerName: data.value.options?.trigger?.name || $t('Device.index.9667820-7'),
         ...DeviceOptions.value,
-        otherColumns: [],
-        columnMap: _columnMap
+        otherColumns: item.message?.inputs?.filter(item => item.value.source === 'upper')
+        .map(item => item.value.value)
+        .reduce((pre, cur) => {
+          if(!pre.includes(cur)) {
+            pre.push(cur)
+          }
+          return pre
+        }, []) || [],
+        columnMap: _columnMap,
     };
     const _type = _data.message.messageType;
     if (_type === 'INVOKE_FUNCTION') {
