@@ -7,11 +7,22 @@
             style="margin-right: 12px"
         />
         <template v-if="shakeLimit.enabled">
-            <a-input-number :min="1"  :precision="0" size="small" v-model:value="shakeLimit.time" style="width: 38px" />
-            <span>{{ $t('ShakeLimit.index.9093426-2') }}</span>
-            <a-input-number :min="1" :max="100" :precision="0" size="small" v-model:value="shakeLimit.threshold" style="width: 38px" />
-            <span>{{ $t('ShakeLimit.index.9093426-3') }}</span>
-            <a-radio-group :options="alarmFirstOptions" optionType="button" v-model:value="shakeLimit.alarmFirst" size="small" @change="handleChange"/>
+            <div style="display: flex;flex-wrap: wrap;gap: 8px;align-items: center">
+                <a-input-number :min="1" :precision="0" size="small" v-model:value="shakeLimit.time" style="width: 38px" />
+                <span>{{ $t('ShakeLimit.index.9093426-7') }}</span>
+                <!-- <span>{{ $t('ShakeLimit.index.9093426-2') }}</span> -->
+                <a-radio-group :options="continuousOptions" :disabled="!shakeLimit.alarmFirst" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.continuous" size="small" @change="handleChange"/>
+                <span>{{ $t('ShakeLimit.index.9093426-8') }}</span>
+                <a-input-number :min="1" :max="100" :precision="0" size="small" v-model:value="shakeLimit.threshold" style="width: 38px" />
+                <span>{{ $t('ShakeLimit.index.9093426-9') }}</span>
+                <!-- <span>{{ $t('ShakeLimit.index.9093426-3') }}</span> -->
+                <a-radio-group :options="alarmFirstOptions" :disabled="shakeLimit.continuous" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.alarmFirst" size="small" @change="handleChangeAlarmFirst"/>
+                <span>{{ $t('ShakeLimit.index.9093426-10') }}</span>
+                <a-radio-group :options="outputFirstOptions" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.outputFirst" size="small" />
+                <span>{{ $t('ShakeLimit.index.9093426-11') }}</span>
+                <a-radio-group :options="rollingOptions" :disabled="!shakeLimit.alarmFirst" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.rolling" size="small" />
+                <span>{{ $t('ShakeLimit.index.9093426-12') }}</span>
+            </div>
         </template>
     </div>
 </template>
@@ -22,11 +33,13 @@ import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
 type ShakeLimitType = {
-    enabled: boolean | undefined,
-    time?: number | undefined | null,
-    threshold?: number | undefined | null,
-    alarmFirst?: boolean | undefined
-    outputFirst?: boolean | undefined
+    enabled?: boolean,
+    time?: number | null,
+    threshold?: number | null,
+    alarmFirst?: boolean
+    outputFirst?: boolean
+    continuous?: boolean
+    rolling?: boolean
 }
 
 type Emit = {
@@ -34,10 +47,24 @@ type Emit = {
 }
 
 const alarmFirstOptions = [
-  { label: $t('ShakeLimit.index.9093426-4'), value: true },
-  { label: $t('ShakeLimit.index.9093426-5'), value: false },
+  { label: $t('ShakeLimit.index.9093426-13'), value: true },
+  { label: $t('ShakeLimit.index.9093426-14'), value: false },
 ];
 
+const continuousOptions = [
+  { label: $t('ShakeLimit.index.9093426-15'), value: true },
+  { label: $t('ShakeLimit.index.9093426-16'), value: false },
+]
+
+const outputFirstOptions = [
+  { label: $t('ShakeLimit.index.9093426-17'), value: true },
+  { label: $t('ShakeLimit.index.9093426-18'), value: false },
+]
+
+const rollingOptions = [
+  { label: $t('ShakeLimit.index.9093426-19'), value: true },
+  { label: $t('ShakeLimit.index.9093426-20'), value: false },
+]
 const props = defineProps({
   value: {
     type: Object as PropType<ShakeLimitType>,
@@ -48,17 +75,25 @@ const props = defineProps({
 const emit = defineEmits<Emit>()
 
 const shakeLimit = reactive<ShakeLimitType>({
-    enabled: undefined,
+    enabled: false,
     time: 1,
     threshold: 1,
-    alarmFirst: undefined,
-    outputFirst: undefined
+    alarmFirst: true,
+    outputFirst: false,
+    continuous: true,
+    rolling: true,
 })
 
 Object.assign(shakeLimit, props.value)
 
 const handleChange = (e: InputEvent) => {
-  shakeLimit.outputFirst = e.target?.value
+  // shakeLimit.outputFirst = e.target?.value
+}
+
+const handleChangeAlarmFirst = (e: InputEvent) => {
+  if(!e.target?.value) {
+    shakeLimit.rolling = false;
+  }
 }
 
 watch(() => shakeLimit, () => {
@@ -76,6 +111,7 @@ watch(() => shakeLimit, () => {
   align-items: center;
   font-weight: 400;
   font-size: 14px;
+  flex: 1;
   :deep(.ant-input-number-handler-wrap) {
     display: none;
   }
@@ -87,5 +123,9 @@ watch(() => shakeLimit, () => {
   input {
     padding: 0 4px;
   }
+}
+:deep(.ant-radio-button-wrapper-disabled.ant-radio-button-wrapper-checked) {
+  background-color: @primary-color !important;
+  color: #fff;
 }
 </style>

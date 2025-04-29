@@ -35,16 +35,12 @@
                   ['select', 'enum', 'boolean'].includes(item.component)
                 "
               >
-                <j-value-item
+                <DropdownMenusMultiple
                   v-if="multiple"
-                  v-model:modelValue="myValue"
-                  :itemType="item.component === 'file' ? 'string' : item.component"
-                  mode="multiple"
+                  :value="myValue"
                   :options="item.key === 'upper' ? metricOptions : options"
                   :extra="props"
-                  :extraProps="{
-                    fieldNames: {label: 'name', value: 'id'}
-                  }"
+                  :fieldNames="{label: 'name', value: 'id'}"
                   @change="multipleChange"
                   style="width: 100%"
                 />
@@ -131,7 +127,7 @@
 <script lang="ts" setup name="ParamsDropdown">
 import type { ValueType } from "./typings";
 import { defaultSetting } from "./typings";
-import { DropdownMenus, DropdownTimePicker } from "../DropdownButton";
+import { DropdownMenus, DropdownTimePicker, DropdownMenusMultiple } from "../DropdownButton";
 import { getOption } from "../DropdownButton/util";
 import { openKeysByTree } from "../../../../../utils/comm";
 
@@ -255,7 +251,7 @@ watchEffect(() => {
           : props.placeholder;
     } else {
       if(props.multiple && props.source === 'fixed') {
-        label.value = props.options?.filter(item => pValue?.includes(item.value)).map(item => item.fullName);
+        label.value = (Array.isArray(pValue) && pValue?.map(item => props.options?.find(i => i.value === item)?.fullName || item)) || pValue
       } else {
         label.value = pValue!== undefined? pValue : props.placeholder;
       }
