@@ -580,9 +580,14 @@ const onDelete = () => {
 };
 
 const getAlarmOptions = () => {
+  if(!showAlarmSelect.value){
+    return
+  }
+  const column = paramsValue.column?.split('.')?.[0];
+  const arr = column?.split('_');
   const actionId =
     formModel.value.branches![props.branchName].then[props.thenName].actions[
-      props.actionName
+      arr?.includes('branch') ? arr?.[5] - 1 : props.actionName
     ].actionId;
   const branchId = formModel.value.branches![props.branchName].branchId;
   const _id = formModel.value.id;
@@ -631,13 +636,13 @@ const subscribe = () => {
 subscribe();
 
 watch(
-  [showAlarm.value, showAlarmSelect.value],
+  () => [showAlarm.value, showAlarmSelect.value, paramsValue.column],
   (val) => {
-    if (val && !alarmOptions.value.length) {
+    if (val) {
       getAlarmOptions();
     }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 );
 
 watch(
