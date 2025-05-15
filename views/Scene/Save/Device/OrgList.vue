@@ -37,7 +37,7 @@
 <script setup lang='ts' name='OrgList'>
 import type { PropType } from 'vue'
 import { getExpandedRowById } from './util'
-import { getTreeData_api } from '@/api/system/department'
+import { getTreeData_api } from "@ruleEngine/api/department";
 import { SelectorValuesItem } from '../../typings'
 import { useI18n } from 'vue-i18n'
 

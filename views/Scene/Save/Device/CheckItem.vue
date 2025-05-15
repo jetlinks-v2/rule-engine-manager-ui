@@ -4,14 +4,14 @@
 
 <script setup lang="ts" name="CheckItem">
 import { storeToRefs } from "pinia";
-import { useSceneStore } from "../../../../store/scene";
+import { useSceneStore } from "@ruleEngine/store/scene";
 import { Form } from "ant-design-vue";
 import {
   queryProductList,
   detail as deviceDetailQuery,
   queryNoPagingPost,
-} from "../../../../api/others";
-import { getTreeData_api } from "@/api/system/department";
+} from "@ruleEngine/api/others";
+import { getTreeData_api } from "@ruleEngine/api/department";
 import {query as channelQuery} from '@ruleEngine/api/channel'
 import {queryCollector, queryPointNoPagingV2} from '@ruleEngine/api/collector'
 
