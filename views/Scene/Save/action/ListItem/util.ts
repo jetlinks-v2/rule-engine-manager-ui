@@ -130,9 +130,9 @@ export const filterTermsValidator = (terms: any) => {
     const realTerms = terms.terms[0]
     const alarmTerms = terms.terms[1]
 
-    if (!alarmTerms.value.value) {
-      return Promise.reject(new Error($t('ListItem.util.9667814-3')))
-    }
+    // if (!alarmTerms.value.value) {
+    //   return Promise.reject(new Error($t('ListItem.util.9667814-3')))
+    // }
     return termsValidator(realTerms)
   } else {
     return termsValidator(terms)

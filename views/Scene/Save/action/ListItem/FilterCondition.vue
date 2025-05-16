@@ -23,14 +23,14 @@
         component="treeSelect"
         @select="columnSelect"
       />
-      <DropdownButton
-        v-if="showAlarm"
-        :options="alarmOptions"
-        type="alarm"
-        :placeholder="$t('ListItem.FilterCondition.9667711-3')"
-        v-model:value="paramsValue.alarm"
-        @select="alarmSelect"
-      />
+<!--      <DropdownButton-->
+<!--        v-if="showAlarm"-->
+<!--        :options="alarmOptions"-->
+<!--        type="alarm"-->
+<!--        :placeholder="$t('ListItem.FilterCondition.9667711-3')"-->
+<!--        v-model:value="paramsValue.alarm"-->
+<!--        @select="alarmSelect"-->
+<!--      />-->
       <DropdownButton
         :options="showAlarmLevel ? enumParamsKey : termTypeOptions"
         type="termType"
