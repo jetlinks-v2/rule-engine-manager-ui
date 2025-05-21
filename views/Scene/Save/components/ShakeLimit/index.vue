@@ -4,10 +4,9 @@
             :checkedChildren="$t('ShakeLimit.index.9093426-0')"
             :unCheckedChildren="$t('ShakeLimit.index.9093426-1')"
             v-model:checked="shakeLimit.enabled"
-            style="margin-right: 12px"
         />
         <template v-if="shakeLimit.enabled">
-            <div style="display: flex;flex-wrap: wrap;gap: 8px;align-items: center">
+            <div style="display: flex;flex-wrap: wrap;gap: 8px;align-items: center;flex: 1;">
                 <a-input-number :min="1" :precision="0" size="small" v-model:value="shakeLimit.time" style="width: 38px" />
                 <span>{{ $t('ShakeLimit.index.9093426-7') }}</span>
                 <!-- <span>{{ $t('ShakeLimit.index.9093426-2') }}</span> -->
@@ -107,7 +106,7 @@ watch(() => shakeLimit, () => {
 <style lang="less" scoped>
 .shakeLimit {
   display: flex;
-  gap: 4px;
+  gap: 16px;
   align-items: center;
   font-weight: 400;
   font-size: 14px;
