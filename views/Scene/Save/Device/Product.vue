@@ -64,10 +64,10 @@ import {
   queryGatewayList,
   queryProductList,
   queryProductSortTree,
-} from "../../../../api/others";
-import { getTreeData_api } from "@/api/system/department";
-import { sceneImages } from "../../../../assets/index";
-import { accessConfigTypeFilter } from "../../../../utils/setting";
+} from "@ruleEngine/api/others";
+import { getTreeData_api } from "@ruleEngine/api/department";
+import { sceneImages } from "@ruleEngine/assets/index";
+import { accessConfigTypeFilter } from "@ruleEngine/utils/setting";
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
