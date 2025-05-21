@@ -92,7 +92,7 @@ import { storeToRefs } from "pinia";
 import { useSceneStore } from "../../../../../store/scene";
 import DropdownButton from "../../components/DropdownButton";
 import FilterItem from "./FilterCondition.vue";
-import { flattenDeep } from "lodash-es";
+import { flattenDeep, isNil } from "lodash-es";
 import { provide } from "vue";
 import { randomString } from "@jetlinks-web/utils";
 import { getParams, EventEmitter, EventSubscribeKeys } from "../../util";
@@ -254,20 +254,37 @@ const onDelete = () => {
 const rules = [
   {
     validator(_: any, v?: Record<string, any>) {
-      console.log(v);
-      if (v !== undefined && !v.error) {
-        if (!Object.keys(v).length) {
-          return Promise.reject(new Error($t('ListItem.FilterGroup.9667710-4')));
-        }
-
-        return filterTermsValidator(v);
-      } else {
-        if (v?.error) {
-          // 数据发生变化
-          return Promise.reject(new Error($t('ListItem.FilterGroup.9667710-4')));
-        }
-        return Promise.reject(new Error($t('ListItem.FilterGroup.9667710-5')));
+      if (v === undefined || v?.error) {
+        return Promise.reject(new Error($t('ListItem.FilterGroup.9667710-4')));
       }
+
+      if (!Object.keys(v).length) {
+        return Promise.reject(new Error($t('ListItem.FilterGroup.9667710-4')));
+      }
+
+      // 处理空值/null值校验
+      const validateValue = (value: any) => {
+        if (Array.isArray(value)) {
+          return value.length > 0;
+        }
+        return !isNil(value);
+      };
+
+      // 特殊条件判断
+      if (!['isnull', 'notnull'].includes(v?.termType)) {
+        if (v.terms) {
+          const isValid = v.terms.every((item: any) => 
+            validateValue(item.value?.value)
+          );
+          if (!isValid) {
+            return Promise.reject(new Error($t('ListItem.FilterGroup.9667710-5')));
+          }
+        } else if (!validateValue(v?.value?.value)) {
+          return Promise.reject(new Error($t('ListItem.FilterGroup.9667710-5')));
+        }
+      }
+
+      return filterTermsValidator(v);
     },
   },
 ];

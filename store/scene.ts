@@ -46,7 +46,7 @@ export const defaultBranches = [
       enabled: false,
       time: 1,
       threshold: 1,
-      alarmFirst: false,
+      alarmFirst: true,
     },
     then: [],
     executeAnyway: true,
