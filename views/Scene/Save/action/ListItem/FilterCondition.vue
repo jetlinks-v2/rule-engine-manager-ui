@@ -32,7 +32,7 @@
 <!--        @select="alarmSelect"-->
 <!--      />-->
       <DropdownButton
-        :options="termTypeOptions"
+        :options="showAlarmLevel ? enumParamsKey : termTypeOptions"
         type="termType"
         value-name="id"
         label-name="name"
@@ -47,7 +47,7 @@
           :placeholder="$t('ListItem.FilterCondition.9667711-5')"
           value-name="id"
           label-name="name"
-          :options="valueOptions"
+          :options="showAlarmSelect ? alarmOptions : showAlarmLevel ? levelOptions : valueOptions"
           :metricOptions="valueColumnOptions"
           :tabsOptions="tabsOptions"
           v-model:value="paramsValue.value.value"
@@ -78,7 +78,7 @@
           value-name="id"
           :value-params-name="valueParamsKey"
           label-name="fullName"
-          :options="showAlarmSelect ? alarmOptions : valueOptions"
+          :options="showAlarmSelect ? alarmOptions : showAlarmLevel ? levelOptions : valueOptions"
           :metricOptions="valueColumnOptions"
           :tabsOptions="tabsOptions"
           :multiple="['in', 'nin'].includes(paramsValue.termType)"
@@ -134,6 +134,8 @@ import { EventEmitter } from "../../util";
 import { queryAlarmList } from "../../../../../api/scene";
 import { analysisFilterTerms , handleFilterTerms , useCheckFilter } from "./util";
 import { useI18n } from 'vue-i18n'
+import { queryLevel } from "@ruleEngine/api/config";
+import { useRequest } from "@jetlinks-web/hooks";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -222,7 +224,13 @@ const valueColumnOptions = ref<any[]>([]);
 
 const showAlarmKey = ["lastAlarmTime", "firstAlarm", "alarmTime", "level"];
 const showAlarmSelectKey = ["alarmConfigId", "alarmName"];
-const valueParamsKey = ref('id')
+const valueParamsKey = ref('id');
+const enumParamsKey = computed(() => {
+  const arr = ['eq', 'neq', 'notnull', 'isnull', 'in', 'nin'];
+  return termTypeOptions.value.filter((item) => {
+    return arr.includes(item.id)
+  })
+});
 
 const tabsOptions = ref<Array<TabsOption>>([
   { label: $t('ListItem.FilterCondition.9667711-7'), key: "fixed", component: "string" },
@@ -239,7 +247,7 @@ const handleRangeFn = (array: Array<string| undefined>) => {
 
 const showDouble = computed(() => {
   return paramsValue.termType
-    ? arrayParamsKey.includes(paramsValue.termType) && ['int', 'float', 'short', 'double', 'long'].includes(tabsOptions.value[0].component)
+    ? arrayParamsKey.includes(paramsValue.termType) && ['int', 'float', 'short', 'double', 'long', 'enum'].includes(tabsOptions.value[0].component)
     : false;
 });
 
@@ -253,8 +261,29 @@ const showAlarmSelect = computed(() => {
   return showAlarmSelectKey.includes(paramsValue.column?.split(".")?.[1]);
 });
 
+const showAlarmLevel = computed(() => {
+  return paramsValue.column?.split(".")?.[1] === 'level';
+});
+
 const showFulfill = computed(() => {
   return paramsValue.termType === "complex_exists";
+})
+
+const {data: levelOptions, run: runQueryLevel} = useRequest(queryLevel, {
+  immediate: false,
+  onSuccess: (res) => {
+    return res?.result?.levels?.filter((item) => {
+      return item.title
+    })?.map((item) => {
+      return {
+        id: item.level,
+        name: item.title,
+        fullName: item.title,
+        value: item.level,
+        ...item
+      }
+    })
+  }
 })
 
 const valueChangeAfter = () => {
@@ -270,7 +299,7 @@ const handOptionByColumn = (option: any) => {
 
     valueParamsKey.value = option.options?.parameter || 'id'
 
-    const _type = _showAlarmSelect ? "select" : option.type;
+    const _type = _showAlarmSelect || showAlarmLevel.value ? "enum" : option.type;
     tabsOptions.value[0].component = _type;
     columnType.value = option.type;
     const _options = option.options;
@@ -637,9 +666,9 @@ watch(
 );
 
 watch(
-  () => [columnOptions.value, paramsValue.column],
+  () => [columnOptions.value, paramsValue.column, levelOptions.value],
   () => {
-    if (paramsValue.column) {
+    if (paramsValue.column && columnOptions.value.length) {
       const option = getOption(columnOptions.value, paramsValue.column, "id");
 
       if (option && Object.keys(option).length) {
@@ -653,6 +682,30 @@ watch(
             })
           );
           valueChangeAfter();
+        } else if(option.type === 'enum' && !['notnull', 'isnull'].includes(props.value?.termType)) {
+          if(
+            (Array.isArray(props.value?.value?.value) && !props.value?.value?.value?.every(item => option.options?.elements?.find(i => i.value === item)))
+            || (!Array.isArray(props.value?.value?.value) && option.options?.elements?.findIndex(i => i.value === props.value?.value?.value) === -1)
+          ) {
+            emit(
+              "update:value",
+              handleFilterTerms({
+                ...props.value,
+                error: true,
+              })
+            );
+            valueChangeAfter();
+          }
+        } else if(showAlarmLevel.value) {
+          const _value = props.value?.terms?.[0]?.value?.value;
+          emit(
+              "update:value",
+              handleFilterTerms({
+                ...props.value,
+                error: (Array.isArray(_value) && _value.some((i) => levelOptions.value?.findIndex(item => item.id === i) === -1)) || (!Array.isArray(_value) && levelOptions.value?.findIndex(i => i.value === _value) === -1) || !_value?.length 
+              })
+            );
+            valueChangeAfter();
         }
       } else {
         emit(
@@ -683,6 +736,16 @@ watch(
   },
   { immediate: true, deep: true }
 );
+
+watch(
+  () => showAlarmLevel.value,
+  () => {
+    if (showAlarmLevel.value) {
+      runQueryLevel();
+    }
+  },
+  { immediate: true }
+)
 
 onMounted(() => {
   if (paramsValue.column) {
