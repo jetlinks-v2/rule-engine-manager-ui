@@ -41,6 +41,7 @@
                 v-model:value="record.value"
                 v-model:upperKey="record.upperKey"
                 :data="record"
+                @change="itemChange"
               />
 <!--                <j-value-item-->
 <!--                    v-model:modelValue='record.value'-->
@@ -98,7 +99,7 @@ const columns = [
     {
         title: $t('actions.EditTable.9667833-2'),
         dataIndex: 'value',
-        algin: 'center',
+        align: 'center',
         form: {
             required: true,
             rules:[{
@@ -153,6 +154,11 @@ if (type === 'file') {
 }
 
 return type
+}
+
+const itemChange = (v: any, obj: any, option: any, record: any) => {
+  const _column = obj.metadata ? obj.column : obj.id
+  columnMap.value[record.id] = v.source === 'fixed' ? undefined : _column
 }
 
 const onChange = () => {

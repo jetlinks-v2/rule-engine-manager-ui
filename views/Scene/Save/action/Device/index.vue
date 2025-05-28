@@ -150,6 +150,7 @@ const onSave = (_data: any, _columnMap: any = {}) => {
     if (DeviceModel.selector === 'relation') {
         item.upperKey = 'scene.deviceId';
     }
+
     const _options: any = {
         // name: '-', //设备名称
         // type: '', //类型
@@ -171,6 +172,7 @@ const onSave = (_data: any, _columnMap: any = {}) => {
     const _type = _data.message.messageType;
     if (_type === 'INVOKE_FUNCTION') {
         _options.type = $t('Device.index.9667820-8');
+      _options.otherColumns = Object.values(_columnMap)
     }
     if (_type === 'READ_PROPERTY') {
         _options.type = $t('Device.index.9667820-9');
