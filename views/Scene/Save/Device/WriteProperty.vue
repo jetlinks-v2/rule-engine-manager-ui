@@ -25,6 +25,7 @@
       <a-col :span='24' v-if='showTable'>
         <FunctionCall
           ref="functionRef"
+          :required="true"
           :data='callDataOptions'
           @change='callDataChange'
         />
