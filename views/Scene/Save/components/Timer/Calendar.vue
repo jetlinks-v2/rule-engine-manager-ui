@@ -113,8 +113,7 @@
 <script setup name="Calendar">
 import dayjs from "dayjs";
 import { useRequest } from "@jetlinks-web/hooks";
-import { queryTags } from "@/api/system/calendar";
-import FullCalendar from "@/views/system/Calendar/FullCalendar/index.vue";
+import { queryTags } from "@ruleEngine/api/calendar";
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
