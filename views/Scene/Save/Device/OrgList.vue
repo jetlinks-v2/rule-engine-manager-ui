@@ -24,7 +24,7 @@
     :rowSelection='{
       type: "radio",
       selectedRowKeys: orgRowKeys,
-      onChange: selectedRowChange
+      onChange: selectedRowChange,
     }'
     :onChange='tableChange'
     @selectCancel='cancelAll'
@@ -119,7 +119,7 @@ const query = async (p: any) => {
 
 const selectedRowChange = (values: any, selectedRows: any[]) => {
   const item = selectedRows[0]
-  emit('update', [{ name: item.name, value: item.id }])
+  emit('update', item ? [{ name: item.name, value: item.id }] : [])
 }
 
 const cancelAll = () => {
