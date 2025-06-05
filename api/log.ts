@@ -37,8 +37,8 @@ export const queryAlarmRecordByType = (type:string,data:any) => request.post(`/a
 
 /**
  * 设备产品专用查询
- * @param data 
- * @returns 
+ * @param data
+ * @returns
  */
 export const queryByDevice = (data:any) => request.post(`/alarm/record/device/_query`,data)
 
@@ -48,7 +48,7 @@ export const queryByDevice = (data:any) => request.post(`/alarm/record/device/_q
 export const handleLog = (data:any) => request.post('/alarm/record/_handle',data);
 
 /**
- * 
+ *
  * 预处理告警处理
  */
 export const handlePreconditioning = (data:any) => request.post(`/alarm/record/device/_handle`,data)
@@ -72,7 +72,7 @@ export const queryHistoryList = (data:any) => request.post('/alarm/history/_quer
 /**
  * 获取告警处理结果
  */
-export const queryHandleHistory = (id:any,data:any) => request.post(`alarm/record/${id}/handle-history/_query`,data);
+export const queryHandleHistory = (id:any,data:any) => request.post(`/alarm/record/${id}/handle-history/_query`,data);
 
 /**
  * 获取预处理数据告警处理结果
