@@ -199,6 +199,7 @@ const props = defineProps({
 const emit = defineEmits<Emit>();
 
 const paramsValue = reactive<TermsType>({
+  key: props.value.key,
   column: props.value.column,
   type: props.value.type,
   termType: props.value.termType,
@@ -234,12 +235,12 @@ const alarmOptions = ref([]);
 const checkFilter = useCheckFilter();
 
 const handleRangeFn = (array: Array<string| undefined>) => {
-  return array.includes(paramsValue.termType) && ['int', 'float','short', 'double', 'long'].includes(tabsOptions.value[0].component);
+  return array.includes(paramsValue.termType) || ['int', 'float','short', 'double', 'long'].includes(tabsOptions.value[0].component);
 }
 
 const showDouble = computed(() => {
   return paramsValue.termType
-    ? arrayParamsKey.includes(paramsValue.termType) && ['int', 'float', 'short', 'double', 'long'].includes(tabsOptions.value[0].component)
+    ? arrayParamsKey.includes(paramsValue.termType) || ['int', 'float', 'short', 'double', 'long'].includes(tabsOptions.value[0].component)
     : false;
 });
 
