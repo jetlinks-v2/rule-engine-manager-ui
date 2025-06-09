@@ -8,7 +8,7 @@
                 <a-tab-pane key="2" :tab="$t('Save.index.021441-1')">
                     <Scene></Scene>
                 </a-tab-pane>
-                <a-tab-pane key="3" :tab="$t('Save.index.021441-2')">
+                <a-tab-pane key="3" :tab="$t('Save.index.021441-2')" v-if="permissionStore.hasPermission('rule-engine/Alarm/Log:view')">
                     <Log v-if="activeKey === '3'" :type="type" />
                 </a-tab-pane>
             </a-tabs>
@@ -26,6 +26,7 @@ import { useI18n } from 'vue-i18n';
 import { storeToRefs } from "pinia";
 import { useAlarmConfigurationStore } from "../../../../store/alarm";
 import { isEqual, pick } from 'lodash-es';
+import {useAuthStore} from "@/store";
 
 const { t: $t } = useI18n();
 const route = useRoute();
@@ -48,6 +49,7 @@ const changeTabs = (e: any) => {
 };
 const activeKey = ref('1');
 const type = ref('detail')
+const permissionStore = useAuthStore();
 
 const typeChange = (_type: string) => {
   type.value = _type
