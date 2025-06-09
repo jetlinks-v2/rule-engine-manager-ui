@@ -71,6 +71,7 @@ import { queryBuiltInParams } from '../../../../../../api/scene';
 import { useSceneStore } from '../../../../../../store/scene';
 import { storeToRefs } from 'pinia';
 import { useI18n } from 'vue-i18n'
+import {ACTION_DATA} from "@ruleEngine/views/Scene/Save/util";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -95,7 +96,7 @@ const props = defineProps({
       type: Number,
       default: 0,
     },
-    thenName: {
+    branchesGroup: {
       type: Number,
       default: 0,
     },
@@ -103,10 +104,14 @@ const props = defineProps({
       type: Number,
       default: 0,
     },
+    thenName: {
+      type: Number,
+      default: 0,
+    },
 });
 
 const emit = defineEmits(['update:value', 'change']);
-
+const action_data = inject(ACTION_DATA)
 const source = computed(() => {
     return props.value?.source || 'fixed';
 });
@@ -185,11 +190,11 @@ watch(
     (newVal) => {
         const v = newVal;
         if (v === 'upper') {
-            const params: Record<string, Number> = {
-                branch: props.branchesName,
-                branchGroup: props.thenName,
-                action: props.name - 1, // action
-            }
+          const params: Record<string, Number> = {
+            branch: (action_data?.branchIndex || 0),
+            branchGroup: props.thenName,
+            action: props.name, // action
+          }
             // const lastIndex = props.name - 1
             // if (lastIndex >= 0) { // 没有action，接口报错
             //   params.action = props.name - 1

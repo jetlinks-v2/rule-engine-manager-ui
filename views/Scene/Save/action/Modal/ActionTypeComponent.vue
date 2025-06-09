@@ -21,7 +21,7 @@
       :options="data?.options"
       :value="data?.notify"
       :name="name"
-      :branchGroup="thenName"
+      :thenName="thenName"
       :branchesName="branchesName"
       @cancel="onCancel"
       @save="onPropsOk"
