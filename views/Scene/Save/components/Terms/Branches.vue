@@ -68,6 +68,7 @@ import { useSceneStore } from '../../../../../store/scene'
 import Action from '../../action/index.vue'
 import { randomString} from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n'
+import {ACTION_DATA} from "@ruleEngine/views/Scene/Save/util";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore()
@@ -113,6 +114,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['deleteGroup', 'delete'])
+
+provide(ACTION_DATA, {
+  branchIndex: props.name
+})
 
 const showDelete = ref(false)
 const error = ref(false)

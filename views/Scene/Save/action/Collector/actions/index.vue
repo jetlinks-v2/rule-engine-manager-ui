@@ -52,7 +52,7 @@ import TopCard from '../../Device/device/TopCard.vue';
 import WriteProperty from './WriteProperty.vue';
 import {sceneImages} from "@ruleEngine/assets";
 import { useI18n } from 'vue-i18n';
-import {getParams} from "@ruleEngine/views/Scene/Save/util";
+import {ACTION_DATA, getParams} from "@ruleEngine/views/Scene/Save/util";
 import {useSceneStore} from "@ruleEngine/store/scene";
 import {storeToRefs} from "pinia";
 
@@ -112,7 +112,7 @@ const props = defineProps({
     }
 });
 const emit = defineEmits(['change']);
-
+const action_data = inject(ACTION_DATA)
 const readPointList = computed(() => {
   /**
    * 读：1（001）
@@ -197,11 +197,16 @@ const validator = (_rule, value) => {
 }
 
 const queryBuiltIn = async () => {
-  const _params = {
-    branch: props.thenName,
-    branchGroup: props.branchesName,
-    action: props.name - 1,
-  };
+  // const _params = {
+  //   branch: props.thenName,
+  //   branchGroup: props.branchesName,
+  //   action: props.name - 1,
+  // };
+  const _params: Record<string, Number> = {
+    branch: (action_data?.branchIndex || 0),
+    branchGroup: props.thenName,
+    action: props.name, // action
+  }
   const _data = await getParams(_params, unref(data));
   builtInList.value = _data;
 };

@@ -71,7 +71,6 @@ const save = (device: TriggerDevice, options: Record<string, any>) => {
 defineExpose({
   changePaneIndex: (index: number) => termsRef.value?.changePaneIndex(index)
 })
-
 </script>
 
 <style scoped lang='less'>
