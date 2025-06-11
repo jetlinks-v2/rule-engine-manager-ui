@@ -11,6 +11,8 @@ interface Params {
     action: number
 }
 
+export const ACTION_DATA = Symbol('action_data')
+
 export const getParams = (params: Params, sceneModel: FormModelType): Promise<any[]> => {
     return new Promise(res => {
         const data = sceneModel.branches!.filter(item => !!item)

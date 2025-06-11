@@ -6,6 +6,7 @@
     v-model:value="_value"
     v-model:source="_source"
     valueName="id"
+    labelName="fullName"
     treeKey="id"
     @select="onChange"
   >

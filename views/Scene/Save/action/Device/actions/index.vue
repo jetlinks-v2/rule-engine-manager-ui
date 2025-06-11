@@ -86,14 +86,14 @@ import EditTable from './EditTable.vue';
 import WriteProperty from './WriteProperty.vue';
 import { useSceneStore } from '../../../../../../store/scene';
 import { storeToRefs } from 'pinia';
-import { getParams } from '../../../util';
+import {ACTION_DATA, getParams} from '../../../util';
 import { sceneImages } from '../../../../../../assets/index';
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
-
+const action_data = inject(ACTION_DATA)
 const TypeList = [
     {
         label: $t('actions.index.9667837-2'),
@@ -252,11 +252,16 @@ const _function = computed(() => {
 });
 
 const queryBuiltIn = async () => {
-    const _params = {
-        branch: props.branchesName,
-        branchGroup: props.thenName,
-        action: props.name - 1,
-    };
+    // const _params = {
+    //     branch: props.branchesName,
+    //     branchGroup: props.thenName,
+    //     action: props.name - 1,
+    // };
+  const _params: Record<string, Number> = {
+    branch: (action_data?.branchIndex || 0),
+    branchGroup: props.thenName,
+    action: props.name, // action
+  }
     const _data = await getParams(_params, unref(data));
     builtInList.value = _data;
 };

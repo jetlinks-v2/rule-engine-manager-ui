@@ -201,6 +201,7 @@ const props = defineProps({
 const emit = defineEmits<Emit>();
 
 const paramsValue = reactive<TermsType>({
+  key: props.value.key,
   column: props.value.column,
   type: props.value.type,
   termType: props.value.termType,
@@ -242,7 +243,7 @@ const alarmOptions = ref([]);
 const checkFilter = useCheckFilter();
 
 const handleRangeFn = (array: Array<string| undefined>) => {
-  return array.includes(paramsValue.termType) && ['int', 'float','short', 'double', 'long'].includes(tabsOptions.value[0].component);
+  return array.includes(paramsValue.termType) || ['int', 'float','short', 'double', 'long'].includes(tabsOptions.value[0].component);
 }
 
 const showDouble = computed(() => {
@@ -476,6 +477,10 @@ const columnSelect = (e: any) => {
   formModel.value.branches![props.branchName].then[props.thenName].actions[
     props.actionName
   ].options!.terms[props.termsName].terms[props.name][0] = e.fullName || e.name;
+
+  formModel.value.branches![props.branchName].then[props.thenName].actions[
+    props.actionName
+  ].options!.terms[props.termsName].terms[props.name][1] = termTypeOptions.value.find(item => item.id === paramsValue.termType)?.name || paramsValue.termType;
 };
 
 const termsTypeSelect = (e: { key: string; name: string }) => {
@@ -605,9 +610,14 @@ const onDelete = () => {
 };
 
 const getAlarmOptions = () => {
+  if(!showAlarmSelect.value){
+    return
+  }
+  const column = paramsValue.column?.split('.')?.[0];
+  const arr = column?.split('_');
   const actionId =
     formModel.value.branches![props.branchName].then[props.thenName].actions[
-      props.actionName
+      arr?.includes('branch') ? arr?.[5] - 1 : props.actionName
     ].actionId;
   const branchId = formModel.value.branches![props.branchName].branchId;
   const _id = formModel.value.id;
@@ -656,13 +666,13 @@ const subscribe = () => {
 subscribe();
 
 watch(
-  [showAlarm.value, showAlarmSelect.value],
+  () => [showAlarm.value, showAlarmSelect.value, paramsValue.column],
   (val) => {
-    if (val && !alarmOptions.value.length) {
+    if (val) {
       getAlarmOptions();
     }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 );
 
 watch(
@@ -702,7 +712,7 @@ watch(
               "update:value",
               handleFilterTerms({
                 ...props.value,
-                error: (Array.isArray(_value) && _value.some((i) => levelOptions.value?.findIndex(item => item.id === i) === -1)) || (!Array.isArray(_value) && levelOptions.value?.findIndex(i => i.value === _value) === -1) || !_value?.length 
+                error: (Array.isArray(_value) && _value.some((i) => levelOptions.value?.findIndex(item => item.id === i) === -1)) || (!Array.isArray(_value) && levelOptions.value?.findIndex(i => i.value === _value) === -1) || !_value?.length
               })
             );
             valueChangeAfter();

@@ -71,6 +71,10 @@ const props = defineProps({
   data: {
     type: Array,
     default: () => []
+  },
+  required: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -91,11 +95,11 @@ const columns = [
     dataIndex: 'value',
     align: 'center',
     form: {
-      required: true,
       rules:[{
         asyncValidator(rule: any, value: any, ...setting: any){
           const record = setting[1]
-          if (record.required && (value === null || value === undefined || value === '')) {
+          const _required = record.required ?? props.required
+          if (_required && (value === null || value === undefined || value === '')) {
             const errorMsg = ['enum', 'boolean', 'time', 'date'].includes(record.type) ? $t('Device.InvokeFunction.372523-7') : $t('Device.InvokeFunction.372523-4')
             return Promise.reject(errorMsg)
           }

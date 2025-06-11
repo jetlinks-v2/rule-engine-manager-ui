@@ -68,7 +68,7 @@
 </template>
 
 <script lang="ts" setup name="SceneSave">
-import { query } from "../../../../../../api/scene";
+import { query, queryType } from "../../../../../../api/scene";
 import { bindScene, queryBindScene } from "../../../../../../api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
 import SceneCardBox from "./CardBox.vue";
@@ -91,24 +91,15 @@ const columns = [
     key: "triggerType",
     search: {
       type: "select",
-      options: [
-        {
-          label: $t('Save.index.021458-5'),
-          value: "manual",
-        },
-        {
-          label: $t('Save.index.021458-6'),
-          value: "timer",
-        },
-        {
-          label: $t('Save.index.021458-7'),
-          value: "device",
-        },
-        {
-          label: $t('Save.utils.021456-41'),
-          value: "collector",
-        },
-      ],
+      options: async () => {
+        const res = await queryType();
+        return res.result.map((item) => {
+          return {
+            label: item.name,
+            value: item.provider,
+          }; 
+        })
+      },
     },
   },
   {

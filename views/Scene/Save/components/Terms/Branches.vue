@@ -68,6 +68,7 @@ import { useSceneStore } from '../../../../../store/scene'
 import Action from '../../action/index.vue'
 import { randomString} from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n'
+import {ACTION_DATA} from "@ruleEngine/views/Scene/Save/util";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore()
@@ -113,6 +114,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['deleteGroup', 'delete'])
+
+provide(ACTION_DATA, {
+  branchIndex: props.name
+})
 
 const showDelete = ref(false)
 const error = ref(false)
@@ -183,11 +188,11 @@ const addWhen = () => {
     ],
     key: `terms_${randomString()}`,
   }
-  FormModel.value.branches!.splice(props.name + 1, 0, null);
+  // FormModel.value.branches!.splice(props.name + 1, 0, null);
   FormModel.value.branches?.[props.name].when?.push(terms)
-  if(FormModel.value.branches?.length <= props.name + 1){
-    FormModel.value.branches?.splice(props.groupLen, 0, null)
-  }
+  // if(FormModel.value.branches?.length <= props.name + 1){
+  //   FormModel.value.branches?.splice(props.groupLen, 0, null)
+  // }
 
   FormModel.value.options!.when[props.branches_Index]!.terms = [{ termType: $t('Terms.Branches.9093534-5'), terms: [['','eq','','and']]}]
 }

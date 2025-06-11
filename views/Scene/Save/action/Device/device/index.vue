@@ -76,12 +76,13 @@ import { getRelationUsers } from "../../../../../../api/others";
 import Device from "./Device.vue";
 import Tag from "./Tag.vue";
 import RelationSelect from "./RelationSelect.vue";
-import { getParams } from "../../../util";
+import {ACTION_DATA, getParams} from "../../../util";
 import { handleParamsData } from "../../../components/Terms/util";
 import { map } from "lodash-es";
 import { TypeMap } from "./util";
 import { useI18n } from 'vue-i18n'
 import { openKeysByTree } from "../../../../../../utils/comm";
+import { isNoCommunity } from "@/utils";
 
 const { t: $t } = useI18n()
 const props = defineProps({
@@ -117,7 +118,7 @@ const isTags = computed(() => {
 
 // save保存deviceDetail
 const emits = defineEmits(["save", "cancel"]);
-
+const action_data = inject(ACTION_DATA)
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
 
@@ -186,11 +187,16 @@ const tagValidator = (_: any, value: any) => {
 }
 
 const sourceChangeEvent = async () => {
-  const _params = {
-    branch: props.thenName,
-    branchGroup: props.branchesName,
-    action: props.name - 1,
-  };
+  // const _params = {
+  //   branch: props.thenName,
+  //   branchGroup: props.branchesName,
+  //   action: props.name - 1,
+  // };
+  const _params: Record<string, Number> = {
+    branch: (action_data?.branchIndex || 0),
+    branchGroup: props.thenName,
+    action: props.name, // action
+  }
   //判断相同产品才有按变量
   // const productId =
   //     data.value?.branches?.[props.branchesName].then?.[props.thenName]
@@ -219,6 +225,7 @@ const filterType = async (newVal: any) => {
     TypeMap.relation,
     TypeMap.tag,
   ];
+
   const triggerType = unref(data)?.trigger?.type;
 
   //标签
@@ -274,7 +281,9 @@ const filterType = async (newVal: any) => {
   }
 
   console.log(_typeList);
-
+  if(!isNoCommunity) {
+    _typeList.splice(2, 1)
+  }
   list.value = _typeList;
 };
 
