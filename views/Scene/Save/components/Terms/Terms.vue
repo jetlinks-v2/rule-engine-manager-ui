@@ -39,7 +39,6 @@
                             v-if="index >= b.start && index < b.start + b.len"
                         >
                             <Branches
-                                v-if="!!item"
                                 :data="item"
                                 :isFirst="index === b.start"
                                 :name="index"
@@ -53,8 +52,8 @@
                                 @add="branchesAdd"
                             />
                             <div
-                                v-else
                                 class="actions-terms-warp"
+                                v-if="b.len === 1 || (index === b.len - 1 && group.length > 1 && item.when.length > 0)"
                                 :style="{
                                     marginTop:
                                         data.branches.length === 2 ? 0 : 24,
@@ -175,7 +174,7 @@ const change = (e: boolean, groupItem: any, index: number) => {
             },
         ];
     } else {
-        data.value.branches!.splice(start + 1, 0, null);
+        // data.value.branches!.splice(start + 1, 0, null);
         data.value.branches![start].when = [
             {
                 terms: [
@@ -224,7 +223,7 @@ const addBranches = (len: number) => {
         branchId: key,
     };
     // const lastIndex = data.value.branches!.length - 1 || 0
-    data.value.branches?.splice(len - 1, 1, branchesItem);
+    data.value.branches?.splice(len, 0, branchesItem);
     // branches中会有null占位，而options.when中不会，所以是插入，而不是替换
     data.value.options!.when.splice(len - 1, 0, {
         terms: [],
@@ -279,7 +278,8 @@ const addGroup = (targetKey: string, action: string) => {
             branchId: key,
             branchName: '',
         };
-        data.value.branches?.push(branchesItem, null);
+        // data.value.branches?.push(branchesItem, null);
+        data.value.branches?.push(branchesItem);
         // data.value.branches?.push(null as any)
         activeKey.value = key;
         data.value.options!.when.push({
@@ -399,10 +399,10 @@ const removeBranchesData = (g: any, index: number) => {
         ); // 获取当前条件组
         groupItem!.len -= 1;
         const branchesItem = data.value.branches[g.start];
-        if (branchesItem === undefined || branchesItem?.executeAnyway) {
-            // 当前位置为undefined或者是下一个条件组的开始 就插入null
-            data.value.branches?.splice(g.start, 0, null);
-        }
+        // if (branchesItem === undefined || branchesItem?.executeAnyway) {
+        //     // 当前位置为undefined或者是下一个条件组的开始 就插入null
+        //     data.value.branches?.splice(g.start, 0, null);
+        // }
     }
 };
 
