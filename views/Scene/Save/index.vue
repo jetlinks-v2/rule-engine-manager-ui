@@ -91,8 +91,9 @@ const save = async (next?: Function) => {
       });
     loading.value = false;
     if (resp.success) {
-      if ((window as any).onTabSaveSuccess) {
-        (window as any).onTabSaveSuccess(resp);
+      const sourceId = route.query?.sourceId as string;
+      if ((window as any).onTabSaveSuccess && sourceId) {
+        (window as any).onTabSaveSuccess(sourceId, resp);
         setTimeout(() => window.close(), 300);
       } else {
         next ? next?.() : menuStore.jumpPage("rule-engine/Scene", {});
