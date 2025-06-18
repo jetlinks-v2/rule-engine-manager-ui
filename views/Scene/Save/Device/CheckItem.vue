@@ -62,6 +62,7 @@ const check = async (): Promise<boolean> => {
           ],
         },
       ],
+      paging: false,
     });
 
     if (
