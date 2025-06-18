@@ -149,6 +149,7 @@ import { handleActiveBranches, handleGroupAndFilter, typeMap } from "./utils";
 import { useMenuStore } from "@/store/menu";
 import Tags from "./tags.vue";
 import { useI18n } from 'vue-i18n';
+import { randomString } from "@jetlinks-web/utils";
 
 const { t: $t } = useI18n();
 type EmitProps = {
@@ -273,14 +274,17 @@ const click = () => {
 
 const jumpView = () => {
   const url = menuStory.menus["rule-engine/Scene/Save"]?.path;
+  const sourceId = `add_scene_${randomString()}`; // 唯一标识
   const tab: any = window.open(
     `${window.location.origin + window.location.pathname}#${url}?triggerType=${
       props.value.triggerType
-    }&id=${props.value.id}`
+    }&id=${props.value.id}&sourceId=${sourceId}`
   );
-  tab.onTabSaveSuccess = (value: any) => {
-    if (value.success) {
-      emit("reload");
+  tab.onTabSaveSuccess = (_sourceId: string, value: any) => {
+    if (sourceId === _sourceId) {
+      if (value.success) {
+        emit("reload");
+      }
     }
   };
 };
