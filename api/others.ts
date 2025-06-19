@@ -12,7 +12,7 @@ export const detail = (id: string, _hideError?: any) => request.get(`/device-ins
  * @param data
  * @returns
  */
-export const queryNoPagingPost = (data?: Record<string, any>) => request.post('/device-instance/_query/no-paging?paging=false', data)
+export const queryNoPagingPost = (data?: Record<string, any>) => request.post('/device-instance/_query/no-paging?paging=false', {...data, paging: false})
 
 /**
  * 查询数据
@@ -66,7 +66,7 @@ export const getTreeData_api = (data: object) => request.post(`/organization/_al
 /**
  * 查询产品分类树形数据
  */
- 
+
 export const queryProductSortTree = (params?: Record<string, any>) => request.post('/device/category/_tree', params)
 
 
@@ -74,10 +74,10 @@ export const queryProductSortTree = (params?: Record<string, any>) => request.po
 export const queryNoticeList = (data: any) => request.post(`/notifier/config/_query`, data)
 
 
-// 
+//
 export const  queryDingTalkUsers = (id: string) => request.get<any>(`/notifier/dingtalk/corp/${id}/users?sorts[0].name="name"&sorts[0].order=asc`)
 
-// 
+//
 export const  queryWechatUsers =  (id: string) => request.get<any>(`/notifier/wechat/corp/${id}/users?sorts[0].name="name"&sorts[0].order=asc`)
 
   // 钉钉部门
