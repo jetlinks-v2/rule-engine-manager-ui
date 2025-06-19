@@ -98,6 +98,7 @@ const checkDeviceDelete = async () => {
             ],
           },
         ],
+        paging: false
       });
 
       hasDevice =
