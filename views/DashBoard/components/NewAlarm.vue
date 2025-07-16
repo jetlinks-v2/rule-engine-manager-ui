@@ -15,7 +15,7 @@
               }}
             </div>
             <div class="new-alarm-item-content">
-              <j-tooltip :title="item.alarmName" placement="topLeft">
+              <a-tooltip :title="item.alarmName" placement="topLeft">
                 <a
                   @click="
                     () => {
@@ -24,13 +24,13 @@
                   "
                   >{{ item.alarmName }}</a
                 >
-              </j-tooltip>
+              </a-tooltip>
             </div>
             <div class="new-alarm-item-state">
-              <j-badge
+              <a-badge
                 :status="item.state?.value === 'warning' ? 'error' : 'default'"
               >
-              </j-badge>
+              </a-badge>
               <span
                 :class="item.state?.value === 'warning' ? 'error' : 'default'"
               >
