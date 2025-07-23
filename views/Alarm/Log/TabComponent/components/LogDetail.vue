@@ -37,6 +37,13 @@
         >{{ data?.sourceName }}</a-button
         >
         </div>
+        <div v-else-if="data.sourceType === 'networkCardPool'">
+          {{ $t('TabComponent.index.165152-27') }}<a-button
+          type="link"
+          @click="() => gotoNetwork(data?.sourceId)"
+        >{{ data?.sourceName }}</a-button
+        >
+        </div>
         <div v-else>
           {{ $t('components.LogDetail.1651510-7') }}<a-button
           type="link"
@@ -98,6 +105,12 @@ const gotoRule = (record) => {
     }
   );
 }
+
+const gotoNetwork = (id) => {
+  menuStory.jumpPage("iot-card/TrafficPoolManagement/Detail", {
+    params: { id},
+  });
+};
 </script>
 <style lang="less" scoped>
 .alarmInfo {
