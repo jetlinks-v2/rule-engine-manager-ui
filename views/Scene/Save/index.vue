@@ -14,11 +14,8 @@
             <Description v-model:value="data.description" />
           </div>
         </div>
-        <a-form ref="sceneForm" :model="data" :colon="false" layout="vertical">
-          <Device ref="deviceRef" v-if="data.triggerType === 'device'" />
-          <Manual v-else-if="data.triggerType === 'manual'" />
-          <Timer v-else-if="data.triggerType === 'timer'" />
-          <Collector v-else-if="data.triggerType === 'collector'"/>
+        <a-form v-if="data.triggerType" ref="sceneForm" :model="data" :colon="false" layout="vertical">
+          <component ref="deviceRef" :is="components[data.triggerType]" />
         </a-form>
         <j-permission-button
           type="primary"
@@ -38,30 +35,36 @@ import { storeToRefs } from "pinia";
 import { useSceneStore } from "../../../store/scene";
 import { TriggerHeaderIcon } from "./asstes";
 import {modify, queryActionType, detail, queryAlarmList} from "../../../api/scene";
+import { unBindAlarm } from "../../../api/configuration";
 import { useMenuStore } from "@/store/menu";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { handleFeatures, actionIconMap } from "./util";
 import { useI18n } from 'vue-i18n'
 import {useRequest} from "@jetlinks-web/hooks";
-import Device from "./Device/index.vue";
-import Manual from "./Manual/index.vue";
-import Timer from "./Timer/index.vue";
-import Collector from "./Collector/index.vue";
 import Description from "./components/Description.vue";
 import { Modal } from 'ant-design-vue';
-import { unBindAlarm } from "../../../api/configuration";
 import { debounce, omit } from "lodash-es";
+import {defineAsyncComponent} from "vue";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const menuStore = useMenuStore();
+
+const components = {
+  device: defineAsyncComponent(() => import('./MultiDevice/index.vue')),
+  manual: defineAsyncComponent(() => import('./Manual/index.vue')),
+  timer: defineAsyncComponent(() => import('./Timer/index.vue')),
+  collector: defineAsyncComponent(() => import('./Collector/index.vue')),
+  multiDevice: defineAsyncComponent(() => import('./MultiDevice/index.vue'))
+}
+
 const { data: actionOptions } = useRequest(queryActionType, {
   onSuccess(resp) {
-    return resp.result.map(item => ({ label: item.name, value: item.provider, subLabel: item.description, iconUrl: actionIconMap[item.provider] }))
+    return resp.result.map((item: any) => ({ label: item.name, value: item.provider, subLabel: item.description, iconUrl: actionIconMap[item.provider] as string }));
   }
 })
 const { data } = storeToRefs(sceneStore);
-const { getDetail, refresh } = sceneStore;
+const { getDetail, reset } = sceneStore;
 
 const route = useRoute();
 const sceneForm = ref();
@@ -74,7 +77,9 @@ const save = async (next?: Function) => {
   const formData = await sceneForm.value.validateFields().catch((err) => {
     const names = err.errorFields[0].name;
     const index = Math.floor(names[1] / 2) + 1
-    deviceRef.value?.changePaneIndex(index)
+    if (data.triggerType === 'device') {
+      deviceRef.value?.changePaneIndex(index)
+    }
   });
   if (formData) {
     loading.value = true;
@@ -86,17 +91,16 @@ const save = async (next?: Function) => {
       branches,
     })
       .then((res) => res)
-      .catch(() => {
+      .finally(() => {
         loading.value = false;
-      });
-    loading.value = false;
+      })
     if (resp.success) {
       const sourceId = route.query?.sourceId as string;
       if ((window as any).onTabSaveSuccess && sourceId) {
         (window as any).onTabSaveSuccess(sourceId, resp);
         setTimeout(() => window.close(), 300);
       } else {
-        next ? next?.() : menuStore.jumpPage("rule-engine/Scene", {});
+        next ? next() : menuStore.jumpPage("rule-engine/Scene", {});
       }
       onlyMessage($t('Save.index.766438-1'));
     }
@@ -104,11 +108,6 @@ const save = async (next?: Function) => {
 };
 
 getDetail(route.query.id as string);
-
-onUnmounted(() => {
-  refresh?.();
-});
-
 
 /**
  * 路由跳转前校验是否存在未保存的数据，
@@ -125,7 +124,7 @@ const beforeRouteLeave = async (next: Function) => {
     const _data = {...data.value, branches: data.value?.branches?.filter((item) => item).map(branch => {
       return {
         ...omit(branch, ['branches_Index', 'key']),
-        then: branch?.then?.map(then => {
+        then: branch.then?.map(then => {
           return {
             ...omit(then, ['key']),
             actions: then?.actions?.map(action => {
@@ -145,7 +144,7 @@ const beforeRouteLeave = async (next: Function) => {
             })
           }
         }),
-        when: branch?.when?.map(when => {
+        when: branch.when?.map(when => {
           return {
            ...omit(when, ['key']),
             terms: when?.terms?.map(term => {
@@ -215,6 +214,11 @@ onBeforeRouteUpdate((to, from, next) => { // 设备管理内路由跳转
   }
   debouncedBeforeRouteLeave(next);
 })
+
+onUnmounted(() => {
+  reset();
+});
+
 </script>
 
 <style scoped lang="less">

@@ -669,7 +669,7 @@
 	"ShakeLimit.index.9093426-4": "for the first time",
 	"ShakeLimit.index.9093426-5": "last hole",
   "ShakeLimit.index.9093426-7": "seconds",
-  "ShakeLimit.index.9093426-8": "happen", 
+  "ShakeLimit.index.9093426-8": "happen",
   "ShakeLimit.index.9093426-9": "times or more, will",
   "ShakeLimit.index.9093426-10": "execute",
   "ShakeLimit.index.9093426-11": "action, and",
@@ -984,5 +984,6 @@
 	"ParamsDropdown.FulFill-3147419-2": "Summarize data entries through aggregation functions.",
 	"ParamsDropdown.FulFill-3147419-3": "Please configure the conditions",
 	"FulFill.Terms-4029416-0": "Please select an agg function",
-	"FulFill.Terms-4029416-1": "Operator"
+	"FulFill.Terms-4029416-1": "Operator",
+	"MultiDevice.index-07221552-1": "Please select device relationship"
 }

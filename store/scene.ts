@@ -20,7 +20,9 @@ const assignmentKey = (data: any[]): any[] => {
     return item;
   });
 };
+
 const defaultBranchId = randomNumber()
+
 export const defaultBranches = [
   {
     when: [
@@ -84,7 +86,7 @@ export const useSceneStore = defineStore('scene', () => {
 
   const productCache = {}
 
-  const refresh = () => {
+  const reset = () => {
     data.value = {
       trigger: { type: ''},
       options: cloneDeep(defaultOptions),
@@ -104,7 +106,7 @@ export const useSceneStore = defineStore('scene', () => {
   }
 
   const getDetail = async (id: string) => {
-    refresh()
+    reset()
     const resp = await detail(id)
     if (resp.success) {
       const result = resp.result as any
@@ -183,6 +185,6 @@ export const useSceneStore = defineStore('scene', () => {
     data,
     productCache,
     getDetail,
-    refresh
+    reset
   }
 })
