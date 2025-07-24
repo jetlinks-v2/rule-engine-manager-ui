@@ -9,11 +9,27 @@ import { EventEmitter, DeviceEmitterKey } from '../util';
 import CheckItem from '../Device/CheckItem.vue'
 import AddModel from '../Device/AddModal.vue'
 import { useI18n } from 'vue-i18n'
+import { useRequest } from '@jetlinks-web/hooks'
+import { getRelationUsers } from '@ruleEngine/api/others'
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore()
 const { data } = storeToRefs(sceneStore)
 const visible = ref(false);
+const termsRef = ref()
+
+const { data: relationData } = useRequest(getRelationUsers, {
+  onSuccess: (resp) => {
+
+    return resp.result.map(item => {
+      const label = `${item.name}/${item.reverseName}`
+      return {
+        label,
+        value: item.id
+      }
+    })
+  }
+});
 
 const rules = [{
   validator(_: any, v: any) {
@@ -57,10 +73,20 @@ defineExpose({
       <template #label>
         <TitleComponent :data="$t('Device.index.372524-0')">
           <template #extra>
-            <a-select
-              style="width: 260px;margin-left: 16px"
-              :placeholder="$t('MultiDevice.index-07221552-1')"
-            />
+            <a-form-item-rest>
+              <a-space>
+                <a-select
+                  style="width: 260px;margin-left: 16px"
+                  :placeholder="$t('MultiDevice.index-07221552-1')"
+                  :options="relationData"
+                />
+                <a-tooltip
+                title="通过设备间关系实现跨设备联动，设备任意一侧都可触发，系统将根据设备关系自动找出对端设备并执行参数校验"
+                >
+                  <AIcon />
+                </a-tooltip>
+              </a-space>
+            </a-form-item-rest>
           </template>
         </TitleComponent>
       </template>
