@@ -1,36 +1,36 @@
 <template>
-  <div class="alarm-log-card">
+  <div class="alarm-log-card" v-if="loading">
     <pro-search
-      :columns="newColumns"
-      :target="`alarm-log-${props.type}`"
-      @search="search"
+        :columns="newColumns"
+        :target="`alarm-log-${type}`"
+        @search="search"
     />
 
     <FullPage>
       <JProTable
-        :columns="columns"
-        :request="handleSearch"
-        :params="params"
-        :gridColumns="[1, 1, 1]"
-        :gridColumn="1"
-        mode="CARD"
-        ref="tableRef"
+          :columns="columns"
+          :request="handleSearch"
+          :params="params"
+          :gridColumns="[1, 1, 1]"
+          :gridColumn="1"
+          mode="CARD"
+          ref="tableRef"
       >
         <template #card="slotProps">
           <CardBox
-            :value="slotProps"
-            v-bind="slotProps"
-            :actions="getActions(slotProps, 'card')"
-            :status="slotProps.state.value"
-            :statusNames="{
+              :value="slotProps"
+              v-bind="slotProps"
+              :actions="getActions(slotProps, 'card')"
+              :status="slotProps.state.value"
+              :statusNames="{
               warning: 'error',
               normal: 'default',
             }"
-            :statusText="slotProps.state.text"
-            @click="() => showDrawer(slotProps)"
+              :statusText="slotProps.state.text"
+              @click="() => showDrawer(slotProps)"
           >
             <template #img>
-              <img :src="imgMap.get(slotProps.targetType)" alt="" />
+              <img :src="imgMap.get(slotProps.targetType)" alt=""/>
             </template>
             <template #content>
               <div class="alarmTitle">
@@ -71,9 +71,11 @@
                     {{ $t("TabComponent.index.165152-0") }}
                   </div>
                   <j-ellipsis
-                    ><div>
+                  >
+                    <div>
                       {{ slotProps?.targetName }}
-                    </div></j-ellipsis
+                    </div>
+                  </j-ellipsis
                   >
                 </a-col>
                 <a-col :span="6">
@@ -84,7 +86,7 @@
                     <div>
                       {{
                         dayjs(
-                          slotProps?.lastAlarmTime || slotProps?.alarmTime
+                            slotProps?.lastAlarmTime || slotProps?.alarmTime
                         ).format("YYYY-MM-DD HH:mm:ss")
                       }}
                     </div>
@@ -95,17 +97,21 @@
                     {{ $t("TabComponent.index.165152-4") }}
                   </div>
                   <j-ellipsis
-                    ><Duration :data="slotProps"></Duration
-                  ></j-ellipsis>
+                  >
+                    <Duration :data="slotProps"></Duration
+                    >
+                  </j-ellipsis>
                 </a-col>
                 <a-col :span="6">
                   <div class="content-title">
                     {{ $t("TabComponent.index.165152-5") }}
                   </div>
                   <j-ellipsis
-                    ><div>
+                  >
+                    <div>
                       {{ slotProps?.actualDesc || "--" }}
-                    </div></j-ellipsis
+                    </div>
+                  </j-ellipsis
                   >
                 </a-col>
               </a-row>
@@ -115,18 +121,18 @@
       </JProTable>
     </FullPage>
     <SolveComponent
-      :data="data.current"
-      v-if="data.solveVisible"
-      @closeSolve="closeSolve"
-      @refresh="refresh"
+        :data="data.current"
+        v-if="data.solveVisible"
+        @closeSolve="closeSolve"
+        @refresh="refresh"
     />
     <LogDrawer
-      v-if="visibleDrawer"
-      :logData="drawerData"
-      :typeMap="titleMap"
-      :levelMap="levelMap"
-      @closeDrawer="visibleDrawer = false"
-      @refreshTable="refreshTable"
+        v-if="visibleDrawer"
+        :logData="drawerData"
+        :typeMap="titleMap"
+        :levelMap="levelMap"
+        @closeDrawer="visibleDrawer = false"
+        @refreshTable="refreshTable"
     />
   </div>
 </template>
@@ -138,34 +144,38 @@ import {
   queryAlarmRecordByType,
   queryAlarmRecordNoPaging,
 } from "../../../../api/log";
-import { useAlarmStore } from "../../../../store/alarm";
-import { storeToRefs } from "pinia";
+import {useAlarmStore} from "../../../../store/alarm";
+import {storeToRefs} from "pinia";
 import dayjs from "dayjs";
 import SolveComponent from "../SolveComponent/index.vue";
-import { useMenuStore } from "@/store/menu";
+import {useMenuStore} from "@/store/menu";
 import LogDrawer from "./components/DetailDrawer.vue";
 import Duration from "../components/Duration.vue";
-import { useAlarmLevel } from "../../../../hook";
-import { logImages } from "../../../../assets/index";
+import {useAlarmLevel} from "../../../../hook";
+import {logImages} from "../../../../assets/index";
 import LevelIcon from '@ruleEngine/components/AlarmLevelIcon/index.vue'
-import { useI18n } from "vue-i18n";
-import { useAlarmConfigType } from "@ruleEngine/hook/useAlarmConfigType";
+import {useI18n} from "vue-i18n";
+import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
 import {getTreeData_api} from "@ruleEngine/api/others";
+import {useRouteQuery} from "@vueuse/router/index";
 
-const { t: $t } = useI18n();
-const { supports } = useAlarmConfigType();
+const {t: $t} = useI18n();
+const {supports} = useAlarmConfigType();
 const menuStory = useMenuStore();
 const tableRef = ref();
-const { levelMap, getLevelList } = useAlarmLevel();
+const {levelMap, getLevelList} = useAlarmLevel();
 const alarmStore = useAlarmStore();
-const { data } = storeToRefs(alarmStore);
+const {data} = storeToRefs(alarmStore);
 const drawerData = ref();
 const visibleDrawer = ref(false);
 const props = defineProps<{
   type: string;
   id?: string;
+  targetId?: string;
 }>();
-
+const q = useRouteQuery('q')
+const searchTarget = useRouteQuery('target')
+const loading = ref(false)
 const imgMap = new Map();
 imgMap.set("product", logImages.product);
 imgMap.set("device", logImages.device);
@@ -201,7 +211,7 @@ const columns = ref([
             prev.push(next)
           }
           return prev
-        },[]);
+        }, []);
       }
     },
   },
@@ -297,7 +307,7 @@ const newColumns = computed(() => {
                   list.forEach((item) => {
                     if (item.children) {
                       item.children = formatValue(
-                        item.children,
+                          item.children,
                       );
                     }
                     _list.push({
@@ -345,7 +355,7 @@ const newColumns = computed(() => {
           ];
           const resp: any = await getAlarmProduct({
             paging: false,
-            sorts: [{ name: "alarmTime", order: "desc" }],
+            sorts: [{name: "alarmTime", order: "desc"}],
             terms: termType,
           });
           const listMap: Map<string, any> = new Map();
@@ -368,19 +378,19 @@ const newColumns = computed(() => {
     return [otherColumns, productColumns, ...columns.value];
   }
   return ["all", "detail"].includes(props.type)
-    ? columns.value
-    : [otherColumns, ...columns.value];
+      ? columns.value
+      : [otherColumns, ...columns.value];
 });
 
 let params: any = ref({
-  sorts: [{ name: "lastAlarmTime", order: "desc" }],
+  sorts: [{name: "lastAlarmTime", order: "desc"}],
   terms: [],
 });
 const handleSearch = async (params: any) => {
   const resp: any =
-    props.type !== "all"
-      ? await queryAlarmRecordByType(props.type, params)
-      : await query(params);
+      props.type !== "all"
+          ? await queryAlarmRecordByType(props.type, params)
+          : await query(params);
   if (resp.success) {
     return resp;
     // const res: any = await getOrgList();
@@ -428,8 +438,8 @@ const search = (data: any) => {
 };
 
 const getActions = (
-  currentData: Partial<Record<string, any>>,
-  type: "card" | "table"
+    currentData: Partial<Record<string, any>>,
+    type: "card" | "table"
 ): any[] => {
   if (!currentData) return [];
   const actions = [
@@ -438,9 +448,9 @@ const getActions = (
       text: $t("TabComponent.index.165152-23"),
       tooltip: {
         title:
-          currentData.state?.value === "normal"
-            ? $t("TabComponent.index.165152-16")
-            : $t("TabComponent.index.165152-23"),
+            currentData.state?.value === "normal"
+                ? $t("TabComponent.index.165152-16")
+                : $t("TabComponent.index.165152-23"),
       },
       icon: "ToolOutlined",
       onClick: () => {
@@ -457,7 +467,7 @@ const getActions = (
       icon: "FileOutlined",
       onClick: () => {
         menuStory.jumpPage(`rule-engine/Alarm/Log/Detail`, {
-          params: { id: currentData.id },
+          params: {id: currentData.id},
         });
       },
     },
@@ -470,7 +480,7 @@ const getActions = (
       icon: "FileTextOutlined",
       onClick: () => {
         menuStory.jumpPage("rule-engine/Alarm/Log/Record", {
-          query: { id: currentData.id },
+          query: {id: currentData.id},
         });
       },
     },
@@ -495,6 +505,7 @@ const showDrawer = (data: any) => {
   drawerData.value = data;
   visibleDrawer.value = true;
 };
+
 onMounted(() => {
   if (props.id) {
     params.value.terms = [
@@ -505,18 +516,38 @@ onMounted(() => {
         type: "and",
       },
     ];
-  }
-  if (props.type === "all") {
+    loading.value = true
+  } else if (props.targetId) {
+    const terms = [
+      {
+        terms: [
+          {
+            termType: "eq",
+            column: "sourceId",
+            value: props.targetId,
+          },
+        ]
+      }
+    ]
+    q.value = encodeURI(JSON.stringify({terms}))
+    searchTarget.value = `alarm-log-${props.type}`
+    setTimeout(() => {
+      loading.value = true
+    })
+  } else if (props.type === "all") {
     params.value.terms = [];
+    loading.value = true
+  } else {
+    loading.value = true
   }
 });
-
 </script>
 <style lang="less" scoped>
 .content-title {
   color: #666;
   font-size: 12px;
 }
+
 .alarmTitle {
   display: flex;
   width: 60%;
@@ -526,6 +557,7 @@ onMounted(() => {
     text-align: center;
     padding: 5px;
   }
+
   .alarmName {
     max-width: 30%;
     color: #1a1a1a;

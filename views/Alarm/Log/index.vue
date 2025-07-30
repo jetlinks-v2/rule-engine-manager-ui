@@ -1,6 +1,6 @@
 <template>
     <j-page-container :tabList="list" :tabActiveKey="data.tab" @tabChange="onTabChange">
-        <TableComponents :type="data.tab"></TableComponents>
+        <TableComponents :targetId="route.query.id" :type="data.tab" ></TableComponents>
     </j-page-container>
 </template>
 
@@ -10,7 +10,6 @@ import { storeToRefs } from 'pinia';
 import  TableComponents  from './TabComponent/index.vue';
 import { useI18n } from 'vue-i18n';
 import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
-
 
 const alarmStore = useAlarmStore();
 const { data }  = storeToRefs(alarmStore);

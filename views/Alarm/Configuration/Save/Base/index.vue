@@ -41,7 +41,7 @@
                 </a-space>
               </template>
               <a-select
-                :options="options"
+                :options="options.filter(i => i.supportTriggers?.length)"
                 v-model:value="form.targetType"
                 :disabled="selectDisable"
               ></a-select>
