@@ -518,21 +518,23 @@ onMounted(() => {
     ];
     loading.value = true
   } else if (props.targetId) {
-    const terms = [
-      {
-        terms: [
-          {
-            termType: "eq",
-            column: "sourceId",
-            value: props.targetId,
-          },
-        ]
-      }
-    ]
-    q.value = encodeURI(JSON.stringify({terms}))
-    searchTarget.value = `alarm-log-${props.type}`
-    setTimeout(() => {
-      loading.value = true
+    nextTick(() => {
+      const terms = [
+        {
+          terms: [
+            {
+              termType: "eq",
+              column: "sourceId",
+              value: props.targetId,
+            },
+          ]
+        }
+      ]
+      q.value = encodeURI(JSON.stringify({terms}))
+      searchTarget.value = `alarm-log-${props.type}`
+      setTimeout(() => {
+        loading.value = true
+      })
     })
   } else if (props.type === "all") {
     params.value.terms = [];
