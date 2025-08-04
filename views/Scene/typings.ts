@@ -190,6 +190,15 @@ export interface SceneItem {
   triggerType: string;
 }
 
+export type MultiDeviceType = {
+  triggers: TriggerDevice[]
+  relation: {
+    objectType: string
+    relation: string
+    next: Record<string, any>
+  }
+}
+
 export type TriggerType = {
   type: string;
   /**
@@ -210,6 +219,11 @@ export type TriggerType = {
   timer?: OperationTimer;
 
   collector?: TriggerCollector
+
+  /**
+   * 多设备触发
+   */
+  multiDevice?: MultiDeviceType
 };
 
 export interface TermsVale {
@@ -315,6 +329,7 @@ export interface ActionBranchesProps {
   key?: string;
 
   executeAnyway?: boolean
+  options?: any
 }
 
 export interface ActionsType {
@@ -364,7 +379,7 @@ export interface FormModelType {
    * 拓展信息,用于前端存储一些渲染数据
    */
   options?: Record<string, any>;
-  triggerType?: 'device' | 'manual' | 'timer'
+  triggerType?: 'device' | 'manual' | 'timer' | 'multi-device'
   description?: string;
 }
 

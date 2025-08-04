@@ -51,11 +51,11 @@ const sceneStore = useSceneStore();
 const menuStore = useMenuStore();
 
 const components = {
-  device: defineAsyncComponent(() => import('./MultiDevice/index.vue')),
+  device: defineAsyncComponent(() => import('./Device/index.vue')),
   manual: defineAsyncComponent(() => import('./Manual/index.vue')),
   timer: defineAsyncComponent(() => import('./Timer/index.vue')),
   collector: defineAsyncComponent(() => import('./Collector/index.vue')),
-  multiDevice: defineAsyncComponent(() => import('./MultiDevice/index.vue'))
+  'multi-device': defineAsyncComponent(() => import('./MultiDevice/index.vue'))
 }
 
 const { data: actionOptions } = useRequest(queryActionType, {

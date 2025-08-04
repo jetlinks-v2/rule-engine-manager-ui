@@ -1,9 +1,11 @@
 <template>
   <div class='rule-button-warp' :style='style'>
     <slot name="extra"/>
-    <div class='rule-button add-button' :class="{'add-circular': showCircular}" @click='click'>
-      <slot />
-    </div>
+    <slot name="button">
+      <div class='rule-button add-button' :class="{'add-circular': showCircular}" @click='click'>
+        <slot />
+      </div>
+    </slot>
   </div>
 </template>
 
@@ -57,10 +59,10 @@ const click = () => {
 .add-button {
   color: #777;
 
-&:hover,
-&:active {
-   border-color: #d0d0d0;
- }
-}
+  &:hover,
+  &:active {
+     border-color: #d0d0d0;
+   }
+  }
 }
 </style>

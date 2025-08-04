@@ -12,7 +12,7 @@
       />
     </div>
     <div class="params-item_button" @mouseover="mouseover" @mouseout="mouseout">
-      <DropdownButton
+      <ColumnDropdownButton
         :options="columnOptions"
         icon="icon-zhihangdongzuoxie-1"
         type="column"
@@ -20,7 +20,6 @@
         label-name="fullName"
         :placeholder="$t('ListItem.FilterCondition.9667711-2')"
         v-model:value="paramsValue.column"
-        component="treeSelect"
         @select="columnSelect"
       />
 <!--      <DropdownButton-->
@@ -109,7 +108,7 @@
 <script setup lang="ts" name="FilterCondition">
 import type { PropType } from "vue";
 import type { TermsType } from "../../../typings";
-import DropdownButton from "../../components/DropdownButton";
+import DropdownButton, { ColumnDropdownButton } from "../../components/DropdownButton";
 import { getOption } from "../../components/DropdownButton/util";
 import ParamsDropdown, {
   DoubleParamsDropdown,
@@ -117,7 +116,7 @@ import ParamsDropdown, {
   ArrayParamsDropdown
 } from "../../components/ParamsDropdown";
 import { inject } from "vue";
-import { useSceneStore } from "../../../../../store/scene";
+import { useSceneStore } from "@ruleEngine/store/scene";
 import { storeToRefs } from "pinia";
 import {
   cloneDeep,
@@ -128,10 +127,10 @@ import {
   set,
 } from "lodash-es";
 import { Form } from "ant-design-vue";
-import { treeFilter } from "../../../../../utils/comm";
+import { treeFilter } from "@ruleEngine/utils/comm";
 import { timeTypeKeys } from "../../components/Terms/util";
 import { EventEmitter } from "../../util";
-import { queryAlarmList } from "../../../../../api/scene";
+import { queryAlarmList } from "@ruleEngine/api/scene";
 import { analysisFilterTerms , handleFilterTerms , useCheckFilter } from "./util";
 import { useI18n } from 'vue-i18n'
 import { queryLevel } from "@ruleEngine/api/config";

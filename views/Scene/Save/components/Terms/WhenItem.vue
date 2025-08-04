@@ -57,6 +57,7 @@ import DropdownButton from '../DropdownButton';
 import { storeToRefs } from 'pinia';
 import { randomString } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n'
+import {When_Index} from "@ruleEngine/views/Scene/Save/util";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -101,7 +102,11 @@ const props = defineProps({
     },
 });
 
+provide(When_Index, props.name)
+
 const showDelete = ref(false);
+
+const BranchIndex = inject('branches_Index');
 
 const mouseover = () => {
     if (props.showDeleteBtn) {

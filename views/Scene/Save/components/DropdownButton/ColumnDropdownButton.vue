@@ -17,37 +17,30 @@
     </div>
     <template #overlay>
       <div class="scene-select-content">
-        <DropdownTimePicker
-          v-if="['date', 'time'].includes(component)"
-          :type="component"
-          @change="timeSelect"
-        />
-        <template v-else-if="options.length">
-          <drop-menus
-            v-if="component === 'select'"
-            :value="selectValue"
-            :options="options"
-            :valueName="valueName"
-            @click="menuSelect"
-          />
-          <div style="min-width: 400px" v-else>
-            <a-input v-if="showSearch" allow-clear :placeholder="$t('MultiDevice.index-07221552-5')" @change="onSearchChange" >
-              <template #suffix>
-                <AIcon type="SearchOutlined" />
-              </template>
-            </a-input>
-            <a-tabs @change="sourceChange">
+        <div class="scene-select-options-content">
+          <div class="content-left">
+            <div
+              v-for="item in group1"
+              class="content-left-item"
+              @click.stop="() => onGroupChange(item.value)"
+            >
+              <j-ellipsis>
+                {{ item.fullName }}
+              </j-ellipsis>
+            </div>
+          </div>
+          <div class="content-right">
+            <a-tabs v-if="tabsList.length" @change="sourceChange">
               <a-tab-pane
-                v-for="sItem in sources"
-                :key="sItem.value"
+                v-for="sItem in tabsList"
+                :key="sItem.column"
                 :tab="sItem.name" ></a-tab-pane>
             </a-tabs>
-
             <a-tree
               v-model:expandedKeys="treeOpenKeys"
               ref="treeRef"
               :selectedKeys="selectValue ? [selectValue] : []"
-              :treeData="searchOptions"
+              :treeData="dataSource"
               :virtual="true"
               :height="350"
               :fieldNames="{ key: valueName }"
@@ -63,22 +56,19 @@
                 <a-space v-else>
                   {{ name || fullName }}
                   <span v-if="description" class="tree-title-description">{{
-                    description
-                  }}</span>
+                      description
+                    }}</span>
                 </a-space>
               </template>
             </a-tree>
           </div>
-        </template>
-        <div class="scene-select-empty" v-else>
-          <a-empty />
         </div>
       </div>
     </template>
   </a-dropdown>
 </template>
 
-<script lang="ts" setup name="DropdownButton">
+<script lang="ts" setup name="ColumnDropdownButton">
 import type { PropType } from "vue";
 import DropMenus from "./Menus.vue";
 import DropdownTimePicker from "./Time.vue";
@@ -86,6 +76,8 @@ import { getOption } from "./util";
 import type { DropdownButtonOptions } from "./util";
 import { openKeysByTree } from "@ruleEngine/utils/comm";
 import {debounce} from "lodash-es";
+import {ParamsSourceKey} from "@ruleEngine/views/Scene/Save/components/Terms/util";
+import {handleParamsGroupBySource} from "@ruleEngine/views/Scene/util";
 
 type LabelType = string | number | boolean | undefined;
 
@@ -123,28 +115,24 @@ const props = defineProps({
     type: String,
     default: "column", // 'column' | 'termType' | 'value' | 'type'
   },
-  component: {
-    type: String,
-    default: "select", // 'select' | 'treeSelect'
-  },
-  sources: {
-    type: Array,
-    default: () => []
-  },
-  showSearch: {
-    type: Boolean,
-    default: false
-  }
 });
 
 const emit = defineEmits<Emit>();
 const slots = Object.keys(useSlots());
+
+const MultiDeviceSource = inject(ParamsSourceKey) // 多设备触发规则数组
 
 const label = ref<LabelType>(props.placeholder);
 const selectValue = ref(props.value);
 const visible = ref(false);
 const treeOpenKeys = ref<(string | number)[]>([]);
 const treeRef = ref()
+
+const group1 = ref([]) // 左侧菜单
+const tabsList = ref([]) // 右侧顶部tabs
+const dataSource = ref([]) // 右侧数据
+const groupSourceMap = ref(new Map())
+
 const searchValue = ref()
 
 const searchOptions = computed(() => {
@@ -172,34 +160,74 @@ const treeSelect = (v: any, option: any) => {
   emit("select", node);
 };
 
-const timeSelect = (v: string) => {
-  selectValue.value = v;
-  visible.value = false;
-  emit("update:value", v);
-  emit("select", v);
-};
-
-const menuSelect = (v: string, option: any) => {
-  selectValue.value = v;
-  visible.value = false;
-  emit("update:value", v);
-  emit("select", option);
-};
-
 const sourceChange = (e) => {
+  console.log(e)
   treeRef.value?.scrollTo({ key: e, align: 'top', offset: 12 })
+  treeOpenKeys.value = [e]
 }
 
 const onShowOverlay = () => {
   visible.value = true;
 }
 
-const onSearchChange = debounce((e) => {
-  const { value } = e.target;
-  searchValue.value = value;
-},300)
+const onGroupChange = (v) => {
+  const item = groupSourceMap.value.get(v);
 
-watchEffect(() => {
+  if (item.isMultiDevice) {
+    tabsList.value = MultiDeviceSource.value
+    const { data } = handleParamsGroupBySource(item.children, { sourceKey: 'options'})
+    dataSource.value = data
+  } else {
+    const list: any[] = []
+    if (item.children && item.children.length > 0) {
+      item.children.forEach(child => {
+        if (child.children && child.children.length > 0) {
+          list.push({
+            column: child.value,
+            name: child.name,
+          });
+        }
+      })
+    }
+    tabsList.value = list;
+    dataSource.value = item.children
+  }
+
+  // TODO 创建provide 传入多设备标识，根据标识来使用ColumnDropdownButton 还是 DropdownButton
+}
+
+const handleGroupDataSource = () => {
+  groupSourceMap.value.clear();
+  let isMultiDeviceRule = false // 理论上来说只有一个数组是多设备规则
+  const MultiDeviceSourceKeys = new Set(MultiDeviceSource.value.map(item => item.value))
+
+  group1.value = props.options.map(item => {
+    const _item: Record<string, any> = {
+      children: item.children
+    }
+    if (!isMultiDeviceRule) {
+      isMultiDeviceRule = !!item.children?.some(item => MultiDeviceSourceKeys.has(item.options?.sourceTrigger))
+      if (isMultiDeviceRule) {
+        _item.isMultiDevice = true
+      }
+    }
+    groupSourceMap.value.set(item.column, _item)
+    return {
+      fullName: item.fullName,
+      value: item.column
+    }
+  })
+}
+
+watch(() => MultiDeviceSource.value, (v) => {
+  if (v.length > 0) {
+    handleGroupDataSource()
+  }
+}, { immediate: true })
+
+watch(() => props.options, () => {
+  if (!props.options.length) return;
+  handleGroupDataSource()
   const option = getOption(props.options, props.value, props.valueName);
   selectValue.value = props.value;
   if (option) {
@@ -214,9 +242,40 @@ watchEffect(() => {
   } else {
     label.value = props.value !== undefined ? props.value : props.placeholder;
   }
-});
+}, { immediate: true})
+
 </script>
 
 <style scoped lang="less">
 @import "./index.less";
+</style>
+<style scoped lang="less">
+.scene-select-content {
+
+  .scene-select-options-content {
+    display: flex;
+
+    .content-left {
+      width: 180px;
+      border-right: 1px solid #f1f1f1;
+      .content-left-item {
+        padding: 4px 12px;
+        cursor: pointer;
+
+        &:hover {
+          background-color: @primary-1;
+        }
+
+        &.selected {
+          background-color: @primary-2;
+        }
+      }
+    }
+
+    .content-right {
+      width: 600px;
+      height: 414px;
+    }
+  }
+}
 </style>

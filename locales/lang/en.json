@@ -985,5 +985,11 @@
 	"ParamsDropdown.FulFill-3147419-3": "Please configure the conditions",
 	"FulFill.Terms-4029416-0": "Please select an agg function",
 	"FulFill.Terms-4029416-1": "Operator",
-	"MultiDevice.index-07221552-1": "Please select device relationship"
+	"MultiDevice.index-07221552-1": "Please select device relationship",
+	"MultiDevice.index-07221552-2": "Please configure multi device triggering rules",
+	"MultiDevice.index-07221552-3": "rules{0}",
+	"MultiDevice.index-07221552-4": "common",
+	"MultiDevice.index-07221552-5": "Please enter search content",
+	"MultiDevice.index-07221552-6": "fixed",
+	"MultiDevice.index-07221552-7": "parameter"
 }

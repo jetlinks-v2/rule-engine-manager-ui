@@ -13,6 +13,18 @@ interface Params {
 
 export const ACTION_DATA = Symbol('action_data')
 
+/**
+ * branches 的下标
+ */
+export const Branche_Index = "branche_index"
+export const When_Index = "when_index"
+export const When_Terms_Index = "when_terms_index"
+export const Then_Index = "then_index"
+export const Then_Action_Index = "then_Action_index"
+export const Then_Action_Terms_Index = "then_Action_Terms_Index"
+export const Then_Action_Terms_Terms_index = "then_Action_Terms_Terms_Index"
+
+
 export const getParams = (params: Params, sceneModel: FormModelType): Promise<any[]> => {
     return new Promise(res => {
         const data = sceneModel.branches!.filter(item => !!item)

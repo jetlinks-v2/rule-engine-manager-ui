@@ -19,6 +19,8 @@
         label-name="fullName"
         :options="columnOptions"
         :placeholder="$t('Terms.ParamsItem.9093430-2')"
+        :sources="parentSource"
+        :showSearch="true"
         v-model:value="paramsValue.column"
         component="treeSelect"
         @select="columnSelect"
@@ -70,6 +72,7 @@
         />
         <ParamsDropdown
           v-else
+          :showBuiltIn="true"
           icon="icon-canshu"
           :placeholder="
             tabsOptions[0]?.component === 'array'
@@ -77,8 +80,10 @@
               : $t('Terms.ParamsItem.9093430-4')
           "
           :options="valueOptions"
+          :columnOptions="columnOptions"
           :metricOptions="metricOption"
           :tabsOptions="tabsOptions"
+          :sources="parentSource"
           :metric="paramsValue.value?.metric"
           v-model:value="paramsValue.value.value"
           v-model:source="paramsValue.value.source"
@@ -117,18 +122,20 @@ import {
   ContextKey,
   arrayParamsKey,
   timeTypeKeys,
-  doubleParamsKey, nullKeys,
+  doubleParamsKey, nullKeys, ParamsSourceKey,
 } from "./util";
-import { useSceneStore } from "../../../../../store/scene";
+import { useSceneStore } from "@ruleEngine/store/scene";
 import { storeToRefs } from "pinia";
 import { Form } from "ant-design-vue";
-import { isArray, isObject, isString, pick } from "lodash-es";
+import { isArray, isObject, isString, pick, set } from "lodash-es";
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data: formModel } = storeToRefs(sceneStore);
 const formItemContext = Form.useInjectFormItemContext();
+
+const parentSource = inject(ParamsSourceKey)
 
 type Emit = {
   (e: "update:value", data: TermsType): void;
@@ -208,6 +215,8 @@ const tabsOptions = ref<Array<TabsOption>>([
   { label: $t('Terms.ParamsItem.9093430-7'), key: "manual", component: "string" },
 ]);
 const metricsCacheOption = ref<any[]>([]); // 缓存指标值
+
+const optionsTermsNamePath = computed(() => ["options", "when", props.branches_Index, "terms", props.whenName, "terms", props.termsName]);
 
 const handOptionByColumn = (option: any) => {
   if (option) {
@@ -352,12 +361,8 @@ const columnSelect = (option: any) => {
     formItemContext.onFieldChange();
   });
 
-  formModel.value.options!.when[props.branches_Index].terms[
-    props.whenName
-  ].terms[props.termsName][0] = option.fullName || option.name;
-  formModel.value.options!.when[props.branches_Index].terms[
-    props.whenName
-  ].terms[props.termsName][1] = paramsValue.termType;
+  set(formModel.value, [...optionsTermsNamePath.value, 0], option.fullName || option.name)
+  set(formModel.value, [...optionsTermsNamePath.value, 1], paramsValue.termType)
 };
 
 const termsTypeSelect = (e: { key: string; name: string }) => {
@@ -404,17 +409,37 @@ const termsTypeSelect = (e: { key: string; name: string }) => {
   paramsValue.value = newValue;
   emit("update:value", { ...paramsValue });
   formItemContext.onFieldChange();
-  formModel.value.options!.when[props.branches_Index].terms[
-    props.whenName
-  ].terms[props.termsName][1] = e.name;
+  set(formModel.value, [...optionsTermsNamePath.value, 1], e.name)
 };
+
+const handleBranchesOptions = () => {
+  const termsColumns = formModel.value.branches![props.branchName].options?.termsColumns
+
+  if (!termsColumns) {
+    formModel.value.branches![props.branchName].options.columns = []
+  } else {
+    const allValues = [];
+    for (const key in termsColumns) {
+      // 确保属性是自身的，而不是原型链上的
+      if (Object.prototype.hasOwnProperty.call(termsColumns, key)) {
+        // 将内层对象的所有值提取出来并合并到 allValues 数组中
+        allValues.push(...Object.values(termsColumns[key]));
+      }
+    }
+
+    // 3. 对合并后的数组进行去重
+    formModel.value.branches![props.branchName].options.columns = Array.from(new Set(allValues));
+  }
+}
 
 const valueSelect = (
   v: any,
   label: string,
   labelObj: Record<number, any>,
-  option: any
+  option: any,
+  column: string
 ) => {
+
   if (paramsValue.value?.source === "metric") {
     paramsValue.value.metric = option?.id;
   }
@@ -424,16 +449,27 @@ const valueSelect = (
   }
   emit("update:value", { ...newValues });
   formItemContext.onFieldChange();
-  formModel.value.options!.when[props.branches_Index].terms[
-    props.whenName
-  ].terms[props.termsName][2] = labelObj;
+  set(formModel.value, [...optionsTermsNamePath.value, 2], labelObj)
+
+  const columnOptions = formModel.value.branches![props.branchName].options
+  debugger
+  if (column) {
+    formModel.value.branches![props.branchName].options ||= {}
+    formModel.value.branches![props.branchName].options!.termsColumns ||= {}
+    let termsColumns = formModel.value.branches![props.branchName].options!.termsColumns
+    termsColumns[props.whenName] ||= {};
+    termsColumns[props.whenName][props.termsName] = column;
+  } else if(columnOptions) {
+    if (formModel.value.branches![props.branchName].options?.termsColumns[props.whenName][props.termsName]) {
+      delete formModel.value.branches![props.branchName].options!.termsColumns[props.whenName][props.termsName]
+    }
+  }
+  handleBranchesOptions()
 };
 
 const typeSelect = (e: any) => {
   emit("update:value", { ...paramsValue });
-  formModel.value.options!.when[props.branches_Index].terms[
-    props.whenName
-  ].terms[props.termsName][3] = e.label;
+  set(formModel.value, [...optionsTermsNamePath.value, 3], e.label)
 };
 
 const termAdd = () => {
@@ -463,6 +499,10 @@ const onDelete = () => {
   formModel.value.options!.when[props.branches_Index].terms[
     props.whenName
   ].terms.splice(props.termsName, 1);
+  if (formModel.value.branches![props.branchName].options?.termsColumns?.[props.whenName]) {
+    delete formModel.value.branches![props.branchName].options!.termsColumns[props.whenName][props.termsName]
+  }
+  handleBranchesOptions()
 };
 
 watch(

@@ -74,6 +74,8 @@ const defaultOptions = {
   ],
 };
 
+const TriggerTypeKeys = ['device', 'multi-device']
+
 export const useSceneStore = defineStore('scene', () => {
   const data = ref<FormModelType>({
     trigger: { type: ''},
@@ -115,46 +117,9 @@ export const useSceneStore = defineStore('scene', () => {
 
       if (!branches) {
         branches = cloneDeep(defaultBranches)
-        if (triggerType === 'device') {
-          // branches.push(null)
-        } else {
+        if (!TriggerTypeKeys.includes(triggerType)) {
           branches[0].when.length = []
         }
-      } else {
-        if (triggerType === 'device') {
-          const len = branches.length
-          const newBranches: any[] = []
-
-          branches.forEach((item, index) => {
-
-            if (item?.executeAnyway && index > 0 && branches[index - 1]?.when?.length) {
-              // newBranches.push(null)
-              newBranches.push(item)
-              // branches.splice(index, 0 , null)
-            } else {
-              newBranches.push(item)
-            }
-
-
-            // if (item?.executeAnyway && index > 0 && branches[index - 1]?.when?.length) {
-            //   branches.splice(index, 0 , null)
-            // }
-
-            // if ( index === len - 1 && item?.when?.length) {
-            //   newBranches.push(null)
-            // }
-          })
-
-          branches = [...newBranches]
-        }
-        // const branchesLength = branches.length;
-        // if (
-        //   triggerType === 'device' &&
-        //   ((branchesLength === 1 && branches[0]?.when?.length) || // 有一组数据并且when有值
-        //     (branchesLength > 1 && branches[branchesLength - 1]?.when?.length)) // 有多组否则数据，并且最后一组when有值
-        // ) {
-        //   branches.push(null);
-        // }
       }
 
       branches = branches.map(item => {
@@ -171,6 +136,20 @@ export const useSceneStore = defineStore('scene', () => {
         }
         return item
       })
+
+      if (result.trigger.type === 'multi-device' && !result.trigger.hasOwnProperty('multiDevice')) {
+        result.trigger = {
+          ...result.trigger,
+          multiDevice: {
+            triggers: [],
+            relation: {
+              objectType: undefined,
+              relation: undefined,
+              next: {}
+            }
+          }
+        }
+      }
 
       data.value = {
         ...result,

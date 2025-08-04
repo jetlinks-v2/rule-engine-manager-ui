@@ -43,7 +43,6 @@
                                 :isFirst="index === b.start"
                                 :name="index"
                                 :branches_Index="item.branches_Index"
-                                :groupLen="b.start + b.len"
                                 :groupIndex="i + 1"
                                 :key="item.key"
                                 :showGroupDelete="group.length !== 1"
@@ -81,20 +80,6 @@
                 </a-tab-pane>
             </a-tabs>
         </div>
-
-        <!--    </template>-->
-        <!--    <div v-else class='actions-branches-item'>-->
-        <!--      <a-form-item-->
-        <!--        :name='["branches", 0, "then"]'-->
-        <!--        :rules='thenRules'-->
-        <!--      >-->
-        <!--        <Action-->
-        <!--          :name='0'-->
-        <!--          :openShakeLimit="true"-->
-        <!--          :thenOptions='data.branches[0]?.then'-->
-        <!--        />-->
-        <!--      </a-form-item>-->
-        <!--    </div>-->
     </div>
     <BranchesNameEdit
         v-if="editConditionVisible"
@@ -106,11 +91,11 @@
 
 <script setup lang="ts" name="Terms">
 import { storeToRefs } from 'pinia';
-import { useSceneStore } from '../../../../../store/scene';
+import { useSceneStore } from '@ruleEngine/store/scene';
 import { cloneDeep } from 'lodash-es';
 import { provide } from 'vue';
-import { ContextKey, handleParamsData } from './util';
-import { getParseTerm } from '../../../../../api/scene';
+import {ContextKey, handleParamsData, ParamsSourceKey} from './util';
+import { getParseTerm } from '@ruleEngine/api/scene';
 import type { FormModelType } from '../../../typings';
 import Branches from './Branches.vue';
 import { randomNumber, randomString } from '@jetlinks-web/utils';
@@ -120,9 +105,14 @@ import { Modal } from 'ant-design-vue';
 import {
     queryBindScene,
     unBindAlarmMultiple,
-} from '../../../../../api/configuration';
+} from '@ruleEngine/api/configuration';
 import { isNoCommunity } from '@/utils/utils'
 import { useI18n } from 'vue-i18n';
+import {handleParamsGroupBySource} from "@ruleEngine/views/Scene/util";
+
+const props = defineProps({
+  type: String
+})
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -132,49 +122,23 @@ const group = ref<Array<{ id: string; len: number }>>([]);
 const activeKey = ref('');
 const editConditionVisible = ref(false);
 const conditionName = ref<any>();
+const sources = ref([])
 
 provide(ContextKey, columnOptions);
+provide(ParamsSourceKey,sources)
 
 const change = (e: boolean, groupItem: any, index: number) => {
-    // group.value = []
-    // activeKey.value = ''
-    // if (!e) {
-    //   data.value.branches!.length = 1
-    //   data.value.branches![0].when = []
-    // } else {
-    //   data.value.branches!.push(null as any)
-    //   data.value.branches![0].when = [
-    //     {
-    //       terms: [
-    //         {
-    //           column: undefined,
-    //           value: {
-    //             source: 'fixed',
-    //             value: undefined
-    //           },
-    //           termType: undefined,
-    //           key: `params_${randomString()}`,
-    //           type: 'and',
-    //         },
-    //       ],
-    //       type: 'and',
-    //       key: `terms_${randomString()}`,
-    //     },
-    //   ]
-    // }
     const start = groupItem.start;
     const len = groupItem.len;
     if (!e) {
         data.value.branches?.splice(start + 1, len - 1);
         data.value.branches![start].when = [];
-        // data.value.options!.when.splice(start,len - 1)
         data.value.options!.when[start].terms = [
             {
                 terms: [['', 'eq', '', 'and']],
             },
         ];
     } else {
-        // data.value.branches!.splice(start + 1, 0, null);
         data.value.branches![start].when = [
             {
                 terms: [
@@ -200,11 +164,14 @@ const queryColumn = (dataModel: FormModelType) => {
     const cloneDevice = cloneDeep(dataModel);
     cloneDevice.branches = cloneDevice.branches?.filter((item) => !!item);
     getParseTerm(cloneDevice).then((res) => {
-        columnOptions.value = handleParamsData(
+
+        const { data: _data, source } = handleParamsGroupBySource(handleParamsData(
             res.result as any[],
             'column',
             '0',
-        );
+        ));
+      sources.value = source.map(item => item)
+      columnOptions.value = _data
     });
 };
 
@@ -295,7 +262,7 @@ const addGroup = (targetKey: string, action: string) => {
         });
     } else {
         const index = group.value.findIndex(
-            (item) => item.branchId === targetKey,
+            (item) => item.id === targetKey,
         );
         groupDelete(group.value[index], index);
     }
@@ -335,20 +302,29 @@ const groupDelete = async (g: any, index: number) => {
                 terms: alarmTerms,
             });
 
-            Modal.confirm({
-                title: $t('Terms.Terms.9093429-6', [resp.result.total]),
+            if (resp.result.total) {
+              Modal.confirm({
+                  title: $t('Terms.Terms.9093429-6', [resp.result.total]),
+                  onOk() {
+                      const _data = resp.result.data.map((item) => {
+                          return {
+                              alarmId: item.alarmId,
+                              ruleId: item.ruleId,
+                              branchIndex: item.branchIndex,
+                          };
+                      });
+                      unBindAlarmMultiple(_data);
+                      removeBranchesData(g, index);
+                  },
+              });
+            } else {
+              Modal.confirm({
+                title: $t('Terms.Terms.9093429-7'),
                 onOk() {
-                    const _data = resp.result.data.map((item) => {
-                        return {
-                            alarmId: item.alarmId,
-                            ruleId: item.ruleId,
-                            branchIndex: item.branchIndex,
-                        };
-                    });
-                    unBindAlarmMultiple(_data);
-                    removeBranchesData(g, index);
+                  removeBranchesData(g, index);
                 },
-            });
+              });
+            }
         } else {
             Modal.confirm({
                 title: $t('Terms.Terms.9093429-7'),
@@ -460,55 +436,96 @@ watchEffect(() => {
     }
 });
 
-watchEffect(() => {
-    const branches = data.value.branches;
-    let _group = [];
-    let _branchesIndex = 0;
-    if (branches) {
-        branches.forEach((item, index) => {
-            const lastIndex = _group.length - 1;
+watch(() => data.value.branches!.length, (len) => {
+  const branches = data.value.branches
+  const groups = []
 
-            let whenItem = data.value.options!.when.find(
-                (when) => item?.branchId === when.key,
-            );
+  let currentGroup: any
 
-            if (!whenItem) {
-                whenItem = data.value.options!.when[_branchesIndex];
-            }
+  for (let i = 0; i < len; i++) {
+      const item = branches[i];
 
-            if (index === 0 || item?.executeAnyway) {
-                _group[lastIndex + 1] = {
-                    id: item.branchId,
-                    len: 1,
-                    start: index,
-                    branchKey: item.key,
-                    branchId: item.branchId,
-                    // branchName: item.branchName || whenItem?.branchName || `条件 ${_branchesIndex + 1}`,
-                    branchName:
-                        item.branchName || whenItem?.branchName || $t('Terms.Terms.9093429-8'),
-                    groupIndex: _branchesIndex,
-                    openFilter: !!item.when.length,
-                };
-            } else {
-                _group[lastIndex].len += 1;
-            }
+      let whenItem = data.value.options!.when.find(
+        (when) => item?.branchId === when.key,
+      );
 
-            if (item) {
-                item.branches_Index = _branchesIndex; // 真实branches中的下标位置
-                _branchesIndex += 1;
-            }
-        });
+      if (!whenItem) {
+        whenItem = data.value.options!.when[i];
+      }
 
-        // branches.filter(item => item).forEach((item, index) => {
-        //   item.branches_Index = index
-        // })
-
-        group.value = _group;
-        if (!activeKey.value) {
-            activeKey.value = _group[0].id;
+      if (item.executeAnyway) {
+        if (currentGroup) {
+          currentGroup.len = i - currentGroup.start;
+          groups.push(currentGroup);
         }
-    }
-});
+
+        currentGroup = {
+          start: i,
+          id: item.branchId,
+          branchName:
+            item.branchName || whenItem?.branchName || $t('Terms.Terms.9093429-8'),
+          openFilter: !!item.when.length,
+        }
+      }
+  }
+
+  if (currentGroup) {
+    currentGroup.len = len - currentGroup.start;
+    groups.push(currentGroup);
+  }
+
+  group.value = groups;
+  if (!activeKey.value) {
+    activeKey.value = groups[0].id;
+  }
+
+}, { immediate: true})
+
+// watchEffect(() => {
+//     const branches = data.value.branches;
+//     let _group = [];
+//     let _branchesIndex = 0;
+//     if (branches) {
+//         branches.forEach((item, index) => {
+//             const lastIndex = _group.length - 1;
+//
+//             let whenItem = data.value.options!.when.find(
+//                 (when) => item?.branchId === when.key,
+//             );
+//
+//             if (!whenItem) {
+//                 whenItem = data.value.options!.when[_branchesIndex];
+//             }
+//
+//             if (index === 0 || item?.executeAnyway) {
+//                 _group[lastIndex + 1] = {
+//                     id: item.branchId,
+//                     len: 1,
+//                     start: index,
+//                     branchKey: item.key,
+//                     branchId: item.branchId,
+//                     // branchName: item.branchName || whenItem?.branchName || `条件 ${_branchesIndex + 1}`,
+//                     branchName:
+//                         item.branchName || whenItem?.branchName || $t('Terms.Terms.9093429-8'),
+//                     groupIndex: _branchesIndex,
+//                     openFilter: !!item.when.length,
+//                 };
+//             } else {
+//                 _group[lastIndex].len += 1;
+//             }
+//
+//             if (item) {
+//                 item.branches_Index = _branchesIndex; // 真实branches中的下标位置
+//                 _branchesIndex += 1;
+//             }
+//         });
+//
+//         group.value = _group;
+//         if (!activeKey.value) {
+//             activeKey.value = _group[0].id;
+//         }
+//     }
+// });
 
 defineExpose({
     changePaneIndex,

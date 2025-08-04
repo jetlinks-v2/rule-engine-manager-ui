@@ -64,11 +64,11 @@ import type { PropType } from 'vue'
 import type { ActionBranchesProps } from '../../../typings';
 import WhenItem from './WhenItem.vue'
 import { storeToRefs } from 'pinia';
-import { useSceneStore } from '../../../../../store/scene'
+import { useSceneStore } from '@ruleEngine/store/scene'
 import Action from '../../action/index.vue'
 import { randomString} from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n'
-import {ACTION_DATA} from "@ruleEngine/views/Scene/Save/util";
+import {ACTION_DATA, Branche_Index} from "@ruleEngine/views/Scene/Save/util";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore()
@@ -99,10 +99,6 @@ const props = defineProps({
     type: Number,
     default: 0
   },
-  groupLen: {
-    type: Number,
-    default: 0
-  },
   groupIndex: {
     type: Number,
     default: 0
@@ -118,6 +114,8 @@ const emit = defineEmits(['deleteGroup', 'delete'])
 provide(ACTION_DATA, {
   branchIndex: props.name
 })
+
+provide(Branche_Index, props.name)
 
 const showDelete = ref(false)
 const error = ref(false)

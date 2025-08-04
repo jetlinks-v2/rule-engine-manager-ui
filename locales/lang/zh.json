@@ -986,5 +986,11 @@
 	"ParamsDropdown.FulFill-3147419-3": "请配置条件",
 	"FulFill.Terms-4029416-0": "请选择聚合函数",
 	"FulFill.Terms-4029416-1": "运算符",
-	"MultiDevice.index-07221552-1": "请选择设备关系"
+	"MultiDevice.index-07221552-1": "请选择设备关系",
+	"MultiDevice.index-07221552-2": "请配置多设备触发规则",
+	"MultiDevice.index-07221552-3": "规则{0}",
+	"MultiDevice.index-07221552-4": "公共参数",
+	"MultiDevice.index-07221552-5": "请输入搜索内容",
+	"MultiDevice.index-07221552-6": "固定值",
+	"MultiDevice.index-07221552-7": "内置参数"
 }
