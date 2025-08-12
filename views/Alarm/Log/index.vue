@@ -1,6 +1,6 @@
 <template>
     <j-page-container :tabList="list" :tabActiveKey="data.tab" @tabChange="onTabChange">
-        <TableComponents :type="data.tab"></TableComponents>
+        <TableComponents :targetId="route.query.id" :type="data.tab" ></TableComponents>
     </j-page-container>
 </template>
 
@@ -11,9 +11,9 @@ import  TableComponents  from './TabComponent/index.vue';
 import { useI18n } from 'vue-i18n';
 import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
 
-
 const alarmStore = useAlarmStore();
 const { data }  = storeToRefs(alarmStore);
+const route = useRoute();
 const onTabChange = (key:string) =>{
     data.value.tab = key;
 }
@@ -28,6 +28,10 @@ const list = computed(() => {
       tab: item.label
     }
   })]
+})
+
+onMounted(() => {
+  data.value.tab = route.query?.tab || 'all'
 })
 </script>
 <style lang="less" scoped>

@@ -33,6 +33,14 @@
               text
             }}</span></j-ellipsis
         >
+        <j-ellipsis
+          v-else-if="['networkCardPool'].includes(record.sourceType)"
+        >
+          {{ $t('TabComponent.index.165152-27') }}
+          <span class="deviceId" @click="() => gotoNetwork(record.sourceId)">{{
+              text
+            }}</span></j-ellipsis
+        >
         <j-ellipsis v-else>{{ $t('components.Log.165155-1') }}<span class="deviceId" @click="() => gotoRule(record)">{{text}}</span></j-ellipsis>
       </template>
       <template
@@ -157,6 +165,12 @@ const onSearch = (e) => {
 const gotoDevice = (id) => {
   menuStory.jumpPage("device/Instance/Detail", {
     params: { id, tab: "Running" },
+  });
+};
+
+const gotoNetwork = (id) => {
+  menuStory.jumpPage("iot-card/TrafficPoolManagement/Detail", {
+    params: { id},
   });
 };
 

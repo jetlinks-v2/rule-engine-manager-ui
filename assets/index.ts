@@ -63,6 +63,7 @@ import TriggerHeaderIconDevice from './scene/trigger-type-icon/device.png'
 import TriggerListIconTimer from './scene/scene-timer.png'
 import TriggerListIconHand from './scene/scene-hand.png'
 import TriggerListIconDevice from './scene/scene-device.png'
+import networkPool from './network-pool.png'
 
 export const configImages = {
    alarm:[
@@ -91,7 +92,8 @@ export const logImages = {
     product,
     device,
     other,
-    org
+    org,
+    networkPool
 }
 
 export const dashBoardImg = {

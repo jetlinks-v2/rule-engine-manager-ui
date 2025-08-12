@@ -6,6 +6,7 @@ export const useAlarmConfigType = () => {
   getTargetTypes().then((res) => {
     supports.value = res.result.map((item: any) => {
       return {
+        ...item,
         label: item.name,
         value: item.id,
       };
