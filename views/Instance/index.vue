@@ -18,7 +18,7 @@
                     :params="params"
                 >
                     <template #headerLeftRender>
-                        <j-space>
+                        <a-space>
                             <j-permission-button
                                 type="primary"
                                 @click="add"
@@ -29,7 +29,7 @@
                                 /></template>
                                 {{ $t('Instance.index.020452-0') }}
                             </j-permission-button>
-                        </j-space>
+                        </a-space>
                     </template>
                     <template #card="slotProps">
                         <CardBox
