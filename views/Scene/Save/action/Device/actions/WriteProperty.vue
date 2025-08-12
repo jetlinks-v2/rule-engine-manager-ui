@@ -39,7 +39,7 @@
                         v-model:value="propertyModelRef.propertiesValue"
                         v-model:source="propertyModelRef.source"
                         valueName="id"
-                        labelName="fullName"
+                        :labelName="propertyModelRef.source === 'upper' ? 'fullName' : 'label'"
                         treeKey="id"
                         @select="onValueChange"
                     >

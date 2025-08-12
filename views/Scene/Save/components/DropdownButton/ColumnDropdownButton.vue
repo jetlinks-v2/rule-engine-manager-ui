@@ -22,6 +22,7 @@
             <div
               v-for="item in group1"
               class="content-left-item"
+              :class="{'selected': groupActiveKey === item.value }"
               @click.stop="() => onGroupChange(item.value)"
             >
               <j-ellipsis>
@@ -30,7 +31,12 @@
             </div>
           </div>
           <div class="content-right">
-            <a-tabs v-if="tabsList.length" @change="sourceChange">
+            <a-input allow-clear v-model:value="searchInputValue" :placeholder="$t('MultiDevice.index-07221552-5')" @change="onSearchChange" >
+              <template #suffix>
+                <AIcon type="SearchOutlined" />
+              </template>
+            </a-input>
+            <a-tabs v-if="tabsList.length" v-model:activeKey="tabsActive" @change="sourceChange">
               <a-tab-pane
                 v-for="sItem in tabsList"
                 :key="sItem.column"
@@ -40,10 +46,11 @@
               v-model:expandedKeys="treeOpenKeys"
               ref="treeRef"
               :selectedKeys="selectValue ? [selectValue] : []"
-              :treeData="dataSource"
+              :treeData="searchOptions"
               :virtual="true"
-              :height="350"
+              :height="340"
               :fieldNames="{ key: valueName }"
+              style="overflow-x: auto"
               @select="treeSelect"
             >
               <template #title="{ column, name, fullName, description, multiTag }">
@@ -78,6 +85,7 @@ import { openKeysByTree } from "@ruleEngine/utils/comm";
 import {debounce} from "lodash-es";
 import {ParamsSourceKey} from "@ruleEngine/views/Scene/Save/components/Terms/util";
 import {handleParamsGroupBySource} from "@ruleEngine/views/Scene/util";
+import {useTreeSearch} from "@ruleEngine/views/Scene/Save/hooks";
 
 type LabelType = string | number | boolean | undefined;
 
@@ -129,54 +137,28 @@ const treeOpenKeys = ref<(string | number)[]>([]);
 const treeRef = ref()
 
 const group1 = ref([]) // 左侧菜单
+const groupActiveKey = ref()
 const tabsList = ref([]) // 右侧顶部tabs
-const dataSource = ref([]) // 右侧数据
+const tabsActive = ref()
 const groupSourceMap = ref(new Map())
 
-const searchValue = ref()
-
-const searchOptions = computed(() => {
-  if (searchValue.value) {
-    return props.options.filter((option) => option.name.includes(searchValue.value) || option.multiTag);
-  }
-  return props.options;
-})
-
-const visibleChange = (v: boolean) => {
-  visible.value = v;
-};
+const searchInputValue = ref()
 
 const dropdownButtonClass = computed(() => ({
   "dropdown-button": true,
   [props.type]: true,
 }));
 
-const treeSelect = (v: any, option: any) => {
-  const node = option.node;
-  visible.value = false;
-  label.value = node.fullName || node.name;
-  selectValue.value = v[0];
-  emit("update:value", node[props.valueName]);
-  emit("select", node);
-};
+const dataSource = computed(() => {
+  const item = groupSourceMap.value.get(groupActiveKey.value);
+  let _data = []
 
-const sourceChange = (e) => {
-  console.log(e)
-  treeRef.value?.scrollTo({ key: e, align: 'top', offset: 12 })
-  treeOpenKeys.value = [e]
-}
-
-const onShowOverlay = () => {
-  visible.value = true;
-}
-
-const onGroupChange = (v) => {
-  const item = groupSourceMap.value.get(v);
+  if (!item) return [];
 
   if (item.isMultiDevice) {
     tabsList.value = MultiDeviceSource.value
     const { data } = handleParamsGroupBySource(item.children, { sourceKey: 'options'})
-    dataSource.value = data
+    _data = data
   } else {
     const list: any[] = []
     if (item.children && item.children.length > 0) {
@@ -190,10 +172,54 @@ const onGroupChange = (v) => {
       })
     }
     tabsList.value = list;
-    dataSource.value = item.children
+    _data = item.children
   }
+  return _data
+})
 
-  // TODO 创建provide 传入多设备标识，根据标识来使用ColumnDropdownButton 还是 DropdownButton
+const { searchValue, searchOptions } = useTreeSearch(dataSource, {
+  labelName: 'name',
+  valueName: props.valueName,
+  onEnd: (selectedKeys) => {
+    treeOpenKeys.value = selectedKeys
+  }
+})
+
+const visibleChange = (v: boolean) => {
+  visible.value = v;
+};
+
+const onSearchChange = debounce((e) => {
+  const { value } = e.target;
+  searchValue.value = value;
+},300)
+
+const treeSelect = (v: any, option: any) => {
+  const node = option.node;
+  visible.value = false;
+  label.value = node.fullName || node.name;
+  selectValue.value = v[0];
+  emit("update:value", node[props.valueName]);
+  emit("select", node);
+};
+
+const onGroupChange = (v) => {
+  groupActiveKey.value = v
+  searchValue.value = ""
+  searchInputValue.value = ""
+}
+
+const sourceChange = (e) => {
+  treeRef.value?.scrollTo({ key: e, align: 'top', offset: 12 })
+  const setKeys = new Set(treeOpenKeys.value)
+  if (!setKeys.has(e)) {
+    setKeys.add(e)
+    treeOpenKeys.value = [...setKeys.values()]
+  }
+}
+
+const onShowOverlay = () => {
+  visible.value = true;
 }
 
 const handleGroupDataSource = () => {
@@ -219,6 +245,24 @@ const handleGroupDataSource = () => {
   })
 }
 
+/**
+ * 初始化选中
+ */
+const initTabsActive = () => {
+  const openKeysSet = new Set(treeOpenKeys.value)
+  const item = tabsList.value.find(item => openKeysSet.has(item.column))
+  if (item) {
+    tabsActive.value = item.column
+  }
+}
+
+const tabsActiveStop = watch(() => tabsList.value, () => {
+  if (tabsList.value.length) {
+    initTabsActive()
+    tabsActiveStop()
+  }
+}, { immediate: true })
+
 watch(() => MultiDeviceSource.value, (v) => {
   if (v.length > 0) {
     handleGroupDataSource()
@@ -239,6 +283,7 @@ watch(() => props.options, () => {
       props.valueName,
       props.valueName
     );
+    groupActiveKey.value = treeOpenKeys.value[0];
   } else {
     label.value = props.value !== undefined ? props.value : props.placeholder;
   }
@@ -274,7 +319,8 @@ watch(() => props.options, () => {
 
     .content-right {
       width: 600px;
-      height: 414px;
+      height: 440px;
+      padding-left: 4px;
     }
   }
 }

@@ -49,8 +49,8 @@ const rules = [{
         if (
           !v.productId ||
           (['fixed', 'org'].includes(v.selector) && !v.selectorValues) ||
-          (v.operation?.operator === 'readProperty' && !v.operation!.readProperties.length) ||
-          (v.operation?.operator === 'writeProperty' && !Object.keys(v.operation!.writeProperties).length) ||
+          (v.operation?.operator === 'readProperty' && !v.operation!.readProperties?.length) ||
+          (v.operation?.operator === 'writeProperty' && !Object.keys(v.operation!.writeProperties || {}).length) ||
           (v.operation?.operator === 'invokeFunction' && !v.operation.functionId) ||
           (v.operation?.operator === 'reportEvent' && !v.operation.eventId)
         ) {

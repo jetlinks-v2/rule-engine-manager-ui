@@ -704,6 +704,7 @@
 	"Device.index.372524-0": "触发规则",
 	"Device.index.372524-1": "请配置设备触发规则",
 	"Device.index.372524-2": "该数据已发生变更，请重新配置",
+	"Device.index.372524-3": "{0}数据已发生变更，请重新配置",
 	"Device.DeviceList.372526-0": "设备类型",
 	"Device.DeviceList.372526-1": "产品名称",
 	"Device.DeviceList.372526-2": "设备名称",

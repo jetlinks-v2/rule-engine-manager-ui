@@ -110,10 +110,6 @@ import { isNoCommunity } from '@/utils/utils'
 import { useI18n } from 'vue-i18n';
 import {handleParamsGroupBySource} from "@ruleEngine/views/Scene/util";
 
-const props = defineProps({
-  type: String
-})
-
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
@@ -374,7 +370,7 @@ const removeBranchesData = (g: any, index: number) => {
             (item) => item.id === activeKey.value,
         ); // 获取当前条件组
         groupItem!.len -= 1;
-        const branchesItem = data.value.branches[g.start];
+        // const branchesItem = data.value.branches[g.start];
         // if (branchesItem === undefined || branchesItem?.executeAnyway) {
         //     // 当前位置为undefined或者是下一个条件组的开始 就插入null
         //     data.value.branches?.splice(g.start, 0, null);

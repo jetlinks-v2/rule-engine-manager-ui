@@ -45,3 +45,8 @@ export const queryActionType = () => request.get('/scene/action/supports')
 export const queryAggregation = () => request.get('/scene/aggregation/supports')
 
 export const queryArrayTerms = (data:any={}) => request.post('/scene/parse-array-child-term-column', data)
+
+export const validateTrigger = (data: Record<string, any>) => request.post(`/scene/validate-trigger`, data)
+export const validateAction = (params: { branch: number, branchGroup: number, action: number }, data: Record<string, any>) => request.post(`/scene/validate-action`, data, { params})
+
+export const sceneValidate = (data: any) => request.post('/scene/validate-target', data)

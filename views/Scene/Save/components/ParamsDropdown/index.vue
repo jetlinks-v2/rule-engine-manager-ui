@@ -1,5 +1,5 @@
 <template>
-  <div class="dropdown-button-box">
+  <div :class="{ 'box-flex': showBuiltIn }" class="dropdown-button-box">
     <div v-if="showBuiltIn">
       <a-dropdown>
         <div class="type">
@@ -9,27 +9,27 @@
           <AIcon type="DownOutlined"/>
         </div>
         <template #overlay>
-          <a-menu style="width: 100%" @click="onTypeChange" :selectedKeys="typeSelectKeys">
+          <a-menu :selectedKeys="typeSelectKeys" style="width: 100%" @click="onTypeChange">
             <a-menu-item key="fixed">
-              {{$t('MultiDevice.index-07221552-6')}}
+              {{ $t('MultiDevice.index-07221552-6') }}
             </a-menu-item>
             <a-menu-item key="upper">
-              {{$t('MultiDevice.index-07221552-7')}}
+              {{ $t('MultiDevice.index-07221552-7') }}
             </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
     </div>
     <a-dropdown
+      v-model:visible="visible"
       class="scene-select-value"
       trigger="click"
-      v-model:visible="visible"
       @visibleChange="visibleChange"
     >
       <div @click.prevent="visible = true">
         <slot :label="label">
-          <div class="value">
-            <AIcon v-if="!!icon" :type="icon" />
+          <div :class="{ 'dropdown-button': !showBuiltIn}" class="value">
+            <AIcon v-if="!!icon" :type="icon"/>
             <j-ellipsis style="max-width: 220px">
               {{ label }}
             </j-ellipsis>
@@ -38,157 +38,157 @@
       </div>
       <template #overlay>
         <div class="scene-select-content">
-          <a-tabs v-if="typeSelectKeys[0] === 'fixed'" v-model:activeKey="mySource" @change="tabsChange">
+          <a-tabs v-if="(showBuiltIn && typeSelectKeys[0] === 'fixed') || (!showBuiltIn)" v-model:activeKey="mySource" @change="tabsChange">
             <a-tab-pane
               v-for="item in tabsOptions"
-              :tab="item.label"
               :key="item.key"
+              :tab="item.label"
             >
               <div class="select-box-content">
-                  <DropdownTimePicker
-                    v-if="['time', 'date'].includes(item.component)"
-                    type="time"
-                    v-model:value="myValue"
-                    @change="timeChange"
-                  />
-                  <template
-                    v-else-if="
+                <DropdownTimePicker
+                  v-if="['time', 'date'].includes(item.component)"
+                  v-model:value="myValue"
+                  type="time"
+                  @change="timeChange"
+                />
+                <template
+                  v-else-if="
                     ['select', 'enum', 'boolean'].includes(item.component)
                   "
-                  >
-                    <DropdownMenusMultiple
-                      v-if="multiple"
-                      :value="myValue"
-                      :options="item.key === 'upper' ? metricOptions : options"
-                      :extra="props"
-                      :fieldNames="{label: 'name', value: 'id'}"
-                      @change="multipleChange"
-                      style="width: 100%"
-                    />
-                    <DropdownMenus
-                      v-else-if="
+                >
+                  <DropdownMenusMultiple
+                    v-if="multiple"
+                    :extra="props"
+                    :fieldNames="{label: 'name', value: 'id'}"
+                    :options="item.key === 'upper' ? metricOptions : options"
+                    :value="myValue"
+                    style="width: 100%"
+                    @change="multipleChange"
+                  />
+                  <DropdownMenus
+                    v-else-if="
                       (['metric', 'upper'].includes(item.key)
                         ? metricOptions
                         : options
                       ).length
                     "
-                      :options="
+                    :options="
                       ['metric', 'upper'].includes(item.key)
                         ? metricOptions
                         : options
                     "
-                      :value="myValue"
-                      :valueName="props.source === 'metric' ? 'id' : valueName"
-                      @click="onSelect"
-                    />
-                    <div class="scene-select-empty" v-else>
-                      <a-empty />
-                    </div>
-                  </template>
-                  <template v-else-if="item.component === 'tree'">
-                    <div
-                      style="padding: 0 10px"
-                      v-if="(item.key === 'upper' ? metricOptions : options).length"
+                    :value="myValue"
+                    :valueName="props.source === 'metric' ? 'id' : valueName"
+                    @click="onSelect"
+                  />
+                  <div v-else class="scene-select-empty">
+                    <a-empty/>
+                  </div>
+                </template>
+                <template v-else-if="item.component === 'tree'">
+                  <div
+                    v-if="(item.key === 'upper' ? metricOptions : options).length"
+                    style="padding: 0 10px"
+                  >
+                    <a-tree
+                      v-model:expandedKeys="treeOpenKeys"
+                      :fieldNames="{ key: treeKey }"
+                      :height="350"
+                      :selectedKeys="myValue ? [myValue] : []"
+                      :treeData="item.key === 'upper' ? metricOptions : options"
+                      style="width: auto;overflow-x: auto"
+                      @select="treeSelect"
                     >
-                      <a-tree
-                        v-model:expandedKeys="treeOpenKeys"
-                        :selectedKeys="myValue ? [myValue] : []"
-                        :treeData="item.key === 'upper' ? metricOptions : options"
-                        :height="350"
-                        :fieldNames="{ key: treeKey }"
-                        style="width: auto;"
-                        @select="treeSelect"
-                      >
-                        <template #title="{ name, description }">
-                          <a-space>
-                            <div class="no-warp">{{ name }}</div>
-                            <div
-                              v-if="description"
-                              class="tree-title-description no-warp"
-                            >
-                              {{ description }}
-                            </div>
-                          </a-space>
-                        </template>
-                      </a-tree>
-                      <!--                  </j-scrollbar>-->
-                    </div>
-                    <div class="scene-select-empty" v-else>
-                      <a-empty />
-                    </div>
-                  </template>
+                      <template #title="{ name, description }">
+                        <a-space>
+                          <div class="no-warp">{{ name }}</div>
+                          <div
+                            v-if="description"
+                            class="tree-title-description no-warp"
+                          >
+                            {{ description }}
+                          </div>
+                        </a-space>
+                      </template>
+                    </a-tree>
+                    <!--                  </j-scrollbar>-->
+                  </div>
+                  <div v-else class="scene-select-empty">
+                    <a-empty/>
+                  </div>
+                </template>
 
-                  <j-value-item
-                    v-else-if="item.component === 'array'"
-                    v-model:modelValue="myValue"
-                    :itemType="item.component"
-                    :options="item.key === 'upper' ? metricOptions : options"
-                    :extra="props"
-                    @change="valueItemChange"
-                    style="width: 100%"
-                  />
-                  <j-value-item
-                    v-else
-                    v-model:modelValue="myValue"
-                    :itemType="itemType(item.component)"
-                    :options="item.key === 'upper' ? metricOptions : options"
-                    :extraProps="props"
-                    @change="valueItemChange"
-                    style="width: 100%"
-                  />
+                <j-value-item
+                  v-else-if="item.component === 'array'"
+                  v-model:modelValue="myValue"
+                  :extra="props"
+                  :itemType="item.component"
+                  :options="item.key === 'upper' ? metricOptions : options"
+                  style="width: 100%"
+                  @change="valueItemChange"
+                />
+                <j-value-item
+                  v-else
+                  v-model:modelValue="myValue"
+                  :extraProps="props"
+                  :itemType="itemType(item.component)"
+                  :options="item.key === 'upper' ? metricOptions : options"
+                  style="width: 100%"
+                  @change="valueItemChange"
+                />
               </div>
             </a-tab-pane>
           </a-tabs>
-            <template v-else>
-              <div style="width: 350px">
-                <a-input allow-clear :placeholder="$t('MultiDevice.index-07221552-5')" @change="onSearchChange" >
-                  <template #suffix>
-                    <AIcon type="SearchOutlined" />
-                  </template>
-                </a-input>
-                <a-tabs @change="sourceChange">
-                  <a-tab-pane
-                    v-for="sItem in searchSources"
-                    :key="sItem.value"
-                    :tab="sItem.name" ></a-tab-pane>
-                </a-tabs>
+          <template v-else>
+            <div style="width: 350px">
+              <a-input :placeholder="$t('MultiDevice.index-07221552-5')" allow-clear @change="onSearchChange">
+                <template #suffix>
+                  <AIcon type="SearchOutlined"/>
+                </template>
+              </a-input>
+              <a-tabs @change="sourceChange">
+                <a-tab-pane
+                  v-for="sItem in searchSources"
+                  :key="sItem.value"
+                  :tab="sItem.name"></a-tab-pane>
+              </a-tabs>
 
-                <a-tree
-                  v-model:expandedKeys="treeOpenKeys"
-                  ref="treeRef"
-                  :selectedKeys="myValue ? [myValue] : []"
-                  :treeData="searchOptions"
-                  :height="350"
-                  :virtual="true"
-                  :fieldNames="{ key: 'column' }"
-                  @select="(v, o) => treeSelect(v, o, 'column')"
-                >
-                  <template #title="{ column, name, fullName, description, multiTag }">
-                    <template v-if="multiTag" >
-                      <AIcon type="icon-shebei" style="padding-right: 8px" />
-                    </template>
-                    <a-space>
-                      {{ name || fullName }}
-                      <span v-if="description" class="tree-title-description">{{
-                          description
-                        }}</span>
-                    </a-space>
+              <a-tree
+                ref="treeRef"
+                v-model:expandedKeys="treeOpenKeys"
+                :fieldNames="{ key: 'column' }"
+                :height="350"
+                :selectedKeys="myValue ? [myValue] : []"
+                :treeData="searchOptions"
+                :virtual="true"
+                @select="(v, o) => treeSelect(v, o, 'column')"
+              >
+                <template #title="{ column, name, fullName, description, multiTag }">
+                  <template v-if="multiTag">
+                    <AIcon style="padding-right: 8px" type="icon-shebei"/>
                   </template>
-                </a-tree>
-              </div>
-            </template>
+                  <a-space>
+                    {{ name || fullName }}
+                    <span v-if="description" class="tree-title-description">{{
+                        description
+                      }}</span>
+                  </a-space>
+                </template>
+              </a-tree>
+            </div>
+          </template>
         </div>
       </template>
     </a-dropdown>
   </div>
 </template>
 
-<script lang="ts" setup name="ParamsDropdown">
-import type { ValueType } from "./typings";
-import { defaultSetting } from "./typings";
-import { DropdownMenus, DropdownTimePicker, DropdownMenusMultiple } from "../DropdownButton";
-import { getOption } from "../DropdownButton/util";
-import { openKeysByTree } from "@ruleEngine/utils/comm";
+<script lang="ts" name="ParamsDropdown" setup>
+import type {ValueType} from "./typings";
+import {defaultSetting} from "./typings";
+import {DropdownMenus, DropdownTimePicker, DropdownMenusMultiple} from "../DropdownButton";
+import {getOption} from "../DropdownButton/util";
+import {openKeysByTree} from "@ruleEngine/utils/comm";
 import {useI18n} from 'vue-i18n'
 import {debounce} from "lodash-es";
 
@@ -230,7 +230,7 @@ const props = defineProps({
 
 const emit = defineEmits<Emit>();
 
-const { t: $t } = useI18n()
+const {t: $t} = useI18n()
 
 const myValue = ref<ValueType>(props.valueBackups || props.value);
 const mySource = ref<string>(props.source);
@@ -274,7 +274,7 @@ const tabsChange = (e: string) => {
   emit("update:value", undefined);
   emit("valueBackups:value", undefined);
   emit("tabChange", e);
-  emit("select", {}, "", { 0: undefined });
+  emit("select", {}, "", {0: undefined});
 };
 
 const treeSelect = (v: any, option: any, column?: string) => {
@@ -283,21 +283,21 @@ const treeSelect = (v: any, option: any, column?: string) => {
   label.value = node[props.labelName] || node.name || node.fullName;
   emit("update:value", node[props.valueName]);
   emit("valueBackups:value", node[props.valueName]);
-  emit("select", node, label.value, { 0: label.value }, undefined, column ? node[props.valueName] : undefined);
+  emit("select", node, label.value, {0: label.value}, undefined, column ? node[props.valueName] : undefined);
 };
 
 const valueItemChange = (e: string) => {
   label.value = e;
   emit("update:value", e);
   emit("valueBackups:value", e);
-  emit("select", e, label.value, { 0: label.value });
+  emit("select", e, label.value, {0: label.value});
 };
 
-const multipleChange = (e: {fullName: string, value: any}[]) => {
+const multipleChange = (e: { fullName: string, value: any }[]) => {
   label.value = e.map(item => item.fullName);
   emit("update:value", e.map(item => item.value));
   emit("valueBackups:value", e.map(item => item.value));
-  emit("select", e.map(item => item.value), label.value, { 0: label.value });
+  emit("select", e.map(item => item.value), label.value, {0: label.value});
 };
 
 const onSelect = (e: string, option: any) => {
@@ -305,7 +305,7 @@ const onSelect = (e: string, option: any) => {
   label.value = option[props.labelName];
   emit("update:value", option[props.valueParamsName]);
   emit("valueBackups:value", e);
-  emit("select", option[props.valueParamsName], label.value, { 0: label.value }, option);
+  emit("select", option[props.valueParamsName], label.value, {0: label.value}, option);
 };
 
 const timeChange = (e: any) => {
@@ -313,7 +313,7 @@ const timeChange = (e: any) => {
   visible.value = false;
   emit("update:value", e);
   emit("valueBackups:value", e);
-  emit("select", e, label.value, { 0: label.value });
+  emit("select", e, label.value, {0: label.value});
 };
 
 const visibleChange = (v: boolean) => {
@@ -330,13 +330,13 @@ const onTypeChange = (e) => {
 }
 
 const sourceChange = (e) => {
-  treeRef.value?.scrollTo({ key: e, align: 'top', offset: 12 })
+  treeRef.value?.scrollTo({key: e, align: 'top', offset: 12})
 }
 
 const onSearchChange = debounce((e) => {
-  const { value } = e.target;
+  const {value} = e.target;
   searchValue.value = value;
-},300)
+}, 300)
 
 nextTick(() => {
   mySource.value = props.source;
@@ -385,18 +385,25 @@ watch(() => [props.options, props.metricOptions, props.columnOptions], () => {
       label.value = value ?? props.placeholder;
     }
   }
-}, { immediate: true, flush: "post"})
+}, {immediate: true, flush: "post"})
 </script>
 
-<style scoped lang="less">
+<style lang="less" scoped>
 @import "../DropdownButton/index.less";
 
 .dropdown-button-box {
-  display: flex;
-  border: 1px solid #d9d9d9;
-  border-radius: 8px;
   cursor: pointer;
-  background-color: rgba(188, 125, 238, 0.1);
+
+  &.box-flex {
+    display: flex;
+    background-color: rgba(188, 125, 238, 0.1);
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+
+    .value {
+      background-color: transparent;
+    }
+  }
 
   .type, & .value {
     display: flex;
@@ -411,10 +418,10 @@ watch(() => [props.options, props.metricOptions, props.columnOptions], () => {
     color: #692ca7;
     border-right: 1px solid #d9d9d9;
   }
+}
 
-  .value {
-    background-color: transparent;
-  }
+.dropdown-button.value {
+  padding: 6px 8px;
 }
 
 .select-box-content {
@@ -424,12 +431,14 @@ watch(() => [props.options, props.metricOptions, props.columnOptions], () => {
     white-space: nowrap
   }
 }
+
 .manual-time-picker {
   position: absolute;
   top: -2px;
   left: 0;
   border: none;
   visibility: hidden;
+
   :deep(.ant-picker-input) {
     display: none;
   }

@@ -73,10 +73,10 @@
         <ParamsDropdown
           v-else
           icon="icon-canshu"
-          :placeholder="$t('ListItem.FilterCondition.9667711-5')"
           value-name="id"
-          :value-params-name="valueParamsKey"
           label-name="fullName"
+          :placeholder="$t('ListItem.FilterCondition.9667711-5')"
+          :value-params-name="valueParamsKey"
           :options="showAlarmSelect ? alarmOptions : showAlarmLevel ? levelOptions : valueOptions"
           :metricOptions="valueColumnOptions"
           :tabsOptions="tabsOptions"
@@ -242,7 +242,7 @@ const alarmOptions = ref([]);
 const checkFilter = useCheckFilter();
 
 const handleRangeFn = (array: Array<string| undefined>) => {
-  return array.includes(paramsValue.termType) || ['int', 'float','short', 'double', 'long'].includes(tabsOptions.value[0].component);
+  return array.includes(paramsValue.termType) && ['int', 'float','short', 'double', 'long'].includes(tabsOptions.value[0].component);
 }
 
 const showDouble = computed(() => {

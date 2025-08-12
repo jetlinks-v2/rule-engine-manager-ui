@@ -32,21 +32,22 @@ export const getComponent = (type: string): string => {
 }
 
 export const getOption = (data: any[], value?: string | number | boolean, key: string = 'name'): DropdownButtonOptions | any => {
-  let option
-  const deepData = cloneDeep(data)
-  if (value === undefined && value === null) return option
-  let _value = isBoolean(value) ? String(value) : value
-  for (let i = 0; i < data.length; i++) {
-    const item = deepData[i]
-    if (isEqual(item[key], _value)) {
-      option = deepData[i]
-      break
-    } else if (item.children && item.children.length) {
-      option = getOption(item.children, value, key)
-      if (option) {
-        break
+  if (value === undefined && value === null) return;
+
+  const targetValue = isBoolean(value) ? String(value) : value;
+
+  const findOption = (items: any[]): any | undefined => {
+    for (const item of items) {
+      if (isEqual(item[key], targetValue)) {
+        return item
+      }
+      if (item.children?.length) {
+        const result = findOption(item.children)
+        if (result) return result
       }
     }
+    return undefined
   }
-  return option
+
+  return findOption(data)
 }

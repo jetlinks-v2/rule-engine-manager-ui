@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n'
 import { useRequest } from '@jetlinks-web/hooks'
 import { getRelationUsers } from '@ruleEngine/api/others'
 import DeviceArray from './DeviceArray.vue'
+import {TermsSetting} from "@ruleEngine/views/Scene/Save/components/Terms/util";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore()
@@ -14,7 +15,7 @@ const { data } = storeToRefs(sceneStore)
 const termsRef = ref()
 const multiDeviceRef = ref()
 
-
+provide(TermsSetting, { showBuiltIn: true})
 
 const { data: relationData } = useRequest(getRelationUsers, {
   onSuccess: (resp) => {
@@ -46,14 +47,21 @@ const rules = [{
           const { selector, operation, productId, selectorValues} = item
           return !productId ||
             (['fixed', 'org'].includes(selector) && !selectorValues) ||
-            (operation?.operator === 'readProperty' && !operation!.readProperties.length) ||
-            (operation?.operator === 'writeProperty' && !Object.keys(operation!.writeProperties).length) ||
+            (operation?.operator === 'readProperty' && !operation!.readProperties?.length) ||
+            (operation?.operator === 'writeProperty' && !Object.keys(operation!.writeProperties || {}).length) ||
             (operation?.operator === 'invokeFunction' && !operation.functionId) ||
             (operation?.operator === 'reportEvent' && !operation.eventId)
         })
 
-        if (hasChange) {
-          return Promise.reject(new Error($t('Device.index.372524-2')));
+        const changeIndex = []
+        v.triggers.map((item, index) => {
+          if (item.changeData) {
+            changeIndex.push($t('MultiDevice.index-07221552-3', [index + 1]))
+          }
+        })
+
+        if (hasChange || changeIndex.length) {
+          return Promise.reject(new Error($t('Device.index.372524-3', [changeIndex.toString()])));
         }
       }
     }
@@ -106,7 +114,7 @@ defineExpose({
       <DeviceArray :data="data.trigger.multiDevice.triggers" />
       <CheckItem />
     </a-form-item>
-    <Terms ref="termsRef" type="multi-device" />
+    <Terms ref="termsRef" />
   </div>
 </template>
 

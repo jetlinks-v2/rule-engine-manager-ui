@@ -704,6 +704,7 @@
 	"Device.index.372524-0": "Trigger rules",
 	"Device.index.372524-1": "Please configure device triggering rules",
 	"Device.index.372524-2": "This data has been changed, please reconfigure",
+	"Device.index.372524-3": "{0} data have been changed, please reconfigure",
 	"Device.DeviceList.372526-0": "Equipment type",
 	"Device.DeviceList.372526-1": "Product Name",
 	"Device.DeviceList.372526-2": "Equipment name",

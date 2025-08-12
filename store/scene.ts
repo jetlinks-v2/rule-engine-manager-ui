@@ -1,9 +1,15 @@
 import { defineStore } from 'pinia'
 import type { FormModelType } from '../views/Scene/typings'
-import { detail } from '../api/scene'
-import {cloneDeep, isArray, isObject} from 'lodash-es'
+import { detail, sceneValidate } from '../api/scene'
+import {cloneDeep, isArray, isObject, set} from 'lodash-es'
 import {randomNumber, randomString} from '@jetlinks-web/utils'
 import i18n from '@/locales';
+import {useRequest} from "@jetlinks-web/hooks";
+
+type ErrorItemType = {
+  path: string
+  column: string
+}
 
 const assignmentKey = (data: any[]): any[] => {
   const onlyKey = ['when', 'then', 'terms', 'actions'];
@@ -76,6 +82,13 @@ const defaultOptions = {
 
 const TriggerTypeKeys = ['device', 'multi-device']
 
+const handleTriggerError = (result: any, path: string[], column: string) => {
+  let value = undefined;
+
+
+  set(result, path, value)
+}
+
 export const useSceneStore = defineStore('scene', () => {
   const data = ref<FormModelType>({
     trigger: { type: ''},
@@ -85,6 +98,9 @@ export const useSceneStore = defineStore('scene', () => {
     name: '',
     id: undefined
   })
+
+
+  const { loading: validateLoading, run: validateRequest } = useRequest<any, ErrorItemType[]>(sceneValidate, { immediate: false });
 
   const productCache = {}
 
@@ -112,6 +128,78 @@ export const useSceneStore = defineStore('scene', () => {
     const resp = await detail(id)
     if (resp.success) {
       const result = resp.result as any
+
+      if (result.branches?.length) { // 有过滤条件和执行动作
+        const validateResult = await validateRequest({
+          branches: result.branches,
+          trigger: result.trigger,
+        }).catch(e => {
+          console.log(e)
+        })
+
+        const actionItemExecutorMap = {
+          device: 'device',
+          notify: 'notify',
+          'device-data': 'configuration',
+          'collector': 'collector'
+        }
+
+
+        if (validateResult!.length) {
+
+          const isMultiDevice = result.trigger.type === 'multi-device'
+          const multiDeviceIndexMap = {}
+
+          if (isMultiDevice) {
+            result.trigger.multiDevice.triggers.forEach((item, index) => {
+              multiDeviceIndexMap[item.options.sourceTrigger] = index
+            })
+          }
+
+          validateResult!.forEach(item => {
+            let _path = item.path
+            const isTrigger = _path.startsWith("trigger")
+            const isBranches = _path.startsWith("branches")
+
+            let paths = _path.split('_').map(pathItem => {
+              if (multiDeviceIndexMap.hasOwnProperty(pathItem)) {
+                return multiDeviceIndexMap[pathItem]
+              }
+
+              if (isBranches && item.column === 'relation' && pathItem === 'selector') {
+                return 'relation'
+              }
+
+              if (pathItem === 'selector') {
+                return 'selectorValues'
+              }
+
+              return pathItem
+            })
+
+            if (_path.startsWith("trigger")) {
+              const [a, b] = paths
+              if (isMultiDevice) {
+                result[a][b].triggers[paths[3]].changeData = true
+              } else {
+                result[a][b].changeData = true
+              }
+            }
+
+            if (_path.startsWith("branches")) {
+              const bIndex = paths[1]
+              const groupIndex = paths[3]
+              const actionIndex = paths[5]
+              const item = result.branches[bIndex].then[groupIndex].actions[actionIndex]
+              const executor = item.executor as string
+              const key = actionItemExecutorMap[executor]
+              item[key].changeData = true
+            }
+            set(result, paths, undefined)
+          })
+        }
+      }
+
       const triggerType = result.triggerType
       let branches: any[] = result.branches
 

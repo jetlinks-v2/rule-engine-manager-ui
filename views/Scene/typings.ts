@@ -84,6 +84,8 @@ export enum Executor {
   'delay' = 'delay',
   'device' = 'device',
   'alarm' = 'alarm',
+  'device-data' = 'device-data',
+  'collector' = 'collector',
 }
 
 export enum DeviceMessageType {
@@ -314,6 +316,26 @@ export interface ActionsCollectorProps {
   handlerType: string
   source: string
   pointSelectInfos: Array<{collectorId: string, pointIds: string[]}>
+  value?: string
+  stateOperator?: string
+  changeData?: boolean
+}
+
+export interface ActionsConfigurationProps {
+  configs?: string[]
+  events?: string[]
+  functions?: string[]
+  properties?: string[]
+  tags?: string[]
+  productId:string
+  selector: {
+    selector: string;
+    selectorValues?: SelectorValuesItem[];
+    source: string
+    upperKey?: string
+    value?: string
+  }
+  changeData?: boolean
 }
 
 export interface BranchesThen {
@@ -343,6 +365,7 @@ export interface ActionsType {
   };
   device?: ActionsDeviceProps;
   collector?: ActionsCollectorProps;
+  configuration?: ActionsConfigurationProps;
   alarm?: {
     mode: keyof typeof ActionAlarmMode;
   };

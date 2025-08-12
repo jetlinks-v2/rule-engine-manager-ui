@@ -40,6 +40,7 @@ import Item from './Item.vue';
 import { useSceneStore } from '@ruleEngine/store/scene';
 import { storeToRefs } from 'pinia';
 import { useI18n } from 'vue-i18n'
+import {Then_Index} from "@ruleEngine/views/Scene/Save/util";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -80,6 +81,8 @@ const thenName = computed(() => {
     const index =  _data.value.branches![props.branchesName].then.findIndex(item => item.parallel === props.parallel)
     return index === -1 ? 0 : index;
 })
+
+provide(Then_Index, thenName.value)
 
 const onAdd = () => {
     visible.value = true;

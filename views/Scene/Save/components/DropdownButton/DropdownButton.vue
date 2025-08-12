@@ -86,6 +86,7 @@ import { getOption } from "./util";
 import type { DropdownButtonOptions } from "./util";
 import { openKeysByTree } from "@ruleEngine/utils/comm";
 import {debounce} from "lodash-es";
+import {useTreeSearch} from "@ruleEngine/views/Scene/Save/hooks";
 
 type LabelType = string | number | boolean | undefined;
 
@@ -145,13 +146,14 @@ const selectValue = ref(props.value);
 const visible = ref(false);
 const treeOpenKeys = ref<(string | number)[]>([]);
 const treeRef = ref()
-const searchValue = ref()
+const propsRef = toRefs(props);
 
-const searchOptions = computed(() => {
-  if (searchValue.value) {
-    return props.options.filter((option) => option.name.includes(searchValue.value) || option.multiTag);
+const { searchValue, searchOptions } = useTreeSearch(propsRef.options, {
+  labelName: 'name',
+  valueName: props.valueName,
+  onEnd: (selectedKeys) => {
+    treeOpenKeys.value = selectedKeys
   }
-  return props.options;
 })
 
 const visibleChange = (v: boolean) => {
@@ -188,6 +190,11 @@ const menuSelect = (v: string, option: any) => {
 
 const sourceChange = (e) => {
   treeRef.value?.scrollTo({ key: e, align: 'top', offset: 12 })
+  const setKeys = new Set(treeOpenKeys.value)
+  if (!setKeys.has(e)) {
+    setKeys.add(e)
+    treeOpenKeys.value = [...setKeys.values()]
+  }
 }
 
 const onShowOverlay = () => {

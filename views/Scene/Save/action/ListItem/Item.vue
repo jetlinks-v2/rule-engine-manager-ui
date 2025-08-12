@@ -111,7 +111,7 @@
 </template>
 
 <script lang="ts" setup name="ActionItem">
-import { PropType } from "vue";
+import type { PropType } from "vue";
 import { ActionsType, ParallelType } from "../../../typings";
 import EditModal from "../Modal/index.vue";
 import ActionTypeComponent from "../Modal/ActionTypeComponent.vue";
@@ -121,7 +121,7 @@ import { storeToRefs } from "pinia";
 import { iconMap} from "./util";
 import FilterGroup from "./FilterGroup.vue";
 import { randomString } from "@jetlinks-web/utils";
-import { EventEmitter, EventEmitterKeys, EventSubscribeKeys } from "../../util";
+import {EventEmitter, EventEmitterKeys, EventSubscribeKeys, Then_Action_Index} from "../../util";
 import CheckItem from "./CheckItem.vue";
 import { useI18n } from 'vue-i18n'
 import ComponentsMap from './detail'
@@ -181,6 +181,8 @@ const triggerData = reactive({
   visible: false,
   actionId: undefined,
 });
+
+provide(Then_Action_Index, props.name)
 
 const termsOptions = computed(() => {
   if (!props.parallel) {
@@ -352,6 +354,14 @@ const rules = [
           !_notify?.templateId ||
           _notify?.changeData === true
         ) {
+          return Promise.reject(new Error($t('ListItem.Item.637563-22')));
+        }
+      } else if (v?.executor === 'device-data') {
+        if (v.configuration.changeData === true) {
+          return Promise.reject(new Error($t('ListItem.Item.637563-22')));
+        }
+      } else if (v?.executor === 'collector') {
+        if (v.collector.changeData === true) {
           return Promise.reject(new Error($t('ListItem.Item.637563-22')));
         }
       }

@@ -72,8 +72,8 @@
         />
         <ParamsDropdown
           v-else
-          :showBuiltIn="true"
           icon="icon-canshu"
+          :showBuiltIn="showBuiltIn"
           :placeholder="
             tabsOptions[0]?.component === 'array'
               ? $t('Terms.ParamsItem.9093430-5')
@@ -122,7 +122,7 @@ import {
   ContextKey,
   arrayParamsKey,
   timeTypeKeys,
-  doubleParamsKey, nullKeys, ParamsSourceKey,
+  doubleParamsKey, nullKeys, ParamsSourceKey, TermsSetting,
 } from "./util";
 import { useSceneStore } from "@ruleEngine/store/scene";
 import { storeToRefs } from "pinia";
@@ -206,6 +206,7 @@ const paramsValue = reactive<TermsType>({
 
 const showDelete = ref(false);
 const columnOptions: any = inject(ContextKey); //
+const termsSetting = inject(TermsSetting)
 const columnType = ref<string>();
 const termTypeOptions = ref<Array<{ id: string; name: string }>>([]); // 条件值
 const valueOptions = ref<any[]>([]); // 默认手动输入下拉
@@ -287,6 +288,8 @@ const showDouble = computed(() => handleRangeFn(doubleParamsKey));
 const showArray = computed(() => handleRangeFn(arrayParamsKey));
 
 const showFulfill = computed(() => paramsValue.termType === "complex_exists")
+
+const showBuiltIn = computed(() => !!termsSetting?.showBuiltIn)
 
 const mouseover = () => {
   if (props.showDeleteBtn) {
@@ -452,7 +455,6 @@ const valueSelect = (
   set(formModel.value, [...optionsTermsNamePath.value, 2], labelObj)
 
   const columnOptions = formModel.value.branches![props.branchName].options
-  debugger
   if (column) {
     formModel.value.branches![props.branchName].options ||= {}
     formModel.value.branches![props.branchName].options!.termsColumns ||= {}

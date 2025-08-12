@@ -3,7 +3,7 @@ import { BranchesThen } from '../../../typings'
 const $t = i18n.global.t
 export const ContextKey = 'columnOptions'
 export const ParamsSourceKey = 'params-source-key'
-export const columnsFlattenKey = 'columns-flatten-key'
+export const TermsSetting = 'terms-setting'
 export const arrayParamsKey: Array<string | undefined> = ['nbtw', 'btw', 'in', 'nin', 'contains_all', 'contains_any', 'not_contains']
 export const doubleParamsKey: Array<string | undefined> = ['nbtw','btw']
 export const timeTypeKeys: Array<string | undefined> = ['time_gt_now', 'time_lt_now']
