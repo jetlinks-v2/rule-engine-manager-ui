@@ -13,7 +13,7 @@
       <a-form-item :label="$t('Save.input.945944-3')">
         <a-switch
           :checked-children="$t('Save.input.945944-4')"
-          :un-checked-children="$t('Save.input.945944-4')"
+          :un-checked-children="$t('Save.input.945944-10')"
           v-model:checked="inputData.status"
         ></a-switch>
       </a-form-item>

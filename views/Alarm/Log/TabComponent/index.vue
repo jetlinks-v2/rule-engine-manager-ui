@@ -290,7 +290,7 @@ const newColumns = computed(() => {
           type: "treeSelect",
           options: () => {
             return new Promise((resolve) => {
-              getTreeData_api({}).then((resp: any) => {
+              getTreeData_api({paging: false}).then((resp: any) => {
                 const formatValue = (list: any[]) => {
                   const _list: any[] = [];
                   list.forEach((item) => {
