@@ -11,6 +11,16 @@ const props = defineProps({
 })
 const {t: $t} = useI18n();
 const icon = computed(() => typeIconMap[props.data?.device?.message?.messageType || 'INVOKE_FUNCTION'])
+
+const showPropertiesValues = computed(() => {
+  return !["READ_PROPERTY"].includes(props.data.device?.message?.messageType)
+})
+
+const showProperties = computed(() => {
+  const {  options } = props.data || {}
+  return !isBoolean(options?.propertiesValue) && options?.propertiesValue && showPropertiesValues.value
+})
+
 </script>
 
 <template>
@@ -26,11 +36,8 @@ const icon = computed(() => typeIconMap[props.data?.device?.message?.messageType
       <j-ellipsis style="max-width: 400px">
         {{ data?.options?.propertiesName }}
       </j-ellipsis>
-      <span
-        v-if="!isBoolean(data?.options?.propertiesValue) && data?.options?.propertiesValue"
-      >{{ $t('ListItem.Item.637563-12') }}
-                  </span>
-      <j-ellipsis style="max-width: 200px">
+      <span v-if="showProperties">{{ $t('ListItem.Item.637563-12') }}</span>
+      <j-ellipsis v-if="showPropertiesValues" style="max-width: 200px">
         {{
           `${
             (

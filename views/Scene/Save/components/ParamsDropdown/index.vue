@@ -178,6 +178,8 @@ nextTick(() => {
   myValue.value = props.source === "metric" ? props.metric : (props.valueBackups || props.value);
 });
 
+const nodeLabelName = computed(() => mySource.value === "upper" ? props.metricName : props.labelName)
+
 const tabsChange = (e: string) => {
   mySource.value = e;
   myValue.value = undefined;
@@ -191,7 +193,7 @@ const tabsChange = (e: string) => {
 const treeSelect = (v: any, option: any) => {
   const node = option.node;
   visible.value = false;
-  label.value = node[props.labelName] || node.name || node.fullName;
+  label.value = node[nodeLabelName.value] || node.name;
   emit("update:value", node[props.valueName]);
   emit("valueBackups:value", node[props.valueName]);
   emit("select", node, label.value, { 0: label.value });
@@ -205,7 +207,7 @@ const valueItemChange = (e: string) => {
 };
 
 const multipleChange = (e: {fullName: string, value: any}[]) => {
-  label.value = e.map(item => item.fullName);
+  label.value = e.map(item => item[nodeLabelName.value]);
   emit("update:value", e.map(item => item.value));
   emit("valueBackups:value", e.map(item => item.value));
   emit("select", e.map(item => item.value), label.value, { 0: label.value });
@@ -213,7 +215,7 @@ const multipleChange = (e: {fullName: string, value: any}[]) => {
 
 const onSelect = (e: string, option: any) => {
   visible.value = false;
-  label.value = option[props.labelName];
+  label.value = option[nodeLabelName.value];
   emit("update:value", option[props.valueParamsName]);
   emit("valueBackups:value", e);
   emit("select", option[props.valueParamsName], label.value, { 0: label.value }, option);
@@ -244,7 +246,7 @@ watchEffect(() => {
   mySource.value = props.source;
 
   if (option) {
-    label.value = option[props.labelName] || option.name || option.fullName;
+    label.value = option[nodeLabelName.value] || option.name;
     treeOpenKeys.value = openKeysByTree(_options, pValue, props.valueName);
   } else {
     if (isMetric) {
@@ -255,7 +257,7 @@ watchEffect(() => {
           : props.placeholder;
     } else {
       if(props.multiple && props.source === 'fixed') {
-        label.value = props.options?.filter(item => pValue?.includes(item.value)).map(item => item.fullName);
+        label.value = props.options?.filter(item => pValue?.includes(item.value)).map(item => item[nodeLabelName.value]);
       } else {
         label.value = pValue!== undefined? pValue : props.placeholder;
       }
