@@ -27,6 +27,7 @@
               <FunctionCall
                 ref="functionRef"
                 :data='callDataOptions'
+                :required="true"
                 @change='callDataChange'
               />
             </a-col>
