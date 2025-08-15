@@ -215,6 +215,7 @@ const columns = [
         hideInTable: true,
         search: {
             type: 'treeSelect',
+            termOptions: ['eq'],
             componentProps: {
               fieldNames: {
                 label: 'name',
