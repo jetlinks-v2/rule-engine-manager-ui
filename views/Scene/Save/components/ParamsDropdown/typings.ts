@@ -46,6 +46,10 @@ export const defaultSetting = {
     type: String,
     default: 'label'
   },
+  metricName: {
+    type: String,
+    default: 'label'
+  },
   source: {
     type: String,
     default: 'fixed'
