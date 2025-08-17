@@ -440,6 +440,8 @@
 	"variableItem.User.9667821-6": "请输入收件人邮箱,多个收件人用换行分隔",
 	"variableItem.User.9667821-7": "请输入固定号码",
 	"variableItem.User.9667821-8": "关系用户",
+	"variableItem.User.9667821-9": "请输入被叫人号码",
+  "variableItem.User.9667821-10": "请输入正确的被叫人号码",
 	"variableItem.Tag.9667822-0": "请选择标签",
 	"variableItem.InputFile.9667824-0": "请上传文件",
 	"variableItem.InputFile.9667824-1": "上传附件",

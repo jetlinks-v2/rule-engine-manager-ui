@@ -440,6 +440,8 @@
 	"variableItem.User.9667821-6": "Please enter recipient email, separate multiple recipients with line breaks",
 	"variableItem.User.9667821-7": "Please enter a fixed number",
 	"variableItem.User.9667821-8": "Relationship users",
+  "variableItem.User.9667821-9": "Please enter the called number",
+  "variableItem.User.9667821-10": "Please enter the correct called number",
 	"variableItem.Tag.9667822-0": "Please select a label",
 	"variableItem.InputFile.9667824-0": "Please upload the file",
 	"variableItem.InputFile.9667824-1": "Upload attachments",
