@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :okText="$t('components.LogDetail.1651510-0')"
     :cancelText="$t('components.LogDetail.1651510-1')"
     :width="1000"

@@ -1,7 +1,7 @@
 <template>
     <a-modal
         :title="$t('Notify.index.966771-0')"
-        visible
+        open
         :width="900"
         @cancel="onCancel"
         @ok="onOk"

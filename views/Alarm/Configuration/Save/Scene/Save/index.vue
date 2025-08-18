@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :title="$t('Save.index.021458-0')"
     :okText="$t('Save.index.021458-1')"
     :cancelText="$t('Save.index.021458-2')"

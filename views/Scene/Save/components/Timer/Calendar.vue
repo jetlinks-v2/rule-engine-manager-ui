@@ -100,7 +100,7 @@
       </j-scrollbar>
     </div>
     <a-button @click="addItem" style="width: 100%"> {{ $t('Timer.Calendar.9093419-10') }} </a-button>
-    <a-modal v-model:visible="visible" :width="1000" :okText="$t('Timer.Calendar.9093419-11')">
+    <a-modal v-model:open="visible" :width="1000" :okText="$t('Timer.Calendar.9093419-11')">
       <div>{{ $t('Timer.Calendar.9093419-12') }}</div>
       <FullCalendar :preview="true" />
       <template #footer>

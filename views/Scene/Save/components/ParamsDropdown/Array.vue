@@ -2,7 +2,7 @@
     <a-dropdown
         class="scene-select-value"
         trigger="click"
-        v-model:visible="visible"
+        v-model:open="visible"
         :overlayStyle="{
             maxWidth: '300px',
         }"

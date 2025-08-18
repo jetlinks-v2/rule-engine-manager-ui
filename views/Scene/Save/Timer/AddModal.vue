@@ -1,7 +1,7 @@
 <template>
   <a-modal
     :title="$t('Timer.AddModal.663671-0')"
-    visible
+    open
     :width="820"
     :maskClosable="false"
     :keyboard="false"

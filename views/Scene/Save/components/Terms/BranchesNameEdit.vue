@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :title="$t('Terms.BranchesNameEdit.9093533-0')"
     :keyboard="false"
     :maskClosable="false"

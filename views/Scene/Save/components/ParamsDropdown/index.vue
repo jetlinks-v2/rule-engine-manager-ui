@@ -2,7 +2,7 @@
   <a-dropdown
     class="scene-select-value"
     trigger="click"
-    v-model:visible="visible"
+    v-model:open="visible"
     @visibleChange="visibleChange"
   >
     <div @click.prevent="visible = true">

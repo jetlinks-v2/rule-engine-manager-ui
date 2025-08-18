@@ -3,7 +3,7 @@
         :title="$t('SolveComponent.index.165153-0')"
         :okText="$t('SolveComponent.index.165153-1')"
         :cancelText="$t('SolveComponent.index.165153-2')"
-        visible
+        open
         @cancel="handleCancel"
         @ok="handleSave"
         destroyOnClose
