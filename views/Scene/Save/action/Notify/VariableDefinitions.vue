@@ -139,8 +139,7 @@ const getType = (item: any) => {
 const checkValue = (_rule: any, value: any, item: any) => {
     if (!_rule.required) {
         return Promise.resolve();
-    }
-    debugger
+    }debugger
     const type = item.expands?.businessType || item?.type;
     if (!value) {
         if(['voice', 'sms', 'email'].includes(props.notify.notifyType)) {
