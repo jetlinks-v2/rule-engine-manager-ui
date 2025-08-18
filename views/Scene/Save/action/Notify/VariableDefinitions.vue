@@ -10,14 +10,9 @@
             :label="item?.name"
             v-for="(item, index) in variableDefinitions"
             :key="item.id"
-            :required="
-                !['file', 'user', 'org', 'tag'].includes(getType(item)) ||
-                item.id === 'calledNumber'
-                    ? true
-                    : false
-            "
             :rules="[
                 {
+                    required: item.required,
                     validator: (_rule, value) => checkValue(_rule, value, item),
                     trigger: ['blur', 'change'],
                 },
@@ -142,10 +137,29 @@ const getType = (item: any) => {
 };
 
 const checkValue = (_rule: any, value: any, item: any) => {
-    if (!value) {
+    if (!_rule.required) {
         return Promise.resolve();
     }
     const type = item.expands?.businessType || item?.type;
+    if (!value) {
+        if(['voice', 'sms', 'email'].includes(props.notify.notifyType)) {
+            return Promise.reject($t('variableItem.User.9667821-5'));
+        }
+    } else {
+        if(['voice', 'sms', 'email'].includes(props.notify.notifyType) && type === 'user') {
+            if(value?.source === 'fixed') {
+                if(!value?.value) {
+                    return Promise.reject($t('variableItem.User.9667821-9'));
+                } else if (!/^1[3456789]\d{9}$|^0\d{2,3}-\d{7,8}(-\d{1,4})?$/.test(value?.value)) { //座机号码和手机号码校验
+                    return Promise.reject($t('variableItem.User.9667821-10'));
+                }
+            } else if(value?.source) {
+                if(!value.relation) {
+                  return Promise.reject($t('variableItem.User.9667821-5'));
+                }
+            }
+        }
+    }
     if (
         ['user', 'org', 'tag', 'userIdList', 'departmentIdList'].includes(type)
     ) {
