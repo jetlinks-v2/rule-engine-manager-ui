@@ -1,6 +1,6 @@
 <template>
   <a-drawer
-    :visible="true"
+    :open="true"
     width="1000"
     :destroyInactiveTabPane="true"
     @close="closeDrawer"

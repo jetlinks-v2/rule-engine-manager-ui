@@ -3,7 +3,7 @@
         :maskClosable="false"
         width="650px"
         destroyOnClose
-        visible
+        open
         :title="props.data?.id ? $t('Save.index.020451-0') : $t('Save.index.020451-1')"
         @ok="handleSave"
         @cancel="handleCancel"

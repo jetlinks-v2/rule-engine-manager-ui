@@ -1,7 +1,7 @@
 <template>
     <a-modal
         :title="$t('Device.index.9667820-0')"
-        visible
+        open
         :width="860"
         @cancel="onCancel"
         @ok="save"

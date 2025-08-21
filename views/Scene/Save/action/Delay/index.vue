@@ -1,7 +1,7 @@
 <template>
     <a-modal
         :title="$t('Delay.index.9667826-0')"
-        visible
+        open
         :width="400"
         @cancel="onCancel"
         @ok="onOk"

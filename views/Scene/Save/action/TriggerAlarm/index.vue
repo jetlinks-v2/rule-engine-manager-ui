@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :title="$t('TriggerAlarm.index.966773-0')"
     :width="1000"
     :keyboard="false"

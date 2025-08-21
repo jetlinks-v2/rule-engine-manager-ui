@@ -1,7 +1,7 @@
 <template>
   <a-modal
       :title="$t('Manual.index.515142-2')"
-      visible
+      open
       :width="1000"
       @cancel="onCancel"
       @ok="save"

@@ -1,6 +1,6 @@
 <template>
   <a-drawer
-    visible
+    open
     :title="$t('Scene.SceneDrawer.021453-0')"
     :width="600"
     :closable="false"

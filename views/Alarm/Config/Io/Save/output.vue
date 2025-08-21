@@ -5,7 +5,7 @@
     :title="$t('Save.output.945943-0')"
     @cancel="close"
     @ok="save"
-    visible
+    open
     :cancelText="$t('Save.output.945943-1')"
     :okText="$t('Save.output.945943-2')"
   >

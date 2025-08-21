@@ -1,10 +1,11 @@
 <template>
   <a-modal
-    visible
+    open
     :title="$t('HandTrigger.index.0214513-0')"
     :okText="$t('HandTrigger.index.0214513-1')"
     :cancelText="$t('HandTrigger.index.0214513-2')"
     :width="1000"
+    :maskClosable="false"
     @cancel="closeModal"
     @ok="saveCorrelation"
   >
