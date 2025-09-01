@@ -70,6 +70,7 @@ import User from './variableItem/User.vue';
 import { PropType } from 'vue';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n'
+import { regular } from '@jetlinks-web/utils'
 
 const { t: $t } = useI18n()
 const props = defineProps({
@@ -142,19 +143,47 @@ const checkValue = (_rule: any, value: any, item: any) => {
     }
     const type = item.expands?.businessType || item?.type;
     if (!value) {
-        if(['voice', 'sms', 'email'].includes(props.notify.notifyType)) {
+        if(['voice', 'sms', 'email'].includes(props.notify.notifyType) && type === 'user') {
             return Promise.reject($t('variableItem.User.9667821-5'));
         }
     } else {
-        if(['voice', 'sms', 'email'].includes(props.notify.notifyType) && type === 'user') {
-            if(value?.source === 'fixed') {
-                if(!value?.value) {
-                    return Promise.reject($t('variableItem.User.9667821-9'));
-                } else if (!/^1[3456789]\d{9}$|^0\d{2,3}-\d{7,8}(-\d{1,4})?$/.test(value?.value)) { //座机号码和手机号码校验
-                    return Promise.reject($t('variableItem.User.9667821-10'));
+        if(!Array.isArray(value)) {
+            if(props.notify.notifyType === 'voice' && type === 'user') {
+                if(value?.source === 'fixed') {
+                    if(!value?.value) {
+                        return Promise.reject($t('variableItem.User.9667821-9'));
+                    } else if (!regular.isTelephone(value?.value) && !regular.isCellphone(value?.value)) { //座机号码和手机号码校验
+                        return Promise.reject($t('variableItem.User.9667821-10'));
+                    }
+                } else {
+                    if(!value?.relation?.objectId) {
+                        return Promise.reject($t('variableItem.User.9667821-5'));
+                    }
                 }
-            } else if(value?.source) {
-                if(!value.relation) {
+            }
+            if(props.notify.notifyType === 'sms' && type === 'user') {
+                if(value?.source === 'fixed') {
+                    if(!value?.value) {
+                        return Promise.reject($t('variableItem.User.9667821-11'));
+                    } else if (!regular.isTelephone(value?.value) && !regular.isCellphone(value?.value)) { //座机号码和手机号码校验
+                        return Promise.reject($t('variableItem.User.9667821-10'));
+                    }
+                } else {
+                    if(!value?.relation?.objectId) {
+                        return Promise.reject($t('variableItem.User.9667821-5"'));
+                    }
+                }
+            }
+        }
+        if(props.notify.notifyType === 'email' && type === 'user') {
+            if(value?.[0]?.source === 'fixed') {
+                if(!value?.every((item: any) => item.value)) {
+                    return Promise.reject($t('variableItem.User.9667821-12'));
+                } else if (!value?.every((item: any) => regular.isEmail(item.value))) { //邮箱校验
+                    return Promise.reject($t('variableItem.User.9667821-13'));
+                }
+            } else if(value?.[0]?.source) {
+                if(!value?.every(item => item.relation?.objectId || item.relation?.related?.relation)) {
                   return Promise.reject($t('variableItem.User.9667821-5'));
                 }
             }
