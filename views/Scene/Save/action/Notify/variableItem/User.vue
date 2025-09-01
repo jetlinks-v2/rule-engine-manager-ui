@@ -38,7 +38,7 @@
                 v-if="['email'].includes(notifyType)"
                 style="width: calc(100% - 120px)"
                 :placeholder="$t('variableItem.User.9667821-5')"
-                @change="(key, label) => onChange(source, key, label)"
+                @change="(key, label, extra) => onChange(source, key, label, extra)"
                 :tree-data="treeData"
                 :multiple="true"
                 :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
@@ -67,7 +67,7 @@
                 style="width: calc(100% - 120px)"
                 :placeholder="$t('variableItem.User.9667821-5')"
                 @change="
-                    (key, label) => onChange(source, key, label)
+                    (key, label, extra) => onChange(source, key, label, extra.isRelation)
                 "
                 :tree-data="treeData"
                 :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
@@ -97,7 +97,7 @@
                 style="width: calc(100% - 120px)"
                 v-if="['dingTalk', 'weixin'].includes(notifyType)"
                 :placeholder="$t('variableItem.User.9667821-5')"
-                :value="value?.value"
+                :value="relationData"
                 showSearch
                 allowClear
                 @change="
@@ -114,7 +114,7 @@
                 style="width: calc(100% - 120px)"
                 v-else-if="['email'].includes(notifyType)"
                 :placeholder="$t('variableItem.User.9667821-6')"
-                :value="value?.value"
+                :value="relationData"
                 mode="tags"
                 max-tag-count="responsive"
                 @change="
@@ -175,7 +175,7 @@ const notifierId = computed(() => {
 
 const source = computed(() => {
     if (props.value) {
-        return props.value?.source || 'relation';
+        return props.value?.[0]?.source || props.value?.source || 'relation';
     } else {
         return 'relation';
     }
@@ -190,12 +190,15 @@ const relationData = computed(() => {
     if(notifyType.value === 'email'){
         if(item && Array.isArray(item) && item.length){
             if(item[0].source === 'relation'){
-                return item.map(i => {
+                return item.filter(i => i.relation?.objectId || i.relation?.related?.relation).map(i => {
                     if(i.relation?.objectType === 'user') {
                         return i?.relation?.objectId
                     }
                     return i?.relation?.related?.relation
                 })
+            } else {
+                debugger
+                return item.filter(i => i.value).map(i => i.value)
             }
         } else {
             return item?.relation?.objectId
@@ -300,8 +303,11 @@ const getUser = async (_source: string, _triggerType: string) => {
 };
 
 const sourceChange = (v: any) => {
-    emit('update:value', {
+    debugger
+    emit('update:value', notifyType.value === 'email' ? [{
         source: v,
+    }] : {
+        source: v
     });
     emit('change',undefined)
 };
@@ -342,27 +348,43 @@ const getObj = (
 const onChange = (
     _source: string = 'fixed',
     _value?: string | string[],
-    // isRelation?: boolean,
     _name?: string,
+    extra?: any,
 ) => {
+    debugger
     let _values: any = undefined;
-
     const _names: string[] = Array.isArray(_name) ? _name : [_name || ''];
     if (Array.isArray(_value)) {
         if (props?.notify?.notifyType === 'email') {
           if (_source === 'fixed') {
-            _values = {
-              source: "fixed",
-              value: _value
-            }
+            _values = _value.length ? _value.map((item) => {
+                return {
+                    source: "fixed",
+                    value: item
+                }
+            }) : [
+                {
+                    source: "fixed",
+                }
+            ]
           } else {
-            _values = {
-              source: "relation",
-              relation: {
-                objectType: "user",
-                objectId: _value?.[0]
-              }
-            }
+            _values = _value.length ? _value.map((item) => {
+                if(extra.triggerNode.props.isRelation && extra.triggerNode.props.value === item) {
+                    return getObj(_source, item, extra.triggerNode.props.isRelation);
+                } else {
+                    return {
+                        source: "relation",
+                        relation:{
+                            objectType: "user",
+                            objectId: item
+                        }
+                    }
+                }
+            }) : [
+                {
+                    source: "relation",
+                }
+            ]
           }
             // _values = _value.map((item) => {
             //     const _item = treeDataMap.get(item)
@@ -385,6 +407,7 @@ const onChange = (
       const _isRelation = item?.isRelation
         _values = getObj(_source, _value, _isRelation);
     }
+    debugger
     emit('update:value', _values);
     emit('change', _names.filter((item) => !!item).join(','));
 };
