@@ -197,7 +197,6 @@ const relationData = computed(() => {
                     return i?.relation?.related?.relation
                 })
             } else {
-                debugger
                 return item.filter(i => i.value).map(i => i.value)
             }
         } else {
@@ -303,7 +302,6 @@ const getUser = async (_source: string, _triggerType: string) => {
 };
 
 const sourceChange = (v: any) => {
-    debugger
     emit('update:value', notifyType.value === 'email' ? [{
         source: v,
     }] : {
@@ -351,7 +349,6 @@ const onChange = (
     _name?: string,
     extra?: any,
 ) => {
-    debugger
     let _values: any = undefined;
     const _names: string[] = Array.isArray(_name) ? _name : [_name || ''];
     if (Array.isArray(_value)) {
@@ -407,7 +404,6 @@ const onChange = (
       const _isRelation = item?.isRelation
         _values = getObj(_source, _value, _isRelation);
     }
-    debugger
     emit('update:value', _values);
     emit('change', _names.filter((item) => !!item).join(','));
 };
