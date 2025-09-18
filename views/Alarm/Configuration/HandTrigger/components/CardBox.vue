@@ -110,6 +110,7 @@ import {
 import { useMenuStore } from "@/store/menu";
 import { useI18n } from 'vue-i18n';
 import { randomString } from "@jetlinks-web/utils";
+import { useTabSaveSuccess } from '@/hooks'
 
 const { t: $t } = useI18n();
 type EmitProps = {
@@ -215,22 +216,19 @@ const click = () => {
   emit("click");
 };
 
-const jumpView = () => {
-  const url = menuStory.menus["rule-engine/Scene/Save"]?.path;
-  const sourceId = `add_scene_${randomString()}`; // 唯一标识
-  const tab: any = window.open(
-    `${window.location.origin + window.location.pathname}#${url}?triggerType=${
-      props.value.triggerType
-    }&id=${props.value.id}&sourceId=${sourceId}`
-  );
-  tab.onTabSaveSuccess = (_sourceId: string, value: any) => {
-    console.log("", value);
-    if (sourceId === _sourceId) {
-      if (value.success) {
-        emit("reload");
-      }
+const { onOpen } = useTabSaveSuccess('rule-engine/Scene/Save', {
+  onSuccess(value) {
+    if (value.success) {
+      emit("reload");
     }
-  };
+  }
+})
+
+const jumpView = () => {
+  onOpen({
+    triggerType: props.value.triggerType,
+    id: props.value.id
+  })
 };
 </script>
 

@@ -91,11 +91,9 @@ const save = async (next?: Function) => {
       });
     loading.value = false;
     if (resp.success) {
-      const sourceId = route.query?.sourceId as string;
-      if ((window as any).onTabSaveSuccess && sourceId) {
-        (window as any).onTabSaveSuccess(sourceId, resp);
-        setTimeout(() => window.close(), 300);
-      } else {
+      const isTabBack = onBack(resp)
+
+      if (!isTabBack) {
         next ? next?.() : menuStore.jumpPage("rule-engine/Scene", {});
       }
       onlyMessage($t('Save.index.766438-1'));
