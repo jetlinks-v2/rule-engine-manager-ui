@@ -1,18 +1,18 @@
 <script setup name="Fulfill">
 import {useI18n} from "vue-i18n";
-import { queryAggregation, queryArrayTerms, queryBuiltInParams } from '@ruleEngine/api/scene'
+import { queryAggregation, queryArrayTerms, queryBuiltInParams } from '@rule-engine-manager-ui/api/scene'
 import {useRequest} from "@jetlinks-web/hooks";
 import WhenItem from './When.vue'
 import {useAggContext, useColumnContext, useFulfillDataContext} from "./hooks";
 import {
   defaultTermsValue
 } from "./util";
-import { useSceneStore } from '@ruleEngine/store/scene'
-import {detail, productDetail} from "@ruleEngine/api/instance";
+import { useSceneStore } from '@rule-engine-manager-ui/store/scene'
+import {detail, productDetail} from "@rule-engine-manager-ui/api/instance";
 import {cloneDeep, isArray, isNil} from "lodash-es";
 import TermItem from './Terms.vue'
 import {randomNumber} from "@jetlinks-web/utils";
-import {handleParamsData} from "@ruleEngine/views/Scene/Save/components/Terms/util";
+import {handleParamsData} from "@rule-engine-manager-ui/views/Scene/Save/components/Terms/util";
 
 const props = defineProps({
   value: {

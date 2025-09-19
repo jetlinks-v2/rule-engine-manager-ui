@@ -50,10 +50,10 @@
 <script lang="ts" setup name="ActionDeviceActions">
 import TopCard from '../../Device/device/TopCard.vue';
 import WriteProperty from './WriteProperty.vue';
-import {sceneImages} from "@ruleEngine/assets";
+import {sceneImages} from "@rule-engine-manager-ui/assets";
 import { useI18n } from 'vue-i18n';
-import {ACTION_DATA, getParams} from "@ruleEngine/views/Scene/Save/util";
-import {useSceneStore} from "@ruleEngine/store/scene";
+import {ACTION_DATA, getParams} from "@rule-engine-manager-ui/views/Scene/Save/util";
+import {useSceneStore} from "@rule-engine-manager-ui/store/scene";
 import {storeToRefs} from "pinia";
 
 const { t: $t } = useI18n()

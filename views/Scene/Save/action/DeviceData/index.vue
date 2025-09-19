@@ -51,12 +51,12 @@
 </template>
 
 <script lang="ts" setup name="ActionDeviceModal">
-import {DeviceModelDataType, DeviceOptionType} from './typings';
+import type {DeviceModelDataType, DeviceOptionType} from './typings';
 import Product from './Product.vue';
 import Device from './device/index.vue';
 import { onlyMessage } from '@jetlinks-web/utils';
-import { detail } from '@ruleEngine/api/instance';
-import { useSceneStore } from '../../../../../store/scene';
+import { detail } from '@rule-engine-manager-ui/api/instance';
+import { useSceneStore } from '@rule-engine-manager-ui/store/scene';
 import { storeToRefs } from 'pinia';
 import { isActionChange } from '../../util';
 import { handleMetadata } from './util'

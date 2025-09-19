@@ -1,5 +1,5 @@
 <script setup name="Device">
-import {typeIconMap} from "@ruleEngine/views/Scene/Save/action/ListItem/util";
+import {typeIconMap} from "@rule-engine-manager-ui/views/Scene/Save/action/ListItem/util";
 import {isBoolean} from "lodash-es";
 import {useI18n} from "vue-i18n";
 

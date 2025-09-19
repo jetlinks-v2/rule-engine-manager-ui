@@ -97,13 +97,13 @@
 </template>
 
 <script setup name="AlarmModal">
-import { queryAlarmPage } from "../../../../../api/scene";
+import { queryAlarmPage } from "@rule-engine-manager-ui/api/scene";
 import { useRequest } from "@jetlinks-web/hooks";
-import { useAlarmLevel } from "../../../../../hook";
-import { bindScene, getTargetTypes } from "../../../../../api/configuration";
+import { useAlarmLevel } from "@rule-engine-manager-ui/hook";
+import { bindScene, getTargetTypes } from "@rule-engine-manager-ui/api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
-import { ConfigurationImages } from "../../../../../assets/index";
-import LevelIcon from '@ruleEngine/components/AlarmLevelIcon/index.vue'
+import { ConfigurationImages } from "@rule-engine-manager-ui/assets";
+import LevelIcon from '@rule-engine-manager-ui/components/AlarmLevelIcon/index.vue'
 import { useI18n } from "vue-i18n";
 
 const { t: $t } = useI18n();

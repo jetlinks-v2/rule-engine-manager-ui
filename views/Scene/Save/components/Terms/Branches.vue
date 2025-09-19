@@ -64,11 +64,11 @@ import type { PropType } from 'vue'
 import type { ActionBranchesProps } from '../../../typings';
 import WhenItem from './WhenItem.vue'
 import { storeToRefs } from 'pinia';
-import { useSceneStore } from '../../../../../store/scene'
+import { useSceneStore } from '@rule-engine-manager-ui/store/scene'
 import Action from '../../action/index.vue'
 import { randomString} from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n'
-import {ACTION_DATA} from "@ruleEngine/views/Scene/Save/util";
+import {ACTION_DATA} from "@rule-engine-manager-ui/views/Scene/Save/util";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore()

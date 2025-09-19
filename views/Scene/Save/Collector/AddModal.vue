@@ -74,13 +74,13 @@
 import type { PropType } from "vue";
 import type { TriggerCollector, metadataType } from "../../typings";
 import { onlyMessage } from "@jetlinks-web/utils";
-import { detail as deviceDetail } from "@ruleEngine/api/instance";
+import { detail as deviceDetail } from "@rule-engine-manager-ui/api/instance";
 import Channel from "./Channel.vue";
 import Collector from "./Collector.vue";
 import Type from "./Type.vue";
 import { handleTimerOptions } from "../components/Timer/util";
 import { Form } from "ant-design-vue";
-import { queryPointNoPagingV2 } from "@ruleEngine/api/collector";
+import { queryPointNoPagingV2 } from "@rule-engine-manager-ui/api/collector";
 import { useI18n } from "vue-i18n";
 import { cloneDeep, omit } from "lodash-es";
 

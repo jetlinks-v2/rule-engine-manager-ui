@@ -1,4 +1,4 @@
-import { providerImages } from "@ruleEngine/assets/data-collect";
+import { providerImages } from "@rule-engine-manager-ui/assets/data-collect";
 
 export const imgMap = new Map();
 imgMap.set('BACNetIp', providerImages.BACNetIp);

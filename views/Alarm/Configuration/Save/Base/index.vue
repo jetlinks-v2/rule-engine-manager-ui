@@ -105,18 +105,18 @@ import {
   save,
   detail,
   update,
-} from "../../../../../api/configuration";
-import { queryLevel } from "../../../../../api/config";
-import { query } from "../../../../../api/scene";
+} from "@rule-engine-manager-ui/api/configuration";
+import { queryLevel } from "@rule-engine-manager-ui/api/config";
+import { query } from "@rule-engine-manager-ui/api/scene";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { useMenuStore } from "@/store/menu";
 import { useRoute } from "vue-router";
-import { useAlarmConfigurationStore } from "../../../../../store/alarm";
+import { useAlarmConfigurationStore } from "@rule-engine-manager-ui/store/alarm";
 import { storeToRefs } from "pinia";
-import { configImages } from "../../../../../assets/index";
+import { configImages } from "@rule-engine-manager-ui/assets";
 import { isNoCommunity } from "@/utils/utils";
 import { useI18n } from "vue-i18n";
-import { useAlarmConfigType } from "@ruleEngine/hook/useAlarmConfigType";
+import { useAlarmConfigType } from "@rule-engine-manager-ui/hook/useAlarmConfigType";
 import { cloneDeep } from "lodash-es";
 
 const { t: $t } = useI18n();

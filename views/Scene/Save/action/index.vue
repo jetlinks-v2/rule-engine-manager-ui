@@ -61,10 +61,10 @@ import { List } from "./ListItem";
 import { PropType } from "vue";
 import { randomString } from "@jetlinks-web/utils";
 import { storeToRefs } from "pinia";
-import { useSceneStore } from "@ruleEngine/store/scene";
+import { useSceneStore } from "@rule-engine-manager-ui/store/scene";
 import { Form, Modal } from "ant-design-vue";
-import { queryAlarmPage } from "@ruleEngine/api/scene";
-import { unBindAlarmMultiple } from "@ruleEngine/api/configuration";
+import { queryAlarmPage } from "@rule-engine-manager-ui/api/scene";
+import { unBindAlarmMultiple } from "@rule-engine-manager-ui/api/configuration";
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()

@@ -76,10 +76,10 @@ import {
     queryProductList,
     productDetail,
     getTreeData_api
-} from '@ruleEngine/api/others';
-import { queryProductSortTree } from '@ruleEngine/api/others';
-import { accessConfigTypeFilter } from '@ruleEngine/utils/setting';
-import { sceneImages } from '@ruleEngine/assets/index';
+} from '@rule-engine-manager-ui/api/others';
+import { queryProductSortTree } from '@rule-engine-manager-ui/api/others';
+import { accessConfigTypeFilter } from '@rule-engine-manager-ui/utils/setting';
+import { sceneImages } from '@rule-engine-manager-ui/assets/index';
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()

@@ -34,10 +34,10 @@
 
 <script lang="ts" setup name="ActionList">
 import type { PropType } from 'vue';
-import type { ActionsType, ParallelType } from '@ruleEngine/Scene/typings';
+import type { ActionsType, ParallelType } from '@rule-engine-manager-ui/Scene/typings';
 import Modal from '../Modal/index.vue';
 import Item from './Item.vue';
-import { useSceneStore } from '@ruleEngine/store/scene';
+import { useSceneStore } from '@rule-engine-manager-ui/store/scene';
 import { storeToRefs } from 'pinia';
 import { useI18n } from 'vue-i18n'
 

@@ -61,10 +61,10 @@
 </template>
 
 <script lang="ts" setup>
-import { queryAlarmRecordNoPaging, queryLogList } from "@ruleEngine/api/log";
+import { queryAlarmRecordNoPaging, queryLogList } from "@rule-engine-manager-ui/api/log";
 import { useRoute } from "vue-router";
 import dayjs from "dayjs";
-import { useAlarmStore } from "../../../../store/alarm";
+import { useAlarmStore } from "@rule-engine-manager-ui/store/alarm";
 import Info from "./info.vue";
 import { useRouterParams } from "@jetlinks-web/hooks";
 import { useMenuStore } from "@/store/menu";

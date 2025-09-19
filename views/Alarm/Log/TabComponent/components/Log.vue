@@ -62,12 +62,12 @@
 <script setup>
 import {
   queryLogList,
-} from "../../../../../api/log";
+} from "@rule-engine-manager-ui/api/log";
 import dayjs from "dayjs";
 import { useMenuStore } from "@/store/menu";
 import LogDetail from "./LogDetail.vue";
 import { useI18n } from 'vue-i18n'
-import { queryCollectorById } from "@ruleEngine/api/collector";
+import { queryCollectorById } from "@rule-engine-manager-ui/api/collector";
 
 const { t: $t } = useI18n()
 const props = defineProps({

@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts" name="Collector">
-import {queryCollector} from '@ruleEngine/api/collector'
+import {queryCollector} from '@rule-engine-manager-ui/api/collector'
 import { useI18n } from 'vue-i18n'
 
 type Emit = {

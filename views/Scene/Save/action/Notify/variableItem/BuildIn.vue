@@ -67,11 +67,11 @@
 </template>
 
 <script lang="ts" setup name="NotifyBuildIn">
-import { queryBuiltInParams } from '../../../../../../api/scene';
-import { useSceneStore } from '../../../../../../store/scene';
+import { queryBuiltInParams } from '@rule-engine-manager-ui/api/scene';
+import { useSceneStore } from '@rule-engine-manager-ui/store/scene';
 import { storeToRefs } from 'pinia';
 import { useI18n } from 'vue-i18n'
-import {ACTION_DATA} from "@ruleEngine/views/Scene/Save/util";
+import {ACTION_DATA} from "@rule-engine-manager-ui/views/Scene/Save/util";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

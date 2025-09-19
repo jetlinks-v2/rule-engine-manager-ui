@@ -1,4 +1,4 @@
-type DeviceModelDataType = {
+export type DeviceModelDataType = {
     productId: string;
     selector: any | {
         selector: string;
@@ -14,7 +14,7 @@ type DeviceModelDataType = {
         functionId?: string;
     }
 }
-type DeviceModelType = {
+export type DeviceModelType = {
     productId: string;
     source: string;
     selector: string
@@ -29,7 +29,7 @@ type DeviceModelType = {
     }
 }
 
-type DeviceOptionType = {
+export type DeviceOptionType = {
     name?: string;
     productName?: string;
     propertiesValue?: string;

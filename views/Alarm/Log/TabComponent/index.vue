@@ -137,20 +137,20 @@ import {
   getAlarmProduct,
   queryAlarmRecordByType,
   queryAlarmRecordNoPaging,
-} from "../../../../api/log";
-import { useAlarmStore } from "../../../../store/alarm";
+} from "@rule-engine-manager-ui/api/log";
+import { useAlarmStore } from "@rule-engine-manager-ui/store/alarm";
 import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
 import SolveComponent from "../SolveComponent/index.vue";
 import { useMenuStore } from "@/store/menu";
 import LogDrawer from "./components/DetailDrawer.vue";
 import Duration from "../components/Duration.vue";
-import { useAlarmLevel } from "../../../../hook";
-import { logImages } from "../../../../assets/index";
-import LevelIcon from '@ruleEngine/components/AlarmLevelIcon/index.vue'
+import { useAlarmLevel } from "@rule-engine-manager-ui/hook";
+import { logImages } from "@rule-engine-manager-ui/assets";
+import LevelIcon from '@rule-engine-manager-ui/components/AlarmLevelIcon/index.vue'
 import { useI18n } from "vue-i18n";
-import { useAlarmConfigType } from "@ruleEngine/hook/useAlarmConfigType";
-import {getTreeData_api} from "@ruleEngine/api/others";
+import { useAlarmConfigType } from "@rule-engine-manager-ui/hook/useAlarmConfigType";
+import {getTreeData_api} from "@rule-engine-manager-ui/api/others";
 
 const { t: $t } = useI18n();
 const { supports } = useAlarmConfigType();

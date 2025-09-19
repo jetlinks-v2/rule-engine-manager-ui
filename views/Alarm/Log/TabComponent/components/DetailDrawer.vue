@@ -82,11 +82,11 @@
 </template>
 
 <script setup name="LogDrawer">
-import { query } from "../../../../../api/log";
+import { query } from "@rule-engine-manager-ui/api/log";
 import Record from "./Record.vue";
 import Log from "./Log.vue";
 import SolveComponent from "../../SolveComponent/index.vue";
-import LevelIcon from "@ruleEngine/components/AlarmLevelIcon/index.vue";
+import LevelIcon from "@rule-engine-manager-ui/components/AlarmLevelIcon/index.vue";
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()

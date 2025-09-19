@@ -4,16 +4,16 @@
 
 <script setup lang="ts" name="CheckItem">
 import { storeToRefs } from "pinia";
-import { useSceneStore } from "@ruleEngine/store/scene";
+import { useSceneStore } from "@rule-engine-manager-ui/store/scene";
 import { Form } from "ant-design-vue";
 import {
   queryProductList,
   detail as deviceDetailQuery,
   queryNoPagingPost,
-} from "@ruleEngine/api/others";
-import { getTreeData_api } from "@ruleEngine/api/department";
-import {query as channelQuery} from '@ruleEngine/api/channel'
-import {queryCollector, queryPointNoPagingV2} from '@ruleEngine/api/collector'
+} from "@rule-engine-manager-ui/api/others";
+import { getTreeData_api } from "@rule-engine-manager-ui/api/department";
+import {query as channelQuery} from '@rule-engine-manager-ui/api/channel'
+import {queryCollector, queryPointNoPagingV2} from '@rule-engine-manager-ui/api/collector'
 
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);

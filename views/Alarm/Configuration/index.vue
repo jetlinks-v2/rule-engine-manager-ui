@@ -164,17 +164,17 @@ import {
   _enable,
   _disable,
   remove,
-} from "../../../api/configuration";
-import { query } from "../../../api/log";
-import { queryLevel } from "../../../api/config";
+} from "@rule-engine-manager-ui/api/configuration";
+import { query } from "@rule-engine-manager-ui/api/log";
+import { queryLevel } from "@rule-engine-manager-ui/api/config";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { useMenuStore } from "@/store/menu";
 import HandTrigger from "./HandTrigger/index.vue";
 import { Modal } from "ant-design-vue";
-import { useAlarmLevel } from "../../../hook";
-import { ConfigurationImages } from "../../../assets/index";
+import { useAlarmLevel } from "@rule-engine-manager-ui/hook";
+import { ConfigurationImages } from "@rule-engine-manager-ui/assets";
 import { useI18n } from 'vue-i18n'
-import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
+import {useAlarmConfigType} from "@rule-engine-manager-ui/hook/useAlarmConfigType";
 
 const { t: $t } = useI18n()
 const params = ref<Record<string, any>>({});

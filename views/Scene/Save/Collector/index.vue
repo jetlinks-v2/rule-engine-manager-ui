@@ -26,7 +26,7 @@ import Title from './Title.vue'
 import type {TriggerCollector} from '../../typings';
 import {EventEmitter, DeviceEmitterKey} from '../util';
 import Terms from "../components/Terms";
-import {useSceneStore} from "@ruleEngine/store/scene";
+import {useSceneStore} from "@rule-engine-manager-ui/store/scene";
 import {storeToRefs} from "pinia";
 import { useI18n } from 'vue-i18n'
 

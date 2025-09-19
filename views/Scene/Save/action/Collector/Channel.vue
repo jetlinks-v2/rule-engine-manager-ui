@@ -93,7 +93,7 @@
 </template>
 
 <script setup lang="ts" name="Channel">
-import {query, getProviders} from '@ruleEngine/api/channel'
+import {query, getProviders} from '@rule-engine-manager-ui/api/channel'
 import {protocolList, imgMap, StatusColorEnum} from "../../Collector/data";
 import { useI18n } from 'vue-i18n';
 

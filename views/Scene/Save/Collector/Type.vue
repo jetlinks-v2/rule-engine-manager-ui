@@ -35,7 +35,7 @@ import type {PropType} from "vue";
 import ReadPoints from "./ReadPoints.vue";
 import WritePoint from "./WritePoint.vue";
 import {cloneDeep, omit} from "lodash-es";
-import {sceneImages} from "@ruleEngine/assets";
+import {sceneImages} from "@rule-engine-manager-ui/assets";
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({

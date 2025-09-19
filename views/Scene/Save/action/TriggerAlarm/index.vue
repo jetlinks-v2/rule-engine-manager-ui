@@ -98,20 +98,20 @@
 </template>
 
 <script setup lang="ts">
-import { queryAlarmPage } from "../../../../../api/scene";
+import { queryAlarmPage } from "@rule-engine-manager-ui/api/scene";
 import AlarmModal from "./AlarmModal.vue";
 import {
   queryBindScene,
   unBindAlarm,
   unbindScene,
-} from "../../../../../api/configuration";
+} from "@rule-engine-manager-ui/api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { EventEmitter } from "../../util";
 import { useRequest } from '@jetlinks-web/hooks';
-import { useAlarmLevel } from "../../../../../hook";
-import LevelIcon from '@ruleEngine/components/AlarmLevelIcon/index.vue'
+import { useAlarmLevel } from "@rule-engine-manager-ui/hook";
+import LevelIcon from '@rule-engine-manager-ui/components/AlarmLevelIcon/index.vue'
 import { useI18n } from 'vue-i18n'
-import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
+import {useAlarmConfigType} from "@rule-engine-manager-ui/hook/useAlarmConfigType";
 
 const { t: $t } = useI18n()
 

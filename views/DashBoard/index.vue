@@ -95,14 +95,14 @@ import {
   getAlarm,
   getAlarmConfigCount,
   getAlarmLevel,
-} from "../../api/dashboard";
+} from "@rule-engine-manager-ui/api/dashboard";
 import dayjs from "dayjs";
 import { useMenuStore } from "@/store/menu";
-import { query } from "../../api/scene";
-import { dashBoardImg } from "../../assets/index";
+import { query } from "@rule-engine-manager-ui/api/scene";
+import { dashBoardImg } from "@rule-engine-manager-ui/assets";
 import { useI18n } from 'vue-i18n'
-import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
-import {queryCollectorById} from "@ruleEngine/api/collector";
+import {useAlarmConfigType} from "@rule-engine-manager-ui/hook/useAlarmConfigType";
+import {queryCollectorById} from "@rule-engine-manager-ui/api/collector";
 
 const { t: $t } = useI18n()
 

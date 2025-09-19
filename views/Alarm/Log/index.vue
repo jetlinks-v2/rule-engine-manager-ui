@@ -5,11 +5,11 @@
 </template>
 
 <script lang="ts" setup>
-import { useAlarmStore } from '../../../store/alarm';
+import { useAlarmStore } from '@rule-engine-manager-ui/store/alarm';
 import { storeToRefs } from 'pinia';
 import  TableComponents  from './TabComponent/index.vue';
 import { useI18n } from 'vue-i18n';
-import {useAlarmConfigType} from "@ruleEngine/hook/useAlarmConfigType";
+import {useAlarmConfigType} from "@rule-engine-manager-ui/hook/useAlarmConfigType";
 
 
 const alarmStore = useAlarmStore();

@@ -1,6 +1,6 @@
 <script setup name="Notify">
 import { useI18n } from 'vue-i18n';
-import {itemNotifyIconMap} from "@ruleEngine/views/Scene/Save/action/ListItem/util";
+import {itemNotifyIconMap} from "@rule-engine-manager-ui/views/Scene/Save/action/ListItem/util";
 
 defineProps({
   data: {

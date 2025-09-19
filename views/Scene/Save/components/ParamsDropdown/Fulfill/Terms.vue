@@ -12,7 +12,7 @@ import {arrayParamsKey, doubleParamsKey} from "../../../components/Terms/util";
 import {watch} from "vue";
 import {getOption} from "../../../components/DropdownButton/util";
 import { storeToRefs } from "pinia";
-import { useSceneStore } from "@ruleEngine/store/scene";
+import { useSceneStore } from "@rule-engine-manager-ui/store/scene";
 
 const props = defineProps({
   isLast: {

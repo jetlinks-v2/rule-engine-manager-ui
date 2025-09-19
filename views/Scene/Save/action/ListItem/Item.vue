@@ -116,7 +116,7 @@ import { ActionsType, ParallelType } from "../../../typings";
 import EditModal from "../Modal/index.vue";
 import ActionTypeComponent from "../Modal/ActionTypeComponent.vue";
 import TriggerAlarm from "../TriggerAlarm/index.vue";
-import { useSceneStore } from "@ruleEngine/store/scene";
+import { useSceneStore } from "@rule-engine-manager-ui/store/scene";
 import { storeToRefs } from "pinia";
 import { iconMap} from "./util";
 import FilterGroup from "./FilterGroup.vue";
