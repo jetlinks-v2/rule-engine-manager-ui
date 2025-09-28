@@ -35,7 +35,10 @@
       >
         <template #img>
           <slot name="img">
-            <img :src="sceneImages.deviceCard" />
+            <Image
+              :src="sceneImages.deviceCard"
+              class="card-list-img-80"
+            />
           </slot>
         </template>
         <template #content>

@@ -35,10 +35,9 @@
       >
         <template #img>
           <slot name="img">
-            <img
-              width="80"
-              height="80"
+            <Image
               :src="slotProps.photoUrl || sceneImages.deviceCard"
+              class="card-list-img-80"
             />
           </slot>
         </template>
