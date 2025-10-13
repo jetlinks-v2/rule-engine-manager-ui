@@ -175,6 +175,7 @@ import { useAlarmLevel } from "@rule-engine-manager-ui/hook";
 import { ConfigurationImages } from "@rule-engine-manager-ui/assets";
 import { useI18n } from 'vue-i18n'
 import {useAlarmConfigType} from "@rule-engine-manager-ui/hook/useAlarmConfigType";
+import { useTermOptions } from '@jetlinks-web/components/es/Search/hooks/useTermOptions'
 
 const { t: $t } = useI18n()
 const params = ref<Record<string, any>>({});
@@ -186,6 +187,7 @@ const configId = ref();
 const deleteState = ref(false);
 const alarmRecordNumber = ref(0);
 const { supports } = useAlarmConfigType();
+const { termOptions } = useTermOptions({ pick: ['in']})
 const columns = [
   {
     title: $t('Configuration.index.021440-5'),
@@ -217,7 +219,8 @@ const columns = [
     key: "id",
     search: {
       type: "select",
-      termOptions: ["in"],
+      termOptions: termOptions,
+      defaultTermType: 'in',
       options: async () => {
         const allData = await queryList({
           paging: false,

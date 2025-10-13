@@ -31,10 +31,10 @@
       >
         <template #img>
           <slot name="img">
-            <img
-              width="80"
-              height="80"
-              :src="slotProps.photoUrl || sceneImages.deviceProduct"
+            <Image
+              :src="slotProps.photoUrl ||
+                                sceneImages.deviceProduct"
+              class="card-list-img-80"
             />
           </slot>
         </template>
@@ -69,6 +69,7 @@ import { getTreeData_api } from "@rule-engine-manager-ui/api/department";
 import { sceneImages } from "@rule-engine-manager-ui/assets/index";
 import { accessConfigTypeFilter } from "@rule-engine-manager-ui/utils/setting";
 import { useI18n } from 'vue-i18n'
+import { useTermOptions } from '@jetlinks-web/components/es/Search/hooks/useTermOptions'
 
 const { t: $t } = useI18n()
 type Emit = {
@@ -92,6 +93,8 @@ const props = defineProps({
 
 const emit = defineEmits<Emit>();
 const firstFind = ref(true);
+
+const { termOptions } = useTermOptions({ pick: ['eq']})
 
 const columns = [
   {
@@ -202,7 +205,7 @@ const columns = [
     hideInTable: true,
     search: {
       type: "treeSelect",
-      termOptions: ["eq"],
+      termOptions: termOptions,
       componentProps: {
         fieldNames: {
           label: "name",
