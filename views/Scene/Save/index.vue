@@ -51,10 +51,12 @@ import Description from "./components/Description.vue";
 import { Modal } from 'ant-design-vue';
 import { unBindAlarm } from "../../../api/configuration";
 import { debounce, omit } from "lodash-es";
+import {useTabSaveSuccessBack} from "@/hooks";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const menuStore = useMenuStore();
+const { onBack } = useTabSaveSuccessBack()
 const { data: actionOptions } = useRequest(queryActionType, {
   onSuccess(resp) {
     return resp.result.map(item => ({ label: item.name, value: item.provider, subLabel: item.description, iconUrl: actionIconMap[item.provider] }))
@@ -91,7 +93,7 @@ const save = async (next?: Function) => {
       });
     loading.value = false;
     if (resp.success) {
-      const isTabBack = onBack(resp)
+      const isTabBack = await onBack(resp)
 
       if (!isTabBack) {
         next ? next?.() : menuStore.jumpPage("rule-engine/Scene", {});
