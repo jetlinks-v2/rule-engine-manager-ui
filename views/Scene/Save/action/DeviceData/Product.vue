@@ -31,14 +31,11 @@
             >
                 <template #img>
                     <slot name="img">
-                        <img
-                            :width="80"
-                            :height="80"
-                            :src="
-                                slotProps.photoUrl ||
-                                sceneImages.deviceProduct
-                            "
-                        />
+                      <Image
+                        :src="slotProps.photoUrl ||
+                                sceneImages.deviceProduct"
+                        class="card-list-img-80"
+                      />
                     </slot>
                 </template>
                 <template #content>
@@ -215,6 +212,7 @@ const columns = [
         hideInTable: true,
         search: {
             type: 'treeSelect',
+            termOptions: ['eq'],
             componentProps: {
               fieldNames: {
                 label: 'name',
