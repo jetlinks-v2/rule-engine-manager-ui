@@ -303,7 +303,11 @@ const valueSelect = (e) => {
 }
 
 const functionSelect = () => {
-  paramsValue.value.value = undefined;
+  if(showDouble.value || showArray.value) {
+    paramsValue.value.value = [undefined, undefined];
+  } else {
+    paramsValue.value.value = undefined;
+  }
 }
 
 const onDelete = () => {
