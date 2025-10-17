@@ -37,7 +37,7 @@
         style="display: flex"
       >
         <DoubleParamsDropdown
-          v-if="showDouble && tabsOptions[0]?.component !== 'enum'"
+          v-if="showDouble"
           icon="icon-canshu"
           :placeholder="$t('Terms.ParamsItem.9093430-4')"
           :options="valueOptions"
