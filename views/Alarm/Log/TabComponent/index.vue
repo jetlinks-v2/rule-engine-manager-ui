@@ -438,6 +438,7 @@ const getActions = (
             ? $t("TabComponent.index.165152-16")
             : $t("TabComponent.index.165152-23"),
       },
+      disabled: currentData.state?.value === "normal",
       icon: "ToolOutlined",
       onClick: () => {
         data.value.current = currentData;
