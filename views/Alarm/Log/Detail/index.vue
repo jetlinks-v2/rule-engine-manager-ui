@@ -21,10 +21,10 @@
           dayjs(slotProps.alarmTime).format("YYYY-MM-DD HH:mm:ss")
         }}</template>
         <template #sourceName="slotProps"
-          >{{ $t('Detail.index.165158-0') }}<a-button
+          >{{ sourceName(slotProps.sourceType) }}：<a
             type="link"
-            @click="() => gotoDevice(slotProps.sourceId)"
-            >{{ slotProps.sourceName }}</a-button
+            @click="() => gotoDevice(slotProps.sourceType, slotProps.sourceId)"
+            >{{ slotProps.sourceName }}</a
           ></template
         >
         <template #action="slotProps">
@@ -186,6 +186,29 @@ const terms = [
     type: "and",
   },
 ];
+
+const sourceName = computed(() => {
+  return (type: string) => {
+    let name = '';
+    switch(type) {
+      case 'scene': 
+        name = $t('Detail.index.165158-9')
+        break;
+      case 'device': 
+        name = $t('Detail.index.165158-0')
+        break;
+      case 'networkCardPool':
+        name = $t('Detail.index.165158-10')
+        break;
+      case 'collector':
+        name = $t('Detail.index.165158-11')
+        break;
+      default: 
+        name = ''
+    }
+    return name
+  }
+})
 /**
  * 获取详情列表
  */
@@ -196,10 +219,35 @@ const queryList = (params: any) => {
     })
   }
 };
-const gotoDevice = (id: string) => {
-  menuStory.jumpPage("device/Instance/Detail", {
-    params: { id, tab: "Running" },
-  });
+const gotoDevice = (type: string, id: string) => {
+  switch(type) {
+    case 'device': 
+      menuStory.jumpPage("device/Instance/Detail", {
+        params: { id, tab: "Running" },
+      });
+      break;
+    case 'networkCardPool':
+      menuStory.jumpPage("iot-card/TrafficPoolManagement/Detail", {
+        params: {
+          id
+        }
+      })
+      break
+    case 'scene':
+      menuStory.jumpPage('rule-engine/Scene/Save', {
+        query: {
+          id,
+        }
+      })
+      break
+    case 'collector':
+      menuStory.jumpPage('DataCollect/Collector', {
+        query: {
+          collectorId: id
+        }
+      })
+  }
+  
 };
 /**
  * 根据id初始化数据
