@@ -51,7 +51,7 @@ import Description from "./components/Description.vue";
 import { Modal } from 'ant-design-vue';
 import { unBindAlarm } from "../../../api/configuration";
 import { debounce, omit } from "lodash-es";
-import { useTabSaveSuccessBack } from '@/hooks'
+import {useTabSaveSuccessBack} from "@/hooks";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

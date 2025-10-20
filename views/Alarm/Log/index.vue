@@ -1,6 +1,6 @@
 <template>
     <j-page-container :tabList="list" :tabActiveKey="data.tab" @tabChange="onTabChange">
-        <TableComponents :type="data.tab"></TableComponents>
+        <TableComponents :key="data.tab" :type="data.tab"></TableComponents>
     </j-page-container>
 </template>
 

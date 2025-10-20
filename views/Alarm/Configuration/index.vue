@@ -186,7 +186,7 @@ const visibleDelete = ref(false);
 const configId = ref();
 const deleteState = ref(false);
 const alarmRecordNumber = ref(0);
-const { supports } = useAlarmConfigType();
+const { supports } = useAlarmConfigType(['networkCardPool']);
 const { termOptions } = useTermOptions({ pick: ['in']})
 const columns = [
   {
