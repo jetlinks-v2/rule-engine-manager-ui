@@ -338,6 +338,7 @@
 	"components.Log.165155-8": "操作",
 	"components.Log.165155-9": "定时触发",
 	"components.Log.165155-10": "采集器名称：",
+	"components.Log.165155-11": "流量池：",
 	"Detail.index.165158-0": "设备名称",
 	"Detail.index.165158-1": "告警时间",
 	"Detail.index.165158-2": "告警名称",

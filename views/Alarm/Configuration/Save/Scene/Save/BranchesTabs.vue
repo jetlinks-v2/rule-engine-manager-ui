@@ -22,10 +22,17 @@
               <template v-if="branch.shakeLimit?.enabled">
                 <span>{{ $t('Save.BranchesTabs.0214510-5') }}</span>
                 <span class="branches-shakeLimit-time">{{ branch.shakeLimit.time }}</span>
-                <span>{{ $t('Save.BranchesTabs.0214510-6') }}</span>
+                <span>{{ $t('ShakeLimit.index.9093426-7') }}</span>
+                <span class="branches-shakeLimit-time">{{ branch.shakeLimit?.continuous ? $t('ShakeLimit.index.9093426-15') : $t('ShakeLimit.index.9093426-16') }}</span>
+                <span>{{ $t('ShakeLimit.index.9093426-8') }}</span>
                 <span class="branches-shakeLimit-time">{{ branch.shakeLimit.threshold }}</span>
-                <span>{{ $t('Save.BranchesTabs.0214510-7') }}</span>
-                <span>{{ branch.shakeLimit.alarmFirst ? $t('Save.BranchesTabs.0214510-8') : $t('Save.BranchesTabs.0214510-9') }}</span>
+                <span>{{ $t('ShakeLimit.index.9093426-9') }}</span>
+                <span class="branches-shakeLimit-time">{{ branch.shakeLimit.alarmFirst ? $t('ShakeLimit.index.9093426-13') : $t('ShakeLimit.index.9093426-14') }}</span>
+                <span>{{ $t('ShakeLimit.index.9093426-10') }}</span>
+                <span class="branches-shakeLimit-time">{{ branch.shakeLimit.outputFirst ? $t('ShakeLimit.index.9093426-17'): $t('ShakeLimit.index.9093426-18') }}</span>
+                <span>{{ $t('ShakeLimit.index.9093426-11') }}</span>
+                <span class="branches-shakeLimit-time">{{ branch.shakeLimit.rolling ? $t('ShakeLimit.index.9093426-19') : $t('ShakeLimit.index.9093426-20')}}</span>
+                <span>{{ $t('ShakeLimit.index.9093426-12') }}</span>
               </template>
               <span v-else>
                 {{ $t('Save.BranchesTabs.0214510-10') }}
