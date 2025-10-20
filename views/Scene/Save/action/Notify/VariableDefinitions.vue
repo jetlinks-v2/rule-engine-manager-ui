@@ -170,7 +170,7 @@ const checkValue = (_rule: any, value: any, item: any) => {
                     }
                 } else {
                     if(!value?.relation?.objectId) {
-                        return Promise.reject($t('variableItem.User.9667821-5"'));
+                        return Promise.reject($t('variableItem.User.9667821-5'));
                     }
                 }
             }
