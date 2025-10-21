@@ -702,7 +702,7 @@ watch(
               "update:value",
               handleFilterTerms({
                 ...props.value,
-                error: (Array.isArray(_value) && _value.some((i) => levelOptions.value?.findIndex(item => item.id === i) === -1)) || (!Array.isArray(_value) && levelOptions.value?.findIndex(i => i.value === _value) === -1) || !_value?.length 
+                error: (Array.isArray(_value) && _value.some((i) => levelOptions.value?.findIndex(item => item.id === i) === -1)) || (!Array.isArray(_value) && levelOptions.value?.findIndex(i => i.value === _value) === -1) || !_value
               })
             );
             valueChangeAfter();

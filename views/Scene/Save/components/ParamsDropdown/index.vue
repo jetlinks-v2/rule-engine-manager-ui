@@ -205,7 +205,7 @@ const valueItemChange = (e: string) => {
 };
 
 const multipleChange = (e: {fullName: string, value: any}[]) => {
-  label.value = e.map(item => item.fullName);
+  label.value = e.map(item => item.fullName || item.name);
   emit("update:value", e.map(item => item.value));
   emit("valueBackups:value", e.map(item => item.value));
   emit("select", e.map(item => item.value), label.value, { 0: label.value });
@@ -257,7 +257,7 @@ watchEffect(() => {
       if(props.multiple && props.source === 'fixed') {
         label.value = props.options?.filter(item => pValue?.includes(item.value)).map(item => item.fullName);
       } else {
-        label.value = pValue!== undefined? pValue : props.placeholder;
+        label.value = pValue!== undefined ? Array.isArray(pValue) ? props.options?.filter(item => pValue?.includes(item.value)).map(item => item.fullName || item.name) : pValue : props.placeholder;
       }
     }
   }

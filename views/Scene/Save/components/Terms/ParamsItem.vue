@@ -79,7 +79,7 @@
           :options="valueOptions"
           :metricOptions="metricOption"
           :tabsOptions="tabsOptions"
-          :multiple="true"
+          :multiple="['in', 'nin'].includes(paramsValue.termType)"
           :metric="paramsValue.value?.metric"
           v-model:value="paramsValue.value.value"
           v-model:source="paramsValue.value.source"
