@@ -102,6 +102,10 @@ const props = defineProps({
     type: Array as PropType<Array<DropdownButtonOptions>>,
     default: () => [],
   },
+  columnOptionsMap: {
+    type: Object,
+    default: () => new Map()
+  },
   type: {
     type: String,
     default: "column", // 'column' | 'termType' | 'value' | 'type'
@@ -152,7 +156,14 @@ const menuSelect = (v: string, option: any) => {
 };
 
 watchEffect(() => {
-  const option = getOption(props.options, props.value, props.valueName);
+  let option
+
+  if (!props.columnOptionsMap) {
+    option = getOption(props.options, props.value, props.valueName);
+  } else {
+    option = props.columnOptionsMap.get(props.value);
+  }
+
   selectValue.value = props.value;
   if (option) {
     // 数据回显

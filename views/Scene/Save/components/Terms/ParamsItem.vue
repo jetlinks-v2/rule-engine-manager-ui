@@ -18,6 +18,7 @@
         value-name="column"
         label-name="fullName"
         :options="columnOptions"
+        :columnOptionsMap="columnOptionsMap"
         :placeholder="$t('Terms.ParamsItem.9093430-2')"
         v-model:value="paramsValue.column"
         component="treeSelect"
@@ -28,6 +29,7 @@
         value-name="id"
         label-name="name"
         :options="termTypeOptions"
+        :columnOptionsMap="termTypeOptionsMap"
         :placeholder="$t('Terms.ParamsItem.9093430-3')"
         v-model:value="paramsValue.termType"
         @select="termsTypeSelect"
@@ -107,7 +109,6 @@
 import type { PropType } from "vue";
 import type { TermsType } from "../../../typings";
 import DropdownButton from "../DropdownButton";
-import { getOption } from "../DropdownButton/util";
 import ParamsDropdown, {
   DoubleParamsDropdown,
   ArrayParamsDropdown,
@@ -118,8 +119,8 @@ import {
   ContextKey,
   arrayParamsKey,
   timeTypeKeys,
-  doubleParamsKey, nullKeys,
-} from "./util";
+  doubleParamsKey, nullKeys, ColumnOptionsMapKey
+} from './util'
 import { useSceneStore } from "../../../../../store/scene";
 import { storeToRefs } from "pinia";
 import { Form } from "ant-design-vue";
@@ -200,8 +201,10 @@ const paramsValue = reactive<TermsType>({
 
 const showDelete = ref(false);
 const columnOptions: any = inject(ContextKey); //
+const columnOptionsMap: any = inject(ColumnOptionsMapKey, new Map()); //
 const columnType = ref<string>();
 const termTypeOptions = ref<Array<{ id: string; name: string }>>([]); // 条件值
+const termTypeOptionsMap = ref(new Map());
 const valueOptions = ref<any[]>([]); // 默认手动输入下拉
 const metricOption = ref<any[]>([]); // 根据termType获取对应指标值
 const isMetric = ref<boolean>(false); // 是否为指标值
@@ -213,6 +216,8 @@ const metricsCacheOption = ref<any[]>([]); // 缓存指标值
 const handOptionByColumn = (option: any) => {
   if (option) {
     termTypeOptions.value = option.termTypes || [];
+    termTypeOptionsMap.value = new Map((option.termTypes || []).map(item => [item.id, item]))
+
     metricsCacheOption.value =
       option.metrics?.map((item: any) => ({
         ...item,
@@ -260,6 +265,7 @@ const handOptionByColumn = (option: any) => {
     }
   } else {
     termTypeOptions.value = [];
+    termTypeOptionsMap.value = new Map();
     metricsCacheOption.value = [];
     valueOptions.value = [];
   }
@@ -470,11 +476,7 @@ watch(
   () => JSON.stringify(columnOptions.value),
   () => {
     if (paramsValue.column) {
-      const option = getOption(
-        columnOptions.value,
-        paramsValue.column,
-        "column"
-      );
+      const option = columnOptionsMap.value.get(paramsValue.column)
       const copyValue = props.value;
       if (option && Object.keys(option).length) {
         handOptionByColumn(option);
