@@ -3,7 +3,7 @@
     class="scene-select-value"
     trigger="click"
     v-model:open="visible"
-    @visibleChange="visibleChange"
+    @openChange="visibleChange"
   >
     <div @click.prevent="visible = true">
       <slot :label="label">
