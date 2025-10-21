@@ -7,9 +7,9 @@
       <AIcon type='icon-zhihangdongzuoxie-1' />
       {{ value[0] }}
     </div>
-    <div v-if="showAlarm" class="dropdown-button alarm">
+    <!-- <div v-if="showAlarm" class="dropdown-button alarm">
       {{ value[4] }}
-    </div>
+    </div> -->
     <div class="dropdown-button termType">
       {{ TermsTypeMap[value[1]] || value[1] }}
     </div>
