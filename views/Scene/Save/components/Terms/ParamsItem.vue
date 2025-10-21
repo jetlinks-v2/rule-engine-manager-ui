@@ -472,8 +472,10 @@ const onDelete = () => {
   ].terms.splice(props.termsName, 1);
 };
 
+const columnOption = computed(() => columnOptionsMap.value.get(paramsValue.column))
+
 watch(
-  () => JSON.stringify(columnOptions.value),
+  columnOption,
   () => {
     if (paramsValue.column) {
       const option = columnOptionsMap.value.get(paramsValue.column)
@@ -502,7 +504,7 @@ watch(
       }
     }
   },
-  { immediate: true }
+  { immediate: true, flush: 'post'  }
 );
 
 watch(() => paramsValue?.termType, (newVal, oldValue) => {

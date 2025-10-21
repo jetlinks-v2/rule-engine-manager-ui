@@ -28,7 +28,7 @@ export const handleParamsData = (data: any[], key: string = 'column', parentId?:
   }) || []
 }
 
-export const handleParamsDataMap = (data: any[], key: string = 'column') => {
+export const handleParamsDataMap = (data: any[], key: string = 'column', pId?: string) => {
   let _map = new Map()
 
   data?.forEach((item, index) => {
@@ -39,10 +39,13 @@ export const handleParamsDataMap = (data: any[], key: string = 'column') => {
       keyValue = item[key] + index
     }
 
-    _map.set(keyValue, omit(item, ['children']))
+    _map.set(keyValue, {
+      ...omit(item, ['children']),
+      pId: pId,
+    })
 
     if (hasChildren) {
-      _map = new Map([..._map, ...handleParamsDataMap(item.children)])
+      _map = new Map([..._map, ...handleParamsDataMap(item.children, key, item[key])])
     }
   })
 

@@ -1,7 +1,5 @@
 <template>
-  <template>
-    <slot />
-  </template>
+  <slot />
 </template>
 
 <script setup lang="ts" name="ActionCheckItem">
