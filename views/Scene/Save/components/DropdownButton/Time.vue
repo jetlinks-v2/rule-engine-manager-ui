@@ -1,8 +1,8 @@
 <template>
-  <div class='dropdown-time-picker'>
+  <div class='dropdown-time-picker' ref="dropdownTimePickerRef">
     <a-time-picker
       v-if='type === "time"'
-      :open="open"
+      open
       v-model:value='myValue'
       class='manual-time-picker'
       :format='myFormat'
@@ -14,7 +14,7 @@
     />
     <a-date-picker
       v-else
-      :open="open"
+      open
       class='manual-time-picker'
       v-model:value='myValue'
       :format='myFormat'
@@ -51,20 +51,19 @@ const props = defineProps({
   }
 })
 
-const open = ref<boolean>(true)
 const emit = defineEmits<Emit>()
 const myFormat = props.format || ( props.type === 'time' ? 'HH:mm:ss' : 'YYYY-MM-DD HH:mm:ss')
 // const myValue = ref<Dayjs>(dayjs(props.value || new Date(), myFormat))
 console.log('Time', props.value, myFormat)
 const myValue = ref<string|number>()
 
+const dropdownTimePickerRef = ref()
 const getPopupContainer = (trigger: HTMLElement) => {
-  return trigger?.parentNode || document.body
+  return dropdownTimePickerRef.value
 }
 
 const change = (e: string) => {
-  myValue.value =  e
-  open.value = false
+  myValue.value = e
   emit('update:value', e)
   emit('change', e)
 }
@@ -86,7 +85,7 @@ onMounted(() => {
   }
 
   .manual-time-picker{
-    // display: none;
+    display: none;
   }
 
   .ant-picker-dropdown {

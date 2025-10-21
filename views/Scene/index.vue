@@ -40,7 +40,7 @@
                   :height="16"
                   :src="typeMap[slotProps.triggerType]?.icon"
                   style="margin-right: 5px"
-                />{{ slotProps.trigger.typeName }}</span
+                />{{ slotProps.trigger?.typeName }}</span
               >
             </template>
             <template #img>
@@ -85,7 +85,7 @@
           </CardBox>
         </template>
         <template #triggerType="slotProps">
-          {{ slotProps.trigger.typeName }}
+          {{ slotProps.trigger?.typeName }}
         </template>
         <template #state="slotProps">
           <JBadgeStatus
