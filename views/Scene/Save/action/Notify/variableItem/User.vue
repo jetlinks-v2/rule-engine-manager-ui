@@ -1,5 +1,5 @@
 <template>
-    <a-input-group compact>
+    <div style="display: flex">
         <a-select
             style="width: 120px"
             v-model:value="mySource"
@@ -93,9 +93,26 @@
             </a-tree-select>
         </template>
         <template v-else>
+            <div v-if="['weixin'].includes(notifyType)" style="width: calc(100% - 120px)">
+              <component
+                  v-if="ToUserModal"
+                  :is="ToUserModal"
+                  :toUser="value?.value"
+                  :toUserName="options?.sendTo"
+                  :config-id="notify.notifierId"
+                  @change="
+                    (val, option) =>
+                        onChange(
+                            source,
+                            val,
+                            option?.label || option?.name,
+                        )
+                "
+              />
+            </div>
             <a-select
                 style="width: calc(100% - 120px)"
-                v-if="['dingTalk', 'weixin'].includes(notifyType)"
+                v-else-if="['dingTalk'].includes(notifyType)"
                 :placeholder="$t('variableItem.User.9667821-5')"
                 :value="relationData"
                 showSearch
@@ -137,7 +154,7 @@
                 "
             ></a-input>
         </template>
-    </a-input-group>
+    </div>
 </template>
 
 <script lang="ts" setup name="NotifyUser">
@@ -147,6 +164,7 @@ import {queryDingTalkUsers , queryWechatUsers , getPlatformUsers , getRelationUs
 import { unionBy } from 'lodash-es';
 import { useI18n } from 'vue-i18n'
 import { isNoCommunity } from '@/utils';
+import {moduleRegistry} from "@/utils/module-registry";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -161,10 +179,14 @@ const props = defineProps({
         type: [Object],
         default: () => {},
     },
+  options: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
 const emit = defineEmits(['update:value', 'change']);
-
+const ToUserModal = ref<any>(null);
 const notifyType = computed(() => {
     return props.notify?.notifyType;
 });
@@ -434,4 +456,9 @@ watch(
     },
     { deep: true, immediate: true },
 );
+
+onMounted(() => {
+  const notifyComponents = moduleRegistry.getResource('notify-manager-ui', 'components')
+  ToUserModal.value = notifyComponents?.ToUserModal
+})
 </script>
