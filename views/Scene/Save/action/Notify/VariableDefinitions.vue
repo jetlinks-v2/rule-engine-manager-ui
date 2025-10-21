@@ -20,6 +20,7 @@
         >
             <User
                 :notify="notify"
+                :options="options"
                 v-if="getType(item) === 'user'"
                 v-model:value="modelRef[item.id]"
                 @change="(val) => onChange(val, 'user', index)"
