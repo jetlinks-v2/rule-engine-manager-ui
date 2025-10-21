@@ -177,7 +177,7 @@ const handleSearch = (e: any) => {
 const emit = defineEmits(["closeSave", "saveScene"]);
 
 const saveCorrelation = async () => {
-  if (Object.keys(selectedKeysMap).length > 0) {
+  if (Object.keys(selectedKeysMap).length > 0 && Object.keys(selectedKeysMap).some(i => selectedKeysMap[i].length > 0)) {
     const list = Object.keys(selectedKeysMap).reduce((prev, next) => {
       const branches = selectedKeysMap[next].map((key) => {
         return {

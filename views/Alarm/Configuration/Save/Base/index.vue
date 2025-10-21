@@ -198,7 +198,7 @@ let form = ref({
   name: "",
   description: "",
 });
-const { supports: options } = useAlarmConfigType();
+const { supports: options } = useAlarmConfigType(['networkCardPool']);
 let levelOption = ref();
 let loading = ref(false);
 const formRef = ref();

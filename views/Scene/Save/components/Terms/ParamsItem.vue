@@ -48,7 +48,7 @@
           @select="valueSelect"
         />
         <ArrayParamsDropdown
-          v-else-if="showArray"
+          v-else-if="showArray && tabsOptions[0]?.component !== 'enum'"
           icon="icon-canshu"
           :placeholder="$t('Terms.ParamsItem.9093430-4')"
           :options="valueOptions"
@@ -79,6 +79,7 @@
           :options="valueOptions"
           :metricOptions="metricOption"
           :tabsOptions="tabsOptions"
+          :multiple="true"
           :metric="paramsValue.value?.metric"
           v-model:value="paramsValue.value.value"
           v-model:source="paramsValue.value.source"

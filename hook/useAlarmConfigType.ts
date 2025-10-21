@@ -1,6 +1,6 @@
 import { getTargetTypes } from '../api/configuration';
 
-export const useAlarmConfigType = () => {
+export const useAlarmConfigType = (filter: string[] = []) => {
   type Options = { label: string; value: string };
   const supports = ref<Options[]>([]);
   getTargetTypes().then((res) => {
@@ -9,6 +9,8 @@ export const useAlarmConfigType = () => {
         label: item.name,
         value: item.id,
       };
+    }).filter((item: any) => {
+      return !filter.includes(item.value)
     });
   });
   return {

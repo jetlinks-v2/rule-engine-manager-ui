@@ -553,6 +553,13 @@ const jumpToDetail = async (id: string) => {
         }
       });
       break;
+    case "networkCardPool":
+      menuStory.jumpPage("iot-card/TrafficPoolManagement/Detail", {
+        params: {
+          id
+        }
+      })
+      break;
   }
 };
 </script>

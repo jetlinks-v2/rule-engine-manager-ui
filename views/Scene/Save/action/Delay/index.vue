@@ -17,6 +17,7 @@
         >
             <template #addonAfter>
                 <a-select
+                    style="min-width: 60px"
                     :options="[
                         { label: $t('Delay.index.9667826-2'), value: 'seconds' },
                         { label: $t('Delay.index.9667826-3'), value: 'minutes' },

@@ -290,7 +290,7 @@ const newColumns = computed(() => {
           type: "treeSelect",
           options: () => {
             return new Promise((resolve) => {
-              getTreeData_api({}).then((resp: any) => {
+              getTreeData_api({paging: false}).then((resp: any) => {
                 const formatValue = (list: any[]) => {
                   const _list: any[] = [];
                   list.forEach((item) => {
@@ -438,6 +438,7 @@ const getActions = (
             ? $t("TabComponent.index.165152-16")
             : $t("TabComponent.index.165152-23"),
       },
+      disabled: currentData.state?.value === "normal",
       icon: "ToolOutlined",
       onClick: () => {
         data.value.current = currentData;

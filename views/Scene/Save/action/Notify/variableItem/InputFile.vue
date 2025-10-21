@@ -3,6 +3,7 @@
         allowClear
         :placeholder="$t('variableItem.InputFile.9667824-0')"
         v-model:value="url"
+        disabled
         @change="onChange"
     >
         <template #addonAfter>
@@ -54,6 +55,7 @@ const handleChange = (info: any) => {
         loading.value = true;
     }
     if (info.file.status === 'done') {
+        url.value = info.file.response?.result;
         info.file.url = info.file.response?.result;
         loading.value = false;
         const result = info.file.response?.result;

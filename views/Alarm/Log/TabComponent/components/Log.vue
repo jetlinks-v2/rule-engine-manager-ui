@@ -33,6 +33,10 @@
               text
             }}</span></j-ellipsis
         >
+        <j-ellipsis v-else-if="['networkCardPool'].includes(record.sourceType)">
+          {{ $t('components.Log.165155-11') }}
+          <span class="deviceId" @click="() => gotoNetworkCardPool(record.sourceId)">{{text}}</span>
+        </j-ellipsis>
         <j-ellipsis v-else>{{ $t('components.Log.165155-1') }}<span class="deviceId" @click="() => gotoRule(record)">{{text}}</span></j-ellipsis>
       </template>
       <template
@@ -163,9 +167,17 @@ const gotoDevice = (id) => {
 const gotoCollector = async (id) => {
   const res = await queryCollectorById(id);
   menuStory.jumpPage("DataCollect/Collector", {
-    query: { channelId: res.result.channelId, collectorId: res.result.id },
+    query: { collectorId: id },
   });
 };
+
+const gotoNetworkCardPool = (id) => {
+  menuStory.jumpPage("iot-card/TrafficPoolManagement/Detail", {
+    params: {
+      id
+    }
+  })
+}
 
 const gotoRule = (record) => {
   menuStory.jumpPage(
