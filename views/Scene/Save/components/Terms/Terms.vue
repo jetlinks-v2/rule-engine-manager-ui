@@ -109,7 +109,7 @@ import { storeToRefs } from 'pinia';
 import { useSceneStore } from '../../../../../store/scene';
 import { cloneDeep } from 'lodash-es';
 import { provide } from 'vue';
-import { ContextKey, handleParamsData } from './util';
+import { ColumnOptionsMapKey, ContextKey, handleParamsData, handleParamsDataMap } from './util'
 import { getParseTerm } from '../../../../../api/scene';
 import type { FormModelType } from '../../../typings';
 import Branches from './Branches.vue';
@@ -128,12 +128,14 @@ const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
 const columnOptions = ref<any>([]);
+const columnOptionsMap = ref<any>(new Map());
 const group = ref<Array<{ id: string; len: number }>>([]);
 const activeKey = ref('');
 const editConditionVisible = ref(false);
 const conditionName = ref<any>();
 
 provide(ContextKey, columnOptions);
+provide(ColumnOptionsMapKey, columnOptionsMap);
 
 const change = (e: boolean, groupItem: any, index: number) => {
     // group.value = []
@@ -205,6 +207,7 @@ const queryColumn = (dataModel: FormModelType) => {
             'column',
             '0',
         );
+      columnOptionsMap.value = handleParamsDataMap(res.result)
     });
 };
 
