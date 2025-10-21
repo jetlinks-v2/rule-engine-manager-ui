@@ -247,7 +247,7 @@ const handleRangeFn = (array: Array<string| undefined>) => {
 
 const showDouble = computed(() => {
   return paramsValue.termType
-    ? arrayParamsKey.includes(paramsValue.termType) && ['int', 'float', 'short', 'double', 'long', 'enum'].includes(tabsOptions.value[0].component)
+    ? arrayParamsKey.includes(paramsValue.termType) && ['int', 'float', 'short', 'double', 'long', 'date', 'enum'].includes(tabsOptions.value[0].component)
     : false;
 });
 
