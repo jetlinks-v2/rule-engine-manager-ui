@@ -6,13 +6,14 @@
     style="margin: 0; padding-left: 0; padding-right: 0"
     target="scene-triggrt-device-category"
   />
-  <div style="height: 300px; overflow-y: auto;">
+  <a-divider style="margin: 0" />
     <j-pro-table
         ref="instanceRef"
         mode='TABLE'
         type='TREE'
         :columns="columns"
         :request="query"
+        :height="240"
         :bodyStyle='{ padding: 0, margin: 0}'
         :expandable='{
       expandedRowKeys: openKeys,
@@ -28,8 +29,6 @@
     >
 
     </j-pro-table>
-  </div>
-
 </template>
 
 <script setup lang='ts' name='OrgList'>
