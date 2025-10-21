@@ -6,7 +6,7 @@
         :overlayStyle="{
             maxWidth: '300px',
         }"
-        @visibleChange="visibleChange"
+        @openChange="visibleChange"
     >
         <div @click.prevent="visible = true">
             <slot :label="label">

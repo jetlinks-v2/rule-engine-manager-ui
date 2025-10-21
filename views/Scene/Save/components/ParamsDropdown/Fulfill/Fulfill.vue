@@ -229,7 +229,7 @@ watch(() => [JSON.stringify(props.value), visible.value], () => {
       {{ tips }}
     </div>
     <a-modal
-      v-model:visible="visible"
+      v-model:open="visible"
       :title="$t('ParamsDropdown.FulFill-3147419-0')"
       width="800px"
       :okText="$t('Save.index.551009-0')"
