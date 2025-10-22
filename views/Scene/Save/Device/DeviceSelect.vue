@@ -89,5 +89,6 @@ const updateOrg = (d: any[]) => {
 <style scoped lang='less'>
 .device-select{
   margin-top: 24px;
+  height: 100%;
 }
 </style>

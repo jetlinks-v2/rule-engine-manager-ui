@@ -3,35 +3,32 @@
     :columns="columns"
     type='simple'
     @search="handleSearch"
-    class='scene-search'
+    style="margin: 0; padding-left: 0; padding-right: 0"
     target="scene-triggrt-device-category"
   />
-  <a-divider style='margin: 0' />
-  <j-pro-table
-    ref="instanceRef"
-    mode='TABLE'
-    type='TREE'
-    :columns="columns"
-    :request="query"
-    :scroll="{
-        y: 200
-    }"
-    :bodyStyle='{ padding: "16px 0 0 0"}'
-    :expandable='{
+  <a-divider style="margin: 0" />
+    <j-pro-table
+        ref="instanceRef"
+        mode='TABLE'
+        type='TREE'
+        :columns="columns"
+        :request="query"
+        :height="240"
+        :bodyStyle='{ padding: 0, margin: 0}'
+        :expandable='{
       expandedRowKeys: openKeys,
       onExpandedRowsChange: expandedRowChange,
     }'
-    :rowSelection='{
+        :rowSelection='{
       type: "radio",
       selectedRowKeys: orgRowKeys,
       onChange: selectedRowChange,
     }'
-    :onChange='tableChange'
-    @selectCancel='cancelAll'
-  >
+        :onChange='tableChange'
+        @selectCancel='cancelAll'
+    >
 
-  </j-pro-table>
-
+    </j-pro-table>
 </template>
 
 <script setup lang='ts' name='OrgList'>
@@ -72,6 +69,7 @@ const columns = [
   {
     title: $t('Device.OrgList.079985-0'),
     width: 300,
+    key: 'name',
     ellipsis: true,
     dataIndex: 'name',
     search: {
@@ -79,6 +77,7 @@ const columns = [
     }
   },
   {
+    key: 'sortIndex',
     title: $t('Device.OrgList.079985-1'),
     dataIndex: 'sortIndex',
     sorter: true,
@@ -133,9 +132,4 @@ const expandedRowChange = (keys: string[]) => {
 </script>
 
 <style scoped>
-.search {
-  margin-bottom: 0;
-  padding-right: 0px;
-  padding-left: 0px;
-}
 </style>
