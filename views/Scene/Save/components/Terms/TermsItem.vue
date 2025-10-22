@@ -93,6 +93,11 @@ const rules = [
             return Promise.reject(new Error($t('Terms.TermsItem.9093428-3-1')));
           }
         }
+        if (['in', 'nin'].includes(v.termType)) {
+          if(Object.keys(v.value.value).length === 0) {
+            return Promise.reject(new Error($t('Terms.TermsItem.9093428-3')));
+          }
+        }
         if (v.value?.value === undefined) {
           if (v.value?.filter?.length) {
             return Promise.resolve();
@@ -113,6 +118,7 @@ const rules = [
       }
       return Promise.resolve();
     },
+    trigger: 'change'
   }
 ]
 

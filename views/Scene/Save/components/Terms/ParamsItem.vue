@@ -374,7 +374,7 @@ const termsTypeSelect = (e: { key: string; name: string }) => {
   const oldValue = isArray(paramsValue.value!.value)
     ? paramsValue.value!.value[0]
     : paramsValue.value!.value;
-  let value = arrayParamsKey.includes(e.key) ? [oldValue, undefined] : oldValue;
+  let value = arrayParamsKey.includes(e.key) ? showDouble.value ? [oldValue, undefined] : oldValue ? [oldValue] : [] : oldValue;
   // 如果上次的值 在 timeTypeKeys中 则不变
   if (columnType.value === "date") {
     if (timeTypeKeys.includes(e.key)) {

@@ -638,7 +638,7 @@
 	"components.Description.9093421-3": "Confirm",
 	"Timer.WhenOption.9093535-0": "Every day",
 	"Timer.WhenOption.9093535-1": "Number {0}",
-	"ParamsDropdown.Array.9093538-0": "Multiple values separated by commas in English",
+	"ParamsDropdown.Array.9093538-0": "Multiple values separated by newlines",
 	"actions.WriteProperty.9667836-0": "set a property",
 	"actions.WriteProperty.9667836-1": "Please choose to set attributes",
 	"actions.WriteProperty.9667836-2": "Please select attributes",

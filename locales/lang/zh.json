@@ -639,7 +639,7 @@
 	"components.Description.9093421-3": "确认",
 	"Timer.WhenOption.9093535-0": "每天",
 	"Timer.WhenOption.9093535-1": "{0}号",
-	"ParamsDropdown.Array.9093538-0": "多个值以英文逗号隔开",
+	"ParamsDropdown.Array.9093538-0": "多个值换行符隔开",
 	"actions.WriteProperty.9667836-0": "设置属性",
 	"actions.WriteProperty.9667836-1": "请选择设置属性",
 	"actions.WriteProperty.9667836-2": "请选择属性",
