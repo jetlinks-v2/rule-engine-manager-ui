@@ -526,7 +526,7 @@ watch(() => data.value.branches, () => {
       activeKey.value = _group[0].id;
     }
   }
-}, { immediate: true })
+}, { immediate: true, deep: true })
 //
 // watchEffect(() => {
 //     const branches = data.value.branches;
