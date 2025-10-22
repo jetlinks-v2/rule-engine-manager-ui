@@ -96,7 +96,7 @@ import { flattenDeep } from "lodash-es";
 import { provide } from "vue";
 import { randomString } from "@jetlinks-web/utils";
 import { getParams, EventEmitter, EventSubscribeKeys } from "../../util";
-import { handleParamsData } from "../../components/Terms/util";
+import { handleParamsData, handleParamsDataMap } from '../../components/Terms/util'
 import { filterTermsValidator } from "./util";
 import CheckFilterItem from "./CheckFilterItem.vue";
 import { useI18n } from 'vue-i18n'
@@ -137,6 +137,7 @@ const props = defineProps({
 });
 
 const columnOptions = ref<any[]>([]);
+const columnOptionsMap = ref(new Map());
 
 const onKeys: string[] = EventSubscribeKeys({
   branch: props.branchName,
@@ -154,6 +155,7 @@ const handleRequest = (e: any) => {
 EventEmitter.subscribe(onKeys, handleRequest);
 
 provide("filter-params", columnOptions);
+provide("filter-params-map", columnOptionsMap);
 
 const columnRequest = () => {
   const param = {
@@ -163,6 +165,7 @@ const columnRequest = () => {
   };
   getParams(param, formModel.value).then((res) => {
     columnOptions.value = handleParamsData(res, "id");
+    columnOptionsMap.value = handleParamsDataMap(res, "id");
   });
 };
 

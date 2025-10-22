@@ -15,7 +15,7 @@ import {useAlarmConfigType} from "@rule-engine-manager-ui/hook/useAlarmConfigTyp
 const alarmStore = useAlarmStore();
 const { data }  = storeToRefs(alarmStore);
 const route = useRoute();
-data.value.tab = route.query.tab
+data.value.tab = route.query.tab || 'all'
 const onTabChange = (key:string) =>{
     data.value.tab = key;
 }

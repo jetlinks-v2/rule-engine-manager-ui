@@ -151,7 +151,7 @@ const props = defineProps({
     type: Object as PropType<ActionsType>,
   },
   type: {
-    type: Object as PropType<ParallelType>,
+    type: String,
   },
   parallel: {
     type: Boolean,

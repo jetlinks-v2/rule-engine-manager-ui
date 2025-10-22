@@ -14,6 +14,7 @@
     <div class="params-item_button" @mouseover="mouseover" @mouseout="mouseout">
       <DropdownButton
         :options="columnOptions"
+        :column-options-map="columnOptionsMap"
         icon="icon-zhihangdongzuoxie-1"
         type="column"
         value-name="id"
@@ -210,6 +211,7 @@ const paramsValue = reactive<TermsType>({
 const formItemContext = Form.useInjectFormItemContext();
 const showDelete = ref(false);
 const columnOptions: any = inject("filter-params"); //
+const columnOptionsMap: any = inject("filter-params-map", new Map()); //
 const columnType = ref<string>();
 const termTypeOptions = ref<Array<{ id: string; name: string }>>([]); // 条件值
 const valueOptions = ref<any[]>([]); // 默认手动输入下拉
@@ -669,8 +671,8 @@ watch(
   () => [columnOptions.value, paramsValue.column, levelOptions.value],
   () => {
     if (paramsValue.column && columnOptions.value.length) {
-      const option = getOption(columnOptions.value, paramsValue.column, "id");
-
+      // const option = getOption(columnOptions.value, paramsValue.column, "id");
+      const option = columnOptionsMap.value.get(paramsValue.column)
       if (option && Object.keys(option).length) {
         handOptionByColumn(option);
         if (props.value.error) {
@@ -749,7 +751,8 @@ watch(
 
 onMounted(() => {
   if (paramsValue.column) {
-    const option = getOption(columnOptions.value, paramsValue.column, "id");
+    // const option = getOption(columnOptions.value, paramsValue.column, "id");
+    const option = columnOptionsMap.value.get(paramsValue.column)
     if (option && Object.keys(option).length) {
       handOptionByColumn(option);
     }
