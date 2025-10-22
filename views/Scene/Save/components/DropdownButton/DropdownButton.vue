@@ -158,7 +158,7 @@ const menuSelect = (v: string, option: any) => {
 watchEffect(() => {
   let option
 
-  if (!props.columnOptionsMap) {
+  if (!props.columnOptionsMap?.size) {
     option = getOption(props.options, props.value, props.valueName);
   } else {
     option = props.columnOptionsMap.get(props.value);

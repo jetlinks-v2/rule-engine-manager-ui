@@ -14,6 +14,7 @@
     <div class="params-item_button" @mouseover="mouseover" @mouseout="mouseout">
       <DropdownButton
         :options="columnOptions"
+        :column-options-map="columnOptionsMap"
         icon="icon-zhihangdongzuoxie-1"
         type="column"
         value-name="id"
