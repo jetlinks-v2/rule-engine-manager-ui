@@ -14,7 +14,7 @@
                     v-for="(b, i) in group"
                     :key="b.id"
                     :closable="false"
-                    :forceRender="true"
+                    :forceRender="forceRenderStatus"
                 >
                     <template #tab>
                         <TermsTabPane
@@ -133,6 +133,7 @@ const group = ref<Array<{ id: string; len: number }>>([]);
 const activeKey = ref('');
 const editConditionVisible = ref(false);
 const conditionName = ref<any>();
+const forceRenderStatus = ref(false)
 
 provide(ContextKey, columnOptions);
 provide(ColumnOptionsMapKey, columnOptionsMap);
@@ -473,6 +474,14 @@ watch(() => data.value.branches, () => {
   const branches = data.value.branches;
   let _group = [];
   let _branchesIndex = 0;
+  if (data.value.branches.length > 10) { // 避免branches过多导致一次性渲染时ParamsItem -> watch卡顿
+    forceRenderStatus.value = false
+    setTimeout(() => {
+      forceRenderStatus.value = true;
+    }, 3000)
+  } else {
+    forceRenderStatus.value = true
+  }
   if (branches) {
     const optionsMap = new Map(data.value.options!.when.map(whenItem => [whenItem.key, whenItem]))
 
