@@ -6,6 +6,9 @@ defineProps({
     type: Object,
     default: () => ({}),
   },
+  options: {
+    type: Object,
+  }
 })
 const emit = defineEmits(['visibleChange'])
 const {t: $t} = useI18n();
