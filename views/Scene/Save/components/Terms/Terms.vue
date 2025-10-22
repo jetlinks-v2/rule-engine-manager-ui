@@ -14,7 +14,7 @@
                     v-for="(b, i) in group"
                     :key="b.id"
                     :closable="false"
-                    :forceRender="true"
+                    :forceRender="forceRenderStatus"
                 >
                     <template #tab>
                         <TermsTabPane
@@ -109,7 +109,7 @@ import { storeToRefs } from 'pinia';
 import { useSceneStore } from '../../../../../store/scene';
 import { cloneDeep } from 'lodash-es';
 import { provide } from 'vue';
-import { ContextKey, handleParamsData } from './util';
+import { ColumnOptionsMapKey, ContextKey, handleParamsData, handleParamsDataMap } from './util'
 import { getParseTerm } from '../../../../../api/scene';
 import type { FormModelType } from '../../../typings';
 import Branches from './Branches.vue';
@@ -128,12 +128,15 @@ const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
 const columnOptions = ref<any>([]);
+const columnOptionsMap = ref<any>(new Map());
 const group = ref<Array<{ id: string; len: number }>>([]);
 const activeKey = ref('');
 const editConditionVisible = ref(false);
 const conditionName = ref<any>();
+const forceRenderStatus = ref(false)
 
 provide(ContextKey, columnOptions);
+provide(ColumnOptionsMapKey, columnOptionsMap);
 
 const change = (e: boolean, groupItem: any, index: number) => {
     // group.value = []
@@ -205,6 +208,7 @@ const queryColumn = (dataModel: FormModelType) => {
             'column',
             '0',
         );
+      columnOptionsMap.value = handleParamsDataMap(res.result)
     });
 };
 
@@ -454,61 +458,125 @@ const changePaneIndex = (index) => {
     }
 };
 
-watchEffect(() => {
-    if (data.value.trigger?.type && !['timer', 'manual'].includes(data.value.trigger.type)) {
-        queryColumn({ trigger: data.value.trigger });
+// watchEffect(() => {
+//     if (data.value.trigger?.type && !['timer', 'manual'].includes(data.value.trigger.type)) {
+//         queryColumn({ trigger: data.value.trigger });
+//     }
+// });
+
+watch(() => data.value.trigger, () => {
+  if (data.value.trigger?.type && !['timer', 'manual'].includes(data.value.trigger.type)) {
+    queryColumn({ trigger: data.value.trigger });
+  }
+}, { immediate: true})
+
+watch(() => data.value.branches, () => {
+  const branches = data.value.branches;
+  let _group = [];
+  let _branchesIndex = 0;
+  if (data.value.branches.length > 10) { // 避免branches过多导致一次性渲染时ParamsItem -> watch卡顿
+    forceRenderStatus.value = false
+    setTimeout(() => {
+      forceRenderStatus.value = true;
+    }, 3000)
+  } else {
+    forceRenderStatus.value = true
+  }
+  if (branches) {
+    const optionsMap = new Map(data.value.options!.when.map(whenItem => [whenItem.key, whenItem]))
+
+    branches.forEach((item, index) => {
+      const lastIndex = _group.length - 1;
+
+      let whenItem = optionsMap.get(item?.branchId)
+
+      if (!whenItem) {
+        whenItem = data.value.options!.when[_branchesIndex];
+      }
+
+      if (index === 0 || item?.executeAnyway) {
+        _group[lastIndex + 1] = {
+          id: item.branchId,
+          len: 1,
+          start: index,
+          branchKey: item.key,
+          branchId: item.branchId,
+          // branchName: item.branchName || whenItem?.branchName || `条件 ${_branchesIndex + 1}`,
+          branchName:
+            item.branchName || whenItem?.branchName || $t('Terms.Terms.9093429-8'),
+          groupIndex: _branchesIndex,
+          openFilter: !!item.when.length,
+        };
+      } else {
+        _group[lastIndex].len += 1;
+      }
+
+      if (item) {
+        item.branches_Index = _branchesIndex; // 真实branches中的下标位置
+        _branchesIndex += 1;
+      }
+    });
+
+    // branches.filter(item => item).forEach((item, index) => {
+    //   item.branches_Index = index
+    // })
+
+    group.value = _group;
+    if (!activeKey.value) {
+      activeKey.value = _group[0].id;
     }
-});
-
-watchEffect(() => {
-    const branches = data.value.branches;
-    let _group = [];
-    let _branchesIndex = 0;
-    if (branches) {
-        branches.forEach((item, index) => {
-            const lastIndex = _group.length - 1;
-
-            let whenItem = data.value.options!.when.find(
-                (when) => item?.branchId === when.key,
-            );
-
-            if (!whenItem) {
-                whenItem = data.value.options!.when[_branchesIndex];
-            }
-
-            if (index === 0 || item?.executeAnyway) {
-                _group[lastIndex + 1] = {
-                    id: item.branchId,
-                    len: 1,
-                    start: index,
-                    branchKey: item.key,
-                    branchId: item.branchId,
-                    // branchName: item.branchName || whenItem?.branchName || `条件 ${_branchesIndex + 1}`,
-                    branchName:
-                        item.branchName || whenItem?.branchName || $t('Terms.Terms.9093429-8'),
-                    groupIndex: _branchesIndex,
-                    openFilter: !!item.when.length,
-                };
-            } else {
-                _group[lastIndex].len += 1;
-            }
-
-            if (item) {
-                item.branches_Index = _branchesIndex; // 真实branches中的下标位置
-                _branchesIndex += 1;
-            }
-        });
-
-        // branches.filter(item => item).forEach((item, index) => {
-        //   item.branches_Index = index
-        // })
-
-        group.value = _group;
-        if (!activeKey.value) {
-            activeKey.value = _group[0].id;
-        }
-    }
-});
+  }
+}, { immediate: true, deep: true })
+//
+// watchEffect(() => {
+//     const branches = data.value.branches;
+//     let _group = [];
+//     let _branchesIndex = 0;
+//     if (branches) {
+//         branches.forEach((item, index) => {
+//             const lastIndex = _group.length - 1;
+//
+//             let whenItem = data.value.options!.when.find(
+//                 (when) => item?.branchId === when.key,
+//             );
+//
+//             if (!whenItem) {
+//                 whenItem = data.value.options!.when[_branchesIndex];
+//             }
+//
+//             if (index === 0 || item?.executeAnyway) {
+//                 _group[lastIndex + 1] = {
+//                     id: item.branchId,
+//                     len: 1,
+//                     start: index,
+//                     branchKey: item.key,
+//                     branchId: item.branchId,
+//                     // branchName: item.branchName || whenItem?.branchName || `条件 ${_branchesIndex + 1}`,
+//                     branchName:
+//                         item.branchName || whenItem?.branchName || $t('Terms.Terms.9093429-8'),
+//                     groupIndex: _branchesIndex,
+//                     openFilter: !!item.when.length,
+//                 };
+//             } else {
+//                 _group[lastIndex].len += 1;
+//             }
+//
+//             if (item) {
+//                 item.branches_Index = _branchesIndex; // 真实branches中的下标位置
+//                 _branchesIndex += 1;
+//             }
+//         });
+//
+//         // branches.filter(item => item).forEach((item, index) => {
+//         //   item.branches_Index = index
+//         // })
+//
+//         group.value = _group;
+//         if (!activeKey.value) {
+//             activeKey.value = _group[0].id;
+//         }
+//     }
+// });
 
 defineExpose({
     changePaneIndex,

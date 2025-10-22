@@ -3,7 +3,7 @@
     <FullPage :fixed="false">
       <div class="scene-warp">
         <div class="header" v-if="data.name">
-          <j-ellipsis :tooltip="data.name" style="max-width: 50%">
+          <j-ellipsis :tooltip="{ title: data.name}" style="max-width: 50%">
             <span class="title">{{ data.name }}</span>
           </j-ellipsis>
           <div class="type">

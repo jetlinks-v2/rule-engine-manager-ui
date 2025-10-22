@@ -1,7 +1,9 @@
 import i18n from '@/locales/index'
 import { BranchesThen } from '../../../typings'
+import { omit } from 'lodash-es'
 const $t = i18n.global.t
 export const ContextKey = 'columnOptions'
+export const ColumnOptionsMapKey = 'columnOptionsMap'
 export const arrayParamsKey: Array<string | undefined> = ['nbtw', 'btw', 'in', 'nin', 'contains_all', 'contains_any', 'not_contains']
 export const doubleParamsKey: Array<string | undefined> = ['nbtw','btw']
 export const timeTypeKeys: Array<string | undefined> = ['time_gt_now', 'time_lt_now']
@@ -24,6 +26,30 @@ export const handleParamsData = (data: any[], key: string = 'column', parentId?:
       children: handleParamsData(item.children, key, item[key])
     }
   }) || []
+}
+
+export const handleParamsDataMap = (data: any[], key: string = 'column', pId?: string) => {
+  let _map = new Map()
+
+  data?.forEach((item, index) => {
+    const hasChildren = !!item.children?.length
+    let keyValue = item[key]
+
+    if (hasChildren && key === 'column') {
+      keyValue = item[key] + index
+    }
+
+    _map.set(keyValue, {
+      ...omit(item, ['children']),
+      pId: pId,
+    })
+
+    if (hasChildren) {
+      _map = new Map([..._map, ...handleParamsDataMap(item.children, key, item[key])])
+    }
+  })
+
+  return _map
 }
 
 export const thenRules = [{

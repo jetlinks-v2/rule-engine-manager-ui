@@ -102,6 +102,10 @@ const props = defineProps({
     type: Array as PropType<Array<DropdownButtonOptions>>,
     default: () => [],
   },
+  columnOptionsMap: {
+    type: Object,
+    default: () => new Map()
+  },
   type: {
     type: String,
     default: "column", // 'column' | 'termType' | 'value' | 'type'
@@ -152,17 +156,31 @@ const menuSelect = (v: string, option: any) => {
 };
 
 watchEffect(() => {
-  const option = getOption(props.options, props.value, props.valueName);
+  let option
+
+  if (!props.columnOptionsMap?.size) {
+    option = getOption(props.options, props.value, props.valueName);
+  } else {
+    option = props.columnOptionsMap.get(props.value);
+  }
+
   selectValue.value = props.value;
   if (option) {
     // 数据回显
     label.value = option[props.labelName] || option.name;
-    treeOpenKeys.value = openKeysByTree(
-      props.options,
-      props.value,
-      props.valueName,
-      props.valueName
-    );
+
+    if (props.columnOptionsMap) {
+      let _id = props.value
+      let openKeys = []
+      while (_id) {
+        if (_id) {
+          openKeys.push(_id);
+          const _item = props.columnOptionsMap.get(_id);
+          _id = _item?.pId
+        }
+      }
+      treeOpenKeys.value = openKeys;
+    }
   } else {
     label.value = props.value !== undefined ? props.value : props.placeholder;
   }

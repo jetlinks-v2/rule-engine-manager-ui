@@ -24,7 +24,8 @@ export const treeFilter = (data: any[], value: any, key: string = 'name'): any[]
  */
 export const openKeysByTree = (data: any[], search: any, searchKey: string = 'id', returnKey: string = 'id'): any[] => {
   if (!data || (data && !isArray(data))) return []
-  const cloneData = cloneDeep(data)
+    console.log('openKeysByTree',data)
+  const cloneData = JSON.parse(JSON.stringify(data))
   const filterTree = treeFilter(cloneData, search, searchKey)
   const openKeys: any[] = []
 
