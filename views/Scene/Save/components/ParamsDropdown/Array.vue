@@ -238,7 +238,7 @@ const onChange = (
 ) => {
     if(dataType === 'array') {
         try {
-            emit('update:value', _value?.map(item => JSON.parse(item)));
+            emit('update:value', _value?.map(item => item && JSON.parse(item)));
         } catch (e) {
             onlyMessage('请输入正确格式的数据', 'error')
         }
