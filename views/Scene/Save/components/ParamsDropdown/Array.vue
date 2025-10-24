@@ -236,7 +236,17 @@ const onChange = (
     dataType,
     _value?: any[],
 ) => {
-    emit('update:value', _value);
+    if(dataType === 'array') {
+        try {
+            emit('update:value', _value?.map(item => JSON.parse(item)));
+        } catch (e) {
+            onlyMessage('请输入正确格式的数据', 'error')
+        }
+    } else if (['float', 'double', 'int'].includes(dataType)) {
+        emit('update:value', _value?.map(item => Number(item)));
+    } else {
+        emit('update:value', _value);
+    }
     emit('select', _value, myValue.value, label.value);
 };
 
@@ -248,9 +258,14 @@ watch(() => [props.value, props.metricOptions], (val) => {
     } else {
       if (Array.isArray(val?.[0])) {
         // myValue.value = JSON.stringify(val)
-        myValue.value = val?.[0]
+        if(props.tabsOptions?.[0].key === 'array') {
+            myValue.value = val?.[0].map(item => JSON.stringify(item))
+        } else {
+            myValue.value = val?.[0]
+        }
+        console.log(myValue.value)
         if(mySource.value === 'fixed') {
-            label.value = props.options?.length ? myValue.value?.map(item => props.options.find(i => i.id === item)?.name)?.join(',') : myValue.value
+            label.value = props.options?.length ? myValue.value?.map(item => props.options.find(i => i.id === item)?.name)?.join(',') || '[]' : !myValue.value?.length ? '[]' : myValue.value
         } else {
             // 遍历props.metricOptions树结构，把存在于myValue数组中的值的fullName写入label.value
             const foundNames = findTreeNode(val?.[0], props.metricOptions);
