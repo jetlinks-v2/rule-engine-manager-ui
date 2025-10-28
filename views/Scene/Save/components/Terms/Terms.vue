@@ -53,7 +53,7 @@
                             />
                             <div
                                 class="actions-terms-warp"
-                                v-if="b.len === 1 || (index === b.len - 1 && group.length > 1 && item.when.length > 0)"
+                                v-if="b.len === 1 || (index === (b.start + b.len - 1) && group.length >= 1 && item.when.length > 0)"
                                 :style="{
                                     marginTop:
                                         data.branches.length === 2 ? 0 : 24,
