@@ -59,7 +59,8 @@
           v-else-if="showArray"
           icon="icon-canshu"
           :placeholder="$t('Terms.ParamsItem.9093430-4')"
-          :options="valueOptions"
+          :options="showAlarmSelect ? alarmOptions : showAlarmLevel ? levelOptions : valueOptions"
+          :metricOptions="valueColumnOptions"
           :tabsOptions="tabsOptions"
           v-model:value="paramsValue.value.value"
           v-model:source="paramsValue.value.source"
@@ -244,12 +245,12 @@ const alarmOptions = ref([]);
 const checkFilter = useCheckFilter();
 
 const handleRangeFn = (array: Array<string| undefined>) => {
-  return array.includes(paramsValue.termType) && ['int', 'float','short', 'double', 'long', 'string'].includes(tabsOptions.value[0].component);
+  return array.includes(paramsValue.termType) && ['int', 'float','short', 'double', 'long', 'string', 'enum'].includes(tabsOptions.value[0].component);
 }
 
 const showDouble = computed(() => {
   return paramsValue.termType
-    ? arrayParamsKey.includes(paramsValue.termType) && ['int', 'float', 'short', 'double', 'long', 'date', 'enum'].includes(tabsOptions.value[0].component)
+    ? arrayParamsKey.includes(paramsValue.termType) && ['int', 'float', 'short', 'double', 'long', 'date'].includes(tabsOptions.value[0].component)
     : false;
 });
 
@@ -484,8 +485,7 @@ const termsTypeSelect = (e: { key: string; name: string }) => {
   const oldValue = isArray(paramsValue.value!.value)
     ? paramsValue.value!.value[0]
     : paramsValue.value!.value;
-  let value = arrayParamsKey.includes(e.key) ? [oldValue, undefined] : oldValue;
-
+  let value = [...arrayParamsKey, 'in', 'nin'].includes(e.key) ? showDouble.value ? [oldValue, undefined] : oldValue ? [oldValue] : [] : oldValue;
   // 如果上次的值 在 timeTypeKeys中 则不变
   if (columnType.value === "date") {
     if (timeTypeKeys.includes(e.key)) {

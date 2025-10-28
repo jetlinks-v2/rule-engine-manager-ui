@@ -458,17 +458,17 @@ const changePaneIndex = (index) => {
     }
 };
 
-// watchEffect(() => {
-//     if (data.value.trigger?.type && !['timer', 'manual'].includes(data.value.trigger.type)) {
-//         queryColumn({ trigger: data.value.trigger });
-//     }
-// });
+watchEffect(() => {
+    if (data.value.trigger?.type && !['timer', 'manual'].includes(data.value.trigger.type)) {
+        queryColumn({ trigger: data.value.trigger });
+    }
+});
 
-watch(() => data.value.trigger, () => {
-  if (data.value.trigger?.type && !['timer', 'manual'].includes(data.value.trigger.type)) {
-    queryColumn({ trigger: data.value.trigger });
-  }
-}, { immediate: true})
+// watch(() => data.value.trigger, () => {
+//   if (data.value.trigger?.type && !['timer', 'manual'].includes(data.value.trigger.type)) {
+//     queryColumn({ trigger: data.value.trigger });
+//   }
+// }, { immediate: true})
 
 watch(() => data.value.branches, () => {
   const branches = data.value.branches;
