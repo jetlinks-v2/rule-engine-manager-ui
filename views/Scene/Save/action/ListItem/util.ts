@@ -111,6 +111,10 @@ const termsValidator = (terms: any) => {
     return Promise.reject(new Error($t('ListItem.util.9667814-1')));
   }
 
+  if (terms.termType === 'isnull') {
+    return Promise.resolve();
+  }
+
   if (terms.value.value === undefined) {
     return Promise.reject(new Error($t('ListItem.util.9667814-2')));
   } else {

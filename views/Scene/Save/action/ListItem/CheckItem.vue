@@ -463,7 +463,7 @@ const checkNoticeDelete = async () => {
 };
 
 const check = () => {
-  if (_data.value.branches![props.branchesName].then[props.thenName]) {
+  if (_data.value.branches![props.branchesName] && _data.value.branches![props.branchesName].then[props.thenName]) {
     const action =
       _data.value.branches![props.branchesName].then[props.thenName].actions?.[
         props.name
