@@ -228,8 +228,9 @@ const addBranches = (len: number) => {
     };
     // const lastIndex = data.value.branches!.length - 1 || 0
     data.value.branches?.splice(len, 0, branchesItem);
-    // branches中会有null占位，而options.when中不会，所以是插入，而不是替换
-    data.value.options!.when.splice(len - 1, 0, {
+    // branch有分组所以是插入，而不是替换
+
+    data.value.options!.when.splice(len, 0, {
         terms: [],
         key,
     });

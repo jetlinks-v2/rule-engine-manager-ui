@@ -431,6 +431,7 @@ const valueSelect = (
   }
   emit("update:value", { ...newValues });
   formItemContext.onFieldChange();
+
   formModel.value.options!.when[props.branches_Index].terms[
     props.whenName
   ].terms[props.termsName][2] = labelObj;
