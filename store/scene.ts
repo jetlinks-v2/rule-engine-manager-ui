@@ -114,7 +114,7 @@ export const useSceneStore = defineStore('scene', () => {
       if (!branches) {
         branches = cloneDeep(defaultBranches)
         if (triggerType === 'device') {
-          branches.push(null)
+          // branches.push(null)
         } else {
           branches[0].when.length = []
         }
@@ -126,7 +126,7 @@ export const useSceneStore = defineStore('scene', () => {
           branches.forEach((item, index) => {
 
             if (item?.executeAnyway && index > 0 && branches[index - 1]?.when?.length) {
-              newBranches.push(null)
+              // newBranches.push(null)
               newBranches.push(item)
               // branches.splice(index, 0 , null)
             } else {
@@ -138,9 +138,9 @@ export const useSceneStore = defineStore('scene', () => {
             //   branches.splice(index, 0 , null)
             // }
 
-            if ( index === len - 1 && item?.when?.length) {
-              newBranches.push(null)
-            }
+            // if ( index === len - 1 && item?.when?.length) {
+            //   newBranches.push(null)
+            // }
           })
 
           branches = [...newBranches]
