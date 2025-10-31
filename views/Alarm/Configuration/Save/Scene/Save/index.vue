@@ -93,11 +93,21 @@ const columns = [
       type: "select",
       options: async () => {
         const res = await queryType();
-        return res.result.map((item) => {
+        return res.result.filter(item => {
+          if (props.type === 'collector') {
+            return item.provider === props.type
+          }
+
+          if (['device', 'product', 'organization'].includes(props.type)) {
+            return item.provider === 'device'
+          }
+
+          return true
+        }).map((item) => {
           return {
             label: item.name,
             value: item.provider,
-          }; 
+          };
         })
       },
     },
