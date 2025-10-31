@@ -181,6 +181,7 @@ imgMap.set("device", logImages.device);
 imgMap.set("collector", logImages.device);
 imgMap.set("scene", logImages.other);
 imgMap.set("organization", logImages.org);
+imgMap.set("networkCardPool", logImages.networkCardPool);
 
 const titleMap = computed(() => {
   const map = new Map();
@@ -332,6 +333,8 @@ const newColumns = computed(() => {
     case "collector":
       otherColumns.title = $t("TabComponent.index.165152-26");
       break;
+    case "networkCardPool":
+      otherColumns.title = $t("Detail.index.165158-12");
     case "aiModel":
       otherColumns.title = 'AI模型';
       break;

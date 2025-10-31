@@ -15,6 +15,7 @@ import product from "./alarm/product.png";
 import device from "./alarm/device.png";
 import other from "./alarm/other.png";
 import org from "./alarm/org.png";
+import networkCardPool from "./alarm/networkCardPool.png";
 import rank1 from './rule-engine/dashboard/ranking/1.png'
 import rank2 from './rule-engine/dashboard/ranking/2.png'
 import rank3 from './rule-engine/dashboard/ranking/3.png'
@@ -91,6 +92,7 @@ export const logImages = {
     product,
     device,
     other,
+    networkCardPool,
     org
 }
 
