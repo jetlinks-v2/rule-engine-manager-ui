@@ -146,6 +146,9 @@ const columns = [
         if (resp.success) {
           return resp.result
             .filter((item) => {
+              if (item.id === 'networkCardPool') {
+                return false
+              }
               return (item.id === props.targetType || item.id === "scene") || (props.targetType === 'device' && item.id !== 'collector');
             })
             .map((item) => ({ label: item.name, value: item.id }))
