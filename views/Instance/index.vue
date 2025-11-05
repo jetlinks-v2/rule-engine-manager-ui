@@ -22,7 +22,7 @@
                             <j-permission-button
                                 type="primary"
                                 @click="add"
-                                hasPermission="rule-engine/Instance:add"
+                                :hasPermission="`${permissionKey}:add`"
                             >
                                 <template #icon
                                     ><AIcon type="PlusOutlined"
@@ -80,7 +80,7 @@
                                         ...item.tooltip,
                                     }"
                                     :hasPermission="
-                                        'rule-engine/Instance:' + item.key
+                                        permissionKey + ':' + item.key
                                     "
                                     @click="item.onClick"
                                 >
@@ -121,7 +121,7 @@
                                     @click="i.onClick"
                                     type="link"
                                     style="padding: 0px"
-                                    :hasPermission="i.key === 'view' ? true : 'rule-engine/Instance:' + i.key"
+                                    :hasPermission="i.key === 'view' ? true : permissionKey + ':' + i.key"
                                     :danger="i.key === 'delete'"
                                 >
                                     <template #icon
@@ -157,12 +157,16 @@ import { useRouterParams } from '@jetlinks-web/hooks';
 import { InstanceImages } from '../../assets/index';
 import { BASE_API } from '@jetlinks-web/constants';
 import { useI18n } from 'vue-i18n'
+import { useRulePermission } from '@rule-engine-manager-ui/hook/usePermission'
 
 const { t: $t } = useI18n()
 const params = ref<Record<string, any>>({});
-let visible = ref(false);
 const tableRef = ref<Record<string, any>>({});
 const routerParams = useRouterParams();
+let visible = ref(false);
+
+const permissionKey = useRulePermission()
+
 const query = {
     columns: [
         {
