@@ -15,11 +15,12 @@
             <j-permission-button
               type="primary"
               @click="handleAdd"
-              hasPermission="rule-engine/Scene:add"
+              :hasPermission="`${permissionKey}:add`"
             >
               <template #icon><AIcon type="PlusOutlined" /></template>
               {{ $t('Scene.index.895630-0') }}
             </j-permission-button>
+            <slot name="headerLeftRender"></slot>
           </a-space>
         </template>
         <template #card="slotProps">
@@ -73,7 +74,7 @@
                   ...item.tooltip,
                 }"
                 @click="item.onClick"
-                :hasPermission="'rule-engine/Scene:' + item.key"
+                :hasPermission="(item.key === 'view' || item.hasPermission) || permissionKey +':' + item.key"
               >
                 <AIcon type="DeleteOutlined" v-if="item.key === 'delete'" />
                 <template v-else>
@@ -111,7 +112,7 @@
                 :danger="i.key === 'delete'"
                 style="padding: 0 5px"
                 :hasPermission="
-                  i.key === 'view' ? true : 'rule-engine/Scene:' + i.key
+                  (i.key === 'view' || i.hasPermission) ? true : permissionKey + ':' + i.key
                 "
               >
                 <template #icon><AIcon :type="i.icon" /></template>
@@ -134,6 +135,8 @@ import { Modal } from "ant-design-vue";
 import { sceneImages } from "../../assets/index";
 import { useI18n } from 'vue-i18n'
 import {useRequest} from "@jetlinks-web/hooks";
+import { useScenePermission } from '@rule-engine-manager-ui/hook/usePermission'
+import { mergeObjectArrays } from '@/utils'
 
 const images = {
   timer: 'icon-shijian2',
@@ -144,6 +147,9 @@ const images = {
 
 const { t: $t, locale } = useI18n()
 const menuStory = useMenuStore();
+const permissionKey = useScenePermission()
+const savePageCode = inject('save-page-code', 'rule-engine/Scene/Save')
+
 const typeMap = ref({
   manual: {
     img: sceneImages.TriggerListIconHand,
@@ -154,6 +160,10 @@ const typeMap = ref({
     icon: sceneImages.TriggerHeaderIconTiming,
   },
   device: {
+    img: sceneImages.TriggerListIconDevice,
+    icon: sceneImages.TriggerHeaderIconDevice,
+  },
+  ai: {
     img: sceneImages.TriggerListIconDevice,
     icon: sceneImages.TriggerHeaderIconDevice,
   },
@@ -180,7 +190,7 @@ statusMap.set("started", "success");
 statusMap.set("disable", "error");
 
 const params = ref<Record<string, any>>({});
-const sceneRef = ref<Record<string, any>>({});
+const sceneRef = ref();
 
 const columns = ref([
   {
@@ -258,7 +268,12 @@ const getActions = (
   type: "card" | "table"
 ): any[] => {
   if (!data) return [];
-  const actions: any[] = [
+
+  const parentGetActions = inject('getActions', (_d: any) => []);
+
+  const parentActions = parentGetActions(data)
+
+  let actions: any[] = [
     {
       key: "update",
       text: $t('Scene.index.895630-18'),
@@ -373,6 +388,11 @@ const getActions = (
       },
     });
   }
+
+  if (parentActions && parentActions.length > 0) {
+    actions = mergeObjectArrays(actions, parentActions);
+  }
+
   return actions;
 };
 
@@ -391,7 +411,7 @@ const handleAdd = () => {
  * @param triggerType 触发类型
  */
 const handleEdit = (id: string, triggerType: string) => {
-  menuStory.jumpPage("rule-engine/Scene/Save", {
+  menuStory.jumpPage(savePageCode, {
     query: { triggerType: triggerType, id, type: "edit" },
   });
 };
@@ -402,7 +422,7 @@ const handleEdit = (id: string, triggerType: string) => {
  * @param triggerType 触发类型
  */
 const handleView = (id: string, triggerType: string) => {
-  menuStory.jumpPage("rule-engine/Scene/Save", {
+  menuStory.jumpPage(savePageCode, {
     query: { triggerType: triggerType, id, type: "view" },
   });
 };

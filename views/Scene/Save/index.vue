@@ -19,6 +19,7 @@
           <Manual v-else-if="data.triggerType === 'manual'" />
           <Timer v-else-if="data.triggerType === 'timer'" />
           <Collector v-else-if="data.triggerType === 'collector'"/>
+          <slot name="triggerRender" :record="data"></slot>
         </a-form>
         <j-permission-button
           type="primary"
@@ -40,7 +41,7 @@ import { TriggerHeaderIcon } from "./asstes";
 import {modify, queryActionType, detail, queryAlarmList} from "../../../api/scene";
 import { useMenuStore } from "@/store/menu";
 import { onlyMessage } from "@jetlinks-web/utils";
-import { handleFeatures, actionIconMap } from "./util";
+import { handleFeatures, actionIconMap, ACTION_DATA } from './util'
 import { useI18n } from 'vue-i18n'
 import {useRequest} from "@jetlinks-web/hooks";
 import Device from "./Device/index.vue";
@@ -71,6 +72,7 @@ const loading = ref(false);
 const deviceRef = ref();
 
 provide('action-options', actionOptions)
+provide(ACTION_DATA, data)
 
 const save = async (next?: Function) => {
   const formData = await sceneForm.value.validateFields().catch((err) => {
