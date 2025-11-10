@@ -38,7 +38,7 @@
                 type="primary"
                 size="middle"
                 @click="handleSaveLevel"
-                hasPermission="rule-engine/Alarm/Config:update"
+                :hasPermission="alarmPermissionKey + ':update'"
                 >{{ $t('Config.index.945945-2') }}</j-permission-button
               >
             </div>
@@ -71,7 +71,10 @@ import { configImages } from "../../../assets/index";
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();
-const list = isNoCommunity
+const AlarmConfigType = inject('AlarmConfigType', 'iot')
+const alarmPermissionKey = inject('alarmPermissionKey', 'rule-engine/Alarm/Config')
+
+const list = isNoCommunity && AlarmConfigType === 'iot'
   ? [
       {
         key: "config",
@@ -88,6 +91,7 @@ const list = isNoCommunity
         tab: $t('Config.index.945945-7'),
       },
     ];
+
 let levels = ref([]);
 let tab = ref<"io" | "config" | string>("config");
 const getAlarmLevel = () => {
