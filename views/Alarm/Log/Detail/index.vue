@@ -84,6 +84,7 @@ const { data } = alarmStore;
 const current = ref(); // 当前告警记录信息
 const details = ref(); // 告警记录的详情
 const alarmType = ref();
+const alarmTriggerType = inject('alarmTriggerType', 'iot')
 const columns = ref(
     [
       {
@@ -191,10 +192,10 @@ const sourceName = computed(() => {
   return (type: string) => {
     let name = '';
     switch(type) {
-      case 'scene': 
+      case 'scene':
         name = $t('Detail.index.165158-9')
         break;
-      case 'device': 
+      case 'device':
         name = $t('Detail.index.165158-0')
         break;
       case 'networkCardPool':
@@ -203,7 +204,7 @@ const sourceName = computed(() => {
       case 'collector':
         name = $t('Detail.index.165158-11')
         break;
-      default: 
+      default:
         name = ''
     }
     return name
@@ -221,7 +222,7 @@ const queryList = (params: any) => {
 };
 const gotoDevice = (type: string, id: string) => {
   switch(type) {
-    case 'device': 
+    case 'device':
       menuStory.jumpPage("device/Instance/Detail", {
         params: { id, tab: "Running" },
       });
@@ -241,13 +242,21 @@ const gotoDevice = (type: string, id: string) => {
       })
       break
     case 'collector':
-      menuStory.jumpPage('DataCollect/Collector', {
-        query: {
-          collectorId: id
-        }
-      })
+      if(alarmTriggerType === 'edge') {
+        menuStory.jumpPage('data-collect/collector', {
+          query: {
+            collectorId: id
+          }
+        })
+      } else {
+        menuStory.jumpPage('DataCollect/Collector', {
+          query: {
+            collectorId: id
+          }
+        })
+      }
   }
-  
+
 };
 /**
  * 根据id初始化数据

@@ -27,7 +27,7 @@
           <j-permission-button
             type="primary"
             @click="showModal"
-            hasPermission="rule-engine/Alarm/Configuration:add"
+            :hasPermission="`${permissionKey}:add`"
           >
             <template #icon>
               <AIcon type="PlusOutlined" />
@@ -93,6 +93,8 @@ const scene = reactive({
   visible: false,
   detail: undefined,
 });
+const permissionKey = inject('alarmConfigurationPermissionKey', 'rule-engine/Alarm/Configuration')
+
 
 const actionRef = ref();
 

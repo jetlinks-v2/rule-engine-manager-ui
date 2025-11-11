@@ -84,7 +84,7 @@
           v-if="!route.query?.id"
           :loading="loading"
           @click="handleSave"
-          hasPermission="rule-engine/Alarm/Configuration:add"
+          :hasPermission="`${permissionKey}:add`"
           >{{ $t("Base.index.021452-9") }}</j-permission-button
         >
         <j-permission-button
@@ -92,7 +92,7 @@
           v-else
           :loading="loading"
           @click="handleSave"
-          hasPermission="rule-engine/Alarm/Configuration:update"
+          :hasPermission="`${permissionKey}:update`"
           >{{ $t("Base.index.021452-9") }}</j-permission-button
         >
       </a-form>
@@ -124,6 +124,9 @@ const route = useRoute();
 let selectDisable = ref(false);
 const alarmConfigurationStore = useAlarmConfigurationStore();
 let { configurationData } = storeToRefs(alarmConfigurationStore);
+
+const permissionKey = inject('alarmConfigurationPermissionKey', 'rule-engine/Alarm/Configuration')
+
 
 const emit = defineEmits(["change"]);
 

@@ -24,7 +24,7 @@
               <j-permission-button
                 type="primary"
                 @click="add"
-                hasPermission="rule-engine/Alarm/Configuration:add"
+                :hasPermission="permissionKey + ':add'"
               >
                 <template #icon><AIcon type="PlusOutlined" /></template>
                 {{ $t('Configuration.index.021440-0') }}
@@ -45,7 +45,7 @@
               @click="
                 () => {
                   menuStory.jumpPage(
-                    'rule-engine/Alarm/Configuration/Save',
+                    `${permissionKey}/Save`,
                     { query: { id: slotProps.id } }
                   );
                 }
@@ -90,7 +90,7 @@
                   :popConfirm="item.popConfirm"
                   :tooltip="{ ...item.tooltip }"
                   @click="item.onClick"
-                  :hasPermission="'rule-engine/Alarm/Configuration:' + item.key"
+                  :hasPermission="`${permissionKey}:${item.key}`"
                 >
                   <AIcon type="DeleteOutlined" v-if="item.key === 'delete'" />
                   <template v-else>
@@ -138,7 +138,7 @@
                   @click="i.onClick"
                   type="link"
                   style="padding: 0px"
-                  :hasPermission="'rule-engine/Alarm/Configuration:' + i.key"
+                  :hasPermission="`${permissionKey}:${i.key}`"
                   :danger="i.key === 'delete'"
                 >
                   <template #icon><AIcon :type="i.icon" /></template>
@@ -188,6 +188,9 @@ const deleteState = ref(false);
 const alarmRecordNumber = ref(0);
 const { supports } = useAlarmConfigType(['networkCardPool']);
 const { termOptions } = useTermOptions({ pick: ['in']})
+
+const permissionKey = inject('alarmConfigurationPermissionKey', 'rule-engine/Alarm/Configuration')
+
 const columns = [
   {
     title: $t('Configuration.index.021440-5'),
@@ -352,7 +355,7 @@ const getActions = (
 
       icon: "EditOutlined",
       onClick: () => {
-        menuStory.jumpPage("rule-engine/Alarm/Configuration/Save", {
+        menuStory.jumpPage(`${permissionKey}/Save`, {
           query: { id: data.id },
         });
       },
@@ -446,7 +449,7 @@ const onSave = () => {
   tableRef.value?.reload();
 };
 const add = () => {
-  menuStory.jumpPage("rule-engine/Alarm/Configuration/Save", {});
+  menuStory.jumpPage(`${permissionKey}/Save`, {});
 };
 
 const deleteConfig = async (id: any) => {

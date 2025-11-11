@@ -8,7 +8,7 @@
                 <a-tab-pane key="2" :tab="$t('Save.index.021441-1')">
                     <Scene></Scene>
                 </a-tab-pane>
-                <a-tab-pane key="3" :tab="$t('Save.index.021441-2')" v-if="permissionStore.hasPermission('rule-engine/Alarm/Log:view')">
+                <a-tab-pane key="3" :tab="$t('Save.index.021441-2')" v-if="permissionStore.hasPermission(`${alarmLogPermissionKey}:view`)">
                     <Log v-if="activeKey === '3'" :type="type" />
                 </a-tab-pane>
             </a-tabs>
@@ -32,6 +32,9 @@ const { t: $t } = useI18n();
 const route = useRoute();
 const alarmConfigurationStore = useAlarmConfigurationStore();
 const { configurationData } = storeToRefs(alarmConfigurationStore);
+
+const alarmLogPermissionKey = inject('alarmLogPermissionKey', 'rule-engine/Alarm/Log');
+
 const baseRef = ref();
 const changeTabs = (e: any) => {
     if (route.query?.id) {
