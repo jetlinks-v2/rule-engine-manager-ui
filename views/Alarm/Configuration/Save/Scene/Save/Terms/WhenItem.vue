@@ -13,7 +13,7 @@
     <div class="dropdown-button termType">
       {{ TermsTypeMap[value[1]] || value[1] }}
     </div>
-    <template v-if="data.termType !== 'isnull'">
+    <template v-if="!['notnull', 'isnull'].includes(data.termType)">
       <div v-if="_value" class="dropdown-button value">
         <AIcon type='icon-canshu' />
         {{ typeof(_value) === 'object' ? _value[0] : _value}}
