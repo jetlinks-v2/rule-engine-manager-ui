@@ -233,9 +233,10 @@ const filterType = async (newVal: any) => {
 
   tagList.value = tag || [];
 
-  if (tag?.length === 0) {
-    _typeList[3].disabled = true;
-  }
+  // if (tag?.length === 0) {
+  //   _typeList[3].disabled = true;
+  // }
+  _typeList[3].disabled = !tag?.length
 
   if (triggerType === "device") {
     // _typeList.push(TypeMap.tag) // 设备输出一直展示标签
