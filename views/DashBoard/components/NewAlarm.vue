@@ -68,8 +68,11 @@ const props = defineProps({
   },
 });
 const menuStore = useMenuStore();
+
+const alarmPermissionKey = inject('alarmLogPermissionKey', 'rule-engine/Alarm/Log')
+
 const jumpDetail = (item: any) => {
-  menuStore.jumpPage(`rule-engine/Alarm/Log/Detail`, {
+  menuStore.jumpPage(`${alarmPermissionKey}/Detail`, {
     params: {
       id: item.id,
       detail: true,
