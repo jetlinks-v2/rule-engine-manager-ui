@@ -69,9 +69,10 @@ import { queryLevel, saveLevel } from "../../../api/config";
 import Io from "./Io/index.vue";
 import { configImages } from "../../../assets/index";
 import { useI18n } from 'vue-i18n';
+import { useMircoAppData } from '@/hooks/useMircoApp'
 
 const { t: $t } = useI18n();
-const AlarmConfigType = inject('AlarmConfigType', 'iot')
+const { data: AlarmConfigType } = useMircoAppData('platformName')
 const alarmPermissionKey = inject('alarmPermissionKey', 'rule-engine/Alarm/Config')
 
 const list = isNoCommunity && AlarmConfigType === 'iot'
