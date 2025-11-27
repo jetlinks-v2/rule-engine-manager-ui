@@ -155,9 +155,9 @@ import { onlyMessage } from '@jetlinks-web/utils';
 import Save from './Save/index.vue';
 import { useRouterParams } from '@jetlinks-web/hooks';
 import { InstanceImages } from '../../assets/index';
-import { BASE_API } from '@jetlinks-web/constants';
 import { useI18n } from 'vue-i18n'
 import { useRulePermission } from '@rule-engine-manager-ui/hook/usePermission'
+import {getBaseApi} from "@/utils";
 
 const { t: $t } = useI18n()
 const params = ref<Record<string, any>>({});
@@ -340,7 +340,7 @@ const handleSearch = (e: any) => {
 };
 const openRuleEditor = (item: any) => {
     window.open(
-        `${BASE_API}/rule-editor/index.html#flow/${item.id}`,
+        `${getBaseApi()}/rule-editor/index.html#flow/${item.id}`,
     );
 };
 const closeSave = () => {
