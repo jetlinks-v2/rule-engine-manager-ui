@@ -58,7 +58,7 @@
                                         </span>
                                     </j-ellipsis>
                                 </div> -->
-                <div style="display: flex; max-width: 50%">
+                <div style="display: flex; max-width: 50%; height: 22px">
                   <LevelIcon :level="slotProps.level"></LevelIcon>
                   <j-ellipsis>
                     {{ levelMap[slotProps.level] }}

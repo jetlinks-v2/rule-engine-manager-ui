@@ -2,7 +2,7 @@
   <a-modal
     open
     :title="title"
-    :width="750"
+    :width="810"
     :confirm-loading="loading"
     :maskClosable="false"
     @cancel="emit('close')"
