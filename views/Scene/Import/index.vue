@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { save } from "@/api/computing/scene";
+import { save } from "@rule-engine-manager-ui/api/scene";
 import { omit } from 'lodash-es';
 import { onlyMessage } from '@jetlinks-web/utils';
 
