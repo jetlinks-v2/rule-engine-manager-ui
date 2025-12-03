@@ -67,7 +67,7 @@ import dayjs from "dayjs";
 import { useAlarmStore } from "@rule-engine-manager-ui/store/alarm";
 import Info from "./info.vue";
 import { useRouterParams } from "@jetlinks-web/hooks";
-import { useMenuStore } from "@/store/menu";
+import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import LogDetail from "../TabComponent/components/LogDetail.vue";
 import { useI18n } from 'vue-i18n'
 

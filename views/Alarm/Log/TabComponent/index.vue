@@ -148,7 +148,7 @@ import {useAlarmStore} from "@rule-engine-manager-ui/store/alarm";
 import {storeToRefs} from "pinia";
 import dayjs from "dayjs";
 import SolveComponent from "../SolveComponent/index.vue";
-import {useMenuStore} from "@/store/menu";
+import {useMenuStore} from "@jetlinks-web-core/store/menu";
 import LogDrawer from "./components/DetailDrawer.vue";
 import Duration from "../components/Duration.vue";
 import {useAlarmLevel} from "@rule-engine-manager-ui/hook";

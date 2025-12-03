@@ -12,7 +12,7 @@ import DeviceList from './DeviceList.vue'
 import OrgList from './OrgList.vue'
 import type { PropType } from 'vue'
 import { SelectorValuesItem } from '../../typings'
-import { isNoCommunity } from '@/utils/utils'
+import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { sceneImages } from '../../../../assets/index'
 import { useI18n } from 'vue-i18n'
 

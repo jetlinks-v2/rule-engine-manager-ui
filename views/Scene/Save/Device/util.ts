@@ -1,4 +1,4 @@
-import i18n from '@/locales/index'
+import i18n from '@jetlinks-web-core/locales/index'
 import { sceneImages } from "../../../../assets/index";
 
 const $t = i18n.global.t

@@ -64,12 +64,12 @@
 
 <script lang="ts" setup>
 import { onlyMessage } from "@jetlinks-web/utils";
-import { isNoCommunity } from '@/utils/utils'
+import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { queryLevel, saveLevel } from "../../../api/config";
 import Io from "./Io/index.vue";
 import { configImages } from "../../../assets/index";
 import { useI18n } from 'vue-i18n';
-import { useMircoAppData } from '@/hooks/useMircoApp'
+import { useMircoAppData } from '@jetlinks-web-core/hooks/useMircoApp'
 
 const { t: $t } = useI18n();
 const { data: AlarmConfigType } = useMircoAppData('platformName')

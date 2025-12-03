@@ -121,7 +121,7 @@ import {
     queryBindScene,
     unBindAlarmMultiple,
 } from '../../../../../api/configuration';
-import { isNoCommunity } from '@/utils/utils'
+import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n()

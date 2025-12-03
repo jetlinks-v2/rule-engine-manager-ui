@@ -84,7 +84,7 @@
 <script lang="ts" setup>
 import { Empty } from "ant-design-vue";
 import { onlyMessage } from "@jetlinks-web/utils";
-import { isNoCommunity } from "@/utils/utils";
+import { isNoCommunity } from "@jetlinks-web-core/utils/utils";
 import Charts from "./components/Charts.vue";
 import TopCard from "./components/TopCard.vue";
 import NewAlarm from "./components/NewAlarm.vue";
@@ -97,7 +97,7 @@ import {
   getAlarmLevel,
 } from "@rule-engine-manager-ui/api/dashboard";
 import dayjs from "dayjs";
-import { useMenuStore } from "@/store/menu";
+import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import { query } from "@rule-engine-manager-ui/api/scene";
 import { dashBoardImg } from "@rule-engine-manager-ui/assets";
 import { useI18n } from 'vue-i18n'

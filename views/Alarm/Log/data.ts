@@ -1,7 +1,7 @@
-import product from "../.././../public/images/alarm/product.png";
-import device from "../.././../public/images/alarm/device.png";
-import other from "../.././../public/images/alarm/other.png";
-import org from "../.././../public/images/alarm/org.png";
+import product from "@rule-engine-manager-ui/assets/alarm/product.png";
+import device from "@rule-engine-manager-ui/assets/alarm/device.png";
+import other from "@rule-engine-manager-ui/assets/alarm/other.png";
+import org from "@rule-engine-manager-ui/assets/alarm/org.png";
 
 export const logImages = {
     product,

@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang='ts' name='ReadProperties'>
-import {filterSelectNode} from '@/utils/comm'
+import {filterSelectNode} from '@jetlinks-web-core/utils/comm'
 import type {PropType} from 'vue'
 import { useI18n } from 'vue-i18n'
 

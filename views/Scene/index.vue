@@ -128,7 +128,7 @@
 
 <script setup lang="ts" name="Scene">
 import SaveModal from "./Save/save.vue";
-import { useMenuStore } from "@/store/menu";
+import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import {query, _delete, _action, _execute, queryType, queryAlarmPage} from "../../api/scene";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { Modal } from "ant-design-vue";
@@ -136,7 +136,7 @@ import { sceneImages } from "../../assets/index";
 import { useI18n } from 'vue-i18n'
 import {useRequest} from "@jetlinks-web/hooks";
 import { useScenePermission } from '@rule-engine-manager-ui/hook/usePermission'
-import { mergeObjectArrays } from '@/utils'
+import { mergeObjectArrays } from '@jetlinks-web-core/utils'
 
 const images = {
   timer: 'icon-shijian2',

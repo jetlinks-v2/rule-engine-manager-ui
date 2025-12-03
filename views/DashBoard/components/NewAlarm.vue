@@ -55,7 +55,7 @@
 
 <script lang="ts" setup>
 import { Empty } from "ant-design-vue";
-import { useMenuStore } from "@/store/menu";
+import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import { dashBoardImg } from "../../../assets/index";
 import dayjs from "dayjs";
 import { useI18n } from 'vue-i18n'

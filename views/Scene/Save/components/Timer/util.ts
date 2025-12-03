@@ -1,4 +1,4 @@
-import i18n from '@/locales/index'
+import i18n from '@jetlinks-web-core/locales/index'
 import { isArray } from 'lodash-es'
 import type { OperationTimer } from '../../../typings';
 

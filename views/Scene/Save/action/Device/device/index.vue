@@ -82,7 +82,7 @@ import { map } from "lodash-es";
 import { TypeMap } from "./util";
 import { useI18n } from 'vue-i18n'
 import { openKeysByTree } from "../../../../../../utils/comm";
-import { isNoCommunity } from "@/utils";
+import { isNoCommunity } from "@jetlinks-web-core/utils";
 
 const { t: $t } = useI18n()
 const props = defineProps({

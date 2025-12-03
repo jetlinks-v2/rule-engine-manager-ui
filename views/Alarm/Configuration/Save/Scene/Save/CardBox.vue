@@ -146,10 +146,10 @@ import AddButton from "../../../../../Scene/Save/components/AddButton.vue";
 import BranchesTabs from "./BranchesTabs.vue";
 import { PropType } from "vue";
 import { handleActiveBranches, handleGroupAndFilter, typeMap } from "./utils";
-import { useMenuStore } from "@/store/menu";
+import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import Tags from "./tags.vue";
 import { useI18n } from 'vue-i18n';
-import { useTabSaveSuccess } from '@/hooks'
+import { useTabSaveSuccess } from '@jetlinks-web-core/hooks'
 
 const { t: $t } = useI18n();
 type EmitProps = {
@@ -450,7 +450,7 @@ watch(
         width: 15%;
         min-width: 64px;
         height: 2px;
-        background-image: url("/images/rectangle.png");
+        background-image: url("@jetlinks-web-core/assets/rectangle.png");
         background-repeat: no-repeat;
         background-size: 100% 100%;
         content: " ";

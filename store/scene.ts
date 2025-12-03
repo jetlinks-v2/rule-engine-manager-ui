@@ -3,7 +3,7 @@ import type { FormModelType } from '../views/Scene/typings'
 import { detail } from '../api/scene'
 import {cloneDeep, isArray, isObject} from 'lodash-es'
 import {randomNumber, randomString} from '@jetlinks-web/utils'
-import i18n from '@/locales';
+import i18n from '@jetlinks-web-core/locales';
 
 const assignmentKey = (data: any[]): any[] => {
   const onlyKey = ['when', 'then', 'terms', 'actions'];

@@ -1,4 +1,4 @@
-import scene from '../../public/images/scene/trigger-type/scene.png'
+import scene from '@rule-engine-manager-ui/assets/scene/trigger-type/scene.png'
 
 export const InstanceImages = {
     scene

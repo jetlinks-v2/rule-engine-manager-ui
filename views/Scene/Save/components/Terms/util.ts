@@ -1,4 +1,4 @@
-import i18n from '@/locales/index'
+import i18n from '@jetlinks-web-core/locales/index'
 import { BranchesThen } from '../../../typings'
 import { omit } from 'lodash-es'
 const $t = i18n.global.t

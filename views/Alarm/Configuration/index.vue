@@ -168,7 +168,7 @@ import {
 import { query } from "@rule-engine-manager-ui/api/log";
 import { queryLevel } from "@rule-engine-manager-ui/api/config";
 import { onlyMessage } from "@jetlinks-web/utils";
-import { useMenuStore } from "@/store/menu";
+import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import HandTrigger from "./HandTrigger/index.vue";
 import { Modal } from "ant-design-vue";
 import { useAlarmLevel } from "@rule-engine-manager-ui/hook";

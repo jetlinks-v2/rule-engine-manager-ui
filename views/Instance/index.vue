@@ -157,7 +157,7 @@ import { useRouterParams } from '@jetlinks-web/hooks';
 import { InstanceImages } from '../../assets/index';
 import { useI18n } from 'vue-i18n'
 import { useRulePermission } from '@rule-engine-manager-ui/hook/usePermission'
-import {getBaseApi} from "@/utils";
+import {getBaseApi} from "@jetlinks-web-core/utils";
 
 const { t: $t } = useI18n()
 const params = ref<Record<string, any>>({});

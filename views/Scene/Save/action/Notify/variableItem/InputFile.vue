@@ -30,7 +30,7 @@
 <script lang="ts" setup>
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n'
-import {getBaseApi, getUploadHeaders} from "@/utils";
+import {getBaseApi, getUploadHeaders} from "@jetlinks-web-core/utils";
 
 const { t: $t } = useI18n()
 const props = defineProps({

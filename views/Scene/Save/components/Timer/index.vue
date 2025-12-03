@@ -110,7 +110,7 @@ import type { OperationTimer } from '../../../typings';
 import { defineExpose } from 'vue';
 import Calendar from './Calendar.vue';
 // import cronstrue from 'cronstrue';
-import { isNoCommunity } from '@/utils/utils';
+import { isNoCommunity } from '@jetlinks-web-core/utils/utils';
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()

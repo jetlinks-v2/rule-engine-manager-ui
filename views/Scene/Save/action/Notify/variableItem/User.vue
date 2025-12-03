@@ -163,8 +163,8 @@ import { useSceneStore } from '../../../../../../store/scene';
 import {queryDingTalkUsers , queryWechatUsers , getPlatformUsers , getRelationUsers as queryRelationUsers } from '../../../../../../api/others'
 import { unionBy } from 'lodash-es';
 import { useI18n } from 'vue-i18n'
-import { isNoCommunity } from '@/utils';
-import {moduleRegistry} from "@/utils/module-registry";
+import { isNoCommunity } from '@jetlinks-web-core/utils';
+import {moduleRegistry} from "@jetlinks-web-core/utils/module-registry";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

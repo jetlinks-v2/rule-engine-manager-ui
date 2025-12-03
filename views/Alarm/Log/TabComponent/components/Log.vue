@@ -68,7 +68,7 @@ import {
   queryLogList,
 } from "@rule-engine-manager-ui/api/log";
 import dayjs from "dayjs";
-import { useMenuStore } from "@/store/menu";
+import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import LogDetail from "./LogDetail.vue";
 import { useI18n } from 'vue-i18n'
 import { queryCollectorById } from "@rule-engine-manager-ui/api/collector";

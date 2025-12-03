@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang='ts' name='WriteProperties'>
-import { filterSelectNode } from '@/utils/comm'
+import { filterSelectNode } from '@jetlinks-web-core/utils/comm'
 import { FunctionCall } from '../components'
 import type { PropType } from 'vue'
 import { defineExpose } from 'vue'

@@ -1,5 +1,5 @@
 import {getTargetTypes} from '../api/configuration';
-import {useMenuStore} from "@/store";
+import {useMenuStore} from "@jetlinks-web-core/store";
 
 export const useAlarmConfigType = (filter: string[] = []) => {
     type Options = { label: string; value: string };

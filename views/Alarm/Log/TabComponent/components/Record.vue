@@ -51,7 +51,7 @@
 <script setup>
 import { queryHandleHistory } from "../../../../../api/log";
 import dayjs from "dayjs";
-import { useMenuStore } from "@/store/menu";
+import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import { defineExpose } from "vue";
 import Duration from "../../components/Duration.vue";
 import { useI18n } from "vue-i18n";

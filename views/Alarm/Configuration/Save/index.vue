@@ -26,7 +26,7 @@ import { useI18n } from 'vue-i18n';
 import { storeToRefs } from "pinia";
 import { useAlarmConfigurationStore } from "../../../../store/alarm";
 import { isEqual, pick } from 'lodash-es';
-import {useAuthStore} from "@/store";
+import {useAuthStore} from "@jetlinks-web-core/store";
 
 const { t: $t } = useI18n();
 const route = useRoute();

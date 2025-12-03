@@ -39,7 +39,7 @@ import { storeToRefs } from "pinia";
 import { useSceneStore } from "../../../store/scene";
 import { TriggerHeaderIcon } from "./asstes";
 import {modify, queryActionType, detail, queryAlarmList} from "../../../api/scene";
-import { useMenuStore } from "@/store/menu";
+import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { handleFeatures, actionIconMap, ACTION_DATA } from './util'
 import { useI18n } from 'vue-i18n'
@@ -52,7 +52,7 @@ import Description from "./components/Description.vue";
 import { Modal } from 'ant-design-vue';
 import { unBindAlarm } from "../../../api/configuration";
 import { debounce, omit } from "lodash-es";
-import {useTabSaveSuccessBack} from "@/hooks";
+import {useTabSaveSuccessBack} from "@jetlinks-web-core/hooks";
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

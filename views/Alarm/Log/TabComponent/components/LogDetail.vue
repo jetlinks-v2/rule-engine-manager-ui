@@ -60,7 +60,7 @@
 <script setup>
 import dayjs from "dayjs";
 import { JsonViewer } from "vue3-json-viewer";
-import { useMenuStore } from "@/store/menu";
+import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import { useI18n } from 'vue-i18n'
 import {queryCollectorById} from "@rule-engine-manager-ui/api/collector";
 

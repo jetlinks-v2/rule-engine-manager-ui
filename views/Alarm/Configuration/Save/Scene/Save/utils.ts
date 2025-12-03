@@ -1,4 +1,4 @@
-import i18n from '@/locales/index'
+import i18n from '@jetlinks-web-core/locales/index'
 import {isArray, isBoolean, isObject} from "lodash-es";
 import {randomString} from "@jetlinks-web/utils";
 import { ConfigurationImages } from "../../../../../../assets/index";

@@ -1,4 +1,4 @@
-import i18n from "@/locales";
+import i18n from "@jetlinks-web-core/locales";
 export const keyByLabel = {
   manual: i18n.global.t('Save.utils.021456-34'),
   timer: i18n.global.t('Save.utils.021456-36'),
