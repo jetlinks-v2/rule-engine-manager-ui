@@ -16,13 +16,13 @@
       @search="handleSearch"
       style="padding: 0"
     />
-    <j-scrollbar :maxHeight="500">
+    <div style="height: 400px">
       <JProTable
         mode="CARD"
         :columns="columns"
         :request="queryAlarmPage"
         :bodyStyle="{ padding: 0 }"
-        :gridColumn="3"
+        :gridColumns="[1]"
         :defaultParams="{
           sorts: [{ name: 'createTime', order: 'desc' }],
           terms: [
@@ -64,14 +64,9 @@
               enabled: 'processing',
               disabled: 'error',
             }"
-            :scroll="{ y: 510 }"
             @click="handleClick"
+            :imgUrl="ConfigurationImages.alarmConfig"
           >
-            <template #img>
-              <slot name="img">
-                <img :src="ConfigurationImages.alarmConfig" />
-              </slot>
-            </template>
             <template #content>
               <div
                 style="
@@ -92,7 +87,7 @@
           </CardBox>
         </template>
       </JProTable>
-    </j-scrollbar>
+    </div>
   </a-modal>
 </template>
 

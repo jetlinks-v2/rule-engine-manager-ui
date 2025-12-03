@@ -5,6 +5,8 @@
       <JProTable
         ref="sceneRef"
         :columns="columns"
+        :gridColumn="3"
+        :gridColumns="[1, 2, 3]"
         :request="query"
         modeValue="CARD"
         :defaultParams="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
@@ -20,7 +22,13 @@
               <template #icon><AIcon type="PlusOutlined" /></template>
               {{ $t('Scene.index.895630-0') }}
             </j-permission-button>
-            <slot name="headerLeftRender"></slot>
+            <j-permission-button
+              @click="handleImport"
+              :hasPermission="`${permissionKey}:add`"
+            >
+              <template #icon><AIcon type="ImportOutlined" /></template>
+              导入
+            </j-permission-button>
           </a-space>
         </template>
         <template #card="slotProps">
@@ -123,11 +131,13 @@
       </JProTable>
     </FullPage>
     <SaveModal v-if="visible" @close="visible = false" :data="current" :typeOptions="typeOptions" />
+    <ImportModal v-if="importVisible" @close="importVisible = false" @save="importSuccess"/>
   </j-page-container>
 </template>
 
 <script setup lang="ts" name="Scene">
 import SaveModal from "./Save/save.vue";
+import ImportModal from "./Import/index.vue";
 import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import {query, _delete, _action, _execute, queryType, queryAlarmPage} from "../../api/scene";
 import { onlyMessage } from "@jetlinks-web/utils";
@@ -137,6 +147,7 @@ import { useI18n } from 'vue-i18n'
 import {useRequest} from "@jetlinks-web/hooks";
 import { useScenePermission } from '@rule-engine-manager-ui/hook/usePermission'
 import { mergeObjectArrays } from '@jetlinks-web-core/utils'
+import { omit } from 'lodash-es';
 
 const images = {
   timer: 'icon-shijian2',
@@ -149,6 +160,7 @@ const { t: $t, locale } = useI18n()
 const menuStory = useMenuStore();
 const permissionKey = useScenePermission()
 const savePageCode = inject('save-page-code', 'rule-engine/Scene/Save')
+const importVisible = ref(false)
 
 const typeMap = ref({
   manual: {
@@ -318,6 +330,25 @@ const getActions = (
       },
     },
     {
+      key: 'add',
+      text: '导出为模版',
+      icon: 'ExportOutlined',
+      tooltip: {
+        title: '导出为模版',
+      },
+      onClick: () => {
+        // json导出为文件
+        const _data = omit(data, ['id', 'createTime', 'creatorId', 'creatorName', 'modifierId', 'modifyTime', 'modifierName'])
+        const json = JSON.stringify(_data);
+        const blob = new Blob([json], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${data.name}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      },
+    },
+    {
       key: "delete",
       text: $t('Scene.index.895630-22'),
       disabled: data.state?.value !== "disable",
@@ -404,6 +435,15 @@ const handleAdd = () => {
   visible.value = true;
   current.value = {};
 };
+
+const handleImport = () => {
+  importVisible.value = true
+}
+
+const importSuccess = (data: any) => {
+  importVisible.value = false
+  sceneRef.value?.reload()
+}
 
 /**
  * 编辑
