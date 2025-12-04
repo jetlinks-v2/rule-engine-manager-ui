@@ -23,7 +23,7 @@
           <p class="upload-hint">仅支持 .json 格式文件</p>
         </div>
       </a-upload-dragger>
-      
+
       <!-- 文件信息显示 -->
       <div v-if="selectedFile" class="file-info">
         <a-alert
@@ -33,7 +33,7 @@
           show-icon
         />
       </div>
-      
+
       <!-- 错误信息显示 -->
       <div v-if="errorMessage" class="error-info">
         <a-alert
@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { save } from "@/api/computing/scene";
+import { save } from "@rule-engine-manager-ui/api/scene";
 import { omit } from 'lodash-es';
 import { onlyMessage } from '@jetlinks-web/utils';
 
@@ -70,21 +70,21 @@ const errorMessage = ref<string>('')
 const beforeUpload = (file: File) => {
   // 清除之前的错误信息
   errorMessage.value = ''
-  
+
   // 检查文件类型
   const isJSON = file.type === 'application/json' || file.name.toLowerCase().endsWith('.json')
   if (!isJSON) {
     errorMessage.value = '只能上传 JSON 格式的文件！'
     return false
   }
-  
+
   // 检查文件大小（限制为10MB）
   const isLt10M = file.size / 1024 / 1024 < 10
   if (!isLt10M) {
     errorMessage.value = '文件大小不能超过 10MB！'
     return false
   }
-  
+
   return true
 }
 
@@ -92,10 +92,10 @@ const beforeUpload = (file: File) => {
 const customRequest = (options: any) => {
   const { file } = options
   selectedFile.value = file
-  
+
   // 使用FileReader读取文件内容
   const reader = new FileReader()
-  
+
   reader.onload = (e) => {
     try {
       const content = e.target?.result as string
@@ -109,13 +109,13 @@ const customRequest = (options: any) => {
       fileContent.value = ''
     }
   }
-  
+
   reader.onerror = () => {
     errorMessage.value = '文件读取失败！'
     selectedFile.value = null
     fileContent.value = ''
   }
-  
+
   reader.readAsText(file, 'UTF-8')
 }
 
@@ -134,11 +134,11 @@ const handleImport = async () => {
     onlyMessage('请先选择要导入的文件！', 'warning')
     return
   }
-  
+
   try {
     loading.value = true
     const jsonData = JSON.parse(fileContent.value)
-    
+
     console.log(jsonData)
     loading.value = true;
     const resp = await save(omit(jsonData, 'id'));
