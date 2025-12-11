@@ -81,13 +81,13 @@
 
 <script lang="ts" setup name="ActionDeviceActions">
 import TopCard from '../device/TopCard.vue';
-import { detail } from '@ruleEngine/api/others';
+import { detail } from '@rule-engine-manager-ui/api/others';
 import EditTable from './EditTable.vue';
 import WriteProperty from './WriteProperty.vue';
-import { useSceneStore } from '@ruleEngine/store/scene';
+import { useSceneStore } from '@rule-engine-manager-ui/store/scene';
 import { storeToRefs } from 'pinia';
 import {ACTION_DATA, getParams} from '../../../util';
-import { sceneImages } from '@ruleEngine/assets';
+import { sceneImages } from '@rule-engine-manager-ui/assets';
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
