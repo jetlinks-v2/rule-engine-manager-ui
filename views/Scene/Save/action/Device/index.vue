@@ -193,7 +193,7 @@ const onProductChange = (_val: any, bol: boolean) => {
     if (!bol) {
         DeviceModel.selectorValues = undefined;
         DeviceModel.deviceId = ''
-        DeviceModel.selector = 'fixed',
+        DeviceModel.selector = 'fixed'
         DeviceModel.upperKey = ''
         DeviceModel.source = 'fixed'
         const flag = isActionChange(

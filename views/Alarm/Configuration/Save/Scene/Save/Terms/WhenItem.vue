@@ -13,14 +13,16 @@
     <div class="dropdown-button termType">
       {{ TermsTypeMap[value[1]] || value[1] }}
     </div>
-    <div v-if="_value" class="dropdown-button value">
-      <AIcon type='icon-canshu' />
-      {{ typeof(_value) === 'object' ? Array.isArray(_value) ? _value : _value[0] : _value}}
-    </div>
-    <div v-if="value[2][1] && typeof value[2] === 'object'" class="dropdown-button value">
-      <AIcon type='icon-canshu' />
-      {{ _value[1] }}
-    </div>
+    <template v-if="!['notnull', 'isnull'].includes(data.termType)">
+      <div v-if="_value" class="dropdown-button value">
+        <AIcon type='icon-canshu' />
+        {{ typeof(_value) === 'object' ? _value[0] : _value}}
+      </div>
+      <div v-if="value[2][1] && typeof value[2] === 'object'" class="dropdown-button value">
+        <AIcon type='icon-canshu' />
+        {{ _value[1] }}
+      </div>
+    </template>
   </div>
 </template>
 

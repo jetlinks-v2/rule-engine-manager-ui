@@ -131,34 +131,46 @@ export const EventEmitter = {
     }
 }
 
-export const isActionChange = (_metadata: any, _message: any) => {
-    const _properties = _metadata?.properties || [];
-    const _functions = _metadata?.functions || [];
-    if (
-        _message?.messageType === 'READ_PROPERTY' &&
-        _message?.properties?.[0]
-    ) {
-        const _item = _properties.find(
-            (i: any) => i.id === _message?.properties?.[0],
-        );
-        return _item?.id;
-    } else if (
-        _message?.messageType === 'INVOKE_FUNCTION' &&
-        _message?.functionId
-    ) {
-        const _item = _functions.find(
-            (i: any) => i.id === _message?.functionId,
-        );
-        return _item?.id;
-    } else if (_message?.messageType === 'WRITE_PROPERTY') {
-        const _data = Object.keys(_message?.properties)?.[0]
-        if (_data) {
-            const _item = _properties.find((i: any) => i.id === _data);
-            return _item?.id;
+export const isActionChange = (_metadata: Record<string, any[]>, _message: any) => {
+    if (!_message) return false
+
+    const { properties = [], functions = [] } = _metadata
+    const { messageType, properties: msgProperties, functionId } = _message
+
+    switch (messageType) {
+        case "READ_PROPERTY": {
+            const propertyId = msgProperties?.[0];
+            if (!propertyId) return false;
+
+            const item = properties.find(
+              (p: any) => p.id === propertyId && p.expands?.type?.includes('read'),
+            );
+            return item?.id || false;
         }
-        return false;
+
+        case "INVOKE_FUNCTION": {
+            // 确保 functionId 存在
+            if (!functionId) return false;
+
+            const item = functions.find((f: any) => f.id === functionId);
+            return item?.id || false;
+        }
+
+        case "WRITE_PROPERTY": {
+            // 使用 Object.keys 获取属性，并确保 msgProperties 存在
+            const propertyId = msgProperties && Object.keys(msgProperties)[0];
+            if (!propertyId) return false;
+
+            const item = properties.find(
+              (p: any) => p.id === propertyId && p.expands?.type?.includes('write'),
+            );
+            return item?.id || false;
+        }
+
+        default: {
+            return false
+        }
     }
-    return false;
 };
 
 export const handleFeatures = (branches: ActionBranchesProps[]): string[] => {

@@ -306,6 +306,7 @@
 	"Save.input.945944-7": "最多输入64个字符",
 	"Save.input.945944-8": "请输入kafka地址",
 	"Save.input.945944-9": "操作成功",
+	"Save.input.945944-10": "未启用",
 	"components.LogDetail.1651510-0": "确定",
 	"components.LogDetail.1651510-1": "取消",
 	"components.LogDetail.1651510-2": "告警日志",
