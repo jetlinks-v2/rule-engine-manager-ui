@@ -36,7 +36,7 @@
           <div class="calendar-item-content">
             <div class="calendar-item-top">
               <div>
-                <j-radio-group
+                <a-radio-group
                   :value="item.mod"
                   :options="[
                     { label: $t('Timer.Calendar.9093419-3'), value: 'period' },

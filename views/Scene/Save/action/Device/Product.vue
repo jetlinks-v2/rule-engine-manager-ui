@@ -78,6 +78,7 @@ import { queryProductSortTree } from '../../../../../api/others';
 import { accessConfigTypeFilter } from '../../../../../utils/setting';
 import { sceneImages } from '../../../../../assets/index';
 import { useI18n } from 'vue-i18n'
+import { useTermOptions } from '@jetlinks-web/components/es/Search/hooks/useTermOptions'
 
 const { t: $t } = useI18n()
 type Emit = {
@@ -100,6 +101,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits<Emit>();
+
+const { termOptions: dimAssetsTermOptions } = useTermOptions({ pick: ['eq']})
 
 const columns = [
     {
@@ -212,7 +215,7 @@ const columns = [
         hideInTable: true,
         search: {
             type: 'treeSelect',
-            termOptions: ['eq'],
+            termOptions: dimAssetsTermOptions,
             componentProps: {
               fieldNames: {
                 label: 'name',
