@@ -46,8 +46,16 @@
         </div>
       </a-descriptions-item>
       <a-descriptions-item :label="$t('components.LogDetail.1651510-8')" :span="2"
-        ><div style="max-height: 500px; overflow-y: auto">
-          <JsonViewer
+      >
+        <div style="max-height: 500px; overflow-y: auto">
+        <div style="display: flex; flex-direction: column; gap: 10px" v-if="isIncludeMedia">
+          <a-image v-if="runningWater?.image" :width="200" :src="runningWater.image"/>
+          <div v-if="runningWater?.video" style="height: 300px">
+            <Player :url="runningWater.video" autoplay :live="false" />
+          </div>
+        </div>
+        <JsonViewer
+            v-else
             :value="runningWater"
             :expanded="true"
             :expandDepth="4"
@@ -72,7 +80,10 @@ const menuStory = useMenuStore();
 const runningWater = computed(() => {
   return JSON.parse(props.data?.alarmInfo);
 });
-
+const isIncludeMedia = computed(() => {
+  const targets = ['image', 'video'];
+  return props.data?.alarmInfo && Object.keys(JSON.parse(props.data?.alarmInfo)).some((item) => targets.includes(item));
+});
 const emit = defineEmits(["close"]);
 const closeModal = () => {
   emit("close");
