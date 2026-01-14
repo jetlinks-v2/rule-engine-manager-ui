@@ -199,9 +199,7 @@ const columns = ref([
     scopedSlots: true,
     search: {
       type: "select",
-      options: () => {
-        return typeOptions.value
-      }
+      options: typeOptions
     },
   },
   {
