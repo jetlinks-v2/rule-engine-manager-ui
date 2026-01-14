@@ -17,7 +17,7 @@
                 <!-- <span>{{ $t('ShakeLimit.index.9093426-2') }}</span> -->
                 <a-radio-group :options="continuousOptions" :disabled="!shakeLimit.alarmFirst" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.continuous" size="small" @change="handleChange"/>
                 <span>{{ $t('ShakeLimit.index.9093426-8') }}</span>
-                <a-input-number :min="1" :max="100" :precision="0" size="small" v-model:value="shakeLimit.threshold" style="width: 38px" />
+                <a-input-number :min="1" :max="10000" :precision="0" size="small" v-model:value="shakeLimit.threshold" style="width: 38px" />
                 <span>{{ $t('ShakeLimit.index.9093426-9') }}</span>
                 <!-- <span>{{ $t('ShakeLimit.index.9093426-3') }}</span> -->
                 <a-radio-group :options="alarmFirstOptions" :disabled="shakeLimit.continuous" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.alarmFirst" size="small" @change="handleChangeAlarmFirst"/>
