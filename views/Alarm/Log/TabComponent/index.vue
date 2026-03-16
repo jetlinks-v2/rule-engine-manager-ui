@@ -336,10 +336,10 @@ const newColumns = computed(() => {
     case "networkCardPool":
       otherColumns.title = $t("Detail.index.165158-12");
     case "aiModel":
-      otherColumns.title = 'AI模型';
+      otherColumns.title = $t("TabComponent.index.172503-1");
       break;
     case "aiTask":
-      otherColumns.title = 'AI任务'
+      otherColumns.title = $t("TabComponent.index.172503-2")
       break;
   }
   if (props.type === "device") {

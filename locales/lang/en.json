@@ -996,5 +996,7 @@
 	"ParamsDropdown.FulFill-3147419-2": "Summarize data entries through aggregation functions.",
 	"ParamsDropdown.FulFill-3147419-3": "Please configure the conditions",
 	"FulFill.Terms-4029416-0": "Please select an agg function",
-	"FulFill.Terms-4029416-1": "Operator"
+	"FulFill.Terms-4029416-1": "Operator",
+	"TabComponent.index.172503-1": "AI model",
+	"TabComponent.index.172503-2": "AI task"
 }
