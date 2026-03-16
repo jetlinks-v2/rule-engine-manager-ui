@@ -335,6 +335,7 @@ const newColumns = computed(() => {
       break;
     case "networkCardPool":
       otherColumns.title = $t("Detail.index.165158-12");
+      break;
     case "aiModel":
       otherColumns.title = $t("TabComponent.index.172503-1");
       break;
