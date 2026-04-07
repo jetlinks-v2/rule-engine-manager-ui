@@ -249,7 +249,7 @@ const columns = ref([
     title: $t('Scene.index.895630-14'),
     key: "action",
     fixed: "right",
-    width: 250,
+    width: 300,
     scopedSlots: true,
   },
 ]);
