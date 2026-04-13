@@ -1,5 +1,5 @@
 <template>
-  <j-page-container :tabList="list" @tabChange="onTabChange" :tabActiveKey="tab">
+  <j-page-container :tabList="mergedOptions" @tabChange="onTabChange" :tabActiveKey="tab">
     <div v-if="tab == 'config'">
       <a-row :gutter="24">
         <a-col :span="14">
@@ -70,28 +70,27 @@ import Io from "./Io/index.vue";
 import { configImages } from "../../../assets/index";
 import { useI18n } from 'vue-i18n';
 import { useMircoAppData } from '@jetlinks-web-core/hooks/useMircoApp'
+import { useRegistryOptions } from '@jetlinks-web-core/hooks'
 
 const { t: $t } = useI18n();
 const { data: AlarmConfigType } = useMircoAppData('platformName')
 const alarmPermissionKey = inject('alarmPermissionKey', 'rule-engine/Alarm/Config')
 
-const list = isNoCommunity && AlarmConfigType === 'iot'
-  ? [
-      {
-        key: "config",
-        tab: $t('Config.index.945945-7'),
-      },
-      {
-        key: "io",
-        tab: $t('Config.index.945945-8'),
-      },
-    ]
-  : [
-      {
-        key: "config",
-        tab: $t('Config.index.945945-7'),
-      },
-    ];
+const list = ref(
+  isNoCommunity
+    ? [
+        { key: 'config', tab: $t('Config.index.945945-7') },
+        { key: 'io', tab: $t('Config.index.945945-8') }
+      ]
+    : [
+        { key: 'config', tab: $t('Config.index.945945-7') }
+      ]
+)
+
+const { mergedOptions } = useRegistryOptions({
+  baseOptions: list,
+  code: 'alarm-config-tabs'
+})
 
 let levels = ref([]);
 let tab = ref<"io" | "config" | string>("config");
