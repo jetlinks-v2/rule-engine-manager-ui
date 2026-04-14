@@ -22,6 +22,7 @@
         :placeholder="$t('Terms.ParamsItem.9093430-2')"
         v-model:value="paramsValue.column"
         component="treeSelect"
+        showSearch
         @select="columnSelect"
       />
       <DropdownButton

@@ -31,12 +31,25 @@
             @click="menuSelect"
           />
           <div style="min-width: 400px" v-else>
+            <a-input
+              v-if="showSearch"
+              v-model:value="treeSearchValue"
+              allow-clear
+              :placeholder="$t('DropdownButton.DropdownButton.20260414-0')"
+              style="margin-bottom: 8px"
+            >
+              <template #suffix>
+                <AIcon type="SearchOutlined" />
+              </template>
+            </a-input>
             <a-tree
+              v-if="treeOptions.length"
               v-model:expandedKeys="treeOpenKeys"
               :selectedKeys="selectValue ? [selectValue] : []"
-              :treeData="options"
+              :treeData="treeOptions"
               style="width: auto;  height: 350px;overflow: auto;"
               :virtual="true"
+              :autoExpandParent="true"
               :fieldNames="{ key: valueName }"
               @select="treeSelect"
             >
@@ -52,6 +65,7 @@
                 </a-space>
               </template>
             </a-tree>
+            <a-empty v-else style="margin-top: 24px" />
           </div>
         </template>
         <div class="scene-select-empty" v-else>
@@ -64,11 +78,12 @@
 
 <script lang="ts" setup name="DropdownButton">
 import type { PropType } from "vue";
+import { cloneDeep } from "lodash-es";
+import { useI18n } from "vue-i18n";
 import DropMenus from "./Menus.vue";
 import DropdownTimePicker from "./Time.vue";
 import { getOption } from "./util";
 import type { DropdownButtonOptions } from "./util";
-import { openKeysByTree } from "../../../../../utils/comm";
 
 type LabelType = string | number | boolean | undefined;
 
@@ -114,23 +129,115 @@ const props = defineProps({
     type: String,
     default: "select", // 'select' | 'treeSelect'
   },
+  showSearch: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 const emit = defineEmits<Emit>();
+const { t: $t } = useI18n();
 const slots = Object.keys(useSlots());
 
 const label = ref<LabelType>(props.placeholder);
 const selectValue = ref(props.value);
 const visible = ref(false);
+const treeSearchValue = ref("");
 const treeOpenKeys = ref<(string | number)[]>([]);
+
+const syncTreeOpenKeys = () => {
+  if (!props.columnOptionsMap || !props.value) {
+    treeOpenKeys.value = [];
+    return;
+  }
+
+  let currentId = props.value;
+  const openKeys: (string | number)[] = [];
+
+  while (currentId) {
+    openKeys.push(currentId);
+    const currentItem = props.columnOptionsMap.get(currentId);
+    currentId = currentItem?.pId;
+  }
+
+  treeOpenKeys.value = openKeys;
+};
+
 const visibleChange = (v: boolean) => {
   visible.value = v;
+  if (!v) {
+    treeSearchValue.value = "";
+    syncTreeOpenKeys();
+  }
 };
 
 const dropdownButtonClass = computed(() => ({
   "dropdown-button": true,
   [props.type]: true,
 }));
+
+const filterTreeOptions = (
+  data: DropdownButtonOptions[],
+  keyword: string,
+): { treeData: DropdownButtonOptions[]; expandedKeys: (string | number)[] } => {
+  const searchValue = keyword.trim().toLowerCase();
+
+  if (!searchValue) {
+    return {
+      treeData: data,
+      expandedKeys: [],
+    };
+  }
+
+  const expandedKeys = new Set<string | number>();
+
+  const loop = (nodes: DropdownButtonOptions[]): DropdownButtonOptions[] => {
+    return nodes.reduce((result: DropdownButtonOptions[], node) => {
+      const children = Array.isArray(node.children) ? loop(node.children) : [];
+      const keywords = [
+        node.name,
+        node.fullName,
+        node.description,
+        node.label,
+        node[props.labelName],
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const matched = keywords.includes(searchValue);
+
+      if (matched || children.length) {
+        expandedKeys.add(node[props.valueName]);
+        result.push({
+          ...node,
+          children,
+        });
+      }
+
+      return result;
+    }, []);
+  };
+
+  return {
+    treeData: loop(cloneDeep(data)),
+    expandedKeys: Array.from(expandedKeys),
+  };
+};
+
+const treeOptions = computed(() => {
+  const { treeData } = filterTreeOptions(props.options, treeSearchValue.value);
+  return treeData;
+});
+
+watch(treeSearchValue, (value) => {
+  if (!value.trim()) {
+    syncTreeOpenKeys();
+    return;
+  }
+
+  const { expandedKeys } = filterTreeOptions(props.options, value);
+  treeOpenKeys.value = expandedKeys;
+});
 
 const treeSelect = (v: any, option: any) => {
   const node = option.node;
@@ -170,16 +277,7 @@ watchEffect(() => {
     label.value = option[props.labelName] || option.name;
 
     if (props.columnOptionsMap) {
-      let _id = props.value
-      let openKeys = []
-      while (_id) {
-        if (_id) {
-          openKeys.push(_id);
-          const _item = props.columnOptionsMap.get(_id);
-          _id = _item?.pId
-        }
-      }
-      treeOpenKeys.value = openKeys;
+      syncTreeOpenKeys();
     }
   } else {
     label.value = props.value !== undefined ? props.value : props.placeholder;
