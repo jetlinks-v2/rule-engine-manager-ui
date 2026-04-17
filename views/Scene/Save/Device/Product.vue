@@ -70,6 +70,7 @@ import { sceneImages } from "@rule-engine-manager-ui/assets/index";
 import { accessConfigTypeFilter } from "@rule-engine-manager-ui/utils/setting";
 import { useI18n } from 'vue-i18n'
 import { useTermOptions } from '@jetlinks-web/components/es/Search/hooks/useTermOptions'
+import { useMenuStore } from "@jetlinks-web-core/store";
 
 const { t: $t } = useI18n()
 type Emit = {
@@ -96,151 +97,158 @@ const firstFind = ref(true);
 
 const { termOptions } = useTermOptions({ pick: ['eq']})
 
-const columns = [
-  {
-    title: "ID",
-    dataIndex: "id",
-    width: 300,
-    ellipsis: true,
-    fixed: "left",
-    search: {
-      type: "string",
+const menuStore = useMenuStore();
+const hasDepartmentMenu = menuStore.hasMenu('system/Department')
+const columns = computed(() => {
+  const arr = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      width: 300,
+      ellipsis: true,
+      fixed: "left",
+      search: {
+        type: "string",
+      },
     },
-  },
-  {
-    title: $t('Device.Product.372522-3'),
-    dataIndex: "name",
-    width: 200,
-    ellipsis: true,
-    search: {
-      type: "string",
-      first: true,
+    {
+      title: $t('Device.Product.372522-3'),
+      dataIndex: "name",
+      width: 200,
+      ellipsis: true,
+      search: {
+        type: "string",
+        first: true,
+      },
     },
-  },
-  {
-    title: $t('Device.Product.372522-4'),
-    dataIndex: "accessProvider",
-    width: 150,
-    ellipsis: true,
-    hideInTable: true,
-    search: {
-      type: "select",
-      options: () =>
-        getProviders().then((resp: any) => {
-          return accessConfigTypeFilter(resp.result || []);
-        }),
+    {
+      title: $t('Device.Product.372522-4'),
+      dataIndex: "accessProvider",
+      width: 150,
+      ellipsis: true,
+      hideInTable: true,
+      search: {
+        type: "select",
+        options: () =>
+          getProviders().then((resp: any) => {
+            return accessConfigTypeFilter(resp.result || []);
+          }),
+      },
     },
-  },
-  {
-    title: $t('Device.Product.372522-5'),
-    dataIndex: "accessId",
-    width: 150,
-    ellipsis: true,
-    search: {
-      type: "select",
-      options: () =>
-        queryGatewayList().then((resp: any) =>
-          resp.result.map((item: any) => ({
-            label: item.name,
-            value: item.id,
-          }))
-        ),
+    {
+      title: $t('Device.Product.372522-5'),
+      dataIndex: "accessId",
+      width: 150,
+      ellipsis: true,
+      search: {
+        type: "select",
+        options: () =>
+          queryGatewayList().then((resp: any) =>
+            resp.result.map((item: any) => ({
+              label: item.name,
+              value: item.id,
+            }))
+          ),
+      },
     },
-  },
-  {
-    title: $t('Device.Product.372522-2'),
-    dataIndex: "deviceType",
-    width: 150,
-    search: {
-      type: "select",
-      options: [
-        { label: $t('Device.Product.372522-6'), value: "device" },
-        { label: $t('Device.Product.372522-7'), value: "childrenDevice" },
-        { label: $t('Device.Product.372522-8'), value: "gateway" },
-      ],
+    {
+      title: $t('Device.Product.372522-2'),
+      dataIndex: "deviceType",
+      width: 150,
+      search: {
+        type: "select",
+        options: [
+          { label: $t('Device.Product.372522-6'), value: "device" },
+          { label: $t('Device.Product.372522-7'), value: "childrenDevice" },
+          { label: $t('Device.Product.372522-8'), value: "gateway" },
+        ],
+      },
     },
-  },
-  {
-    title: $t('Device.Product.372522-9'),
-    dataIndex: "state",
-    width: "90px",
-    search: {
-      type: "select",
-      options: [
-        { label: $t('Device.Product.372522-1'), value: 0 },
-        { label: $t('Device.Product.372522-0'), value: 1 },
-      ],
+    {
+      title: $t('Device.Product.372522-9'),
+      dataIndex: "state",
+      width: "90px",
+      search: {
+        type: "select",
+        options: [
+          { label: $t('Device.Product.372522-1'), value: 0 },
+          { label: $t('Device.Product.372522-0'), value: 1 },
+        ],
+      },
     },
-  },
-  {
-    title: $t('Device.Product.372522-10'),
-    dataIndex: "describe",
-    ellipsis: true,
-    width: 300,
-  },
-  {
-    dataIndex: "classifiedId",
-    title: $t('Device.Product.372522-11'),
-    hideInTable: true,
-    search: {
-      type: "treeSelect",
-      options: () => {
-        return new Promise((res) => {
-          queryProductSortTree({ paging: false }).then((resp) => {
-            res(resp.result);
+    {
+      title: $t('Device.Product.372522-10'),
+      dataIndex: "describe",
+      ellipsis: true,
+      width: 300,
+    },
+    {
+      dataIndex: "classifiedId",
+      title: $t('Device.Product.372522-11'),
+      hideInTable: true,
+      search: {
+        type: "treeSelect",
+        options: () => {
+          return new Promise((res) => {
+            queryProductSortTree({ paging: false }).then((resp) => {
+              res(resp.result);
+            });
           });
-        });
-      },
-      componentProps: {
-        fieldNames: {
-          label: "name",
-          value: "id",
+        },
+        componentProps: {
+          fieldNames: {
+            label: "name",
+            value: "id",
+          },
         },
       },
     },
-  },
-  {
-    dataIndex: "id$dim-assets",
-    title: $t('Device.Product.372522-12'),
-    hideInTable: true,
-    search: {
-      type: "treeSelect",
-      termOptions: termOptions,
-      componentProps: {
-        fieldNames: {
-          label: "name",
-          value: "value",
+  ]
+  if(hasDepartmentMenu) {
+    arr.push({
+      dataIndex: "id$dim-assets",
+      title: $t('Device.Product.372522-12'),
+      hideInTable: true,
+      search: {
+        type: "treeSelect",
+        termOptions: termOptions,
+        componentProps: {
+          fieldNames: {
+            label: "name",
+            value: "value",
+          },
         },
-      },
 
-      options: () =>
-        new Promise((resolve) => {
-          getTreeData_api({ paging: false }).then((resp: any) => {
-            const formatValue = (list: any[]) => {
-              return list.map((item: any) => {
-                if (item.children) {
-                  item.children = formatValue(item.children);
-                }
-                return {
-                  ...item,
-                  value: JSON.stringify({
-                    assetType: "product",
-                    targets: [
-                      {
-                        type: "org",
-                        id: item.id,
-                      },
-                    ],
-                  }),
-                };
-              });
-            };
-            resolve(formatValue(resp.result) || []);
-          });
-        }),
-    },
-  },
-];
+        options: () =>
+          new Promise((resolve) => {
+            getTreeData_api({ paging: false }).then((resp: any) => {
+              const formatValue = (list: any[]) => {
+                return list.map((item: any) => {
+                  if (item.children) {
+                    item.children = formatValue(item.children);
+                  }
+                  return {
+                    ...item,
+                    value: JSON.stringify({
+                      assetType: "product",
+                      targets: [
+                        {
+                          type: "org",
+                          id: item.id,
+                        },
+                      ],
+                    }),
+                  };
+                });
+              };
+              resolve(formatValue(resp.result) || []);
+            });
+          }),
+      },
+    })
+  }
+  return arr
+});
 
 const handleSearch = (p: any) => {
   params.value = p;
