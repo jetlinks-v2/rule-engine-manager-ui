@@ -1,5 +1,5 @@
 <template>
-  <ProductCountCard
+  <CountSummaryConfig
     :configData="configData"
     :typeOptions="typeOptions"
     type="alarmConfigCard"
@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts" name="AlarmConfigCard">
-import ProductCountCard from '../../DeviceManagement/ProductCountCard/Config.vue'
+import CountSummaryConfig from '../components/CountSummaryConfig.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
