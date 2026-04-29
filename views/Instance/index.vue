@@ -157,7 +157,7 @@ import { useRouterParams } from '@jetlinks-web/hooks';
 import { InstanceImages } from '../../assets/index';
 import { useI18n } from 'vue-i18n'
 import { useRulePermission } from '@rule-engine-manager-ui/hook/usePermission'
-import {getBaseApi} from "@jetlinks-web-core/utils";
+import {getBaseApi, isFromCloud} from "@jetlinks-web-core/utils";
 
 const { t: $t } = useI18n()
 const params = ref<Record<string, any>>({});
@@ -339,9 +339,15 @@ const handleSearch = (e: any) => {
     params.value = e;
 };
 const openRuleEditor = (item: any) => {
-    window.open(
-        `${getBaseApi()}/rule-editor/index.html#flow/${item.id}`,
-    );
+    if(isFromCloud()) {
+        window.open(
+            `${localStorage.getItem('proxy')}/rule-editor/index.html#flow/${item.id}?_agent=device:${localStorage.getItem('thingId')}`,
+        );
+    } else {
+        window.open(
+            `${import.meta.env.VITE_APP_BASE_API}/rule-editor/index.html#flow/${item.id}`,
+        );
+    }
 };
 const closeSave = () => {
     visible.value = false;
