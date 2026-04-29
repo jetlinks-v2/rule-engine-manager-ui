@@ -24,6 +24,12 @@
                         :placeholder="$t('Save.index.020451-5')"
                     />
                 </a-form-item>
+                <a-form-item :label="$t('Save.index.020451-12')" name="orgId">
+                    <form-item-org
+                        v-model:value="modelRef.orgId"
+                        :extraProps="{ multiple: false }"
+                    />
+                </a-form-item>
                 <a-form-item :label="$t('Save.index.020451-6')" name="describe">
                     <a-textarea
                         v-model:value="modelRef.description"
@@ -56,7 +62,7 @@ const productList = ref<Record<string, any>[]>([]);
 const loading = ref<boolean>(false);
 const formRef = ref();
 const modelRef = ref();
-modelRef.value = {...props.data};
+modelRef.value = { orgId: undefined, ...props.data };
 const rules = {
     name: [
         {
@@ -66,6 +72,12 @@ const rules = {
         {
             max: 64,
             message: $t('Save.index.020451-8'),
+        },
+    ],
+    orgId: [
+        {
+            required: true,
+            message: $t('Save.index.020451-13'),
         },
     ],
 };
