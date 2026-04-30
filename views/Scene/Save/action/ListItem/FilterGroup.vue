@@ -161,7 +161,7 @@ const columnRequest = () => {
   const param = {
     branch: props.branchName,
     branchGroup: props.thenName,
-    action: props.actionName,
+    action: props.actionName + 1,
   };
   getParams(param, formModel.value).then((res) => {
     columnOptions.value = handleParamsData(res, "id");
