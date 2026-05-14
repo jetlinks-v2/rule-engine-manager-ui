@@ -117,11 +117,8 @@ const termsValidator = (terms: any) => {
 
   if (terms.value.value === undefined) {
     return Promise.reject(new Error($t('ListItem.util.9667814-2')));
-  } else {
-    if (
-        isArray(terms.value.value) &&
-        terms.value.value.some((_v: any) => _v === undefined) || terms.value.value === undefined || !terms.value.value.length
-    ) {
+  } else if (isArray(terms.value.value)) {
+    if (terms.value.value.some((_v: any) => _v === undefined) || !terms.value.value.length) {
       return Promise.reject(new Error($t('ListItem.util.9667814-2')));
     }
   }
