@@ -46,9 +46,38 @@
                         >
                             <template #img>
                                 <slot name="img">
-                                    <img
-                                        :src="InstanceImages.scene"
-                                    />
+                                    <a-popover
+                                        :open="previewRuleId === getRulePreviewKey(slotProps)"
+                                        trigger="hover"
+                                        placement="rightTop"
+                                        overlayClassName="rule-instance-thumbnail-popover"
+                                        @open-change="handleRulePreviewOpenChange(slotProps, $event)"
+                                    >
+                                        <template #content>
+                                            <div class="rule-instance-thumbnail-preview">
+                                                <img
+                                                    :src="getRuleImage(slotProps)"
+                                                    :alt="slotProps.name"
+                                                />
+                                            </div>
+                                        </template>
+                                        <button
+                                            class="rule-instance-thumbnail-frame"
+                                            type="button"
+                                            :aria-label="$t('Instance.index.020452-17')"
+                                            @click.stop="openRuleEditor(slotProps)"
+                                            @mouseenter="openRulePreview(slotProps)"
+                                            @mouseleave="closeRulePreview"
+                                            @focus="openRulePreview(slotProps)"
+                                            @blur="closeRulePreview"
+                                        >
+                                            <img
+                                                class="rule-instance-thumbnail"
+                                                :src="getRuleImage(slotProps)"
+                                                :alt="slotProps.name"
+                                            />
+                                        </button>
+                                    </a-popover>
                                 </slot>
                             </template>
                             <template #content>
@@ -79,9 +108,7 @@
                                     :tooltip="{
                                         ...item.tooltip,
                                     }"
-                                    :hasPermission="
-                                        permissionKey + ':' + item.key
-                                    "
+                                    :hasPermission="permissionKey + ':' + item.key"
                                     @click="item.onClick"
                                 >
                                     <AIcon
@@ -121,7 +148,7 @@
                                     @click="i.onClick"
                                     type="link"
                                     style="padding: 0px"
-                                    :hasPermission="i.key === 'view' ? true : permissionKey + ':' + i.key"
+                                    :hasPermission="permissionKey + ':' + i.key"
                                     :danger="i.key === 'delete'"
                                 >
                                     <template #icon
@@ -140,6 +167,13 @@
                 v-if="visible"
                 @close-save="closeSave"
             />
+            <RuleEditorDrawer
+                v-if="ruleEditor.visible"
+                :open="ruleEditor.visible"
+                :rule="ruleEditor.current"
+                @updated="handleRuleEditorUpdated"
+                @close="closeRuleEditor"
+            />
         </div>
     </j-page-container>
 </template>
@@ -153,19 +187,47 @@ import {
 } from '../../api/instance';
 import { onlyMessage } from '@jetlinks-web/utils';
 import Save from './Save/index.vue';
+import RuleEditorDrawer from './RuleEditor/index.vue';
 import { useRouterParams } from '@jetlinks-web/hooks';
 import { InstanceImages } from '../../assets/index';
 import { useI18n } from 'vue-i18n'
 import { useRulePermission } from '@rule-engine-manager-ui/hook/usePermission'
-import {getBaseApi, isFromCloud} from "@jetlinks-web-core/utils";
+import { useRoute, useRouter } from 'vue-router'
+import { useRuleEditorRouteState } from './useRuleEditorRouteState';
 
 const { t: $t } = useI18n()
 const params = ref<Record<string, any>>({});
 const tableRef = ref<Record<string, any>>({});
 const routerParams = useRouterParams();
+const route = useRoute();
+const router = useRouter();
 let visible = ref(false);
+const ruleEditor = reactive<{
+    visible: boolean;
+    current?: Record<string, any>;
+}>({
+    visible: false,
+    current: undefined,
+});
+const { openRuleEditor, closeRuleEditor } = useRuleEditorRouteState({
+    route,
+    router,
+    ruleEditor,
+    t: $t,
+});
 
 const permissionKey = useRulePermission()
+
+const svgToDataUrl = (value: unknown) => {
+    const svg = typeof value === 'string' ? value.trim() : '';
+    return svg.startsWith('<svg')
+        ? `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
+        : '';
+};
+
+const getRuleImage = (record: Record<string, any>) => (
+    svgToDataUrl(record?.metadata?.thumbnailSvg) || InstanceImages.scene
+);
 
 const query = {
     columns: [
@@ -233,6 +295,23 @@ const columns = [
     },
 ];
 const current = ref();
+const previewRuleId = ref<string>('');
+const getRulePreviewKey = (record: Partial<Record<string, any>>) => (
+    String(record?.id || record?.name || '')
+);
+const openRulePreview = (record: Partial<Record<string, any>>) => {
+    previewRuleId.value = getRulePreviewKey(record);
+};
+const closeRulePreview = () => {
+    previewRuleId.value = '';
+};
+const handleRulePreviewOpenChange = (record: Partial<Record<string, any>>, open: boolean) => {
+    if (open) {
+        openRulePreview(record);
+    } else if (previewRuleId.value === getRulePreviewKey(record)) {
+        closeRulePreview();
+    }
+};
 const getActions = (
     data: Partial<Record<string, any>>,
     type?: 'card' | 'table',
@@ -241,6 +320,17 @@ const getActions = (
         return [];
     }
     const actions = [
+        {
+            key: 'view',
+            text: $t('Instance.index.020452-16'),
+            tooltip: {
+                title: $t('Instance.index.020452-17'),
+            },
+            icon: 'BranchesOutlined',
+            onClick: () => {
+                openRuleEditor(data);
+            },
+        },
         {
             key: 'update',
             text: $t('Instance.index.020452-7'),
@@ -252,17 +342,6 @@ const getActions = (
             onClick: () => {
                 current.value = data;
                 visible.value = true;
-            },
-        },
-        {
-            key: 'view',
-            text: $t('Instance.index.020452-8'),
-            tooltip: {
-                title: $t('Instance.index.020452-8'),
-            },
-            icon: 'EyeOutlined',
-            onClick: () => {
-                openRuleEditor(data);
             },
         },
         {
@@ -318,9 +397,9 @@ const getActions = (
             icon: 'DeleteOutlined',
         },
     ];
-    if (type === 'card')
-        return actions.filter((i: any) => i.key !== 'view');
-    return actions;
+    return type === 'card'
+        ? actions.filter((action) => action.key !== 'update')
+        : actions;
 };
 const add = () => {
     (current.value = {
@@ -338,16 +417,12 @@ const refresh = () => {
 const handleSearch = (e: any) => {
     params.value = e;
 };
-const openRuleEditor = (item: any) => {
-    if(isFromCloud()) {
-        window.open(
-            `${localStorage.getItem('proxy')}/rule-editor/index.html#flow/${item.id}?_agent=device:${localStorage.getItem('thingId')}`,
-        );
-    } else {
-        window.open(
-            `${import.meta.env.VITE_APP_BASE_API}/rule-editor/index.html#flow/${item.id}`,
-        );
-    }
+const handleRuleEditorUpdated = (rule: Record<string, any>) => {
+    ruleEditor.current = {
+        ...ruleEditor.current,
+        ...rule,
+    };
+    tableRef.value?.reload?.();
 };
 const closeSave = () => {
     visible.value = false;
@@ -359,4 +434,53 @@ onMounted(() => {
 });
 </script>
 <style scoped>
+.rule-instance-thumbnail-frame {
+    width: 5rem;
+    height: 5rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: zoom-in;
+}
+
+.rule-instance-thumbnail-frame:focus-visible {
+    outline: 0.125rem solid #1677ff;
+    outline-offset: 0.125rem;
+}
+
+.rule-instance-thumbnail {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+:global(.rule-instance-thumbnail-popover .ant-popover-inner-content) {
+    padding: 0.5rem;
+}
+
+.rule-instance-thumbnail-preview {
+    width: min(22rem, 70vw);
+    aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #fff;
+}
+
+.rule-instance-thumbnail-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
 </style>

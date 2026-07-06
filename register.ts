@@ -1,6 +1,24 @@
 import {useRulePermissionContext, useScenePermissionContext} from '@rule-engine-manager-ui/hook/usePermission'
 import {EventEmitter, DeviceEmitterKey, ACTION_DATA} from '@rule-engine-manager-ui/views/Scene/Save/util';
 
+type HomeAgentProviderLoader = () => Promise<unknown>
+
+const homeAgentProviderKeyMap: Record<string, string> = {
+    './views/DashBoard/homeAgentProvider.ts': 'rule-engine/DashBoard'
+}
+
+const toHomeAgentProviderKey = (path: string) => (
+    homeAgentProviderKeyMap[path] || path.replace('./views/', '').replace('/homeAgentProvider.ts', '')
+)
+
+const homeAgentProviderModules = import.meta.glob('./views/**/homeAgentProvider.ts') as Record<string, HomeAgentProviderLoader>
+const homeAgentProviders = Object.fromEntries(
+    Object.entries(homeAgentProviderModules).map(([path, loader]) => [
+        toHomeAgentProviderKey(path),
+        loader
+    ])
+)
+
 export default {
     components: {
         ruleInstance: defineAsyncComponent(() => import('./views/Instance/index.vue')),
@@ -23,5 +41,6 @@ export default {
     stores: {},
     utils: {
         EventEmitter, DeviceEmitterKey, ACTION_DATA
-    }
+    },
+    homeAgentProviders
 }

@@ -103,8 +103,11 @@ import { dashBoardImg } from "@rule-engine-manager-ui/assets";
 import { useI18n } from 'vue-i18n'
 import {useAlarmConfigType} from "@rule-engine-manager-ui/hook/useAlarmConfigType";
 import {queryCollectorById} from "@rule-engine-manager-ui/api/collector";
+import { useHomeAgentCapabilityProvider } from '@jetlinks-web-core/layout/components/AiChat/useHomeAgentCapabilityProvider';
+import { alarmDashboardHomeAgentProvider } from './homeAgentProvider';
 
 const { t: $t } = useI18n()
+useHomeAgentCapabilityProvider(alarmDashboardHomeAgentProvider);
 
 const menuStory = useMenuStore();
 let currentMonAlarm = ref<any[]>([
