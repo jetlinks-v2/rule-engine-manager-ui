@@ -1,8 +1,18 @@
 import { request } from '@jetlinks-web/core';
+
+export interface DashboardMeasurementRequest {
+  dashboard: string;
+  object: string;
+  measurement: string;
+  dimension: string;
+  group?: string;
+  params?: Record<string, any>;
+}
+
 /**
  * 获取今日及当月告警数量
  */
-export const dashboard = (data:Record<string,any[]>)=> request.post('/dashboard/_multi',data);
+export const dashboard = (data: DashboardMeasurementRequest[])=> request.post('/dashboard/_multi', data);
 
 /**
  *

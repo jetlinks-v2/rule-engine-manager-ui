@@ -5,6 +5,11 @@ import { request } from '@jetlinks-web/core';
 export const queryList = (data: any) => request.post('/rule-engine/instance/_query', data);
 
 /**
+ * 查询规则编排详情
+ */
+export const getRuleDetail = (id: string, hiddenError?: any) => request.get(`/rule-engine/instance/${id}`, {}, { hiddenError });
+
+/**
  * 新增规则
  */
 export const saveRule = (data: any) => request.post('/rule-editor/flows/_create',data);
@@ -13,6 +18,11 @@ export const saveRule = (data: any) => request.post('/rule-editor/flows/_create'
  * 修改规则
  */
 export const modify = (id:any ,data:any) => request.put(`/rule-engine/instance/${id}`,data);
+
+/**
+ * 更新规则展示元数据
+ */
+export const updateRuleMetadata = (id: string, metadata: Record<string, any>) => request.put(`/rule-engine/instance/${id}/metadata`, metadata);
 
 /**
  * 启动规则
