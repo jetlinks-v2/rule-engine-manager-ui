@@ -31,10 +31,10 @@ const isAlarmDashboardAvailable = (context: HomeAgentCapabilityContext) => (
 );
 
 const getPromptExamples = () => [
-  i18n.global.t('DashBoard.homeAgent.prompt.overview'),
+  i18n.global.t('DashBoard.homeAgent.prompt.records'),
   i18n.global.t('DashBoard.homeAgent.prompt.trend'),
   i18n.global.t('DashBoard.homeAgent.prompt.rank'),
-  i18n.global.t('DashBoard.homeAgent.prompt.records'),
+  i18n.global.t('DashBoard.homeAgent.prompt.overview'),
   i18n.global.t('DashBoard.homeAgent.prompt.targetTypes'),
 ];
 
