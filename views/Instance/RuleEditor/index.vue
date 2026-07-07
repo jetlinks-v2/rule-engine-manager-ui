@@ -57,7 +57,7 @@ import { useRuleEditorAgentBridge } from './useRuleEditorAgentBridge';
 
 const RULE_EDITOR_CLIENT_ID = 'ruleEditorChat';
 const RULE_EDITOR_SUBJECT_TYPE = 'ruleInstance';
-const RULE_EDITOR_RESOURCE_VERSION = '2026070716';
+const RULE_EDITOR_RESOURCE_VERSION = '2026070725';
 
 const props = defineProps({
   open: {
