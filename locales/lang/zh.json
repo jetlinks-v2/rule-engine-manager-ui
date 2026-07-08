@@ -616,7 +616,7 @@
 	"Instance.homeAgent.tool.create.confirmOk": "创建并打开",
 	"Instance.homeAgent.capability.createDraft.name": "创建规则草稿",
 	"Instance.homeAgent.capability.createDraft.description": "可为规则配置需求创建草稿并打开规则编排助手继续处理。",
-	"Instance.homeAgent.prompt.system": "本模块按通用 continuation 规范声明规则编排接管能力。当用户提出创建、配置、编排规则，或要求把设备事件、属性、告警等数据转发到 Kafka、通知、命令或其他下游时，把用户原始目标整理为自然语言需求提示词，优先创建规则草稿并交给规则编排助手继续处理。调用创建草稿工具时应生成一个简短规则标题作为 name，长度建议 6-24 个字，不要把完整需求句子作为规则名；同时生成一段业务摘要作为 description 存储，完整原始需求继续放入 userGoal 和 handoff 上下文。产品物模型、事件字段、Kafka broker/topic/认证等细节不是创建草稿的前置条件，缺失时放入后续待确认项。只创建草稿，不发布、不启用、不保存最终画布。用户可见回复只说明草稿已创建并可继续配置，不要暴露工具名、路由参数、内部交接数据、内部流程或编辑器实现细节。",
+	"Instance.homeAgent.prompt.system": "本模块按通用 continuation 规范声明规则编排接管能力。当用户提出创建、配置、编排规则，或要求把设备事件、属性、告警等数据转发到 Kafka、通知、命令或其他下游时，把用户原始目标整理为自然语言需求提示词，优先创建规则草稿并交给规则编排助手继续处理。调用创建草稿工具时应生成一个简短规则标题作为 name，长度建议 6-24 个字，不要把完整需求句子作为规则名；同时生成一段业务摘要作为 description 存储，完整原始需求继续放入 userGoal 和 handoff 上下文。创建草稿工具结果会返回规则 subjectId、subjectName 和规则摘要；后续用户提到“刚才的规则”“这个规则”时，优先使用工具结果中的业务 subject 定位规则，不要依赖 handoffKey 或重新猜测规则。产品物模型、事件字段、Kafka broker/topic/认证等细节不是创建草稿的前置条件，缺失时放入后续待确认项。只创建草稿，不发布、不启用、不保存最终画布。用户可见回复只说明草稿已创建并可继续配置，不要暴露工具名、路由参数、内部交接数据、内部流程或编辑器实现细节。",
 	"Save.index.020451-0": "编辑",
 	"Save.index.020451-1": "新增",
 	"Save.index.020451-2": "确定",

@@ -1,5 +1,6 @@
 import i18n from '@jetlinks-web-core/locales';
 import {
+  createHomeAgentContinuationReceipt,
   registerHomeAgentCapabilityProvider,
   type HomeAgentCapabilityContext,
   type HomeAgentCapabilityProvider,
@@ -215,6 +216,15 @@ const resolveCreatedRule = (response: any, draft: Record<string, any>) => {
   return rule;
 };
 
+const buildRuleEditorLink = (ruleId: string) => {
+  const params = new URLSearchParams({
+    route: RULE_INSTANCE_MENU_CODE,
+    menu: RULE_INSTANCE_MENU_CODE,
+    query: JSON.stringify({ editorId: ruleId }),
+  });
+  return `#${params.toString()}`;
+};
+
 const createDraftAndHandoff = async (
   args: Record<string, any> = {},
   context: HomeAgentCapabilityContext,
@@ -234,12 +244,15 @@ const createDraftAndHandoff = async (
   const rule = resolveCreatedRule(await saveRule(draft), draft);
   const ruleId = String(rule.id);
   const ruleName = normalizeText(rule.name) || name;
+  const ruleDescription = normalizeText(rule.description);
+  const query = { editorId: ruleId };
 
   // The home agent only creates an empty draft. Canvas edits remain owned by ruleEditorChat.
-  saveAiAgentHandoff({
+  const handoffPrepared = saveAiAgentHandoff({
     clientId: RULE_EDITOR_CLIENT_ID,
     subjectType: RULE_EDITOR_SUBJECT_TYPE,
     subjectId: ruleId,
+    subjectName: ruleName,
     routeName: RULE_INSTANCE_MENU_CODE,
     menuCode: RULE_INSTANCE_MENU_CODE,
     prompt: userGoal || i18n.global.t('Instance.homeAgent.ruleDraft.continuePrompt', [ruleName]),
@@ -247,12 +260,58 @@ const createDraftAndHandoff = async (
     source: 'rule-instance-home',
     context: createHandoffContext(args, context, rule, userGoal),
   });
-  const query = { editorId: ruleId };
   context.navigateToMenu(RULE_INSTANCE_MENU_CODE, { query })
     || context.navigateToMenu(RULE_INSTANCE_PATH, { query });
 
+  const navigation = {
+    menuCode: RULE_INSTANCE_MENU_CODE,
+    routeName: RULE_INSTANCE_MENU_CODE,
+    path: RULE_INSTANCE_PATH,
+    query,
+    link: buildRuleEditorLink(ruleId),
+    markdownLink: `[${ruleName}](${buildRuleEditorLink(ruleId)})`,
+  };
+
   return {
     ok: true,
+    created: {
+      type: RULE_EDITOR_SUBJECT_TYPE,
+      id: ruleId,
+      name: ruleName,
+      description: ruleDescription,
+    },
+    rule: {
+      id: ruleId,
+      name: ruleName,
+      description: ruleDescription,
+    },
+    subject: {
+      type: RULE_EDITOR_SUBJECT_TYPE,
+      id: ruleId,
+      name: ruleName,
+      subjectType: RULE_EDITOR_SUBJECT_TYPE,
+      subjectId: ruleId,
+      subjectName: ruleName,
+    },
+    continuation: createHomeAgentContinuationReceipt({
+      targetName: i18n.global.t('Instance.homeAgent.continuation.targetName'),
+      targetClientId: RULE_EDITOR_CLIENT_ID,
+      targetMenuCode: RULE_INSTANCE_MENU_CODE,
+      routeName: RULE_INSTANCE_MENU_CODE,
+      path: RULE_INSTANCE_PATH,
+      subjectType: RULE_EDITOR_SUBJECT_TYPE,
+      subjectId: ruleId,
+      subjectName: ruleName,
+      businessObject: {
+        type: RULE_EDITOR_SUBJECT_TYPE,
+        id: ruleId,
+        name: ruleName,
+        description: ruleDescription,
+      },
+      navigation,
+      contextPrepared: !!handoffPrepared,
+    }),
+    navigation,
     ruleName,
     summary: i18n.global.t('Instance.homeAgent.tool.create.summary', [ruleName]),
     nextAction: i18n.global.t('Instance.homeAgent.tool.create.nextAction'),
