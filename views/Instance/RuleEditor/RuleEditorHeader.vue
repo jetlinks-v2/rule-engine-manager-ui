@@ -28,7 +28,21 @@
           <span>{{ ruleName }}</span>
           <AIcon :type="renameLoading ? 'LoadingOutlined' : 'EditOutlined'" />
         </button>
-        <span class="rule-editor-shell__id">{{ $t('RuleEditor.index.ruleId', [ruleId]) }}</span>
+        <div class="rule-editor-shell__meta">
+          <span class="rule-editor-shell__id">{{ $t('RuleEditor.index.ruleId', [ruleId]) }}</span>
+          <span class="rule-editor-shell__meta-separator" />
+          <button
+            class="rule-editor-shell__description"
+            :class="{ 'rule-editor-shell__description--empty': !ruleDescription }"
+            type="button"
+            :disabled="descriptionLoading"
+            :title="$t('RuleEditor.index.editDescription')"
+            @click="startDescriptionEdit"
+          >
+            <span>{{ ruleDescription || $t('RuleEditor.index.descriptionEmpty') }}</span>
+            <AIcon :type="descriptionLoading ? 'LoadingOutlined' : 'EditOutlined'" />
+          </button>
+        </div>
       </div>
     </div>
     <a-space class="rule-editor-shell__actions" :size="10">
@@ -68,6 +82,23 @@
         </template>
       </a-button>
     </a-space>
+    <a-modal
+      :open="descriptionModalOpen"
+      :title="$t('RuleEditor.index.editDescription')"
+      :confirm-loading="descriptionLoading"
+      :ok-text="$t('RuleEditor.index.descriptionSave')"
+      @ok="commitDescriptionEdit"
+      @cancel="cancelDescriptionEdit"
+    >
+      <a-textarea
+        ref="descriptionInputRef"
+        v-model:value="descriptionDraft"
+        :maxlength="256"
+        :show-count="true"
+        :auto-size="{ minRows: 3, maxRows: 6 }"
+        :placeholder="$t('RuleEditor.index.descriptionPlaceholder')"
+      />
+    </a-modal>
   </header>
 </template>
 
@@ -82,6 +113,10 @@ const props = defineProps({
   ruleName: {
     type: String,
     required: true,
+  },
+  ruleDescription: {
+    type: String,
+    default: '',
   },
   statusColor: {
     type: String as PropType<'success' | 'error' | 'processing'>,
@@ -103,6 +138,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  descriptionLoading: {
+    type: Boolean,
+    default: false,
+  },
   deployDisabled: {
     type: Boolean,
     default: false,
@@ -116,12 +155,16 @@ const props = defineProps({
 const emit = defineEmits<{
   (e: 'execute', action: 'deploy' | 'save'): void;
   (e: 'rename', name: string): void;
+  (e: 'descriptionChange', description: string): void;
   (e: 'close'): void;
 }>();
 
 const nameEditing = ref(false);
 const nameDraft = ref('');
 const nameInputRef = ref();
+const descriptionModalOpen = ref(false);
+const descriptionDraft = ref('');
+const descriptionInputRef = ref();
 
 const startNameEdit = async () => {
   if (props.renameLoading) {
@@ -151,6 +194,34 @@ const commitNameEdit = () => {
   emit('rename', nextName);
 };
 
+const startDescriptionEdit = async () => {
+  if (props.descriptionLoading) {
+    return;
+  }
+  descriptionDraft.value = props.ruleDescription;
+  descriptionModalOpen.value = true;
+  await nextTick();
+  descriptionInputRef.value?.focus?.();
+};
+
+const cancelDescriptionEdit = () => {
+  descriptionDraft.value = props.ruleDescription;
+  descriptionModalOpen.value = false;
+};
+
+const commitDescriptionEdit = () => {
+  if (!descriptionModalOpen.value) {
+    return;
+  }
+  const nextDescription = descriptionDraft.value.trim();
+  descriptionModalOpen.value = false;
+  if (nextDescription === props.ruleDescription.trim()) {
+    descriptionDraft.value = props.ruleDescription;
+    return;
+  }
+  emit('descriptionChange', nextDescription);
+};
+
 watch(
   () => props.ruleName,
   (value) => {
@@ -160,139 +231,16 @@ watch(
   },
   { immediate: true },
 );
+
+watch(
+  () => props.ruleDescription,
+  (value) => {
+    if (!descriptionModalOpen.value) {
+      descriptionDraft.value = value;
+    }
+  },
+  { immediate: true },
+);
 </script>
 
-<style scoped lang="less">
-.rule-editor-shell__header {
-  display: flex;
-  align-items: center; justify-content: space-between;
-  height: 50px;
-  padding: 0 16px;
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
-}
-.rule-editor-shell__title {
-  display: flex; align-items: center;
-  flex: 1;
-  min-width: 0;
-  gap: 12px;
-}
-.rule-editor-shell__icon {
-  position: relative;
-  display: inline-flex; align-items: center; justify-content: center;
-  flex: none;
-  width: 30px; height: 30px;
-  overflow: hidden;
-  color: var(--ant-primary-color, #1677ff);
-  font-size: 16px;
-  border: 1px solid rgba(22, 119, 255, 0.14);
-  border-radius: 8px;
-  background: rgba(22, 119, 255, 0.04);
-}
-.rule-editor-shell__copy {
-  display: flex; flex-direction: column;
-  min-width: 0;
-}
-.rule-editor-shell__name {
-  display: inline-flex;
-  align-items: center;
-  max-width: 28rem;
-  gap: 6px;
-  padding: 0;
-  color: rgba(0, 0, 0, 0.88);
-  font: inherit;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-
-  span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .anticon {
-    flex: none;
-    color: rgba(0, 0, 0, 0.45);
-    font-size: 12px;
-    opacity: 0;
-    transition: opacity 0.16s ease;
-  }
-
-  &:hover .anticon,
-  &:focus-visible .anticon {
-    opacity: 1;
-  }
-
-  &:disabled {
-    cursor: default;
-
-    .anticon {
-      opacity: 1;
-    }
-  }
-}
-.rule-editor-shell__name,
-.rule-editor-shell__name-input {
-  min-width: 12rem;
-  max-width: 28rem;
-}
-.rule-editor-shell__name span,
-.rule-editor-shell__name-input {
-    color: rgba(0, 0, 0, 0.88);
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 22px;
-}
-.rule-editor-shell__id {
-  overflow: hidden;
-  color: rgba(0, 0, 0, 0.45);
-  font-size: 12px;
-  line-height: 18px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.rule-editor-shell__status {
-  display: inline-block;
-  width: 8px; height: 8px;
-  border-radius: 50%; background: #d9d9d9;
-}
-.rule-editor-shell__status--success { background: #52c41a; box-shadow: 0 0 0 3px rgba(82, 196, 26, 0.12); }
-.rule-editor-shell__status--processing { background: var(--ant-primary-color, #1677ff); box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.12); }
-.rule-editor-shell__status--error { background: #ff4d4f; box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.12); }
-.rule-editor-shell__actions { flex: none; }
-.rule-editor-shell__action-group {
-  display: inline-flex; align-items: center;
-  gap: 2px; padding: 2px;
-  border: 1px solid #dce4f2;
-  border-radius: 10px;
-  background: #f4f7fb;
-}
-.rule-editor-shell__action-group :deep(.rule-editor-shell__action) {
-  display: inline-flex; align-items: center;
-  height: 32px; padding: 0 12px;
-  border: 0;
-  border-radius: 8px !important;
-  font-weight: 500;
-  box-shadow: none;
-}
-.rule-editor-shell__action-group :deep(.rule-editor-shell__action--save) {
-  color: rgba(0, 0, 0, 0.72); background: transparent;
-}
-.rule-editor-shell__action-group :deep(.rule-editor-shell__action--save:not(:disabled):hover),
-.rule-editor-shell__action-group :deep(.rule-editor-shell__action--save:not(:disabled):focus-visible) {
-  color: var(--ant-primary-color, #1677ff); background: #fff;
-}
-.rule-editor-shell__action-group :deep(.rule-editor-shell__action--deploy:not(:disabled)) {
-  box-shadow: 0 6px 14px rgba(22, 119, 255, 0.22);
-}
-.rule-editor-shell__close {
-  width: 32px; height: 32px;
-  color: rgba(0, 0, 0, 0.5);
-  border-radius: 8px;
-}
-.rule-editor-shell__close:hover,
-.rule-editor-shell__close:focus-visible {
-  color: rgba(0, 0, 0, 0.88); background: #f5f7fa;
-}
-</style>
+<style src="./RuleEditorHeader.less" scoped lang="less" />

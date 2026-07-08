@@ -1,16 +1,9 @@
 import { computed, onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 import i18n from '@jetlinks-web-core/locales';
-import {
-  createAiClientToolRuntime,
-  type AiClientToolCall,
-  type AiClientToolRuntime,
-} from '@jetlinks-web-core/layout/components/AiChat/clientTools';
+import { createAiClientToolRuntime, type AiClientToolCall, type AiClientToolRuntime } from '@jetlinks-web-core/layout/components/AiChat/clientTools';
 import { createRuleEditorProposalLinkHandler } from './proposalLinks';
-import {
-  createEmptyRuleEditorToolRuntime,
-  toRuleEditorClientToolDefinition,
-  type RemoteRuleEditorToolDefinition,
-} from './toolRuntime';
+import { createRuleEditorReferenceNodeBridge } from './referenceNodeBridge';
+import { createEmptyRuleEditorToolRuntime, toRuleEditorClientToolDefinition, type RemoteRuleEditorToolDefinition } from './toolRuntime';
 import { useRuleEditorSharedAgentTools } from './useRuleEditorSharedAgentTools';
 
 const CHANNEL = 'jetlinks-rule-editor-agent';
@@ -25,15 +18,9 @@ interface RuleEditorAgentMessage {
   origin?: string;
   payload?: Record<string, any>;
 }
-interface PendingCall {
-  timer: number;
-  resolve: (value: any) => void;
-  reject: (error: Error) => void;
-}
+interface PendingCall { timer: number; resolve: (value: any) => void; reject: (error: Error) => void }
 
-interface BridgeOptions {
-  ruleId: Ref<string>;
-}
+interface BridgeOptions { ruleId: Ref<string> }
 
 const t = (key: string, args?: unknown[]) => i18n.global.t(key, args as any);
 
@@ -45,7 +32,8 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
   const context = ref<Record<string, any>>({});
   const remoteTools = ref<RemoteRuleEditorToolDefinition[]>([]);
   const runtime = ref<AiClientToolRuntime>(createEmptyRuntime());
-  const version = ref(0);
+  const toolVersion = ref(0);
+  const contextVersion = ref(0);
   const sharedTools = useRuleEditorSharedAgentTools(computed(() => status.value !== 'idle'));
   const pendingCalls = new Map<string, PendingCall>();
   let readyTimer: number | undefined;
@@ -71,7 +59,6 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     readyTimer = window.setTimeout(() => {
       if (status.value === 'loading') {
         status.value = 'error';
-        version.value += 1;
       }
     }, READY_TIMEOUT);
   };
@@ -131,6 +118,11 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     { proposalId },
   );
 
+  const { previewNode, listNodesForReference } = createRuleEditorReferenceNodeBridge({
+    isReady: () => status.value === 'ready',
+    executeRemoteTool,
+  });
+
   const rebuildRuntime = () => {
     const tools = remoteTools.value
       .filter((tool) => tool?.id)
@@ -148,7 +140,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
         maxDepth: 7,
       },
     });
-    version.value += 1;
+    toolVersion.value += 1;
   };
 
   const handleRequestResult = (message: RuleEditorAgentMessage) => {
@@ -191,7 +183,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
 
     if (data.type === 'rule-editor-agent:ready') {
       context.value = data.payload?.context || context.value;
-      version.value += 1;
+      contextVersion.value += 1;
       return;
     }
     if (data.type === 'rule-editor-agent:register-tools') {
@@ -200,12 +192,13 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
         ? data.payload!.tools as RemoteRuleEditorToolDefinition[]
         : [];
       context.value = data.payload?.context || context.value;
+      contextVersion.value += 1;
       rebuildRuntime();
       return;
     }
     if (data.type === 'rule-editor-agent:context-change') {
       context.value = data.payload?.context || {};
-      version.value += 1;
+      contextVersion.value += 1;
       return;
     }
     if (
@@ -228,7 +221,8 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     runtime.value = createEmptyRuntime();
     status.value = 'loading';
     startReadyTimer();
-    version.value += 1;
+    toolVersion.value += 1;
+    contextVersion.value += 1;
   };
 
   const markFrameLoaded = () => {
@@ -245,7 +239,8 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     context.value = {};
     runtime.value = createEmptyRuntime();
     status.value = 'idle';
-    version.value += 1;
+    toolVersion.value += 1;
+    contextVersion.value += 1;
   };
 
   const clientTools = computed(() => [
@@ -253,7 +248,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     ...sharedTools.clientTools.value,
   ]);
   const workflowGuides = computed(() => sharedTools.workflowGuides.value);
-  const combinedVersion = computed(() => version.value + sharedTools.version.value);
+  const combinedVersion = computed(() => toolVersion.value + sharedTools.version.value);
 
   const handleClientToolCall = (call: AiClientToolCall) => (
     sharedTools.hasTool(call.toolName)
@@ -280,6 +275,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     iframeRef,
     status,
     context,
+    contextVersion,
     version: combinedVersion,
     clientTools,
     clientToolsName: computed(() => runtime.value.clientToolsName),
@@ -291,6 +287,8 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     disposeBridge,
     executeEditorAction,
     executeProposalAction,
+    previewNode,
+    listNodesForReference,
     handleClientToolCall,
     handleMarkdownLink,
   };

@@ -15,18 +15,20 @@
       <RuleEditorHeader
         :rule-id="ruleId"
         :rule-name="ruleName"
+        :rule-description="ruleDescription"
         :status-color="bridgeStatusColor"
         :status-text="bridgeStatusText"
         :actioning="editorActioning"
         :action-done="editorActionDone"
         :rename-loading="ruleNameSaving"
+        :description-loading="ruleDescriptionSaving"
         :deploy-disabled="isEditorActionDisabled('deploy')"
         :save-disabled="isEditorActionDisabled('save')"
         @execute="handleEditorAction"
         @rename="handleRuleRename"
+        @description-change="handleRuleDescriptionChange"
         @close="handleClose"
       />
-
       <div class="rule-editor-shell__body">
         <iframe
           v-if="editorUrl"
@@ -54,10 +56,11 @@ import { getBaseApi, isFromCloud } from '@jetlinks-web-core/utils';
 import RuleEditorHeader from './RuleEditorHeader.vue';
 import { useRuleEditorActions } from './useRuleEditorActions';
 import { useRuleEditorAgentBridge } from './useRuleEditorAgentBridge';
+import { useRuleEditorAgentComposerExtensions } from './useRuleEditorAgentComposerExtensions';
 
 const RULE_EDITOR_CLIENT_ID = 'ruleEditorChat';
 const RULE_EDITOR_SUBJECT_TYPE = 'ruleInstance';
-const RULE_EDITOR_RESOURCE_VERSION = '2026070725';
+const RULE_EDITOR_RESOURCE_VERSION = '2026070804';
 
 const props = defineProps({
   open: {
@@ -79,6 +82,7 @@ const { t: $t } = useI18n();
 const aiStore = useAIStore();
 const ruleId = computed(() => String(props.rule?.id || ''));
 const ruleName = computed(() => String(props.rule?.name || props.rule?.id || '--'));
+const ruleDescription = computed(() => String(props.rule?.description || '').trim());
 const iframeRef = ref<HTMLIFrameElement>();
 const frameLoaded = ref(false);
 const bridge = useRuleEditorAgentBridge({ ruleId });
@@ -87,7 +91,9 @@ const bridgeActions = computed<Record<'deploy' | 'save', boolean | undefined>>((
   deploy: bridge.context.value?.actions?.deploy,
   save: bridge.context.value?.actions?.save,
 }));
-
+const composerExtensions = useRuleEditorAgentComposerExtensions({
+  context: bridge.context, previewNode: bridge.previewNode, listNodes: bridge.listNodesForReference, t: $t,
+});
 watch(iframeRef, (value) => {
   bridge.iframeRef.value = value;
 });
@@ -139,20 +145,22 @@ const bridgeStatusColor = computed(() => {
   return 'processing';
 });
 const showFrameLoading = computed(() => !frameLoaded.value && (bridgeStatus.value === 'loading' || bridgeStatus.value === 'idle'));
-
 const {
   editorActioning,
   editorActionDone,
   ruleNameSaving,
+  ruleDescriptionSaving,
   clearEditorActionDone,
   handleEditorAction,
   handleRuleRename,
+  handleRuleDescriptionChange,
 } = useRuleEditorActions({
   bridge,
   bridgeStatus,
   bridgeActions,
   ruleId,
   ruleName,
+  ruleDescription,
   getRule: () => props.rule,
   onRuleUpdated: (rule) => emit('updated', rule),
   t: $t,
@@ -175,18 +183,17 @@ const buildAgentParameters = () => ({
   subjectId: ruleId.value,
   subjectName: ruleName.value,
   clientTools: bridge.clientTools.value,
+  clientToolsVersion: bridge.version.value,
   clientToolHandler: bridge.handleClientToolCall,
   clientToolsName: bridge.clientToolsName.value,
   clientToolsDescription: bridge.clientToolsDescription.value,
   workflowGuides: bridge.workflowGuides.value,
+  referenceProviders: composerExtensions.referenceProviders.value,
+  composerAddActions: composerExtensions.composerAddActions.value,
   markdownLinkHandler: bridge.handleMarkdownLink,
   systemPrompt: buildSystemPrompt(),
   openingStatement: $t('RuleEditor.agent.opening'),
-  promptExamples: [
-    $t('RuleEditor.agent.prompt.inspect'),
-    $t('RuleEditor.agent.prompt.findNode'),
-    $t('RuleEditor.agent.prompt.validate'),
-  ],
+  promptExamples: [$t('RuleEditor.agent.prompt.inspect'), $t('RuleEditor.agent.prompt.findNode'), $t('RuleEditor.agent.prompt.validate')],
   conversationTitle: $t('RuleEditor.agent.conversationTitle'),
   bubbleIcon: 'BranchesOutlined',
   bubbleIconBadge: 'ToolOutlined',
@@ -249,7 +256,7 @@ watch(
 );
 
 watch(
-  () => [bridge.ready.value, bridge.version.value, props.open, ruleId.value],
+  () => [bridge.ready.value, bridge.version.value, bridge.contextVersion.value, props.open, ruleId.value],
   () => {
     syncRuleEditorAgent();
   },
@@ -263,7 +270,6 @@ onBeforeUnmount(() => {
   }
 });
 </script>
-
 <style scoped lang="less">
 .rule-editor-shell {
   display: flex; flex-direction: column;
