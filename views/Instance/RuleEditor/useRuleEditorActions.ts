@@ -17,6 +17,7 @@ interface RuleEditorActionsOptions {
   bridgeActions: ComputedRef<Record<EditorAction, boolean | undefined>>;
   ruleId: ComputedRef<string>;
   ruleName: ComputedRef<string>;
+  ruleDescription: ComputedRef<string>;
   getRule: () => Record<string, any> | undefined;
   onRuleUpdated: (rule: Record<string, any>) => void;
   t: (key: string) => string;
@@ -26,6 +27,7 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
   const editorActioning = ref<EditorAction | ''>('');
   const editorActionDone = ref<EditorAction | ''>('');
   const ruleNameSaving = ref(false);
+  const ruleDescriptionSaving = ref(false);
   let editorActionDoneTimer: ReturnType<typeof window.setTimeout> | undefined;
 
   const clearEditorActionDone = () => {
@@ -123,14 +125,43 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
     }
   };
 
+  const handleRuleDescriptionChange = async (value: string) => {
+    const nextDescription = value.trim();
+    if (!options.ruleId.value || nextDescription === options.ruleDescription.value || ruleDescriptionSaving.value) {
+      return;
+    }
+
+    ruleDescriptionSaving.value = true;
+    try {
+      const response = await modify(options.ruleId.value, {
+        ...options.getRule(),
+        description: nextDescription,
+      });
+      if (response?.status !== 200) {
+        throw new Error(options.t('RuleEditor.index.descriptionSaveFailed'));
+      }
+      options.onRuleUpdated({
+        ...options.getRule(),
+        ...(response?.result || {}),
+        description: nextDescription,
+      });
+    } catch (error) {
+      onlyMessage(error instanceof Error ? error.message : options.t('RuleEditor.index.descriptionSaveFailed'), 'error');
+    } finally {
+      ruleDescriptionSaving.value = false;
+    }
+  };
+
   onBeforeUnmount(clearEditorActionDone);
 
   return {
     editorActioning,
     editorActionDone,
     ruleNameSaving,
+    ruleDescriptionSaving,
     clearEditorActionDone,
     handleEditorAction,
     handleRuleRename,
+    handleRuleDescriptionChange,
   };
 };

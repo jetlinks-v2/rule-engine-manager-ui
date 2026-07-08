@@ -4,7 +4,8 @@ import {EventEmitter, DeviceEmitterKey, ACTION_DATA} from '@rule-engine-manager-
 type HomeAgentProviderLoader = () => Promise<unknown>
 
 const homeAgentProviderKeyMap: Record<string, string> = {
-    './views/DashBoard/homeAgentProvider.ts': 'rule-engine/DashBoard'
+    './views/DashBoard/homeAgentProvider.ts': 'rule-engine/DashBoard',
+    './views/Instance/homeAgentProvider.ts': 'rule-engine/Instance'
 }
 
 const toHomeAgentProviderKey = (path: string) => (
