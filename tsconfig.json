@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "include": ["./**/*.ts", "./**/*.tsx", "./**/*.vue", "./**/*.json", "../../jetlinks-web-core/src/auto-imports.d.ts"],
+  "exclude": ["./tests/**"],
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {

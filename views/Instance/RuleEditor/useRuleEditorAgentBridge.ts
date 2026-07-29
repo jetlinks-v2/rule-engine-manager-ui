@@ -3,12 +3,19 @@ import i18n from '@jetlinks-web-core/locales';
 import { createAiClientToolRuntime, type AiClientToolCall, type AiClientToolRuntime } from '@jetlinks-web-core/layout/components/AiChat/clientTools';
 import { createRuleEditorProposalLinkHandler } from './proposalLinks';
 import { createRuleEditorReferenceNodeBridge } from './referenceNodeBridge';
-import { createEmptyRuleEditorToolRuntime, toRuleEditorClientToolDefinition, type RemoteRuleEditorToolDefinition } from './toolRuntime';
+import {
+  createEmptyRuleEditorToolRuntime,
+  toRuleEditorClientToolDefinition,
+  type RemoteRuleEditorToolDefinition,
+  type RuleEditorToolExecutionContext,
+} from './toolRuntime';
 import { useRuleEditorSharedAgentTools } from './useRuleEditorSharedAgentTools';
 
 const CHANNEL = 'jetlinks-rule-editor-agent';
 const REQUEST_TIMEOUT = 60000;
 const READY_TIMEOUT = 20000;
+const MAX_EXECUTION_RESPONSE_ID_LENGTH = 256;
+const MAX_EXECUTION_USER_MESSAGE_LENGTH = 16 * 1024;
 type BridgeStatus = 'idle' | 'loading' | 'ready' | 'error';
 interface RuleEditorAgentMessage {
   channel?: string;
@@ -25,6 +32,22 @@ interface BridgeOptions { ruleId: Ref<string> }
 const t = (key: string, args?: unknown[]) => i18n.global.t(key, args as any);
 
 const createEmptyRuntime = () => createEmptyRuleEditorToolRuntime(t);
+
+const normalizeExecutionContext = (value?: RuleEditorToolExecutionContext) => {
+  if (!value) return undefined;
+  const responseId = typeof value.responseId === 'string'
+    ? value.responseId.trim().slice(0, MAX_EXECUTION_RESPONSE_ID_LENGTH) || undefined
+    : undefined;
+  const userMessage = typeof value.userMessage === 'string'
+    ? value.userMessage.trim().slice(0, MAX_EXECUTION_USER_MESSAGE_LENGTH) || undefined
+    : undefined;
+  const turnSeq = Number.isSafeInteger(value.turnSeq) && Number(value.turnSeq) > 0
+    ? value.turnSeq
+    : undefined;
+  return responseId || userMessage || turnSeq !== undefined
+    ? { responseId, turnSeq, userMessage }
+    : undefined;
+};
 
 export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
   const iframeRef = ref<HTMLIFrameElement>();
@@ -100,13 +123,21 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     }, activeFrameOrigin() || '*');
   });
 
-  const executeRemoteTool = (toolId: string, args: Record<string, any>) => executeBridgeRequest(
-    'rule-editor-agent:execute-tool',
-    {
-      toolName: toolId,
-      arguments: args,
-    },
-  );
+  const executeRemoteTool = (
+    toolId: string,
+    args: Record<string, any>,
+    executionContext?: RuleEditorToolExecutionContext,
+  ) => {
+    const normalizedContext = normalizeExecutionContext(executionContext);
+    return executeBridgeRequest(
+      'rule-editor-agent:execute-tool',
+      {
+        toolName: toolId,
+        arguments: args,
+        ...(normalizedContext ? { executionContext: normalizedContext } : {}),
+      },
+    );
+  };
 
   const executeEditorAction = (action: 'deploy' | string, payload: Record<string, any> = {}) => executeBridgeRequest(
     'rule-editor-agent:execute-action',
