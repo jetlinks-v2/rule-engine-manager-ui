@@ -44,8 +44,29 @@ const normalizeExecutionContext = (value?: RuleEditorToolExecutionContext) => {
   const turnSeq = Number.isSafeInteger(value.turnSeq) && Number(value.turnSeq) > 0
     ? value.turnSeq
     : undefined;
-  return responseId || userMessage || turnSeq !== undefined
-    ? { responseId, turnSeq, userMessage }
+  const rawResolution = value.userInputResolution;
+  const userInputResolution = rawResolution?.version === 'user-input-resolution/v1'
+    && typeof rawResolution.interactionId === 'string'
+    && typeof rawResolution.requirementFingerprint === 'string'
+    && typeof rawResolution.optionId === 'string'
+    && typeof rawResolution.toolCallId === 'string'
+    ? {
+        version: 'user-input-resolution/v1' as const,
+        interactionId: rawResolution.interactionId.trim().slice(0, 128),
+        requirementFingerprint: rawResolution.requirementFingerprint.trim().slice(0, 256),
+        optionId: rawResolution.optionId.trim().slice(0, 128),
+        optionTitle: rawResolution.optionTitle?.trim().slice(0, 256),
+        toolCallId: rawResolution.toolCallId.trim().slice(0, 128),
+      }
+    : undefined;
+  const verifiedResolution = userInputResolution?.interactionId
+    && userInputResolution.requirementFingerprint
+    && userInputResolution.optionId
+    && userInputResolution.toolCallId
+    ? userInputResolution
+    : undefined;
+  return responseId || userMessage || turnSeq !== undefined || verifiedResolution
+    ? { responseId, turnSeq, userMessage, userInputResolution: verifiedResolution }
     : undefined;
 };
 
