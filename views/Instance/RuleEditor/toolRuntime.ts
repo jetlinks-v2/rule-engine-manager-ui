@@ -22,6 +22,8 @@ export interface RemoteRuleEditorToolDefinition extends RuleEditorRemoteToolDefi
   annotations?: Record<string, any>;
 }
 
+export const RULE_EDITOR_REMOTE_ADAPTER_VERSION = 'rule-editor-remote-definition/v1' as const;
+
 export type RuleEditorToolExecutionContext = AiClientToolExecutionContext;
 
 const RULE_EDITOR_FLOW_MODES = ['request-response', 'realtime-stream', 'one-way-trigger'] as const;
@@ -278,6 +280,7 @@ export const createEmptyRuleEditorToolRuntime = (
   t: (key: string, args?: unknown[]) => string,
 ): AiClientToolRuntime => ({
   clientTools: [],
+  clientToolsVersion: 0,
   clientToolsName: t('RuleEditor.agent.toolsName'),
   clientToolsDescription: t('RuleEditor.agent.toolsDescription'),
   handleClientToolCall: async () => {
@@ -285,6 +288,9 @@ export const createEmptyRuleEditorToolRuntime = (
   },
   getToolHelp: () => '',
   getAllToolHelp: () => '',
+  refreshClientTools: () => undefined,
+  subscribeClientTools: () => () => undefined,
+  dispose: () => undefined,
 });
 
 export const toRuleEditorClientToolDefinition = (
@@ -294,6 +300,7 @@ export const toRuleEditorClientToolDefinition = (
     args: Record<string, any>,
     executionContext?: RuleEditorToolExecutionContext,
   ) => Promise<any>,
+  sourceRevision = 'unversioned',
 ): AiClientToolDefinition<Record<string, any>> => {
   const isApplyCanvasTool = tool.id === APPLY_CANVAS_TOOL_ID;
   const remoteExpands = isRecord(tool.expands) ? tool.expands : undefined;
@@ -311,6 +318,14 @@ export const toRuleEditorClientToolDefinition = (
       ...(tool.annotations || {}),
     },
     confirm: resolveRuleEditorConfirmOptions(tool),
+    _meta: {
+      ...(isApplyCanvasTool ? APPLY_CANVAS_CONTRACT._meta : {}),
+      clientToolAdapter: {
+        version: RULE_EDITOR_REMOTE_ADAPTER_VERSION,
+        source: 'rule-editor-iframe',
+        sourceRevision: String(sourceRevision || 'unversioned'),
+      },
+    },
     execute: async (args, _context, call) => {
       const result: unknown = await execute(
         tool.id,

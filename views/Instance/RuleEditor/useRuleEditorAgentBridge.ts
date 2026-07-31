@@ -81,6 +81,9 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
   const sharedTools = useRuleEditorSharedAgentTools(computed(() => status.value !== 'idle'));
   const pendingCalls = new Map<string, PendingCall>();
   let readyTimer: number | undefined;
+  let runtimeInitialized = false;
+  let remoteSourceRevision = 'rule-editor:empty';
+  let unsubscribeRuntime: (() => void) | undefined;
 
   const activeFrameWindow = () => iframeRef.value?.contentWindow;
   const activeFrameOrigin = () => {
@@ -175,12 +178,19 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     executeRemoteTool,
   });
 
-  const rebuildRuntime = () => {
-    const tools = remoteTools.value
-      .filter((tool) => tool?.id)
-      .map((tool) => toRuleEditorClientToolDefinition(tool, executeRemoteTool));
+  const createRemoteSourceRevision = (tools: RemoteRuleEditorToolDefinition[]) => {
+    const source = JSON.stringify(tools);
+    let hash = 2166136261;
+    for (let index = 0; index < source.length; index += 1) {
+      hash ^= source.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return `rule-editor:${(hash >>> 0).toString(36)}`;
+  };
 
-    runtime.value = createAiClientToolRuntime(tools, {
+  const createRuntime = () => createAiClientToolRuntime(() => remoteTools.value
+      .filter((tool) => tool?.id)
+      .map((tool) => toRuleEditorClientToolDefinition(tool, executeRemoteTool, remoteSourceRevision)), {
       toolsName: t('RuleEditor.agent.toolsName'),
       toolsDescription: t('RuleEditor.agent.toolsDescription'),
       getContext: () => context.value,
@@ -192,7 +202,27 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
         maxDepth: 7,
       },
     });
+
+  const replaceRuntime = (nextRuntime: AiClientToolRuntime, initialized: boolean) => {
+    unsubscribeRuntime?.();
+    runtime.value.dispose();
+    runtime.value = nextRuntime;
+    runtimeInitialized = initialized;
+    unsubscribeRuntime = initialized
+      ? nextRuntime.subscribeClientTools(() => {
+          toolVersion.value += 1;
+        })
+      : undefined;
     toolVersion.value += 1;
+  };
+
+  const rebuildRuntime = () => {
+    if (!runtimeInitialized) {
+      replaceRuntime(createRuntime(), true);
+      return;
+    }
+    // Runtime owns active-execution deferral, so a late iframe revision cannot detach the current turn.
+    runtime.value.refreshClientTools();
   };
 
   const handleRequestResult = (message: RuleEditorAgentMessage) => {
@@ -243,6 +273,11 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
       remoteTools.value = Array.isArray(data.payload?.tools)
         ? data.payload!.tools as RemoteRuleEditorToolDefinition[]
         : [];
+      remoteSourceRevision = String(
+        data.payload?.sourceRevision
+        || data.payload?.toolsRevision
+        || createRemoteSourceRevision(remoteTools.value),
+      );
       context.value = data.payload?.context || context.value;
       contextVersion.value += 1;
       rebuildRuntime();
@@ -270,10 +305,9 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     rejectPendingCalls(t('RuleEditor.bridge.error.notReady'));
     remoteTools.value = [];
     context.value = {};
-    runtime.value = createEmptyRuntime();
+    replaceRuntime(createEmptyRuntime(), false);
     status.value = 'loading';
     startReadyTimer();
-    toolVersion.value += 1;
     contextVersion.value += 1;
   };
 
@@ -289,16 +323,18 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     rejectPendingCalls(t('RuleEditor.bridge.error.notReady'));
     remoteTools.value = [];
     context.value = {};
-    runtime.value = createEmptyRuntime();
+    replaceRuntime(createEmptyRuntime(), false);
     status.value = 'idle';
-    toolVersion.value += 1;
     contextVersion.value += 1;
   };
 
-  const clientTools = computed(() => [
-    ...runtime.value.clientTools,
-    ...sharedTools.clientTools.value,
-  ]);
+  const clientTools = computed(() => {
+    void toolVersion.value;
+    return [
+      ...runtime.value.clientTools,
+      ...sharedTools.clientTools.value,
+    ];
+  });
   const workflowGuides = computed(() => sharedTools.workflowGuides.value);
   const combinedVersion = computed(() => toolVersion.value + sharedTools.version.value);
 
@@ -333,7 +369,10 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     clientToolsName: computed(() => runtime.value.clientToolsName),
     clientToolsDescription: computed(() => runtime.value.clientToolsDescription),
     workflowGuides,
-    ready: computed(() => status.value === 'ready' && runtime.value.clientTools.length > 0),
+    ready: computed(() => {
+      void toolVersion.value;
+      return status.value === 'ready' && runtime.value.clientTools.length > 0;
+    }),
     reset,
     markFrameLoaded,
     disposeBridge,

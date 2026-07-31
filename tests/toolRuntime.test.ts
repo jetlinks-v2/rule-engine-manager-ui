@@ -362,10 +362,11 @@ test('unrelated remote tools keep their original execution contract', async () =
     annotations: { idempotentHint: true },
   } satisfies RemoteRuleEditorToolDefinition;
   const payload = { ok: true, canvasRevision: 3 };
-  const definition = toRuleEditorClientToolDefinition(remote, async () => payload);
+  const definition = toRuleEditorClientToolDefinition(remote, async () => payload, 'revision-7');
 
   assert.equal(definition.routing, undefined);
-  assert.equal(definition._meta, undefined);
+  assert.equal(definition._meta?.clientToolAdapter?.source, 'rule-editor-iframe');
+  assert.equal(definition._meta?.clientToolAdapter?.sourceRevision, 'revision-7');
   assert.equal(definition.annotations?.readOnlyHint, true);
   assert.equal(definition.annotations?.idempotentHint, true);
   assert.equal(await definition.execute({}, {}, {} as any), payload);
@@ -376,7 +377,11 @@ test('empty runtime reports translated metadata and rejects execution before bri
 
   assert.equal(runtime.clientToolsName, 'translated:RuleEditor.agent.toolsName');
   assert.equal(runtime.clientToolsDescription, 'translated:RuleEditor.agent.toolsDescription');
+  assert.equal(runtime.clientToolsVersion, 0);
   assert.equal(runtime.getToolHelp?.('unknown' as any), '');
   assert.equal(runtime.getAllToolHelp?.(), '');
+  runtime.refreshClientTools();
+  assert.equal(typeof runtime.subscribeClientTools(() => undefined), 'function');
+  runtime.dispose();
   await assert.rejects(runtime.handleClientToolCall({} as any), /translated:RuleEditor\.bridge\.error\.notReady/);
 });
