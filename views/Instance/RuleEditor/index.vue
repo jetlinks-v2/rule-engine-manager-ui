@@ -60,7 +60,7 @@ import { useRuleEditorAgentComposerExtensions } from './useRuleEditorAgentCompos
 
 const RULE_EDITOR_CLIENT_ID = 'ruleEditorChat';
 const RULE_EDITOR_SUBJECT_TYPE = 'ruleInstance';
-const RULE_EDITOR_RESOURCE_VERSION = '2026070804';
+const RULE_EDITOR_RESOURCE_VERSION = '2026072907';
 
 const props = defineProps({
   open: {
@@ -172,8 +172,10 @@ const isEditorActionDisabled = (action: 'deploy' | 'save') => (
 );
 
 const buildSystemPrompt = () => [
-  $t('RuleEditor.agent.system.role'),
+  $t('RuleEditor.agent.system.role'), $t('RuleEditor.agent.system.userConstraints'),
   $t('RuleEditor.agent.system.compact'),
+  $t('RuleEditor.agent.system.templateSemantics'),
+  $t('RuleEditor.agent.system.presentation'),
 ].join('\n');
 
 const buildAgentParameters = () => ({
