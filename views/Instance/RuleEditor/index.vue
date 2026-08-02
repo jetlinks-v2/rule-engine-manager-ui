@@ -172,7 +172,7 @@ const isEditorActionDisabled = (action: 'deploy' | 'save') => (
 );
 
 const buildSystemPrompt = () => [
-  $t('RuleEditor.agent.system.role'),
+  $t('RuleEditor.agent.system.role'), $t('RuleEditor.agent.system.userConstraints'),
   $t('RuleEditor.agent.system.compact'),
   $t('RuleEditor.agent.system.templateSemantics'),
   $t('RuleEditor.agent.system.presentation'),

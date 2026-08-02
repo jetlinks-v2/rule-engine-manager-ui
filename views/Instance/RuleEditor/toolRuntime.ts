@@ -90,12 +90,14 @@ const APPLY_CANVAS_CONTRACT = defineAiClientToolContract({
     evidencePolicy: 'required',
     validationHints: ['canvas-changes-exist', 'canvas-revision-advanced', 'topology-completion-satisfied'],
     cost: 'medium',
-    exposure: 'deferred',
+    // FLAT only exposes a deferred tool after a high-confidence route. Atomic canvas apply is the
+    // editor's primary action, so it must remain directly available even when routing is inconclusive.
+    exposure: 'auto',
   },
   outputs: [{
     kind: 'state-events',
     name: 'canvas-changes',
-    shape: 'rule-editor.canvas-change[]',
+    shape: 'rule-editor.canvas-changes',
     path: '$.changes',
   }, {
     kind: 'artifact',

@@ -6,8 +6,13 @@ import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const coreAiChatRoot = path.resolve(
+  packageRoot,
+  '../../jetlinks-web-core/src/layout/components/AiChat',
+)
 const outputDirectory = await mkdtemp(path.join(tmpdir(), 'rule-editor-agent-tool-tests-'))
 const outputFile = path.join(outputDirectory, 'toolRuntime.test.mjs')
+const catalogOutputFile = path.join(outputDirectory, 'toolRuntimeCatalog.test.mjs')
 
 const runtimeMocks = {
   name: 'rule-editor-agent-tool-runtime-mocks',
@@ -73,6 +78,46 @@ const runtimeMocks = {
   },
 }
 
+const realCoreRuntime = {
+  name: 'rule-editor-agent-tool-real-core-runtime',
+  setup(buildApi) {
+    buildApi.onResolve({
+      filter: /^@jetlinks-web-core\/layout\/components\/AiChat\/clientTools$/,
+    }, () => ({ path: 'clientTools', namespace: 'rule-editor-real-core' }))
+    buildApi.onResolve({ filter: /^\.\/confirmOptions$/ }, () => ({
+      path: 'confirmOptions',
+      namespace: 'rule-editor-real-core',
+    }))
+    buildApi.onLoad({ filter: /^clientTools$/, namespace: 'rule-editor-real-core' }, () => ({
+      loader: 'ts',
+      resolveDir: coreAiChatRoot,
+      contents: `
+        export {
+          defineAiClientToolContract,
+          withAiClientToolContractEvidence,
+        } from ${JSON.stringify(path.join(coreAiChatRoot, 'clientToolContract.ts'))};
+        export {
+          createAiClientToolFailureResult,
+        } from ${JSON.stringify(path.join(coreAiChatRoot, 'clientToolResult.ts'))};
+        export {
+          createAiClientToolCatalogReport,
+        } from ${JSON.stringify(path.join(coreAiChatRoot, 'clientToolCatalog.ts'))};
+        export {
+          AI_CLIENT_TOOL_ROUTING_EXPAND_KEY,
+          normalizeAiClientToolRoutingMetadata,
+        } from ${JSON.stringify(path.join(coreAiChatRoot, 'clientToolRouting.ts'))};
+      `,
+    }))
+    buildApi.onLoad({ filter: /^confirmOptions$/, namespace: 'rule-editor-real-core' }, () => ({
+      loader: 'ts',
+      contents: `
+        export const resolveRuleEditorConfirmOptions = () => false;
+        export const resolveRuleEditorToolDisplayName = tool => tool.name || tool.id;
+      `,
+    }))
+  },
+}
+
 try {
   await build({
     entryPoints: [path.join(packageRoot, 'tests/toolRuntime.test.ts')],
@@ -84,6 +129,17 @@ try {
     sourcemap: 'inline',
     logLevel: 'warning',
     plugins: [runtimeMocks],
+  })
+  await build({
+    entryPoints: [path.join(packageRoot, 'tests/toolRuntimeCatalog.test.ts')],
+    outfile: catalogOutputFile,
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    target: 'node22',
+    sourcemap: 'inline',
+    logLevel: 'warning',
+    plugins: [realCoreRuntime],
   })
   const result = spawnSync(process.execPath, [
     '--test',
@@ -97,7 +153,15 @@ try {
     encoding: 'utf8',
     stdio: 'inherit',
   })
-  process.exitCode = result.status ?? 1
+  const catalogResult = spawnSync(process.execPath, [
+    '--test',
+    catalogOutputFile,
+  ], {
+    cwd: packageRoot,
+    encoding: 'utf8',
+    stdio: 'inherit',
+  })
+  process.exitCode = result.status || catalogResult.status || 0
 } finally {
   await rm(outputDirectory, { recursive: true, force: true })
 }

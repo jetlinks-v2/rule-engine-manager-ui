@@ -74,7 +74,12 @@ test('apply tool exposes one canonical root schema without duplicate input schem
   assert.deepEqual(definition.routing?.capabilities, ['rule-editor.canvas.apply']);
   assert.deepEqual(definition.routing?.accepts, ['rule-editor.canvas-plan']);
   assert.equal(definition.routing?.evidencePolicy, 'required');
+  assert.equal(definition.routing?.exposure, 'auto');
   assert.deepEqual(definition.routing?.produces, ['canvas-changes', 'topology-diagram']);
+  assert.deepEqual(definition.routing?.outputShapes, [
+    'rule-editor.canvas-changes',
+    'diagram.flowchart',
+  ]);
   assert.equal(definition._meta?.clientToolContract.outputs[0].kind, 'state-events');
   assert.equal(definition._meta?.clientToolContract.outputs[1].kind, 'artifact');
   assert.equal(definition._meta?.clientToolContract.outputs[1].mediaType, 'application/vnd.mermaid');
@@ -173,7 +178,7 @@ test('successful apply result carries canonical state-change evidence', async ()
   });
   assert.equal(result.outputBindings[0].name, 'canvas-changes');
   assert.equal(result.outputBindings[0].recordCount, 1);
-  assert.equal(result.outputBindings[0].shape, 'rule-editor.canvas-change[]');
+  assert.equal(result.outputBindings[0].shape, 'rule-editor.canvas-changes');
   assert.equal(result.outputBindings[1].name, 'topology-diagram');
   assert.equal(result.outputBindings[1].mediaType, 'application/vnd.mermaid');
   assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
