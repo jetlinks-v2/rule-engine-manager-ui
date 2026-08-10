@@ -3,6 +3,7 @@ import { onlyMessage } from '@jetlinks-web/utils';
 import { modify, updateRuleMetadata } from '../../../api/instance';
 
 type EditorAction = 'deploy' | 'save';
+type EditorTransferAction = 'import' | 'export';
 interface EditorActionResult {
   ok?: boolean;
   error?: string;
@@ -12,9 +13,10 @@ interface EditorActionResult {
 interface RuleEditorActionsOptions {
   bridge: {
     executeEditorAction: (action: EditorAction) => Promise<unknown>;
+    executeEditorUtilityAction: (action: EditorTransferAction) => Promise<unknown>;
   };
   bridgeStatus: ComputedRef<string>;
-  bridgeActions: ComputedRef<Record<EditorAction, boolean | undefined>>;
+  bridgeActions: ComputedRef<Record<EditorAction | EditorTransferAction, boolean | undefined>>;
   ruleId: ComputedRef<string>;
   ruleName: ComputedRef<string>;
   ruleDescription: ComputedRef<string>;
@@ -26,6 +28,7 @@ interface RuleEditorActionsOptions {
 export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
   const editorActioning = ref<EditorAction | ''>('');
   const editorActionDone = ref<EditorAction | ''>('');
+  const editorTransferActioning = ref<EditorTransferAction | ''>('');
   const ruleNameSaving = ref(false);
   const ruleDescriptionSaving = ref(false);
   let editorActionDoneTimer: ReturnType<typeof window.setTimeout> | undefined;
@@ -98,6 +101,28 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
     }
   };
 
+  const handleEditorTransfer = async (action: EditorTransferAction) => {
+    if (
+      options.bridgeStatus.value !== 'ready'
+      || !!editorActioning.value
+      || !!editorTransferActioning.value
+      || options.bridgeActions.value[action] === false
+    ) {
+      return;
+    }
+    editorTransferActioning.value = action;
+    try {
+      const result = await options.bridge.executeEditorUtilityAction(action) as EditorActionResult;
+      if (result?.ok === false) {
+        throw new Error(options.t('RuleEditor.index.transferFailed'));
+      }
+    } catch (error) {
+      onlyMessage(error instanceof Error ? error.message : options.t('RuleEditor.index.transferFailed'), 'error');
+    } finally {
+      editorTransferActioning.value = '';
+    }
+  };
+
   const handleRuleRename = async (value: string) => {
     const nextName = value.trim();
     if (!options.ruleId.value || !nextName || nextName === options.ruleName.value || ruleNameSaving.value) {
@@ -157,10 +182,12 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
   return {
     editorActioning,
     editorActionDone,
+    editorTransferActioning,
     ruleNameSaving,
     ruleDescriptionSaving,
     clearEditorActionDone,
     handleEditorAction,
+    handleEditorTransfer,
     handleRuleRename,
     handleRuleDescriptionChange,
   };

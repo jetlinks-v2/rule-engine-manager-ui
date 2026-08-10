@@ -20,11 +20,15 @@
         :status-text="bridgeStatusText"
         :actioning="editorActioning"
         :action-done="editorActionDone"
+        :transfer-actioning="editorTransferActioning"
         :rename-loading="ruleNameSaving"
         :description-loading="ruleDescriptionSaving"
         :deploy-disabled="isEditorActionDisabled('deploy')"
         :save-disabled="isEditorActionDisabled('save')"
+        :import-disabled="isEditorActionDisabled('import')"
+        :export-disabled="isEditorActionDisabled('export')"
         @execute="handleEditorAction"
+        @transfer="handleEditorTransfer"
         @rename="handleRuleRename"
         @description-change="handleRuleDescriptionChange"
         @close="handleClose"
@@ -87,9 +91,11 @@ const iframeRef = ref<HTMLIFrameElement>();
 const frameLoaded = ref(false);
 const bridge = useRuleEditorAgentBridge({ ruleId });
 const bridgeStatus = computed(() => bridge.status.value);
-const bridgeActions = computed<Record<'deploy' | 'save', boolean | undefined>>(() => ({
+const bridgeActions = computed<Record<'deploy' | 'save' | 'import' | 'export', boolean | undefined>>(() => ({
   deploy: bridge.context.value?.actions?.deploy,
   save: bridge.context.value?.actions?.save,
+  import: bridge.context.value?.actions?.import,
+  export: bridge.context.value?.actions?.export,
 }));
 const composerExtensions = useRuleEditorAgentComposerExtensions({
   context: bridge.context, previewNode: bridge.previewNode, listNodes: bridge.listNodesForReference, t: $t,
@@ -148,10 +154,12 @@ const showFrameLoading = computed(() => !frameLoaded.value && (bridgeStatus.valu
 const {
   editorActioning,
   editorActionDone,
+  editorTransferActioning,
   ruleNameSaving,
   ruleDescriptionSaving,
   clearEditorActionDone,
   handleEditorAction,
+  handleEditorTransfer,
   handleRuleRename,
   handleRuleDescriptionChange,
 } = useRuleEditorActions({
@@ -165,9 +173,10 @@ const {
   onRuleUpdated: (rule) => emit('updated', rule),
   t: $t,
 });
-const isEditorActionDisabled = (action: 'deploy' | 'save') => (
+const isEditorActionDisabled = (action: 'deploy' | 'save' | 'import' | 'export') => (
   bridgeStatus.value !== 'ready'
   || !!editorActioning.value
+  || !!editorTransferActioning.value
   || bridgeActions.value[action] === false
 );
 
@@ -272,29 +281,4 @@ onBeforeUnmount(() => {
   }
 });
 </script>
-<style scoped lang="less">
-.rule-editor-shell {
-  display: flex; flex-direction: column;
-  width: 100%; height: 100vh;
-  background: #fff;
-}
-.rule-editor-shell__body {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-}
-.rule-editor-shell__iframe {
-  width: 100%; height: 100%;
-  border: 0;
-}
-.rule-editor-shell__loading {
-  position: absolute; inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center; justify-content: center;
-  gap: 10px;
-  color: rgba(0, 0, 0, 0.65);
-  background: rgba(255, 255, 255, 0.72);
-  pointer-events: none;
-}
-</style>
+<style src="./RuleEditorShell.less" scoped lang="less" />
