@@ -49,6 +49,32 @@
       <a-tooltip :title="statusText">
         <span class="rule-editor-shell__status" :class="`rule-editor-shell__status--${statusColor}`" />
       </a-tooltip>
+      <a-button-group class="rule-editor-shell__action-group rule-editor-shell__transfer-group">
+        <a-button
+          class="rule-editor-shell__action rule-editor-shell__action--transfer"
+          :loading="transferActioning === 'import'"
+          :disabled="importDisabled"
+          :title="$t('RuleEditor.index.importDescription')"
+          @click="$emit('transfer', 'import')"
+        >
+          <template #icon>
+            <AIcon type="ImportOutlined" />
+          </template>
+          {{ $t('RuleEditor.index.import') }}
+        </a-button>
+        <a-button
+          class="rule-editor-shell__action rule-editor-shell__action--transfer"
+          :loading="transferActioning === 'export'"
+          :disabled="exportDisabled"
+          :title="$t('RuleEditor.index.exportDescription')"
+          @click="$emit('transfer', 'export')"
+        >
+          <template #icon>
+            <AIcon type="ExportOutlined" />
+          </template>
+          {{ $t('RuleEditor.index.export') }}
+        </a-button>
+      </a-button-group>
       <a-button-group class="rule-editor-shell__action-group">
         <a-button
           class="rule-editor-shell__action rule-editor-shell__action--save"
@@ -134,6 +160,10 @@ const props = defineProps({
     type: String as PropType<'deploy' | 'save' | ''>,
     default: '',
   },
+  transferActioning: {
+    type: String as PropType<'import' | 'export' | ''>,
+    default: '',
+  },
   renameLoading: {
     type: Boolean,
     default: false,
@@ -150,10 +180,19 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  importDisabled: {
+    type: Boolean,
+    default: false,
+  },
+  exportDisabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits<{
   (e: 'execute', action: 'deploy' | 'save'): void;
+  (e: 'transfer', action: 'import' | 'export'): void;
   (e: 'rename', name: string): void;
   (e: 'descriptionChange', description: string): void;
   (e: 'close'): void;

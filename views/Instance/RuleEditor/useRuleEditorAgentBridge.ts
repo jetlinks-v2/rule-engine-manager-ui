@@ -168,6 +168,11 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     { ...payload, action },
   );
 
+  const executeEditorUtilityAction = (action: 'import' | 'export') => executeBridgeRequest(
+    'rule-editor-agent:execute-action',
+    { action },
+  );
+
   const executeProposalAction = (proposalId: string) => executeBridgeRequest(
     'rule-editor-agent:execute-proposal',
     { proposalId },
@@ -377,6 +382,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     markFrameLoaded,
     disposeBridge,
     executeEditorAction,
+    executeEditorUtilityAction,
     executeProposalAction,
     previewNode,
     listNodesForReference,
