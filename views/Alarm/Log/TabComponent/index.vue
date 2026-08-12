@@ -157,6 +157,7 @@ import LevelIcon from '@rule-engine-manager-ui/components/AlarmLevelIcon/index.v
 import {useI18n} from "vue-i18n";
 import {useAlarmConfigType} from "@rule-engine-manager-ui/hook/useAlarmConfigType";
 import {getTreeData_api} from "@rule-engine-manager-ui/api/others";
+import {useAlarmAgentEntry} from "../useAlarmAgentEntry";
 
 const {t: $t} = useI18n();
 const {supports} = useAlarmConfigType();
@@ -516,6 +517,7 @@ const showDrawer = (data: any) => {
   drawerData.value = data;
   visibleDrawer.value = true;
 };
+useAlarmAgentEntry(showDrawer);
 onMounted(() => {
   if (props.id) {
     params.value.terms = [

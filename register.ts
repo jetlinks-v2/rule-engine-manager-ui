@@ -1,5 +1,7 @@
 import {useRulePermissionContext, useScenePermissionContext} from '@rule-engine-manager-ui/hook/usePermission'
 import {EventEmitter, DeviceEmitterKey, ACTION_DATA} from '@rule-engine-manager-ui/views/Scene/Save/util';
+import type { DataCapabilityProviderManifest } from '@jetlinks-web-core/data-capability'
+import { ALARM_ANALYSIS_EXTENSION_KEY } from './agentCapabilities/alarmAnalysis/constants'
 
 type HomeAgentProviderLoader = () => Promise<unknown>
 
@@ -21,6 +23,7 @@ const homeAgentProviders = Object.fromEntries(
 )
 
 export default {
+    moduleId: 'rule-engine-manager-ui',
     components: {
         ruleInstance: defineAsyncComponent(() => import('./views/Instance/index.vue')),
         scenePage: defineAsyncComponent(() => import('./views/Scene/index.vue')),
@@ -43,5 +46,37 @@ export default {
     utils: {
         EventEmitter, DeviceEmitterKey, ACTION_DATA
     },
-    homeAgentProviders
+    homeAgentProviders,
+    dataCapabilityProviders: {
+        deviceMonitoring: {
+            capabilityIds: [
+                'alarm.device.summary',
+                'alarm.device.active.ids',
+                'alarm.device.rank',
+                'alarm.device.list',
+            ],
+            loader: () => import('./dataCapabilities/deviceAlarmProvider'),
+        },
+        visionMonitoring: {
+            capabilityIds: [
+                'alarm.vision.summary',
+                'alarm.vision.trend',
+                'alarm.vision.type.distribution',
+                'alarm.vision.level.distribution',
+                'alarm.vision.scene.distribution',
+                'alarm.vision.scene.rank',
+                'alarm.vision.list',
+                'alarm.vision.level.trend',
+                'alarm.vision.handling.trend',
+                'alarm.vision.channel.rank',
+                'alarm.vision.ai-review.summary',
+                'alarm.event.summary',
+                'alarm.event.list',
+            ],
+            loader: () => import('./dataCapabilities/visionAlarmProvider'),
+        },
+    } satisfies DataCapabilityProviderManifest,
+    generalAgentExtensions: {
+        [ALARM_ANALYSIS_EXTENSION_KEY]: () => import('./agentCapabilities/alarmAnalysis/generalAgentExtension')
+    }
 }
