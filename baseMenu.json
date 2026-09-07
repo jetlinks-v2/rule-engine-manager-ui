@@ -1,6 +1,6 @@
 [
   {
-    "code": "rule-engine/Alarm",
+    "code": "alarm-center",
     "name": "告警中心",
     "i18nMessages": {
       "name": {
