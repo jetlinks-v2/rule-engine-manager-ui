@@ -122,7 +122,7 @@
     "owner": "iot",
     "id": "91aa7c753b1c030dfad612aa0a45d453",
     "sortIndex": 7,
-    "url": "/iot/rule-engine",
+    "url": "/rule-engine",
     "icon": "icon-zidingyiguize",
     "permissions": [],
     "buttons": [],
@@ -140,7 +140,7 @@
         "owner": "iot",
         "id": "898001f2efa11f93253d67a254904ead",
         "sortIndex": 1,
-        "url": "/iot/rule-engine/Instance",
+        "url": "/rule-engine/Instance",
         "icon": "icon-changjingliandong",
         "showPage": [
           "rule-instance"
@@ -382,7 +382,7 @@
         "owner": "iot",
         "id": "b68867fdc24cfc3df7c52e842136f439",
         "sortIndex": 2,
-        "url": "/iot/rule-engine/scene",
+        "url": "/rule-engine/scene",
         "icon": "icon-yunweiguanli-1",
         "showPage": [
           "rule-scene"
