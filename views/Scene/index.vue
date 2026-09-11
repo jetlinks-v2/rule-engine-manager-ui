@@ -1,6 +1,5 @@
 <template>
   <j-page-container>
-    <pro-search :columns="columns" target="scene" @search="handleSearch" />
     <FullPage>
       <JProTable
         ref="sceneRef"
@@ -13,23 +12,26 @@
         :params="params"
       >
         <template #headerLeftRender>
-          <a-space>
-            <j-permission-button
-              type="primary"
-              @click="handleAdd"
-              :hasPermission="`${permissionKey}:add`"
-            >
-              <template #icon><AIcon type="PlusOutlined" /></template>
-              {{ $t('Scene.index.895630-0') }}
-            </j-permission-button>
-            <j-permission-button
-              @click="handleImport"
-              :hasPermission="`${permissionKey}:add`"
-            >
-              <template #icon><AIcon type="ImportOutlined" /></template>
-              导入
-            </j-permission-button>
-          </a-space>
+          <a-flex :gap="16">
+            <ConditionFilter :columns="columns" target="scene" @search="handleSearch" />
+            <a-space>
+              <j-permission-button
+                type="primary"
+                @click="handleAdd"
+                :hasPermission="`${permissionKey}:add`"
+              >
+                <template #icon><AIcon type="PlusOutlined" /></template>
+                {{ $t('Scene.index.895630-0') }}
+              </j-permission-button>
+              <j-permission-button
+                @click="handleImport"
+                :hasPermission="`${permissionKey}:add`"
+              >
+                <template #icon><AIcon type="ImportOutlined" /></template>
+                导入
+              </j-permission-button>
+            </a-space>
+          </a-flex>
         </template>
         <template #card="slotProps">
           <CardBox

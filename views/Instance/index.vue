@@ -1,10 +1,6 @@
 <template>
     <j-page-container>
         <div>
-            <ConditionFilter
-                :fields="filterFields"
-                @change="handleSearch"
-            />
             <FullPage>
                 <JProTable
                     :columns="columns"
@@ -17,18 +13,24 @@
                     :params="params"
                 >
                     <template #headerLeftRender>
-                        <a-space>
-                            <j-permission-button
-                                type="primary"
-                                @click="add"
-                                :hasPermission="`${permissionKey}:add`"
-                            >
-                                <template #icon
+                        <a-flex :gap="16">
+                            <ConditionFilter
+                                :fields="filterFields"
+                                @change="handleSearch"
+                            />
+                            <a-space>
+                                <j-permission-button
+                                    type="primary"
+                                    @click="add"
+                                    :hasPermission="`${permissionKey}:add`"
+                                >
+                                    <template #icon
                                     ><AIcon type="PlusOutlined"
-                                /></template>
-                                {{ $t('Instance.index.020452-0') }}
-                            </j-permission-button>
-                        </a-space>
+                                    /></template>
+                                    {{ $t('Instance.index.020452-0') }}
+                                </j-permission-button>
+                            </a-space>
+                        </a-flex>
                     </template>
                     <template #card="slotProps">
                         <CardBox
