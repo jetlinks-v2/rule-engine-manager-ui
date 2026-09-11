@@ -23,6 +23,8 @@
             <a-select
               :value="operationType"
               class="device-action-row__operation-type"
+              popup-class-name="scene-editor__compact-dropdown"
+              :dropdown-match-select-width="false"
               :options="operationTypeOptions"
               :disabled="!config.productId"
               @change="changeOperationType"
@@ -315,13 +317,14 @@ watch(() => props.action.config?.message?.inputs, inputs => {
 .device-action-row__index { width: 22px; height: 22px; color: var(--ant-color-primary); background: var(--ant-color-fill-secondary); border-radius: 50%; font-size: 12px; font-weight: 600; }
 .device-action-row__icon { color: #1e5eff; background: #e8f0ff; }
 .device-action-row__icon :deep(.anticon) { display: block; line-height: 1; }
-.device-action-row__product { flex: 0 0 var(--scene-linkage-resource-select-width, 10.5rem); width: var(--scene-linkage-resource-select-width, 10.5rem); min-width: var(--scene-linkage-resource-select-width, 10.5rem); }
-.device-action-row__scope { display: inline-flex; flex: 0 0 var(--scene-linkage-device-select-width, 17rem); justify-content: center; width: var(--scene-linkage-device-select-width, 17rem); min-width: var(--scene-linkage-device-select-width, 17rem); text-align: center; align-items: center }
+.device-action-row__product { flex: 0 0 var(--scene-linkage-resource-select-width, 18rem); width: var(--scene-linkage-resource-select-width, 18rem); min-width: var(--scene-linkage-resource-select-width, 18rem); }
+.device-action-row__scope { display: inline-flex; flex: 0 0 var(--scene-linkage-device-select-width, 18rem); justify-content: center; width: var(--scene-linkage-device-select-width, 18rem); min-width: var(--scene-linkage-device-select-width, 18rem); text-align: center; align-items: center }
+.device-action-row__operation-type { flex: 0 0 var(--scene-linkage-compact-select-width, 8rem); width: var(--scene-linkage-compact-select-width, 8rem); }
 .device-action-row__details { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; min-width: 0; }
 .device-action-row__details-content { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; min-width: 0; }
 .device-action-row__operation-group { display: flex; flex: none; gap: 10px; align-items: center; min-width: 0; }
-.device-action-row__operation { flex: 0 0 var(--scene-linkage-thing-model-select-width, 15.75rem); width: min(var(--scene-linkage-thing-model-select-width, 15.75rem), calc(100% - 3rem)); min-width: var(--scene-linkage-thing-model-select-width, 15.75rem); }
-.device-action-row__write-value { flex: 0 0 11rem; width: 11rem !important; }
+.device-action-row__operation { flex: 0 0 var(--scene-linkage-thing-model-select-width, 18rem); width: var(--scene-linkage-thing-model-select-width, 18rem); min-width: var(--scene-linkage-thing-model-select-width, 18rem); }
+.device-action-row__write-value { flex: 0 0 var(--scene-linkage-value-input-width, 11rem); width: var(--scene-linkage-value-input-width, 11rem) !important; }
 .device-action-row__remove { align-self: end; justify-self: end; }
 .device-action-row__main :deep(.ant-input) { width: 140px; }
 </style>

@@ -4,6 +4,8 @@
     :value="modelValue"
     :options="valueOptions"
     :placeholder="$t('IotSceneLinkage.placeholder.termValue')"
+    :dropdown-match-select-width="false"
+    popup-class-name="scene-editor__compact-dropdown"
     @change="$emit('update:modelValue', $event)"
   />
   <a-date-picker

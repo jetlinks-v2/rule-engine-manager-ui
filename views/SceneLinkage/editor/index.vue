@@ -82,7 +82,7 @@
 												                  :class="['scene-editor__thing-model-select', { 'scene-editor__invalid': hasError('property') }]"
 												                  :options="propertyOptions" @change="updateTriggerProperty"
 												                  @dropdownVisibleChange="loadMetadata"/>
-												<a-select v-model:value="form.termType" class="scene-editor__term-type" :options="termOptions"/>
+												<a-select v-model:value="form.termType" class="scene-editor__term-type" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :options="termOptions"/>
 												<ThingModelValueInput v-model="form.termValue"
 												                      :class="{ 'scene-editor__invalid': hasError('property') }"
 												                      :value-type="selectedProperty?.valueType"/>
@@ -98,7 +98,7 @@
 													                  :options="eventOutputOptions"
 													                  :placeholder="$t('IotSceneLinkage.placeholder.thingModel')"
 													                  @change="updateTriggerEventOutput"/>
-													<a-select v-model:value="form.eventTermType" class="scene-editor__event-term-type"
+													<a-select v-model:value="form.eventTermType" class="scene-editor__event-term-type" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false"
 													          :options="eventTermOptions"/>
 													<ThingModelValueInput v-model="form.eventTermValue" class="scene-editor__event-term-value"
 													                      :value-type="selectedEventOutput?.valueType"/>
@@ -128,7 +128,7 @@
 											<span>{{ $t('IotSceneLinkage.editor.dateExecutionHint') }}</span></template>
 										<template v-else-if="form.triggerKind === 'interval'">
 											<a-input-number v-model:value="form.interval" :min="1"/>
-											<a-select v-model:value="form.intervalUnit" :options="units"/>
+											<a-select v-model:value="form.intervalUnit" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :options="units"/>
 										</template>
 										<a-button
 											v-if="!isEditing && form.triggerKind !== 'state' && !(form.triggerKind === 'repeat' && form.repeatMode === 'custom')"
@@ -234,7 +234,7 @@
 						<span class="scene-editor__action-icon"><AIcon :type="actionIcon(action.type)"/></span>
 						<b>{{ $t(`IotSceneLinkage.action.${action.type}`) }}</b>
 						<a-input-number v-if="action.type === 'delay'" v-model:value="action.time" :min="1"/>
-						<a-select v-if="action.type === 'delay'" v-model:value="action.unit" class="scene-editor__delay-unit"
+						<a-select v-if="action.type === 'delay'" v-model:value="action.unit" class="scene-editor__delay-unit" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false"
 						          :options="units"/>
 						<a-button class="scene-editor__remove" type="text" danger @click="form.actions.splice(index, 1)">
 							<AIcon type="DeleteOutlined"/>

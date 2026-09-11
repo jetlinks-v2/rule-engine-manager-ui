@@ -28,7 +28,7 @@
 					<ThingModelSelect class="scene-condition-row__property" :model-value="condition.propertyId || undefined"
 					                  :options="propertyOptions" :placeholder="$t('IotSceneLinkage.placeholder.property')"
 					                  :disabled="!condition.productId" @change="updateProperty"/>
-					<a-select class="scene-condition-row__term-type" :value="condition.termType" :options="termOptions"
+					<a-select class="scene-condition-row__term-type" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :value="condition.termType" :options="termOptions"
 					          @change="updateTermType"/>
 					<ThingModelValueInput class="scene-condition-row__value" :model-value="condition.value"
 					                      :value-type="selectedProperty?.valueType" @update:model-value="updateValue"/>
@@ -343,7 +343,7 @@ watch(() => props.condition.type === 'deviceProperty' ? props.condition.productI
 }
 
 .scene-condition-row :deep(.ant-select), .scene-condition-row :deep(.ant-input) {
-	width: 120px;
+	width: var(--scene-linkage-compact-select-width, 8rem);
 }
 
 .scene-condition-row :deep(.scene-condition-row__property) {
@@ -353,10 +353,10 @@ watch(() => props.condition.type === 'deviceProperty' ? props.condition.productI
 }
 
 .scene-condition-row :deep(.scene-condition-row__value) {
-	width: 11rem;
+	width: var(--scene-linkage-value-input-width, 11rem);
 }
 
 .scene-condition-row :deep(.scene-condition-row__term-type) {
-	width: 88px;
+	width: var(--scene-linkage-compact-select-width, 8rem);
 }
 </style>
