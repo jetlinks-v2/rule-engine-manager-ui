@@ -61,7 +61,6 @@ export const formatDeviceScopeText = (
     return t('IotSceneLinkage.scope.deviceGroupCount', { count })
   }
 
-  if (firstName) return count > 1 ? t('IotSceneLinkage.scope.fixedSummaryMore', { name: firstName, count }) : t('IotSceneLinkage.scope.fixedSummary', { name: firstName })
   return t('IotSceneLinkage.scope.fixedCount', { count })
 }
 

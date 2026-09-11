@@ -14,7 +14,7 @@
 				<template #actions>
 					<div class="scene-editor__header-actions">
 						<a-button @click="menuStore.jumpPage(sceneRouteKey)">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
-						<j-permission-button type="primary" :hasPermission="`${permissionKey}:update`" :loading="saving" @click="save">{{
+						<j-permission-button type="primary" :hasPermission="savePermission" :loading="saving" @click="save">{{
 								$t('IotSceneLinkage.action.saveScene')
 							}}
 						</j-permission-button>
@@ -74,7 +74,7 @@
 											          :title="scopeTitle"
 											          @click="openScope">
 												<AIcon type="AimOutlined"/>
-												{{ scopeText }}
+												<span class="scene-editor__scope-text">{{ scopeText }}</span>
 											</a-button>
 											<div v-if="form.triggerKind === 'property'" class="scene-editor__trigger-condition">
 												<span>{{ $t('IotSceneLinkage.condition.current') }}</span>
@@ -82,7 +82,7 @@
 												                  :class="['scene-editor__thing-model-select', { 'scene-editor__invalid': hasError('property') }]"
 												                  :options="propertyOptions" @change="updateTriggerProperty"
 												                  @dropdownVisibleChange="loadMetadata"/>
-												<a-select v-model:value="form.termType" class="scene-editor__term-type" :options="termOptions"/>
+												<a-select v-model:value="form.termType" class="scene-editor__term-type" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :options="termOptions"/>
 												<ThingModelValueInput v-model="form.termValue"
 												                      :class="{ 'scene-editor__invalid': hasError('property') }"
 												                      :value-type="selectedProperty?.valueType"/>
@@ -98,7 +98,7 @@
 													                  :options="eventOutputOptions"
 													                  :placeholder="$t('IotSceneLinkage.placeholder.thingModel')"
 													                  @change="updateTriggerEventOutput"/>
-													<a-select v-model:value="form.eventTermType" class="scene-editor__event-term-type"
+													<a-select v-model:value="form.eventTermType" class="scene-editor__event-term-type" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false"
 													          :options="eventTermOptions"/>
 													<ThingModelValueInput v-model="form.eventTermValue" class="scene-editor__event-term-value"
 													                      :value-type="selectedEventOutput?.valueType"/>
@@ -128,7 +128,7 @@
 											<span>{{ $t('IotSceneLinkage.editor.dateExecutionHint') }}</span></template>
 										<template v-else-if="form.triggerKind === 'interval'">
 											<a-input-number v-model:value="form.interval" :min="1"/>
-											<a-select v-model:value="form.intervalUnit" :options="units"/>
+											<a-select v-model:value="form.intervalUnit" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :options="units"/>
 										</template>
 										<a-button
 											v-if="!isEditing && form.triggerKind !== 'state' && !(form.triggerKind === 'repeat' && form.repeatMode === 'custom')"
@@ -234,7 +234,7 @@
 						<span class="scene-editor__action-icon"><AIcon :type="actionIcon(action.type)"/></span>
 						<b>{{ $t(`IotSceneLinkage.action.${action.type}`) }}</b>
 						<a-input-number v-if="action.type === 'delay'" v-model:value="action.time" :min="1"/>
-						<a-select v-if="action.type === 'delay'" v-model:value="action.unit" class="scene-editor__delay-unit"
+						<a-select v-if="action.type === 'delay'" v-model:value="action.unit" class="scene-editor__delay-unit" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false"
 						          :options="units"/>
 						<a-button class="scene-editor__remove" type="text" danger @click="form.actions.splice(index, 1)">
 							<AIcon type="DeleteOutlined"/>
@@ -323,7 +323,10 @@ import { useScenePermission } from '@rule-engine-manager-ui/hook/usePermission'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 const notifyUsersPageIndex = ref(-1)
 const notifyUsersTotal = ref(0)
-// 新编辑路由仍复用标品菜单的 update 动作权限，避免迁移后绕过原有授权。
+// 编辑器由 SaaS 与私有化两套菜单进入，新增和编辑分别对应各自菜单的动作码。
+const sceneRoutePermissionKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, ''))
+const savePermission = computed(() => `${sceneRoutePermissionKey.value}:${route.params.id ? 'update' : 'add'}`)
+// 新编辑路由按当前菜单分别使用 SaaS 的 add/update 与私有化菜单的 add/update 动作权限。
 const route = useRoute(); const { t } = useI18n(); const permissionKey = useScenePermission(); const menuStore = useMenuStore(); const sceneRouteKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, '')); const form = reactive<SceneLinkageForm>(defaultForm()); const selectedProductOption = ref<IotAlarmTargetSelectOption>(); const devices = ref<any[]>([]); const properties = ref<any[]>([]); const events = ref<any[]>([]); const scopeOptions = ref<any[]>([]); const scopeTreeData = ref<any[]>([]); const scopeExpandedKeys = ref<string[]>([]); const scopeLoading = ref(false); const scopeNodeMap = new Map<string, any>(); const saving = ref(false); const triggerPickerVisible = ref(false); const actionPickerVisible = ref(false); const scopeVisible = ref(false); const conditionVisible = ref(false); const advancedExpanded = ref(false); const notifyMethods = ref<SceneNotifyMethod[]>([]); const notifyUsers = ref<SceneNotifyUser[]>([]); const notifyMethodsLoading = ref(false); const notifyUsersLoading = ref(false); const supportedTriggers = ref<string[]>([]); const supportedActions = ref<string[]>([]); const validation = reactive({ field: '', message: '' }); const loadingScene = ref(Boolean(route.params.id))
 const { activeMultiTriggerIndex, addingMultiTrigger, isMulti, showMultiTriggerControl, multiTriggerDisabledReason, canAddMultiTrigger, addMultiTrigger: beginMultiTrigger, cancelTriggerPicker: resetMultiTriggerPicker, removeMultiTrigger, selectMultiTrigger, selectTrigger: selectMultiTriggerKind } = useMultiSceneTrigger(form, supportedTriggers, () => Boolean(route.params.id), () => { selectedProductOption.value = undefined; void loadMetadata(true) })
 const hasTrigger = computed(() => Boolean(form.triggerKind)); const hasRuleContent = computed(() => hasTrigger.value || form.additionalConditions.length > 0 || form.actions.length > 0); const isEditing = computed(() => Boolean(route.params.id)); const isDevice = computed(() => ['property', 'event', 'online', 'offline', 'state'].includes(form.triggerKind)); const repeatTime = computed({ get: () => form.repeatTime, set: (value: string) => form.repeatTime = value }); const units = computed(() => ['seconds', 'minutes', 'hours'].map(value => ({ value, label: t(`IotSceneLinkage.unit.${value}`) }))); const weekOptions = computed(() => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, index) => ({ value: index + 1, label: t(`IotSceneLinkage.weekday.${day}`) }))); const monthDayOptions = computed(() => Array.from({ length: 31 }, (_, index) => ({ value: index + 1, label: t('IotSceneLinkage.monthDay', { day: index + 1 }) }))); const propertyOptions = computed(() => toThingModelOptions(properties.value, 'property')); const eventOptions = computed(() => toThingModelOptions(events.value, 'event')); const selectedProperty = computed(() => propertyOptions.value.find(item => item.value === form.propertyId)); const termOptions = computed(() => getTermTypes(selectedProperty.value?.valueType).map(value => ({ value, label: t(`IotSceneLinkage.term.${value}`) }))); const triggerText = computed(() => hasTrigger.value ? t(`IotSceneLinkage.trigger.${form.triggerKind}`) : t('IotSceneLinkage.rule.noTrigger')); const actionText = computed(() => form.actions.length ? form.actions.map(action => t(`IotSceneLinkage.action.${action.type}`)).join('、') : t('IotSceneLinkage.rule.noAction')); const scopeText = computed(() => formatDeviceScopeText(t, toTriggerScopeValue(form), { emptyText: t('IotSceneLinkage.placeholder.device') })); const scopeTitle = computed(() => formatDeviceScopeTitle(t, toTriggerScopeValue(form), { emptyText: t('IotSceneLinkage.placeholder.device') })); const triggerIcon = computed(() => ({ manual: { background: '#F2F3F5', color: '#4E5969', path: 'M9 1.5 3 9h4l-1 5.5L12 7H8l1-5.5Z' }, repeat: { background: '#E8F0FF', color: '#1E5EFF', path: 'M8 14.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13ZM8 4.5V8l2.5 1.5' }, date: { background: '#E6F5EE', color: '#0E8A5F', path: 'M2.5 3.5h11v10h-11ZM2.5 6.5h11M5.5 1.5v3M10.5 1.5v3' }, interval: { background: '#EFEBFF', color: '#6C4FE0', path: 'M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 1.5v3h-3' }, property: { background: '#E6F5EE', color: '#0E8A5F', path: 'M2 12l3.5-3.5 2.5 2.5L14 5M14 5h-3.5M14 5v3.5' }, event: { background: '#FFECF0', color: '#D02F5A', path: 'M1.5 8h3L6 4l3 8 1.5-4h4' }, online: { background: '#E6F5EE', color: '#0E8A5F', type: 'LoginOutlined' }, offline: { background: '#F2F3F5', color: '#4E5969', type: 'LogoutOutlined' }, state: { background: '#EFEBFF', color: '#6C4FE0', type: 'SyncOutlined' }, alarm: { background: '#FFF1F0', color: '#FF4D4F', type: 'AlertOutlined' } }[form.triggerKind] || { background: '#F2F3F5', color: '#4E5969', type: 'ThunderboltOutlined' })); const hasError = (field: string) => validation.field === field; const errorMessage = (field: string) => hasError(field) ? t(validation.message) : ''
@@ -395,10 +398,23 @@ function updateTriggerEventOutput(value: string) { const output = eventOutputOpt
 function clearScope() { form.deviceIds = []; form.groupIds = []; form.propertyId = undefined; form.eventId = undefined; form.eventOutputId = undefined; form.eventOutputName = undefined; form.eventTermValue = undefined; properties.value = []; events.value = [] }
 function addCondition(type: SceneConditionForm['type']) { if (type === 'timeRange') { const existing = form.additionalConditions.find(item => item.type === 'timeRange'); if (existing?.type === 'timeRange') { conditionVisible.value = false; return }; form.additionalConditions.push({ type, ranges: [{ start: '09:00', end: '18:00' }] }) } else if (type === 'alarmState') form.additionalConditions.push({ type, alarm: { modes: [], state: 'warning', options: {} } }); else form.additionalConditions.push({ type, productId: '', selector: 'fixed', selectorValues: [], propertyId: '', termType: 'eq', value: '' }); conditionVisible.value = false }
 function updateCondition(index: number, condition: SceneConditionForm) { form.additionalConditions[index] = condition }
-async function addNotifyAction() { await Promise.all([loadNotifyMethods(true), loadNotifyUsers(true)]); form.actions.push({ type: 'sceneNotify', config: { userIds: [], notifyChannelIds: [] } }); actionPickerVisible.value = false }
-function addDelay() { form.actions.push({ type: 'delay', time: 1, unit: 'seconds' }); actionPickerVisible.value = false }
-function openAction(type: 'device') { actionPickerVisible.value = false; form.actions.push({ type, config: { productId: '', selector: 'fixed', selectorValues: [], message: { messageType: 'READ_PROPERTY', properties: [] } } }) }
-function updateAction(index: number, action: any) { form.actions[index] = action }
+async function addNotifyAction() { await Promise.all([loadNotifyMethods(true), loadNotifyUsers(true)]); form.actions.push({ type: 'sceneNotify', config: { userIds: [], notifyChannelIds: [] } }); actionPickerVisible.value = false; clearActionValidationIfResolved() }
+function addDelay() { form.actions.push({ type: 'delay', time: 1, unit: 'seconds' }); actionPickerVisible.value = false; clearActionValidationIfResolved() }
+function openAction(type: 'device') { actionPickerVisible.value = false; form.actions.push({ type, config: { productId: '', selector: 'fixed', selectorValues: [], message: { messageType: 'READ_PROPERTY', properties: [] } } }); clearActionValidationIfResolved() }
+function updateAction(index: number, action: any) { form.actions[index] = action; clearActionValidationIfResolved() }
+function clearValidationField(field: string) { if (hasError(field)) { validation.field = ''; validation.message = '' } }
+function hasIncompleteDeviceAction(action: any) { return action.type === 'device' && (!action.config?.productId || (action.config?.selector !== 'all' && !action.config?.selectorValues?.length) || !action.config?.message?.messageType) }
+function hasMissingWritePropertyValue(action: any) { return action.type === 'device' && action.config?.message?.messageType === 'WRITE_PROPERTY' && isEmptyValue(Object.values(action.config.message.properties || {})[0]) }
+function hasIncompleteNotifyAction(action: any) { return action.type === 'sceneNotify' && (!action.config?.notifyChannelIds?.length || !action.config?.userIds?.length) }
+function clearActionValidationIfResolved() {
+  // 用户补齐当前错误对应的动作配置后，立即撤销红框和提示，避免旧校验状态滞留到下一次保存。
+  if (hasError('action')) {
+    if (validation.message === 'IotSceneLinkage.message.actionRequired' && form.actions.length) return clearValidationField('action')
+    if (validation.message === 'IotSceneLinkage.message.deviceActionRequired' && !form.actions.some(hasIncompleteDeviceAction)) return clearValidationField('action')
+    if (validation.message === 'IotSceneLinkage.message.deviceActionValueRequired' && !form.actions.some(hasMissingWritePropertyValue)) return clearValidationField('action')
+  }
+  if (hasError('notify') && !form.actions.some(hasIncompleteNotifyAction)) clearValidationField('notify')
+}
 async function changeNotifyMethod(index: number, method: SceneNotifyMethod) { await refreshNotifyTemplate(index, method, true) }
 async function refreshNotifyTemplate(index: number, method: SceneNotifyMethod, changed = false) { const response: any = await querySceneNotifyChannelTemplates(method.providerId); const detail = response?.result ?? response; const item = detail?.channels?.find((channel: any) => channel.channel?.id === method.id); form.actions[index] = { ...form.actions[index], config: { ...form.actions[index].config, ...(changed ? { notifyChannelIds: [method.id] } : {}) }, options: { ...form.actions[index].options, channelName: method.name, templateContent: getTemplateContent(item?.template) } } }
 function getTemplateContent(template: any) { const content = template?.template || {}; const getByPath = (source: any, path: string[]) => path.reduce((target, key) => target && typeof target === 'object' && !Array.isArray(target) ? target[key] : undefined, source); const asText = (value: unknown) => typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : ''; const firstText = (...values: unknown[]) => values.map(asText).find(Boolean) || ''; return firstText(getByPath(content, ['message']), getByPath(content, ['ttsmessage']), getByPath(content, ['body']), getByPath(content, ['text', 'content']), getByPath(content, ['markdown', 'text']), getByPath(content, ['link', 'text']), getByPath(content, ['text'])) }
@@ -498,11 +514,11 @@ async function validate() {
   if (form.additionalConditions.some(condition => condition.type === 'timeRange' && condition.ranges.some(range => range.start === range.end))) return invalid('condition', 'IotSceneLinkage.message.timeRangeInvalid')
   if (form.additionalConditions.some(condition => condition.type === 'deviceProperty' && isEmptyValue(condition.value))) return invalid('condition', 'IotSceneLinkage.message.conditionValueRequired')
   if (!form.actions.length) return invalid('action', 'IotSceneLinkage.message.actionRequired')
-  if (form.actions.some(action => action.type === 'device' && (!action.config?.productId || (action.config?.selector !== 'all' && !action.config?.selectorValues?.length) || !action.config?.message?.messageType))) return invalid('action', 'IotSceneLinkage.message.deviceActionRequired')
-  if (form.actions.some(action => action.type === 'device' && action.config?.message?.messageType === 'WRITE_PROPERTY' && isEmptyValue(Object.values(action.config.message.properties || {})[0]))) return invalid('action', 'IotSceneLinkage.message.deviceActionValueRequired')
+  if (form.actions.some(hasIncompleteDeviceAction)) return invalid('action', 'IotSceneLinkage.message.deviceActionRequired')
+  if (form.actions.some(hasMissingWritePropertyValue)) return invalid('action', 'IotSceneLinkage.message.deviceActionValueRequired')
   const missingFunctionInputs = (await Promise.all(form.actions.filter(action => action.type === 'device').map(getMissingFunctionInputs))).flat()
   if (missingFunctionInputs.length) return invalid('action', 'IotSceneLinkage.message.deviceFunctionInputRequired', { names: missingFunctionInputs.join('、') })
-  if (form.actions.some(action => action.type === 'sceneNotify' && (!action.config?.notifyChannelIds?.length || !action.config?.userIds?.length))) return invalid('notify', 'IotSceneLinkage.message.notifyRequired')
+  if (form.actions.some(hasIncompleteNotifyAction)) return invalid('notify', 'IotSceneLinkage.message.notifyRequired')
   validation.field = ''
   validation.message = ''
   return true
@@ -548,6 +564,7 @@ async function save() {
 watch(() => form.repeatMode, (_value, previous) => { if (!loadingScene.value && previous) resetRepeatSelections() })
 watch(() => form.name, value => { if (value.trim() && hasError('name')) { validation.field = ''; validation.message = '' } })
 watch(() => [form.propertyId, form.termValue], ([propertyId, termValue]) => { if (propertyId && termValue !== undefined && termValue !== null && termValue !== '' && hasError('property')) { validation.field = ''; validation.message = '' } })
+watch(() => form.actions, clearActionValidationIfResolved, { deep: true })
 // Keep persisted weekly or monthly selections while the edit form is being populated.
 async function init() {
   await loadSceneProviders()

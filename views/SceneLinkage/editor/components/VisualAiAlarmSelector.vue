@@ -2,6 +2,8 @@
   <div class="visual-ai-alarm-selector">
     <a-select
       class="visual-ai-alarm-selector__scene"
+      popup-class-name="scene-editor__resource-dropdown"
+      :dropdown-match-select-width="false"
       :value="modelValue.options?.sceneId"
       :loading="loadingScenes"
       :options="visibleSceneOptions"
@@ -17,6 +19,8 @@
     </a-select>
     <a-select
       class="visual-ai-alarm-selector__target"
+      popup-class-name="scene-editor__resource-dropdown"
+      :dropdown-match-select-width="false"
       :value="modelValue.options?.taskTarget"
       :disabled="!modelValue.options?.sceneId"
       :options="visibleTargetOptions"
@@ -29,6 +33,8 @@
     <span class="visual-ai-alarm-selector__word">{{ $t('IotSceneLinkage.alarmPhrase.ofAlarm') }}</span>
     <a-select
       class="visual-ai-alarm-selector__task"
+      popup-class-name="scene-editor__resource-dropdown"
+      :dropdown-match-select-width="false"
       :value="modelValue.alarmConfigId"
       :disabled="!modelValue.options?.taskTarget"
       :loading="loadingAggregateTasks"
@@ -166,8 +172,12 @@ watch(
 </script>
 
 <style scoped>
-.visual-ai-alarm-selector { display: flex; flex: 1 1 auto; flex-wrap: nowrap; gap: var(--space-2, 8px); align-items: center; min-width: 0; }
-.visual-ai-alarm-selector__scene, .visual-ai-alarm-selector__target { flex: 1 1 13rem; min-width: 9rem; max-width: 13rem; }
-.visual-ai-alarm-selector__task { flex: 1 1 18rem; min-width: 12rem; max-width: 18rem; }
+.visual-ai-alarm-selector { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: var(--space-2, 8px); align-items: center; min-width: 0; }
+.visual-ai-alarm-selector__scene, .visual-ai-alarm-selector__target, .visual-ai-alarm-selector__task {
+	flex: 0 0 var(--scene-linkage-resource-select-width, 18rem);
+	width: var(--scene-linkage-resource-select-width, 18rem);
+	min-width: var(--scene-linkage-resource-select-width, 18rem);
+	max-width: var(--scene-linkage-resource-select-width, 18rem);
+}
 .visual-ai-alarm-selector__word { flex: none; white-space: nowrap; }
 </style>

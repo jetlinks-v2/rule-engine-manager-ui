@@ -7,6 +7,8 @@
       <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.send') }}</span>
       <a-select
         class="notify-action-row__method"
+        popup-class-name="scene-editor__compact-dropdown"
+        :dropdown-match-select-width="false"
         :value="methodValue"
         :loading="methodsLoading"
         :placeholder="$t('IotSceneLinkage.placeholder.notifyMethod')"
@@ -16,6 +18,8 @@
       <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.to') }}</span>
       <a-select
         class="notify-action-row__users"
+        popup-class-name="scene-editor__resource-dropdown"
+        :dropdown-match-select-width="false"
         mode="multiple"
         :value="recipientIds"
         :loading="usersLoading"
@@ -136,8 +140,15 @@ const changeRecipients = (userIds: string[]) => {
 .notify-action-row__icon { display: grid; place-items: center; width: 28px; height: 28px; color: #d46b08; background: #fff7e8; border-radius: 6px; }
 .notify-action-row__icon :deep(.anticon) { display: block; line-height: 1; }
 .notify-action-row__label, .notify-action-row__content { color: var(--ant-color-text-secondary); font-size: 13px; }
-.notify-action-row__method { width: 132px; }
-.notify-action-row__users { flex: 1; min-width: 220px; }
+.notify-action-row__method {
+	flex: 0 0 var(--scene-linkage-compact-select-width, 8rem);
+	width: var(--scene-linkage-compact-select-width, 8rem);
+}
+.notify-action-row__users {
+	flex: 0 0 var(--scene-linkage-resource-select-width, 18rem);
+	width: var(--scene-linkage-resource-select-width, 18rem);
+	min-width: var(--scene-linkage-resource-select-width, 18rem);
+}
 .notify-action-row__content { display: flex; gap: var(--space-2, 8px); align-items: flex-start; width: 100%; max-width: 100%; box-sizing: border-box; padding: var(--space-3, 12px) 0 0 calc(22px + 28px + 3.5rem + 20px); line-height: 24px; }
 .notify-action-row__content-label { display: inline-flex; flex: none; gap: var(--space-1, 4px); align-items: center; }
 .notify-action-row__remove { flex: none; margin-left: auto; }

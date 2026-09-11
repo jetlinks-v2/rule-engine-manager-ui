@@ -61,7 +61,7 @@
                   <j-permission-button
                     v-if="sceneTriggerType(record.scene) === 'manual'"
                     type="link"
-                    :hasPermission="`${permissionKey}:tigger`"
+                    :hasPermission="scenePermission('tigger')"
                     @click="confirmExecute(record.scene)"
                   >
                     {{ $t('IotSceneLinkage.action.execute') }}
@@ -121,12 +121,23 @@ import { toSceneTemplate } from './sceneCompatibility'
 const { t } = useI18n()
 const authStore = useAuthStore()
 const menuStore = useMenuStore()
-// 私有化场景页沿用菜单注入的标品动作码，不能改用 SaaS 的 rule-scene 权限码。
-const permissionKey = useScenePermission()
 const route = useRoute()
 // 使用当前菜单路由名定位 Editor 子页，使同一场景页可由 SaaS 与私有化各自的父菜单承载。
-const sceneRouteKey = computed(() => String(route.name || permissionKey))
-const hasScenePermission = (action: string) => authStore.hasPermission(`${permissionKey}:${action}`)
+const injectedPermissionKey = useScenePermission()
+const sceneRouteKey = computed(() => String(route.name || injectedPermissionKey).replace(/\/Editor$/, ''))
+// 菜单权限按菜单 code 保存。SaaS 菜单沿用 iot-user/scene-linkage，私有化菜单使用 rule-engine/Scene。
+const permissionKey = computed(() => sceneRouteKey.value || injectedPermissionKey)
+const sceneActionCandidates: Record<string, string[]> = {
+  // SaaS 菜单未单独声明这两个按钮，使用其编辑权限承接同等的保存/执行能力。
+  action: ['action', 'update'],
+  tigger: ['tigger', 'update'],
+}
+const scenePermission = (action: string) => {
+  const candidates = sceneActionCandidates[action] || [action]
+  return candidates.map(candidate => `${permissionKey.value}:${candidate}`).find(authStore.hasPermission)
+    || `${permissionKey.value}:${candidates[0]}`
+}
+const hasScenePermission = (action: string) => authStore.hasPermission(scenePermission(action))
 const list = ref<any[]>([])
 const total = ref(0)
 const loading = ref(false)

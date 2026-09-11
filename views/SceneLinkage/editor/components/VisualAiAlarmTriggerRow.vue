@@ -4,6 +4,8 @@
     <span class="visual-ai-alarm-trigger-row__word">{{ $t('IotSceneLinkage.alarmPhrase.statusChange') }}</span>
     <a-select
       class="visual-ai-alarm-trigger-row__mode"
+      popup-class-name="scene-editor__compact-dropdown"
+      :dropdown-match-select-width="false"
       :value="modelValue.modes[0] || 'trigger'"
       :options="modeOptions"
       @change="changeMode"
@@ -39,6 +41,9 @@ function changeMode(value: unknown) {
 
 <style scoped>
 .visual-ai-alarm-trigger-row { display: flex; flex: 1; flex-wrap: wrap; gap: var(--space-2, 8px); align-items: center; min-width: 0; }
-.visual-ai-alarm-trigger-row__mode { flex: 0 1 11rem; min-width: 10rem; max-width: 11rem; }
+.visual-ai-alarm-trigger-row__mode {
+	flex: 0 0 var(--scene-linkage-compact-select-width, 8rem);
+	width: var(--scene-linkage-compact-select-width, 8rem);
+}
 .visual-ai-alarm-trigger-row__word { flex: none; white-space: nowrap; }
 </style>

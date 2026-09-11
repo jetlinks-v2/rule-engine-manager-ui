@@ -2,9 +2,9 @@
   <div class="device-state-trigger">
     <div class="device-state-trigger__row">
       <span class="device-state-trigger__label">{{ state === 'any' ? $t('IotSceneLinkage.stateCondition.anyPhrasePrefix') : $t('IotSceneLinkage.stateCondition.phrasePrefix') }}</span>
-      <a-select class="device-state-trigger__select" :value="state" :options="stateOptions" @update:value="updateState" />
+      <a-select class="device-state-trigger__select" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :value="state" :options="stateOptions" @update:value="updateState" />
       <span class="device-state-trigger__label">{{ $t('IotSceneLinkage.stateTriggerMode.phraseSeparator') }}</span>
-      <a-select class="device-state-trigger__mode" :value="mode" :disabled="state === 'any'" :options="modeOptions" @update:value="updateMode" />
+      <a-select class="device-state-trigger__mode" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :value="mode" :disabled="state === 'any'" :options="modeOptions" @update:value="updateMode" />
       <template v-if="mode === 'sustained'">
         <a-input-number :value="sustainedTime" :min="1" :precision="0" @update:value="emit('update:sustainedTime', $event || 1)" />
         <span class="device-state-trigger__unit">{{ $t('IotSceneLinkage.stateTriggerMode.sustainedSuffix') }}</span>
@@ -64,8 +64,8 @@ watch(() => props.state, value => {
 .device-state-trigger { flex: 0 0 100%; width: 100%; min-width: 0; }
 .device-state-trigger__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2, 8px); }
 .device-state-trigger__label { color: var(--ant-color-text-secondary); }
-.device-state-trigger__select { width: 10rem; }
-.device-state-trigger__mode { width: 8rem; }
+.device-state-trigger__select { width: var(--scene-linkage-compact-select-width, 8rem); }
+.device-state-trigger__mode { width: var(--scene-linkage-compact-select-width, 8rem); }
 .device-state-trigger__unit { color: var(--ant-color-text-secondary); }
 .device-state-trigger__remove { flex: none; margin-left: auto; }
 </style>

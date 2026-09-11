@@ -29,6 +29,8 @@
       <span class="alarm-state-condition-row__word">{{ $t('IotSceneLinkage.alarmPhrase.ofAlarm') }}</span>
       <a-select
         class="alarm-state-condition-row__alarm"
+        popup-class-name="scene-editor__resource-dropdown"
+        :dropdown-match-select-width="false"
         :value="modelValue.alarmConfigId"
         :options="options"
         :loading="loading"
@@ -46,7 +48,7 @@
     </template>
     <VisualAiAlarmSelector v-else :model-value="modelValue" @update:model-value="updateValue" />
     <span class="alarm-state-condition-row__word">{{ $t('IotSceneLinkage.alarmPhrase.currentState') }}</span>
-    <a-select class="alarm-state-condition-row__state" :value="modelValue.state || 'warning'" :options="stateOptions" @change="changeState" />
+    <a-select class="alarm-state-condition-row__state" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :value="modelValue.state || 'warning'" :options="stateOptions" @change="changeState" />
   </div>
 </template>
 
@@ -269,10 +271,23 @@ watch(() => [props.modelValue.alarmConfigId, props.modelValue.options?.productId
 </script>
 
 <style scoped>
-.alarm-state-condition-row { display: flex; flex: 1 1 auto; flex-wrap: nowrap; gap: var(--space-2, 8px); width: 100%; min-width: 0; align-items: center; }
+.alarm-state-condition-row { display: flex; flex: 0 0 auto; flex-wrap: nowrap; gap: var(--space-2, 8px); width: max-content; min-width: max-content; align-items: center; }
 .alarm-state-condition-row__source, .alarm-state-condition-row__word, .alarm-state-condition-row__state { flex: none; }
-.alarm-state-condition-row__product { flex: 1 1 var(--scene-linkage-resource-select-width, 10.5rem); min-width: 8rem; max-width: var(--scene-linkage-resource-select-width, 10.5rem); }
-.alarm-state-condition-row__device, .alarm-state-condition-row__alarm { flex: 1 1 16rem; min-width: 10rem; max-width: 18rem; }
-.alarm-state-condition-row__state { width: 8rem; }
+.alarm-state-condition-row__product, .alarm-state-condition-row__device, .alarm-state-condition-row__alarm {
+	flex: 0 0 var(--scene-linkage-resource-select-width, 18rem);
+	width: var(--scene-linkage-resource-select-width, 18rem);
+	min-width: var(--scene-linkage-resource-select-width, 18rem);
+	max-width: var(--scene-linkage-resource-select-width, 18rem);
+}
+.alarm-state-condition-row__state {
+	flex: 0 0 var(--scene-linkage-compact-select-width, 8rem);
+	width: var(--scene-linkage-compact-select-width, 8rem);
+}
 .alarm-state-condition-row__word { white-space: nowrap; }
+.alarm-state-condition-row :deep(.visual-ai-alarm-selector) {
+	flex: 0 0 auto;
+	flex-wrap: nowrap;
+	width: max-content;
+	min-width: max-content;
+}
 </style>
