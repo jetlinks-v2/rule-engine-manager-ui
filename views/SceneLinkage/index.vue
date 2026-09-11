@@ -1,62 +1,63 @@
 <template>
   <j-page-container>
-    <SceneRecordTimeline v-if="recordScene" :scene="recordScene" @back="recordScene = undefined" />
-    <section v-else class="scene-list">
-      <div class="scene-list-table">
-        <div class="scene-list-toolbar">
-          <h2 class="scene-list-toolbar__title">{{ $t('IotSceneLinkage.title.list') }}</h2>
-          <ConditionFilter
-            class="scene-list-toolbar__search"
-            :fields="filterFields"
-            :common-fields="filterCommonFields"
-            :model-value="terms"
-            :placeholder="$t('IotSceneLinkage.placeholder.search')"
-            @update:model-value="terms = $event"
-            @change="reload($event)"
-          />
-          <div class="scene-list-toolbar__actions">
-          <j-permission-button
-            :hasPermission="`${permissionKey}:add`"
-            @click="templateImportVisible = true"
-          >
-            <template #icon><AIcon type="ImportOutlined" /></template>
-            {{ $t('IotSceneLinkage.action.importTemplate') }}
-          </j-permission-button>
-          <j-permission-button
-            type="primary"
-            :hasPermission="`${permissionKey}:add`"
-            @click="openEditor()"
-          >
-            <template #icon><AIcon type="PlusOutlined" /></template>
-            {{ $t('IotSceneLinkage.title.add') }}
-          </j-permission-button>
+    <full-page has-padding>
+      <SceneRecordTimeline v-if="recordScene" :scene="recordScene" @back="recordScene = undefined" />
+      <section v-else class="scene-list">
+        <div class="scene-list-table">
+          <div class="scene-list-toolbar">
+            <h2 class="scene-list-toolbar__title">{{ $t('IotSceneLinkage.title.list') }}</h2>
+            <ConditionFilter
+              class="scene-list-toolbar__search"
+              :fields="filterFields"
+              :common-fields="filterCommonFields"
+              :model-value="terms"
+              :placeholder="$t('IotSceneLinkage.placeholder.search')"
+              @update:model-value="terms = $event"
+              @change="reload($event)"
+            />
+            <div class="scene-list-toolbar__actions">
+              <j-permission-button
+                :hasPermission="`${permissionKey}:add`"
+                @click="templateImportVisible = true"
+              >
+                <template #icon><AIcon type="ImportOutlined" /></template>
+                {{ $t('IotSceneLinkage.action.importTemplate') }}
+              </j-permission-button>
+              <j-permission-button
+                type="primary"
+                :hasPermission="`${permissionKey}:add`"
+                @click="openEditor()"
+              >
+                <template #icon><AIcon type="PlusOutlined" /></template>
+                {{ $t('IotSceneLinkage.title.add') }}
+              </j-permission-button>
+            </div>
           </div>
-        </div>
-        <a-table class="scene-list__table" :loading="loading" :columns="columns" :data-source="list" row-key="scene.id" :pagination="pagination" @change="changePage">
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'name'">
-              <strong>{{ record.scene.name }}</strong>
-              <div><a-tag class="scene-list__trigger-tag">{{ triggerLabel(record.scene) }}</a-tag></div>
-            </template>
-            <template v-else-if="column.dataIndex === 'rule'">
-              <div class="scene-list__summary">
-                <template v-for="(part, index) in sceneSummaryParts(record.scene)" :key="`${part.keyword}-${index}`">
-                  <b :class="part.kind === 'action' ? 'scene-list__summary-keyword--action' : 'scene-list__summary-keyword--trigger'">{{ part.keyword }}</b>
-                  <span :class="`scene-list__summary-field--${part.kind}`" :title="part.title || part.value">{{ part.value }}</span>
-                </template>
-              </div>
-            </template>
-            <template v-else-if="column.dataIndex === 'state'">
-              <a-switch
-                :checked="stateValue(record.scene) === 'started'"
-                :disabled="!hasScenePermission('action')"
-                :loading="pendingId === record.scene.id"
-                @change="confirmToggle(record.scene)"
-              />
-            </template>
-            <template v-else-if="column.dataIndex === 'lastExecute'">{{ record.lastExecute || '-' }}</template>
-            <template v-else-if="column.dataIndex === 'actions'">
-              <div class="scene-list__actions">
+          <a-table class="scene-list__table" :loading="loading" :columns="columns" :data-source="list" row-key="scene.id" :pagination="pagination" @change="changePage">
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'name'">
+                <strong>{{ record.scene.name }}</strong>
+                <div><a-tag class="scene-list__trigger-tag">{{ triggerLabel(record.scene) }}</a-tag></div>
+              </template>
+              <template v-else-if="column.dataIndex === 'rule'">
+                <div class="scene-list__summary">
+                  <template v-for="(part, index) in sceneSummaryParts(record.scene)" :key="`${part.keyword}-${index}`">
+                    <b :class="part.kind === 'action' ? 'scene-list__summary-keyword--action' : 'scene-list__summary-keyword--trigger'">{{ part.keyword }}</b>
+                    <span :class="`scene-list__summary-field--${part.kind}`" :title="part.title || part.value">{{ part.value }}</span>
+                  </template>
+                </div>
+              </template>
+              <template v-else-if="column.dataIndex === 'state'">
+                <a-switch
+                  :checked="stateValue(record.scene) === 'started'"
+                  :disabled="!hasScenePermission('action')"
+                  :loading="pendingId === record.scene.id"
+                  @change="confirmToggle(record.scene)"
+                />
+              </template>
+              <template v-else-if="column.dataIndex === 'lastExecute'">{{ record.lastExecute || '-' }}</template>
+              <template v-else-if="column.dataIndex === 'actions'">
+                <div class="scene-list__actions">
                 <span>
                   <j-permission-button
                     v-if="sceneTriggerType(record.scene) === 'manual'"
@@ -67,39 +68,40 @@
                     {{ $t('IotSceneLinkage.action.execute') }}
                   </j-permission-button>
                 </span>
-                <j-permission-button type="link" :hasPermission="`${permissionKey}:update`" @click="openEditor(record.scene.id)">
-                  {{ $t('IotSceneLinkage.action.edit') }}
-                </j-permission-button>
-                <a-dropdown>
-                  <a-button type="link"><AIcon type="MoreOutlined" /></a-button>
-                  <template #overlay>
-                    <a-menu>
-                      <a-menu-item @click="recordScene = record.scene">{{ $t('IotSceneLinkage.action.records') }}</a-menu-item>
-                      <a-menu-item :disabled="!hasScenePermission('add')" @click="exportTemplate(record.scene)">
-                        {{ $t('IotSceneLinkage.action.exportTemplate') }}
-                      </a-menu-item>
-                      <a-menu-item v-if="stateValue(record.scene) !== 'disable'" danger disabled>
-                        <a-tooltip :title="$t('IotSceneLinkage.message.disableBeforeDelete')">
-                          <span class="scene-list__delete-tooltip">{{ $t('IotSceneLinkage.action.delete') }}</span>
-                        </a-tooltip>
-                      </a-menu-item>
-                      <a-menu-item v-else danger :disabled="!hasScenePermission('delete')" @click="confirmRemove(record.scene)">
-                        {{ $t('IotSceneLinkage.action.delete') }}
-                      </a-menu-item>
-                    </a-menu>
-                  </template>
-                </a-dropdown>
-              </div>
+                  <j-permission-button type="link" :hasPermission="`${permissionKey}:update`" @click="openEditor(record.scene.id)">
+                    {{ $t('IotSceneLinkage.action.edit') }}
+                  </j-permission-button>
+                  <a-dropdown>
+                    <a-button type="link"><AIcon type="MoreOutlined" /></a-button>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item @click="recordScene = record.scene">{{ $t('IotSceneLinkage.action.records') }}</a-menu-item>
+                        <a-menu-item :disabled="!hasScenePermission('add')" @click="exportTemplate(record.scene)">
+                          {{ $t('IotSceneLinkage.action.exportTemplate') }}
+                        </a-menu-item>
+                        <a-menu-item v-if="stateValue(record.scene) !== 'disable'" danger disabled>
+                          <a-tooltip :title="$t('IotSceneLinkage.message.disableBeforeDelete')">
+                            <span class="scene-list__delete-tooltip">{{ $t('IotSceneLinkage.action.delete') }}</span>
+                          </a-tooltip>
+                        </a-menu-item>
+                        <a-menu-item v-else danger :disabled="!hasScenePermission('delete')" @click="confirmRemove(record.scene)">
+                          {{ $t('IotSceneLinkage.action.delete') }}
+                        </a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </div>
+              </template>
             </template>
-          </template>
-        </a-table>
-      </div>
-    </section>
-    <SceneTemplateImportModal
-      v-if="templateImportVisible"
-      @close="templateImportVisible = false"
-      @success="onTemplateImported"
-    />
+          </a-table>
+        </div>
+      </section>
+      <SceneTemplateImportModal
+        v-if="templateImportVisible"
+        @close="templateImportVisible = false"
+        @success="onTemplateImported"
+      />
+    </full-page>
   </j-page-container>
 </template>
 <script setup lang="ts">
