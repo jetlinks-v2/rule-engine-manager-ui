@@ -280,6 +280,8 @@
 }
 
 .scene-editor__extra-condition-add {
+    align-self: flex-start;
+    display: inline-flex;
     width: auto;
     padding-inline: 0;
     margin-top: var(--space-2, 8px);
@@ -331,9 +333,9 @@
 }
 
 .scene-editor {
-    --scene-linkage-resource-select-width: 18rem;
-    --scene-linkage-device-select-width: 18rem;
-    --scene-linkage-thing-model-select-width: 18rem;
+    --scene-linkage-resource-select-width: 10rem;
+    --scene-linkage-device-select-width: 10rem;
+    --scene-linkage-thing-model-select-width: 10rem;
     --scene-linkage-compact-select-width: 8rem;
     --scene-linkage-value-input-width: 11rem;
     --scene-linkage-title-column-width: 5.5rem;
@@ -558,6 +560,13 @@
 .scene-editor__scope {
     justify-content: center;
     text-align: center;
+}
+
+.scene-editor__scope-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .ant-btn-default {

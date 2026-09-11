@@ -271,7 +271,7 @@ watch(() => [props.modelValue.alarmConfigId, props.modelValue.options?.productId
 </script>
 
 <style scoped>
-.alarm-state-condition-row { display: flex; flex: 1 1 auto; flex-wrap: nowrap; gap: var(--space-2, 8px); width: 100%; min-width: 0; align-items: center; }
+.alarm-state-condition-row { display: flex; flex: 0 0 auto; flex-wrap: nowrap; gap: var(--space-2, 8px); width: max-content; min-width: max-content; align-items: center; }
 .alarm-state-condition-row__source, .alarm-state-condition-row__word, .alarm-state-condition-row__state { flex: none; }
 .alarm-state-condition-row__product, .alarm-state-condition-row__device, .alarm-state-condition-row__alarm {
 	flex: 0 0 var(--scene-linkage-resource-select-width, 18rem);
@@ -284,4 +284,10 @@ watch(() => [props.modelValue.alarmConfigId, props.modelValue.options?.productId
 	width: var(--scene-linkage-compact-select-width, 8rem);
 }
 .alarm-state-condition-row__word { white-space: nowrap; }
+.alarm-state-condition-row :deep(.visual-ai-alarm-selector) {
+	flex: 0 0 auto;
+	flex-wrap: nowrap;
+	width: max-content;
+	min-width: max-content;
+}
 </style>

@@ -14,7 +14,7 @@
         @change="onProductChange"
       />
       <a-button class="device-action-row__scope" :title="scopeTitle" :disabled="!config.productId" @click="scopeVisible = true">
-        <AIcon type="AimOutlined" />{{ scopeText }}
+        <AIcon type="AimOutlined" /><span class="device-action-row__scope-text">{{ scopeText }}</span>
       </a-button>
       <div class="device-action-row__details">
         <div class="device-action-row__details-content">
@@ -311,20 +311,21 @@ watch(() => props.action.config?.message?.inputs, inputs => {
 
 <style scoped>
 .device-action-row { padding: 14px; margin-bottom: 10px; border: 1px solid var(--jet-theme-border-secondary); border-radius: 8px; }
-.device-action-row__main { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; min-width: 0; }
+.device-action-row__main { display: grid; grid-template-columns: 22px 28px max-content var(--scene-linkage-resource-select-width, 18rem) var(--scene-linkage-device-select-width, 18rem) max-content auto; gap: 10px; align-items: center; width: 100%; min-width: 0; overflow-x: auto; }
 .device-action-row__label { flex: none; white-space: nowrap; }
 .device-action-row__index, .device-action-row__icon { display: grid; flex: none; place-items: center; width: 28px; height: 28px; border-radius: 6px; }
 .device-action-row__index { width: 22px; height: 22px; color: var(--ant-color-primary); background: var(--ant-color-fill-secondary); border-radius: 50%; font-size: 12px; font-weight: 600; }
 .device-action-row__icon { color: #1e5eff; background: #e8f0ff; }
 .device-action-row__icon :deep(.anticon) { display: block; line-height: 1; }
-.device-action-row__product { flex: 0 0 var(--scene-linkage-resource-select-width, 18rem); width: var(--scene-linkage-resource-select-width, 18rem); min-width: var(--scene-linkage-resource-select-width, 18rem); }
-.device-action-row__scope { display: inline-flex; flex: 0 0 var(--scene-linkage-device-select-width, 18rem); justify-content: center; width: var(--scene-linkage-device-select-width, 18rem); min-width: var(--scene-linkage-device-select-width, 18rem); text-align: center; align-items: center }
+.device-action-row__product { grid-column: 4; flex: 0 0 var(--scene-linkage-resource-select-width, 18rem); width: var(--scene-linkage-resource-select-width, 18rem); min-width: var(--scene-linkage-resource-select-width, 18rem); }
+.device-action-row__scope { grid-column: 5; display: inline-flex; flex: 0 0 var(--scene-linkage-device-select-width, 18rem); justify-content: center; width: var(--scene-linkage-device-select-width, 18rem); min-width: var(--scene-linkage-device-select-width, 18rem); text-align: center; align-items: center }
+.device-action-row__scope-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .device-action-row__operation-type { flex: 0 0 var(--scene-linkage-compact-select-width, 8rem); width: var(--scene-linkage-compact-select-width, 8rem); }
-.device-action-row__details { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; min-width: 0; }
-.device-action-row__details-content { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; min-width: 0; }
+.device-action-row__details { display: contents; }
+.device-action-row__details-content { grid-column: 6; display: flex; flex-wrap: nowrap; gap: 10px; align-items: center; min-width: max-content; }
 .device-action-row__operation-group { display: flex; flex: none; gap: 10px; align-items: center; min-width: 0; }
 .device-action-row__operation { flex: 0 0 var(--scene-linkage-thing-model-select-width, 18rem); width: var(--scene-linkage-thing-model-select-width, 18rem); min-width: var(--scene-linkage-thing-model-select-width, 18rem); }
 .device-action-row__write-value { flex: 0 0 var(--scene-linkage-value-input-width, 11rem); width: var(--scene-linkage-value-input-width, 11rem) !important; }
-.device-action-row__remove { align-self: end; justify-self: end; }
+.device-action-row__remove { grid-column: 7; align-self: center; justify-self: end; }
 .device-action-row__main :deep(.ant-input) { width: 140px; }
 </style>

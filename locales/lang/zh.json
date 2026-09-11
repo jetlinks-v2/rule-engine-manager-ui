@@ -1895,7 +1895,7 @@
 	"IotSceneLinkage.scope.fixed": "指定设备",
 	"IotSceneLinkage.scope.range": "范围选择",
 	"IotSceneLinkage.scope.nameSeparator": "、",
-	"IotSceneLinkage.scope.fixedCount": "指定 {count} 台设备",
+	"IotSceneLinkage.scope.fixedCount": "指定设备：{count} 台",
 	"IotSceneLinkage.scope.fixedSummary": "指定设备：{name}",
 	"IotSceneLinkage.scope.fixedSummaryMore": "指定设备：{name} 等 {count} 台",
 	"IotSceneLinkage.scope.fixedSummaryFull": "指定设备：{names}",

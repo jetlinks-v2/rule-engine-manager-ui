@@ -1894,7 +1894,7 @@
 	"IotSceneLinkage.scope.fixed": "Specific devices",
 	"IotSceneLinkage.scope.range": "Range selection",
 	"IotSceneLinkage.scope.nameSeparator": ", ",
-	"IotSceneLinkage.scope.fixedCount": "{count} devices selected",
+	"IotSceneLinkage.scope.fixedCount": "Specific devices: {count}",
 	"IotSceneLinkage.scope.fixedSummary": "Device: {name}",
 	"IotSceneLinkage.scope.fixedSummaryMore": "Devices: {name} ({count} selected)",
 	"IotSceneLinkage.scope.fixedSummaryFull": "Devices: {names}",
