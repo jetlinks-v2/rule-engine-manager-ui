@@ -1,10 +1,6 @@
 <template>
   <div class="alarm-log-card">
-    <pro-search
-        :columns="newColumns"
-        :target="`alarm-log-${props.type}`"
-        @search="search"
-    />
+    
 
     <FullPage>
       <JProTable
@@ -15,7 +11,15 @@
           :gridColumn="1"
           mode="CARD"
           ref="tableRef"
+          class="pro-table__no-padding"
       >
+	      <template #headerLeftRender>
+		      <ConditionFilter
+			      :columns="newColumns"
+			      :target="`alarm-log-${props.type}`"
+			      @search="search"
+		      />
+	      </template>
         <template #card="slotProps">
           <CardBox
               :value="slotProps"

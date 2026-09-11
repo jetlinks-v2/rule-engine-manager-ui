@@ -1,154 +1,158 @@
 <template>
   <j-page-container>
-    <div>
-      <pro-search
-        :columns="columns"
-        target="search-configuration"
-        @search="handleSearch"
-      />
-      <j-ellipsis>
-        <JProTable
-          :columns="columns"
-          :request="queryList"
-          :gridColumn="3"
-          :gridColumns="[1, 2, 3]"
-          modeValue="CARD"
-          ref="tableRef"
-          :defaultParams="{
-            sorts: [{ name: 'createTime', order: 'desc' }],
-          }"
-          :params="params"
-        >
-          <template #headerLeftRender>
-            <a-space>
-              <j-permission-button
-                type="primary"
-                @click="add"
-                :hasPermission="permissionKey + ':add'"
-              >
-                <template #icon><AIcon type="PlusOutlined" /></template>
-                {{ $t('Configuration.index.021440-0') }}
-              </j-permission-button>
-            </a-space>
-          </template>
-          <template #card="slotProps">
-            <CardBox
-              :value="slotProps"
-              :actions="getActions(slotProps, 'card')"
-              v-bind="slotProps"
-              :status="slotProps.state?.value"
-              :statusText="slotProps.state?.text"
-              :statusNames="{
-                enabled: 'processing',
-                disabled: 'error',
+    <FullPage transparentBackground>
+      <ContentPanel>
+        <div>
+          <pro-search
+            :columns="columns"
+            target="search-configuration"
+            @search="handleSearch"
+          />
+          <j-ellipsis>
+            <JProTable
+              :columns="columns"
+              :request="queryList"
+              :gridColumn="3"
+              :gridColumns="[1, 2, 3]"
+              modeValue="CARD"
+              ref="tableRef"
+              :defaultParams="{
+                sorts: [{ name: 'createTime', order: 'desc' }],
               }"
-              @click="
-                () => {
-                  menuStory.jumpPage(
-                    `${permissionKey}/Save`,
-                    { query: { id: slotProps.id } }
-                  );
-                }
-              "
+              :params="params"
             >
-              <template #img>
-                <slot name="img">
-                  <img :src="ConfigurationImages.alarmConfig" />
-                </slot>
+              <template #headerLeftRender>
+                <a-space>
+                  <j-permission-button
+                    type="primary"
+                    @click="add"
+                    :hasPermission="permissionKey + ':add'"
+                  >
+                    <template #icon><AIcon type="PlusOutlined" /></template>
+                    {{ $t('Configuration.index.021440-0') }}
+                  </j-permission-button>
+                </a-space>
               </template>
-              <template #content>
-                <a-row>
-                  <j-ellipsis style="max-width: calc(100% - 120px)">
-                    <span style="font-weight: 600; font-size: 16px">
-                      {{ slotProps.name }}
-                    </span>
-                  </j-ellipsis>
-                </a-row>
-                <a-row>
-                  <a-col :span="12">
-                    <div class="card-item-content-text">{{ $t('Configuration.index.021440-1') }}</div>
-                    <div style="height: 22px; width: 100%">
-                      <j-ellipsis style="max-width: 100%">
-                        {{ slotProps.description }}
-                      </j-ellipsis>
-                    </div>
-                  </a-col>
-                  <a-col :span="12">
-                    <div class="card-item-content-text">{{ $t('Configuration.index.021440-2') }}</div>
-                    <div style="display: flex">
-                      <LevelIcon :level="slotProps.level"></LevelIcon>
-                      <j-ellipsis>
-                        {{ levelMap[slotProps.level] }}
-                      </j-ellipsis>
-                    </div>
-                  </a-col>
-                </a-row>
-              </template>
-              <template #actions="item">
-                <j-permission-button
-                  :disabled="item.disabled"
-                  :popConfirm="item.popConfirm"
-                  :tooltip="{ ...item.tooltip }"
-                  @click="item.onClick"
-                  :hasPermission="`${permissionKey}:${item.key}`"
-                >
-                  <AIcon type="DeleteOutlined" v-if="item.key === 'delete'" />
-                  <template v-else>
-                    <AIcon :type="item.icon" />
-                    <span>{{ item?.text }}</span>
-                  </template>
-                </j-permission-button>
-              </template>
-            </CardBox>
-          </template>
-          <template #targetType="slotProps">
-            <span>{{ supports.find(item => slotProps.targetType === item.value)?.label }}</span>
-          </template>
-
-          <template #state="slotProps">
-            <j-badgeStatus
-              :text="slotProps.state?.text"
-              :status="slotProps.state?.value"
-              :statusNames="{
-                enabled: 'processing',
-                disabled: 'error',
-              }"
-            />
-          </template>
-          <template #level="slotProps">
-            <div style="display: flex">
-              <LevelIcon :level="slotProps.level"></LevelIcon>
-              <j-ellipsis>
-                {{ levelMap[slotProps.level] }}
-              </j-ellipsis>
-            </div>
-          </template>
-          <template #action="slotProps">
-            <a-space :size="16">
-              <template
-                v-for="i in getActions(slotProps, 'table')"
-                :key="i.key"
-              >
-                <j-permission-button
-                  :disabled="i.disabled"
-                  :popConfirm="i.popConfirm"
-                  :tooltip="{
-                    ...i.tooltip,
+              <template #card="slotProps">
+                <CardBox
+                  :value="slotProps"
+                  :actions="getActions(slotProps, 'card')"
+                  v-bind="slotProps"
+                  :status="slotProps.state?.value"
+                  :statusText="slotProps.state?.text"
+                  :statusNames="{
+                    enabled: 'processing',
+                    disabled: 'error',
                   }"
-                  @click="i.onClick"
-                  type="link"
-                  style="padding: 0px"
-                  :hasPermission="`${permissionKey}:${i.key}`"
-                  :danger="i.key === 'delete'"
+                  @click="
+                    () => {
+                      menuStory.jumpPage(
+                        `${permissionKey}/Save`,
+                        { query: { id: slotProps.id } }
+                      );
+                    }
+                  "
                 >
-                  <template #icon><AIcon :type="i.icon" /></template>
-                </j-permission-button>
+                  <template #img>
+                    <slot name="img">
+                      <img :src="ConfigurationImages.alarmConfig" />
+                    </slot>
+                  </template>
+                  <template #content>
+                    <a-row>
+                      <j-ellipsis style="max-width: calc(100% - 120px)">
+                        <span style="font-weight: 600; font-size: 16px">
+                          {{ slotProps.name }}
+                        </span>
+                      </j-ellipsis>
+                    </a-row>
+                    <a-row>
+                      <a-col :span="12">
+                        <div class="card-item-content-text">{{ $t('Configuration.index.021440-1') }}</div>
+                        <div style="height: 22px; width: 100%">
+                          <j-ellipsis style="max-width: 100%">
+                            {{ slotProps.description }}
+                          </j-ellipsis>
+                        </div>
+                      </a-col>
+                      <a-col :span="12">
+                        <div class="card-item-content-text">{{ $t('Configuration.index.021440-2') }}</div>
+                        <div style="display: flex">
+                          <LevelIcon :level="slotProps.level"></LevelIcon>
+                          <j-ellipsis>
+                            {{ levelMap[slotProps.level] }}
+                          </j-ellipsis>
+                        </div>
+                      </a-col>
+                    </a-row>
+                  </template>
+                  <template #actions="item">
+                    <j-permission-button
+                      :disabled="item.disabled"
+                      :popConfirm="item.popConfirm"
+                      :tooltip="{ ...item.tooltip }"
+                      @click="item.onClick"
+                      :hasPermission="`${permissionKey}:${item.key}`"
+                    >
+                      <AIcon type="DeleteOutlined" v-if="item.key === 'delete'" />
+                      <template v-else>
+                        <AIcon :type="item.icon" />
+                        <span>{{ item?.text }}</span>
+                      </template>
+                    </j-permission-button>
+                  </template>
+                </CardBox>
               </template>
-            </a-space>
-          </template>
-        </JProTable>
-      </j-ellipsis>
-    </div>
+              <template #targetType="slotProps">
+                <span>{{ supports.find(item => slotProps.targetType === item.value)?.label }}</span>
+              </template>
+
+              <template #state="slotProps">
+                <j-badgeStatus
+                  :text="slotProps.state?.text"
+                  :status="slotProps.state?.value"
+                  :statusNames="{
+                    enabled: 'processing',
+                    disabled: 'error',
+                  }"
+                />
+              </template>
+              <template #level="slotProps">
+                <div style="display: flex">
+                  <LevelIcon :level="slotProps.level"></LevelIcon>
+                  <j-ellipsis>
+                    {{ levelMap[slotProps.level] }}
+                  </j-ellipsis>
+                </div>
+              </template>
+              <template #action="slotProps">
+                <a-space :size="16">
+                  <template
+                    v-for="i in getActions(slotProps, 'table')"
+                    :key="i.key"
+                  >
+                    <j-permission-button
+                      :disabled="i.disabled"
+                      :popConfirm="i.popConfirm"
+                      :tooltip="{
+                        ...i.tooltip,
+                      }"
+                      @click="i.onClick"
+                      type="link"
+                      style="padding: 0px"
+                      :hasPermission="`${permissionKey}:${i.key}`"
+                      :danger="i.key === 'delete'"
+                    >
+                      <template #icon><AIcon :type="i.icon" /></template>
+                    </j-permission-button>
+                  </template>
+                </a-space>
+              </template>
+            </JProTable>
+          </j-ellipsis>
+        </div>
+      </ContentPanel>
+    </FullPage>
   </j-page-container>
   <HandTrigger
     @save="onSave"

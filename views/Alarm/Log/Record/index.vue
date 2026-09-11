@@ -1,54 +1,56 @@
 <template>
     <j-page-container>
+    <FullPage transparentBackground>
+      <ContentPanel>
         <pro-search
             :columns="columns"
             target="bind-channel"
             @search="handleSearch"
         />
-        <FullPage>
-            <JProTable
-                mode="TABLE"
-                :columns="columns"
-                :defaultParams="{
-                    sorts: [{ name: 'createTime', order: 'desc' }],
-                }"
-                :request="query"
-                :params="params"
-            >
-                <template #handleTime="slotsProps">
-                    <span>
-                        {{
-                            slotsProps?.handleTime
-                                ? dayjs(slotsProps.handleTime).format(
-                                      'YYYY-MM-DD HH:mm:ss',
-                                  )
-                                : '--'
-                        }}
-                    </span>
-                </template>
-                <template #handleType="slotProps">
-                    <span>{{ slotProps.handleType?.text || '--' }}</span>
-                </template>
-                <template #alarmDuration="slotProps">
-                    <j-ellipsis><Duration :data="slotProps" /></j-ellipsis>
-                </template>
-                <template #state="slotProps">{{
-                    slotProps?.state?.text
-                }}</template>
-                <template #alarmTime="slotProps">
-                    <span>
-                        {{
-                            dayjs(slotProps.alarmTime).format(
-                                'YYYY-MM-DD HH:mm:ss',
-                            )
-                        }}
-                    </span>
-                </template>
-                <template #description="slotProps">
-                    {{ slotProps?.description || '--' }}
-                </template>
-            </JProTable>
-        </FullPage>
+        <JProTable
+            mode="TABLE"
+            :columns="columns"
+            :defaultParams="{
+                sorts: [{ name: 'createTime', order: 'desc' }],
+            }"
+            :request="query"
+            :params="params"
+        >
+            <template #handleTime="slotsProps">
+                <span>
+                    {{
+                        slotsProps?.handleTime
+                            ? dayjs(slotsProps.handleTime).format(
+                                  'YYYY-MM-DD HH:mm:ss',
+                              )
+                            : '--'
+                    }}
+                </span>
+            </template>
+            <template #handleType="slotProps">
+                <span>{{ slotProps.handleType?.text || '--' }}</span>
+            </template>
+            <template #alarmDuration="slotProps">
+                <j-ellipsis><Duration :data="slotProps" /></j-ellipsis>
+            </template>
+            <template #state="slotProps">{{
+                slotProps?.state?.text
+            }}</template>
+            <template #alarmTime="slotProps">
+                <span>
+                    {{
+                        dayjs(slotProps.alarmTime).format(
+                            'YYYY-MM-DD HH:mm:ss',
+                        )
+                    }}
+                </span>
+            </template>
+            <template #description="slotProps">
+                {{ slotProps?.description || '--' }}
+            </template>
+        </JProTable>
+      </ContentPanel>
+    </FullPage>
     </j-page-container>
 </template>
 
