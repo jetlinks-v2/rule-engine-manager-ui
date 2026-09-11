@@ -26,7 +26,8 @@ export default {
     moduleId: 'rule-engine-manager-ui',
     components: {
         ruleInstance: defineAsyncComponent(() => import('./views/Instance/index.vue')),
-        scenePage: defineAsyncComponent(() => import('./views/Scene/index.vue')),
+        // 私有化运行时从该注册表加载场景菜单，不能只依赖 index.ts 的动态路由映射。
+        scenePage: defineAsyncComponent(() => import('./views/SceneLinkage/index.vue')),
         sceneSavePage: defineAsyncComponent(() => import('./views/Scene/Save/index.vue')),
         sceneSaveAddButton: defineAsyncComponent(() => import('./views/Scene/Save/components/AddButton.vue')),
         sceneSaveTerms: defineAsyncComponent(() => import('./views/Scene/Save/components/Terms')),

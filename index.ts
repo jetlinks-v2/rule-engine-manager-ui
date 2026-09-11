@@ -12,6 +12,9 @@ const getAsyncRoutesMap = () => {
         modules[key] = routerModules[item]
     })
 
+    // 私有化菜单仍使用 rule-engine/Scene；新入口由规则引擎模块内的 SaaS 场景页承载。
+    modules['rule-engine/Scene'] = () => import('./views/SceneLinkage/index.vue')
+
     return modules
 }
 
@@ -24,6 +27,13 @@ const getExtraRoutesMap = () => {
                     url: '/Save',
                     name: i18n.global.t('rule-engine-manager-ui.index.102627-0'),
                     component: () => import('./views/Scene/Save/index.vue')
+                },
+                {
+                    // 与 SaaS 保持同一个 Editor 子路由语义；父路径由各运行时菜单决定。
+                    code: 'Editor',
+                    url: '/editor/:id?',
+                    name: i18n.global.t('rule-engine-manager-ui.index.102627-0'),
+                    component: () => import('./views/SceneLinkage/editor/index.vue')
                 }
             ]
         },
