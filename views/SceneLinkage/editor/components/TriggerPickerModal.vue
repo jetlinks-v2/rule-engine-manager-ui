@@ -154,6 +154,18 @@ function close() {
 </script>
 
 <style scoped>
+:global(.trigger-picker-modal .ant-modal-header) {
+  margin-bottom: 0 !important;
+}
+
+:global(.trigger-picker-modal .ant-modal-title) {
+  padding-bottom: var(--space-1, 4px) !important;
+}
+
+:global(.trigger-picker-modal .ant-modal-body) {
+  padding-top: 0;
+}
+
 .trigger-picker__title {
   display: flex;
   gap: var(--space-2, 8px);
@@ -211,13 +223,13 @@ function close() {
 }
 
 .trigger-picker__body {
-  height: 20.75rem;
-  padding: .75rem .875rem;
+  height: 24rem;
+  padding: var(--space-2, 8px) .875rem .75rem;
   overflow: auto;
   background: var(--jet-theme-bg-container);
   border: 1px solid var(--jet-theme-border-secondary);
   border-radius: 1rem;
-  margin-top: .5rem;
+  margin-top: 0;
 }
 
 .trigger-picker__body--expanded {

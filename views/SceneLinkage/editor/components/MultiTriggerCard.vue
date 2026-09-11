@@ -176,10 +176,11 @@ watch(() => trigger.value.productId, value => { void loadMetadata(value); void l
 .multi-trigger-card__content {
   display: grid;
   grid-column: 3;
-  grid-template-columns: minmax(0, max-content) auto;
+  grid-template-columns: minmax(0, max-content) minmax(2rem, 1fr);
   grid-template-rows: auto auto;
   gap: var(--space-3, 12px);
   align-items: center;
+  width: 100%;
   min-width: max-content;
 }
 
@@ -332,6 +333,9 @@ watch(() => trigger.value.productId, value => { void loadMetadata(value); void l
   grid-row: 1 / -1;
   flex: none;
   align-self: center;
+  justify-self: end;
+  width: auto;
+  min-width: auto;
   padding: 0;
   color: #ff4d4f !important;
 }

@@ -1755,7 +1755,7 @@
 	"IotSceneLinkage.debounce.enable": "开启防抖",
 	"IotSceneLinkage.debounce.continuous": "持续满足",
 	"IotSceneLinkage.debounce.interval": "执行间隔",
-	"IotSceneLinkage.debounce.continuousHint": "条件持续满足后再执行动作。",
+	"IotSceneLinkage.debounce.continuousHint": "条件持续满足后再执行动作",
 	"IotSceneLinkage.debounce.intervalHint": "限制短时间内重复执行动作。",
 	"IotSceneLinkage.debounce.summary.continuous": "持续满足 {time} 秒",
 	"IotSceneLinkage.debounce.summary.interval": "执行间隔 {time} 秒",

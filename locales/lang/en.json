@@ -1754,7 +1754,7 @@
 	"IotSceneLinkage.debounce.enable": "Enable debounce",
 	"IotSceneLinkage.debounce.continuous": "Continuous condition",
 	"IotSceneLinkage.debounce.interval": "Execution interval",
-	"IotSceneLinkage.debounce.continuousHint": "Run actions after the condition remains satisfied.",
+	"IotSceneLinkage.debounce.continuousHint": "Run actions after the condition remains satisfied",
 	"IotSceneLinkage.debounce.intervalHint": "Limit repeated action execution in a short period.",
 	"IotSceneLinkage.debounce.summary.continuous": "Continuous for {time} seconds",
 	"IotSceneLinkage.debounce.summary.interval": "Execution interval {time} seconds",

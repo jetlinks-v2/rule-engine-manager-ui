@@ -1,15 +1,19 @@
 <template>
   <a-modal
     :open="open"
-    :title="$t('IotSceneLinkage.title.condition')"
     :width="520"
     :footer="null"
     :mask-closable="false"
     wrap-class-name="condition-picker-modal"
     @cancel="$emit('cancel')"
   >
+    <template #title>
+      <div class="condition-picker__title">
+        <span>{{ $t('IotSceneLinkage.title.condition') }}</span>
+        <small>{{ $t('IotSceneLinkage.editor.conditionPickerHint') }}</small>
+      </div>
+    </template>
     <div class="condition-picker__body">
-      <p class="condition-picker__hint">{{ $t('IotSceneLinkage.editor.conditionPickerHint') }}</p>
       <div class="condition-picker__items">
         <button v-for="item in conditionTypes" :key="item.value" class="condition-picker__item" :disabled="item.disabled" @click="selectType(item.value)">
           <span class="condition-picker__icon"><AIcon :type="item.icon" /></span>
@@ -57,20 +61,40 @@ function selectType(type: ConditionPickerType) {
   padding: 0;
 }
 
+:global(.condition-picker-modal .ant-modal-header) {
+  margin-bottom: 0 !important;
+}
+
+:global(.condition-picker-modal .ant-modal-title) {
+  padding-bottom: var(--space-1, 4px) !important;
+}
+
+.condition-picker__title {
+  display: flex;
+  gap: var(--space-2, 8px);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.condition-picker__title span {
+  flex: none;
+}
+
+.condition-picker__title small {
+  overflow: hidden;
+  color: var(--ant-color-text-tertiary);
+  font-size: .75rem;
+  font-weight: 400;
+  line-height: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .condition-picker__body {
-  padding: 1rem .9375rem .9375rem;
-  margin-top: 1rem;
+  padding: var(--space-2, 8px) .875rem .75rem;
   background: rgb(255 255 255 / 70%);
   border: 1px solid #eceff3;
   border-radius: 1rem;
-}
-
-.condition-picker__hint {
-  margin: 0 0 .75rem;
-  color: #1d2129;
-  font-size: 1rem;
-  font-weight: 500;
-  line-height: 1.375rem;
 }
 
 .condition-picker__items {
