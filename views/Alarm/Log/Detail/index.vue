@@ -1,51 +1,53 @@
 <template>
   <j-page-container>
-    <pro-search
-      :columns="columns"
-      target="alarm-log-detail"
-      @search="handleSearch"
-    />
-    <FullPage>
-      <JProTable
-        :columns="columns"
-        mode="TABLE"
-        ref="tableRef"
-        :request="queryList"
-        :params="params"
-        :defaultParams="{
-          terms,
-          sorts: [{ name: 'alarmTime', order: 'desc' }],
-        }"
-      >
-        <template #alarmTime="slotProps">{{
-          dayjs(slotProps.alarmTime).format("YYYY-MM-DD HH:mm:ss")
-        }}</template>
-        <template #sourceName="slotProps"
-          >{{ sourceName(slotProps.sourceType) }}：<a
-            type="link"
-            @click="() => gotoDevice(slotProps.sourceType, slotProps.sourceId)"
-            >{{ slotProps.sourceName }}</a
-          ></template
+    <FullPage transparentBackground>
+      <ContentPanel>
+        <pro-search
+          :columns="columns"
+          target="alarm-log-detail"
+          @search="handleSearch"
+        />
+        <JProTable
+          :columns="columns"
+          mode="TABLE"
+          ref="tableRef"
+          :request="queryList"
+          :params="params"
+          :defaultParams="{
+            terms,
+            sorts: [{ name: 'alarmTime', order: 'desc' }],
+          }"
         >
-        <template #action="slotProps">
-          <a-space :size="16"
-            ><template v-for="i in getActions(slotProps, 'table')" :key="i.key">
-              <j-permission-button
-                :disabled="i.disabled"
-                :popConfirm="i.popConfirm"
-                :tooltip="{
-                  ...i.tooltip,
-                }"
-                @click="i.onClick"
-                type="link"
-                style="padding: 0px"
-              >
-                <template #icon><AIcon :type="i.icon" /></template>
-              </j-permission-button>
-            </template>
-          </a-space>
-        </template>
-      </JProTable>
+          <template #alarmTime="slotProps">{{
+            dayjs(slotProps.alarmTime).format("YYYY-MM-DD HH:mm:ss")
+          }}</template>
+          <template #sourceName="slotProps"
+            >{{ sourceName(slotProps.sourceType) }}：<a
+              type="link"
+              @click="() => gotoDevice(slotProps.sourceType, slotProps.sourceId)"
+              >{{ slotProps.sourceName }}</a
+            ></template
+          >
+          <template #action="slotProps">
+            <a-space :size="16"
+              ><template v-for="i in getActions(slotProps, 'table')" :key="i.key">
+                <j-permission-button
+                  :disabled="i.disabled"
+                  :popConfirm="i.popConfirm"
+                  :tooltip="{
+                    ...i.tooltip,
+                  }"
+                  @click="i.onClick"
+                  type="link"
+                  style="padding: 0px"
+                >
+                  <template #icon><AIcon :type="i.icon" /></template>
+                </j-permission-button>
+              </template>
+            </a-space>
+          </template>
+        </JProTable>
+      </ContentPanel>
     </FullPage>
     <Info
       v-if="visible && alarmType !== 'device'"

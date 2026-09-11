@@ -1,6 +1,6 @@
 <template>
   <j-page-container>
-    <full-page has-padding>
+    <full-page has-padding transparent-background>
       <SceneRecordTimeline v-if="recordScene" :scene="recordScene" @back="recordScene = undefined" />
       <section v-else class="scene-list">
         <div class="scene-list-table">
@@ -305,7 +305,6 @@ onMounted(reload)
 .scene-list-table {
   display: grid;
   gap: var(--space-4);
-  background: var(--jet-theme-bg-container);
   border-radius: var(--jet-theme-radius);
 }
 

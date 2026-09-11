@@ -1,136 +1,138 @@
 <template>
   <j-page-container>
-    <FullPage>
-      <JProTable
-        ref="sceneRef"
-        :columns="columns"
-        :gridColumn="3"
-        :gridColumns="[1, 2, 3]"
-        :request="query"
-        modeValue="CARD"
-        :defaultParams="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
-        :params="params"
-      >
-        <template #headerLeftRender>
-          <a-flex :gap="16">
-            <ConditionFilter :columns="columns" target="scene" @search="handleSearch" />
-            <a-space>
-              <j-permission-button
-                type="primary"
-                @click="handleAdd"
-                :hasPermission="`${permissionKey}:add`"
-              >
-                <template #icon><AIcon type="PlusOutlined" /></template>
-                {{ $t('Scene.index.895630-0') }}
-              </j-permission-button>
-              <j-permission-button
-                @click="handleImport"
-                :hasPermission="`${permissionKey}:add`"
-              >
-                <template #icon><AIcon type="ImportOutlined" /></template>
-                导入
-              </j-permission-button>
+    <FullPage transparentBackground>
+      <ContentPanel>
+        <JProTable
+          ref="sceneRef"
+          :columns="columns"
+          :gridColumn="3"
+          :gridColumns="[1, 2, 3]"
+          :request="query"
+          modeValue="CARD"
+          :defaultParams="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
+          :params="params"
+        >
+          <template #headerLeftRender>
+            <a-flex :gap="16">
+              <ConditionFilter :columns="columns" target="scene" @search="handleSearch" />
+              <a-space>
+                <j-permission-button
+                  type="primary"
+                  @click="handleAdd"
+                  :hasPermission="`${permissionKey}:add`"
+                >
+                  <template #icon><AIcon type="PlusOutlined" /></template>
+                  {{ $t('Scene.index.895630-0') }}
+                </j-permission-button>
+                <j-permission-button
+                  @click="handleImport"
+                  :hasPermission="`${permissionKey}:add`"
+                >
+                  <template #icon><AIcon type="ImportOutlined" /></template>
+                  导入
+                </j-permission-button>
+              </a-space>
+            </a-flex>
+          </template>
+          <template #card="slotProps">
+            <CardBox
+              :value="slotProps"
+              @click="handleView(slotProps.id, slotProps.triggerType)"
+              :actions="getActions(slotProps, 'card')"
+              :status="slotProps.state?.value"
+              :statusText="slotProps.state?.text"
+              :statusNames="{
+                started: 'processing',
+                disable: 'error',
+              }"
+            >
+              <template #type>
+                <span
+                  ><img
+                    :height="16"
+                    :src="typeMap[slotProps.triggerType]?.icon"
+                    style="margin-right: 5px"
+                  />{{ slotProps.trigger?.typeName }}</span
+                >
+              </template>
+              <template #img>
+                <img :src="typeMap[slotProps.triggerType]?.img" />
+              </template>
+              <template #content>
+                <j-ellipsis style="width: calc(100% - 100px)">
+                  <span style="font-size: 16px; font-weight: 600">
+                    {{ slotProps.name }}
+                  </span>
+                </j-ellipsis>
+                <div class="subTitle">
+                  <span class="subTitle-title"> {{ $t('Scene.index.895630-1') }} </span>
+                  <span class="subTitle-content" :style="{textIndent: locale.includes('zh') ? '38px' : '60px'}">
+                    <j-ellipsis :lineClamp="2">
+                      {{
+                        slotProps?.description
+                          ? slotProps?.description
+                          : typeMap[slotProps.triggerType]?.tip
+                      }}
+                    </j-ellipsis>
+                  </span>
+                </div>
+              </template>
+              <template #actions="item">
+                <j-permission-button
+                  :disabled="item.disabled"
+                  :popConfirm="item.popConfirm"
+                  :tooltip="{
+                    ...item.tooltip,
+                  }"
+                  @click="item.onClick"
+                  :hasPermission="(item.key === 'view' || item.hasPermission) || permissionKey +':' + item.key"
+                >
+                  <AIcon type="DeleteOutlined" v-if="item.key === 'delete'" />
+                  <template v-else>
+                    <AIcon :type="item.icon" />
+                    <span>{{ item?.text }}</span>
+                  </template>
+                </j-permission-button>
+              </template>
+            </CardBox>
+          </template>
+          <template #triggerType="slotProps">
+            {{ slotProps.trigger?.typeName }}
+          </template>
+          <template #state="slotProps">
+            <JBadgeStatus
+              :status="slotProps.state?.value"
+              :text="slotProps.state?.text"
+              :statusNames="{
+                started: 'processing',
+                disable: 'error',
+              }"
+            />
+          </template>
+          <template #action="slotProps">
+            <a-space :size="16">
+              <template v-for="i in getActions(slotProps, 'table')" :key="i.key">
+                <j-permission-button
+                  :disabled="i.disabled"
+                  :popConfirm="i.popConfirm"
+                  :tooltip="{
+                    ...i.tooltip,
+                  }"
+                  @click="i.onClick"
+                  type="link"
+                  :danger="i.key === 'delete'"
+                  style="padding: 0 5px"
+                  :hasPermission="
+                    (i.key === 'view' || i.hasPermission) ? true : permissionKey + ':' + i.key
+                  "
+                >
+                  <template #icon><AIcon :type="i.icon" /></template>
+                </j-permission-button>
+              </template>
             </a-space>
-          </a-flex>
-        </template>
-        <template #card="slotProps">
-          <CardBox
-            :value="slotProps"
-            @click="handleView(slotProps.id, slotProps.triggerType)"
-            :actions="getActions(slotProps, 'card')"
-            :status="slotProps.state?.value"
-            :statusText="slotProps.state?.text"
-            :statusNames="{
-              started: 'processing',
-              disable: 'error',
-            }"
-          >
-            <template #type>
-              <span
-                ><img
-                  :height="16"
-                  :src="typeMap[slotProps.triggerType]?.icon"
-                  style="margin-right: 5px"
-                />{{ slotProps.trigger?.typeName }}</span
-              >
-            </template>
-            <template #img>
-              <img :src="typeMap[slotProps.triggerType]?.img" />
-            </template>
-            <template #content>
-              <j-ellipsis style="width: calc(100% - 100px)">
-                <span style="font-size: 16px; font-weight: 600">
-                  {{ slotProps.name }}
-                </span>
-              </j-ellipsis>
-              <div class="subTitle">
-                <span class="subTitle-title"> {{ $t('Scene.index.895630-1') }} </span>
-                <span class="subTitle-content" :style="{textIndent: locale.includes('zh') ? '38px' : '60px'}">
-                  <j-ellipsis :lineClamp="2">
-                    {{
-                      slotProps?.description
-                        ? slotProps?.description
-                        : typeMap[slotProps.triggerType]?.tip
-                    }}
-                  </j-ellipsis>
-                </span>
-              </div>
-            </template>
-            <template #actions="item">
-              <j-permission-button
-                :disabled="item.disabled"
-                :popConfirm="item.popConfirm"
-                :tooltip="{
-                  ...item.tooltip,
-                }"
-                @click="item.onClick"
-                :hasPermission="(item.key === 'view' || item.hasPermission) || permissionKey +':' + item.key"
-              >
-                <AIcon type="DeleteOutlined" v-if="item.key === 'delete'" />
-                <template v-else>
-                  <AIcon :type="item.icon" />
-                  <span>{{ item?.text }}</span>
-                </template>
-              </j-permission-button>
-            </template>
-          </CardBox>
-        </template>
-        <template #triggerType="slotProps">
-          {{ slotProps.trigger?.typeName }}
-        </template>
-        <template #state="slotProps">
-          <JBadgeStatus
-            :status="slotProps.state?.value"
-            :text="slotProps.state?.text"
-            :statusNames="{
-              started: 'processing',
-              disable: 'error',
-            }"
-          />
-        </template>
-        <template #action="slotProps">
-          <a-space :size="16">
-            <template v-for="i in getActions(slotProps, 'table')" :key="i.key">
-              <j-permission-button
-                :disabled="i.disabled"
-                :popConfirm="i.popConfirm"
-                :tooltip="{
-                  ...i.tooltip,
-                }"
-                @click="i.onClick"
-                type="link"
-                :danger="i.key === 'delete'"
-                style="padding: 0 5px"
-                :hasPermission="
-                  (i.key === 'view' || i.hasPermission) ? true : permissionKey + ':' + i.key
-                "
-              >
-                <template #icon><AIcon :type="i.icon" /></template>
-              </j-permission-button>
-            </template>
-          </a-space>
-        </template>
-      </JProTable>
+          </template>
+        </JProTable>
+      </ContentPanel>
     </FullPage>
     <SaveModal v-if="visible" @close="visible = false" :data="current" :typeOptions="typeOptions" />
     <ImportModal v-if="importVisible" @close="importVisible = false" @save="importSuccess"/>
