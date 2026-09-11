@@ -1,10 +1,9 @@
 <template>
     <j-page-container>
         <div>
-            <pro-search
-                :columns="query.columns"
-                target="rule-engine-instance"
-                @search="handleSearch"
+            <ConditionFilter
+                :fields="filterFields"
+                @change="handleSearch"
             />
             <FullPage>
                 <JProTable
@@ -194,9 +193,13 @@ import { useI18n } from 'vue-i18n'
 import { useRulePermission } from '@rule-engine-manager-ui/hook/usePermission'
 import { useRoute, useRouter } from 'vue-router'
 import { useRuleEditorRouteState } from './useRuleEditorRouteState';
+import ConditionFilter, {
+    type ConditionFilterChangePayload,
+    type ConditionFilterField,
+} from '@jetlinks-web-core/components/ConditionFilter';
 
 const { t: $t } = useI18n()
-const params = ref<Record<string, any>>({});
+const params = ref<ConditionFilterChangePayload['filter']>({ terms: [] });
 const tableRef = ref<Record<string, any>>({});
 const routerParams = useRouterParams();
 const route = useRoute();
@@ -229,44 +232,39 @@ const getRuleImage = (record: Record<string, any>) => (
     svgToDataUrl(record?.metadata?.thumbnailSvg) || InstanceImages.scene
 );
 
-const query = {
-    columns: [
-        {
-            title: $t('Instance.index.020452-3'),
-            dataIndex: 'name',
-            key: 'name',
-            search: {
-                type: 'string',
-            },
+const filterFields: ConditionFilterField[] = [
+    {
+        title: $t('Instance.index.020452-3'),
+        dataIndex: 'name',
+        search: {
+            type: 'string',
         },
-        {
-            title: $t('Instance.index.020452-4'),
-            dataIndex: 'state',
-            key: 'state',
-            search: {
-                type: 'select',
-                options: [
-                    {
-                        label: $t('Instance.index.020452-1'),
-                        value: 'started',
-                    },
-                    {
-                        label: $t('Instance.index.020452-2'),
-                        value: 'disable',
-                    },
-                ],
-            },
+    },
+    {
+        title: $t('Instance.index.020452-4'),
+        dataIndex: 'state',
+        search: {
+            type: 'select',
+            options: [
+                {
+                    label: $t('Instance.index.020452-1'),
+                    value: 'started',
+                },
+                {
+                    label: $t('Instance.index.020452-2'),
+                    value: 'disable',
+                },
+            ],
         },
-        {
-            title: $t('Instance.index.020452-5'),
-            key: 'description',
-            dataIndex: 'description',
-            search: {
-                type: 'string',
-            },
+    },
+    {
+        title: $t('Instance.index.020452-5'),
+        dataIndex: 'description',
+        search: {
+            type: 'string',
         },
-    ],
-};
+    },
+];
 const columns = [
     {
         title: $t('Instance.index.020452-3'),
@@ -414,8 +412,11 @@ const add = () => {
 const refresh = () => {
     tableRef.value?.reload();
 };
-const handleSearch = (e: any) => {
-    params.value = e;
+/**
+ * 接收统一条件组件已经转换好的查询参数，避免页面重复维护筛选协议。
+ */
+const handleSearch = ({ filter }: ConditionFilterChangePayload) => {
+    params.value = filter;
 };
 const handleRuleEditorUpdated = (rule: Record<string, any>) => {
     ruleEditor.current = {
