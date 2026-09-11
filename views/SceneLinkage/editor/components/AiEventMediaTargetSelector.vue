@@ -323,7 +323,13 @@ function appendDistinctChannels(current: AiEventMediaChannel[], next: AiEventMed
 </script>
 
 <style scoped>
-.ai-event-media-target-selector { flex: 0 0 12rem; width: 12rem; min-width: 10rem; max-width: 12rem; text-align: left; }
+.ai-event-media-target-selector {
+	flex: 0 0 var(--scene-linkage-resource-select-width, 18rem);
+	width: var(--scene-linkage-resource-select-width, 18rem);
+	min-width: var(--scene-linkage-resource-select-width, 18rem);
+	max-width: var(--scene-linkage-resource-select-width, 18rem);
+	text-align: left;
+}
 .ai-event-media-target-selector__content { display: flex; gap: 16px; height: min(25rem, calc(100vh - 20rem)); min-height: 20rem; }
 .ai-event-media-target-selector__tree { width: 14rem; flex: none; border-right: 1px solid var(--border-color-split, #f0f0f0); padding-right: 16px; }
 .ai-event-media-target-selector__tree-list { height: calc(min(25rem, 100vh - 20rem) - 4rem); margin-top: 12px; overflow: auto; }

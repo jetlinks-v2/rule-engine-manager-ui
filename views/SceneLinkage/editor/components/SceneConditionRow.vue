@@ -13,7 +13,7 @@
 				                      :placeholder="$t('IotSceneLinkage.placeholder.product')" rich @change="onProductChange"/>
 				<a-button class="scene-condition-row__scope" :title="scopeTitle" :disabled="!condition.productId" @click="scopeVisible = true">
 					<AIcon type="AimOutlined"/>
-					{{ scopeText }}
+					<span class="scene-condition-row__scope-text">{{ scopeText }}</span>
 				</a-button>
 			</template>
 			<div
@@ -28,7 +28,7 @@
 					<ThingModelSelect class="scene-condition-row__property" :model-value="condition.propertyId || undefined"
 					                  :options="propertyOptions" :placeholder="$t('IotSceneLinkage.placeholder.property')"
 					                  :disabled="!condition.productId" @change="updateProperty"/>
-					<a-select class="scene-condition-row__term-type" :value="condition.termType" :options="termOptions"
+					<a-select class="scene-condition-row__term-type" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :value="condition.termType" :options="termOptions"
 					          @change="updateTermType"/>
 					<ThingModelValueInput class="scene-condition-row__value" :model-value="condition.value"
 					                      :value-type="selectedProperty?.valueType" @update:model-value="updateValue"/>
@@ -226,11 +226,13 @@ watch(() => props.condition.type === 'deviceProperty' ? props.condition.productI
 
 .scene-condition-row {
 	display: flex;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 	gap: var(--space-3, 12px);
 	align-items: center;
 	width: 100%;
 	min-width: 0;
+	overflow-x: auto;
+	white-space: nowrap;
 	padding: var(--space-4, 16px);
 	border: 1px solid #eceff3;
 	border-radius: var(--radius-jet-sm, 10px);
@@ -308,42 +310,56 @@ watch(() => props.condition.type === 'deviceProperty' ? props.condition.productI
 	text-align: center;
 }
 
+.scene-condition-row__scope-text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .scene-condition-row__word {
 	flex: none;
 	white-space: nowrap;
 }
 
 .scene-condition-row__footer {
-	display: grid;
-	flex: 1;
-	grid-template-columns: minmax(0, 1fr) auto;
+	display: flex;
+	flex: 0 0 auto;
 	gap: var(--space-3, 12px);
-	align-items: end;
-	min-width: 0;
+	align-items: center;
+	min-width: max-content;
 }
 
 .scene-condition-row__footer--full {
-	flex: 0 0 100%;
+	flex: 0 0 auto;
 }
 
 .scene-condition-row__footer--alarm {
-	flex: 1 1 0;
+	flex: 0 0 auto;
 }
 
 .scene-condition-row__condition {
 	display: flex;
+	flex: 0 0 auto;
 	gap: var(--space-3, 12px);
 	align-items: center;
-	min-width: 0;
+	min-width: max-content;
 }
 
 .scene-condition-row__remove {
-	align-self: end;
-	justify-self: end;
+	flex: none;
+	align-self: center;
+	margin-left: var(--space-1, 4px);
+}
+
+.scene-condition-row__footer :deep(.alarm-state-condition-row) {
+	flex: 0 0 auto;
+	width: max-content;
+	min-width: max-content;
 }
 
 .scene-condition-row :deep(.ant-select), .scene-condition-row :deep(.ant-input) {
-	width: 120px;
+	width: var(--scene-linkage-compact-select-width, 8rem);
 }
 
 .scene-condition-row :deep(.scene-condition-row__property) {
@@ -353,10 +369,10 @@ watch(() => props.condition.type === 'deviceProperty' ? props.condition.productI
 }
 
 .scene-condition-row :deep(.scene-condition-row__value) {
-	width: 11rem;
+	width: var(--scene-linkage-value-input-width, 11rem);
 }
 
 .scene-condition-row :deep(.scene-condition-row__term-type) {
-	width: 88px;
+	width: var(--scene-linkage-compact-select-width, 8rem);
 }
 </style>

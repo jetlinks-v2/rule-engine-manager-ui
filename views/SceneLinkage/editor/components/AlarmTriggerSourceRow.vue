@@ -40,7 +40,8 @@ function changeSource(event: { target?: { value?: unknown } }) {
 </script>
 
 <style scoped>
-.alarm-trigger-source-row { display: flex; flex: 1; flex-wrap: nowrap; gap: var(--space-3, 12px); align-items: center; min-width: 0; }
+.alarm-trigger-source-row { display: flex; flex: 1; flex-wrap: nowrap; gap: var(--space-3, 12px); align-items: flex-start; min-width: 0; }
+.alarm-trigger-source-row > .ant-radio-group { margin-top: var(--space-1, 4px); }
 .alarm-trigger-source-row > :last-child { flex: 1 1 0; min-width: 0; }
 @media (max-width: 70rem) { .alarm-trigger-source-row { flex-wrap: wrap; }.alarm-trigger-source-row > :last-child { flex-basis: 100%; } }
 </style>

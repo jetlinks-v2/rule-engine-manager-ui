@@ -2,12 +2,12 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-4, 16px);
 }
 
 .scene-editor__header {
     display: flex;
-    gap: 12px;
+    gap: var(--space-3, 12px);
     align-items: center
 }
 
@@ -57,6 +57,8 @@
 }
 
 .scene-editor__section {
+    box-sizing: border-box;
+    padding: var(--space-4, 16px) var(--space-5, 20px);
     background: color-mix(in srgb, var(--jet-theme-bg-container) 70%, transparent);
     border: 1px solid var(--ant-color-border-secondary);
     border-radius: 8px
@@ -65,8 +67,8 @@
 .scene-editor__section h3 {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin: 0 0 12px
+    gap: var(--space-2, 8px);
+    margin: 0 0 var(--space-3, 12px)
 }
 
 .scene-editor__section h3 b {
@@ -130,7 +132,8 @@
 }
 
 .scene-editor__trigger-row :deep(.ant-select) {
-    width: 132px;
+    width: var(--scene-linkage-compact-select-width, 8rem);
+    min-width: var(--scene-linkage-compact-select-width, 8rem);
     flex: none
 }
 
@@ -157,8 +160,13 @@
 }
 
 .scene-editor__scope {
-    min-width: 140px;
-    text-align: left
+    display: inline-flex;
+    flex: 0 0 var(--scene-linkage-device-select-width, 18rem);
+    width: var(--scene-linkage-device-select-width, 18rem) !important;
+    min-width: var(--scene-linkage-device-select-width, 18rem);
+    align-items: center;
+    justify-content: center;
+    text-align: center
 }
 
 .scene-editor__action-row {
@@ -224,9 +232,10 @@
 .scene-editor__advanced {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--space-2, 8px);
     align-items: center;
-    margin-top: 12px;
+    box-sizing: border-box;
+    padding: var(--space-4, 16px) var(--space-5, 20px);
     background: color-mix(in srgb, var(--jet-theme-bg-container) 70%, transparent);
     border: 1px solid var(--ant-color-border-secondary);
     border-radius: 8px;
@@ -242,7 +251,7 @@
 
 .scene-editor__advanced-content {
     flex-basis: 100%;
-    padding-top: 8px;
+    padding-top: var(--space-2, 8px);
     cursor: default
 }
 
@@ -271,6 +280,8 @@
 }
 
 .scene-editor__extra-condition-add {
+    align-self: flex-start;
+    display: inline-flex;
     width: auto;
     padding-inline: 0;
     margin-top: var(--space-2, 8px);
@@ -322,10 +333,33 @@
 }
 
 .scene-editor {
-    --scene-linkage-resource-select-width: 21rem;
-    --scene-linkage-device-select-width: 17rem;
-    --scene-linkage-thing-model-select-width: 18rem;
+    --scene-linkage-resource-select-width: 10rem;
+    --scene-linkage-device-select-width: 10rem;
+    --scene-linkage-thing-model-select-width: 10rem;
+    --scene-linkage-compact-select-width: 8rem;
+    --scene-linkage-value-input-width: 11rem;
     --scene-linkage-title-column-width: 5.5rem;
+}
+
+.scene-editor__resource-dropdown.ant-select-dropdown,
+.scene-editor__thing-model-dropdown.ant-select-dropdown {
+    box-sizing: border-box;
+    width: min(30rem, calc(100vw - 24px)) !important;
+    min-width: min(30rem, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+}
+
+.scene-editor__compact-dropdown.ant-select-dropdown {
+    box-sizing: border-box;
+    width: min(14rem, calc(100vw - 24px)) !important;
+    min-width: min(14rem, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+}
+
+.scene-editor__resource-dropdown.ant-select-dropdown .ant-select-item-option-content,
+.scene-editor__thing-model-dropdown.ant-select-dropdown .ant-select-item-option-content {
+    overflow: visible;
+    white-space: normal;
 }
 
 .scene-editor__trigger-row--interval > b::after {
@@ -400,6 +434,8 @@
     gap: var(--space-2, 8px);
     flex: 1;
     width: 100%;
+    box-sizing: border-box;
+    padding: var(--space-4, 16px) var(--space-5, 20px);
 }
 
 .scene-editor__header-actions {
@@ -437,20 +473,24 @@
     white-space: nowrap;
 }
 .scene-editor__event-select {
-    flex: 0 0 12rem !important;
-    width: 12rem !important;
+    flex: 0 0 var(--scene-linkage-thing-model-select-width) !important;
+    width: var(--scene-linkage-thing-model-select-width) !important;
 }
 .scene-editor__event-output-select {
-    flex: 0 0 10rem !important;
-    width: 10rem !important;
+    flex: 0 0 var(--scene-linkage-thing-model-select-width) !important;
+    width: var(--scene-linkage-thing-model-select-width) !important;
 }
 .scene-editor__event-term-type {
-    flex: 0 0 5.5rem !important;
-    width: 5.5rem !important;
+    flex: 0 0 var(--scene-linkage-compact-select-width) !important;
+    width: var(--scene-linkage-compact-select-width) !important;
 }
 .scene-editor__event-term-value {
-    flex: 0 0 8.75rem !important;
-    width: 8.75rem !important;
+    flex: 0 0 var(--scene-linkage-value-input-width) !important;
+    width: var(--scene-linkage-value-input-width) !important;
+}
+.scene-editor__delay-unit {
+    flex: 0 0 var(--scene-linkage-compact-select-width);
+    width: var(--scene-linkage-compact-select-width) !important;
 }
 .scene-editor__trigger-row--property > b,
 .scene-editor__trigger-row--property > span {
@@ -487,14 +527,14 @@
     min-width: var(--scene-linkage-thing-model-select-width);
 }
 .scene-editor__trigger-row--property .scene-editor__term-type {
-    flex: 0 0 5.5rem;
-    width: 5.5rem;
-    min-width: 5.5rem;
+    flex: 0 0 var(--scene-linkage-compact-select-width);
+    width: var(--scene-linkage-compact-select-width);
+    min-width: var(--scene-linkage-compact-select-width);
 }
 .scene-editor__trigger-row--property .scene-editor__trigger-condition > :last-child {
-    flex: 0 0 8.75rem !important;
-    width: 8.75rem !important;
-    min-width: 8.75rem;
+    flex: 0 0 var(--scene-linkage-value-input-width) !important;
+    width: var(--scene-linkage-value-input-width) !important;
+    min-width: var(--scene-linkage-value-input-width);
 }
 .scene-editor__trigger-row--property .scene-editor__scope {
     flex: 0 0 var(--scene-linkage-device-select-width);
@@ -520,6 +560,13 @@
 .scene-editor__scope {
     justify-content: center;
     text-align: center;
+}
+
+.scene-editor__scope-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .ant-btn-default {

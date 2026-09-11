@@ -2,6 +2,8 @@
   <div class="ai-event-trigger-row">
     <a-select
       class="ai-event-trigger-row__select"
+      popup-class-name="scene-editor__resource-dropdown"
+      :dropdown-match-select-width="false"
       :value="modelValue.sceneId"
       :loading="loadingScenes"
       :options="visibleSceneOptions"
@@ -17,6 +19,8 @@
     </a-select>
     <a-select
       class="ai-event-trigger-row__select"
+      popup-class-name="scene-editor__resource-dropdown"
+      :dropdown-match-select-width="false"
       :value="modelValue.taskTarget"
       :options="visibleTargetOptions"
       :disabled="!modelValue.sceneId"
@@ -38,6 +42,8 @@
       : 'IotSceneLinkage.aiEvent.phrase.resultProduced') }}</span>
     <a-select
       class="ai-event-trigger-row__condition-column"
+      popup-class-name="scene-editor__resource-dropdown"
+      :dropdown-match-select-width="false"
       :value="modelValue.condition?.column"
       :options="conditionOptions"
       :disabled="!modelValue.taskTarget"
@@ -51,6 +57,8 @@
     <a-select
       v-if="modelValue.condition"
       class="ai-event-trigger-row__condition-type"
+      popup-class-name="scene-editor__compact-dropdown"
+      :dropdown-match-select-width="false"
       :value="displayTermType"
       :options="conditionTermTypes"
       @change="changeConditionType"
@@ -58,6 +66,8 @@
     <a-select
       v-if="modelValue.condition && conditionValueOptions.length && requiresConditionValue"
       class="ai-event-trigger-row__condition-value"
+      popup-class-name="scene-editor__compact-dropdown"
+      :dropdown-match-select-width="false"
       :value="displayConditionValue as number"
       :options="conditionValueOptions"
       :placeholder="$t('IotSceneLinkage.placeholder.aiResultValue')"
@@ -276,10 +286,20 @@ function supportedTermTypes(column?: AiEventResultColumn) {
 
 <style scoped>
 .ai-event-trigger-row { display: flex; flex: 1; flex-wrap: wrap; gap: var(--space-2, 8px); align-items: center; min-width: 0; }
-.ai-event-trigger-row__select { flex: 0 1 13rem; min-width: 10rem; max-width: 13rem; }
-.ai-event-trigger-row__media { flex: 0 0 15rem; min-width: 12rem; }
-.ai-event-trigger-row__condition-column { flex: 0 1 11rem; min-width: 9rem; }
-.ai-event-trigger-row__condition-type { flex: 0 0 6.5rem; }
-.ai-event-trigger-row__condition-value { flex: 0 1 9rem; min-width: 7rem; }
+.ai-event-trigger-row__select, .ai-event-trigger-row__media, .ai-event-trigger-row__condition-column {
+	flex: 0 0 var(--scene-linkage-resource-select-width, 18rem);
+	width: var(--scene-linkage-resource-select-width, 18rem);
+	min-width: var(--scene-linkage-resource-select-width, 18rem);
+	max-width: var(--scene-linkage-resource-select-width, 18rem);
+}
+.ai-event-trigger-row__condition-type {
+	flex: 0 0 var(--scene-linkage-compact-select-width, 8rem);
+	width: var(--scene-linkage-compact-select-width, 8rem);
+}
+.ai-event-trigger-row__condition-value {
+	flex: 0 0 var(--scene-linkage-value-input-width, 11rem);
+	width: var(--scene-linkage-value-input-width, 11rem);
+	min-width: var(--scene-linkage-value-input-width, 11rem);
+}
 .ai-event-trigger-row__word { flex: none; white-space: nowrap; }
 </style>

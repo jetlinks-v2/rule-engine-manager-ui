@@ -5,46 +5,50 @@
       <strong>{{ $t(`IotSceneLinkage.trigger.${trigger.triggerKind}`) }}</strong>
     </header>
 
-    <div v-if="isDevice" class="multi-trigger-card__row">
-      <IotAlarmTargetSelect v-model="trigger.productId" class="multi-trigger-card__product" :request="requestProducts" :selected-option="selectedProduct" :placeholder="$t('IotSceneLinkage.placeholder.product')" rich @change="changeProduct" />
-      <a-button class="multi-trigger-card__scope" :title="scopeTitle" :disabled="!trigger.productId" @click="scopeVisible = true"><AIcon type="AimOutlined" />{{ scopeText }}</a-button>
+    <div class="multi-trigger-card__content">
+      <div class="multi-trigger-card__main">
+        <div v-if="isDevice" class="multi-trigger-card__row">
+          <IotAlarmTargetSelect v-model="trigger.productId" class="multi-trigger-card__product" :request="requestProducts" :selected-option="selectedProduct" :placeholder="$t('IotSceneLinkage.placeholder.product')" rich @change="changeProduct" />
+          <a-button class="multi-trigger-card__scope" :title="scopeTitle" :disabled="!trigger.productId" @click="scopeVisible = true"><AIcon type="AimOutlined" /><span class="multi-trigger-card__scope-text">{{ scopeText }}</span></a-button>
+          <template v-if="trigger.triggerKind === 'property'">
+            <span>{{ $t('IotSceneLinkage.condition.current') }}</span>
+            <ThingModelSelect v-model="trigger.propertyId" class="multi-trigger-card__thing" :options="propertyOptions" :disabled="!trigger.productId" @change="changeProperty" />
+            <a-select v-model:value="trigger.termType" class="multi-trigger-card__term" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :options="termOptions" />
+            <ThingModelValueInput v-model="trigger.termValue" class="multi-trigger-card__value" :value-type="selectedProperty?.valueType" />
+          </template>
+          <template v-else-if="trigger.triggerKind === 'event'">
+            <span>{{ $t('IotSceneLinkage.rule.when') }}</span>
+            <ThingModelSelect v-model="trigger.eventId" class="multi-trigger-card__thing" :options="eventOptions" :disabled="!trigger.productId" @change="changeEvent" />
+            <template v-if="trigger.eventId">
+              <span>{{ $t('IotSceneLinkage.condition.eventOutput') }}</span>
+              <ThingModelSelect v-model="trigger.eventOutputId" class="multi-trigger-card__output" :options="eventOutputOptions" @change="changeEventOutput" />
+              <a-select v-model:value="trigger.eventTermType" class="multi-trigger-card__term" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :options="eventTermOptions" />
+              <ThingModelValueInput v-model="trigger.eventTermValue" class="multi-trigger-card__value" :value-type="selectedEventOutput?.valueType" />
+            </template>
+          </template>
+          <DeviceStateTriggerRow v-else-if="trigger.triggerKind === 'state'" v-model:state="trigger.deviceState" v-model:mode="trigger.deviceStateTriggerMode" v-model:sustained-time="trigger.deviceStateSustainedTime" :removable="false" />
+        </div>
+        <AlarmTriggerSourceRow v-else-if="trigger.triggerKind === 'alarm'" v-model="trigger.alarm" />
+        <AiEventTriggerRow v-else-if="trigger.triggerKind === 'ai-event'" v-model="trigger.aiEvent" class="multi-trigger-card__row" />
+        <div v-else-if="trigger.triggerKind === 'repeat'" class="multi-trigger-card__row">
+          <a-radio-group v-model:value="trigger.repeatMode">
+            <a-radio-button value="daily">{{ $t('IotSceneLinkage.repeat.daily') }}</a-radio-button><a-radio-button value="weekdays">{{ $t('IotSceneLinkage.repeat.weekdays') }}</a-radio-button><a-radio-button value="weekends">{{ $t('IotSceneLinkage.repeat.weekends') }}</a-radio-button><a-radio-button value="custom">{{ $t('IotSceneLinkage.repeat.custom') }}</a-radio-button>
+          </a-radio-group>
+          <a-time-picker v-model:value="trigger.repeatTime" format="HH:mm" value-format="HH:mm" />
+        </div>
+        <div v-else-if="trigger.triggerKind === 'date'" class="multi-trigger-card__row"><a-date-picker v-model:value="trigger.dateTime" show-time format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" /><span>{{ $t('IotSceneLinkage.editor.dateExecutionHint') }}</span></div>
+        <div v-else-if="trigger.triggerKind === 'interval'" class="multi-trigger-card__row"><span>{{ $t('IotSceneLinkage.editor.every') }}</span><a-input-number v-model:value="trigger.interval" :min="1" /><a-select v-model:value="trigger.intervalUnit" popup-class-name="scene-editor__compact-dropdown" :dropdown-match-select-width="false" :options="units" /><span>{{ $t('IotSceneLinkage.editor.triggerOnce') }}</span></div>
+      </div>
+
+      <div v-if="trigger.triggerKind === 'repeat' && trigger.repeatMode === 'custom'" class="multi-trigger-card__repeat-options">
+        <a-radio-group v-model:value="trigger.repeatCustomMode"><a-radio-button value="weekly">{{ $t('IotSceneLinkage.repeat.weekly') }}</a-radio-button><a-radio-button value="monthly">{{ $t('IotSceneLinkage.repeat.monthly') }}</a-radio-button></a-radio-group>
+        <a-checkbox-group v-if="trigger.repeatCustomMode === 'weekly'" v-model:value="trigger.repeatWeekdays" :options="weekOptions" />
+        <a-checkbox-group v-else v-model:value="trigger.repeatMonthDays" :options="monthDayOptions" />
+      </div>
+
+      <a-button v-if="removable" class="multi-trigger-card__remove" type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button>
     </div>
 
-    <div v-if="trigger.triggerKind === 'property'" class="multi-trigger-card__row">
-      <span>{{ $t('IotSceneLinkage.condition.current') }}</span>
-      <ThingModelSelect v-model="trigger.propertyId" class="multi-trigger-card__thing" :options="propertyOptions" :disabled="!trigger.productId" @change="changeProperty" />
-      <a-select v-model:value="trigger.termType" class="multi-trigger-card__term" :options="termOptions" />
-      <ThingModelValueInput v-model="trigger.termValue" class="multi-trigger-card__value" :value-type="selectedProperty?.valueType" />
-    </div>
-    <div v-else-if="trigger.triggerKind === 'event'" class="multi-trigger-card__row">
-      <span>{{ $t('IotSceneLinkage.rule.when') }}</span>
-      <ThingModelSelect v-model="trigger.eventId" class="multi-trigger-card__thing" :options="eventOptions" :disabled="!trigger.productId" @change="changeEvent" />
-      <template v-if="trigger.eventId">
-        <span>{{ $t('IotSceneLinkage.condition.eventOutput') }}</span>
-        <ThingModelSelect v-model="trigger.eventOutputId" class="multi-trigger-card__output" :options="eventOutputOptions" @change="changeEventOutput" />
-        <a-select v-model:value="trigger.eventTermType" class="multi-trigger-card__term" :options="eventTermOptions" />
-        <ThingModelValueInput v-model="trigger.eventTermValue" class="multi-trigger-card__value" :value-type="selectedEventOutput?.valueType" />
-      </template>
-    </div>
-    <div v-else-if="trigger.triggerKind === 'state'" class="multi-trigger-card__row"><DeviceStateTriggerRow v-model:state="trigger.deviceState" v-model:mode="trigger.deviceStateTriggerMode" v-model:sustained-time="trigger.deviceStateSustainedTime" :removable="false" /></div>
-    <AlarmTriggerSourceRow v-else-if="trigger.triggerKind === 'alarm'" v-model="trigger.alarm" />
-    <AiEventTriggerRow v-else-if="trigger.triggerKind === 'ai-event'" v-model="trigger.aiEvent" class="multi-trigger-card__row" />
-    <div v-else-if="trigger.triggerKind === 'repeat'" class="multi-trigger-card__row">
-      <a-radio-group v-model:value="trigger.repeatMode">
-        <a-radio-button value="daily">{{ $t('IotSceneLinkage.repeat.daily') }}</a-radio-button><a-radio-button value="weekdays">{{ $t('IotSceneLinkage.repeat.weekdays') }}</a-radio-button><a-radio-button value="weekends">{{ $t('IotSceneLinkage.repeat.weekends') }}</a-radio-button><a-radio-button value="custom">{{ $t('IotSceneLinkage.repeat.custom') }}</a-radio-button>
-      </a-radio-group>
-      <a-time-picker v-model:value="trigger.repeatTime" format="HH:mm" value-format="HH:mm" />
-    </div>
-    <div v-else-if="trigger.triggerKind === 'date'" class="multi-trigger-card__row"><a-date-picker v-model:value="trigger.dateTime" show-time format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" /><span>{{ $t('IotSceneLinkage.editor.dateExecutionHint') }}</span></div>
-    <div v-else-if="trigger.triggerKind === 'interval'" class="multi-trigger-card__row"><span>{{ $t('IotSceneLinkage.editor.every') }}</span><a-input-number v-model:value="trigger.interval" :min="1" /><a-select v-model:value="trigger.intervalUnit" :options="units" /><span>{{ $t('IotSceneLinkage.editor.triggerOnce') }}</span></div>
-
-    <div v-if="trigger.triggerKind === 'repeat' && trigger.repeatMode === 'custom'" class="multi-trigger-card__repeat-options">
-      <a-radio-group v-model:value="trigger.repeatCustomMode"><a-radio-button value="weekly">{{ $t('IotSceneLinkage.repeat.weekly') }}</a-radio-button><a-radio-button value="monthly">{{ $t('IotSceneLinkage.repeat.monthly') }}</a-radio-button></a-radio-group>
-      <a-checkbox-group v-if="trigger.repeatCustomMode === 'weekly'" v-model:value="trigger.repeatWeekdays" :options="weekOptions" />
-      <a-checkbox-group v-else v-model:value="trigger.repeatMonthDays" :options="monthDayOptions" />
-    </div>
-
-    <a-button v-if="removable" class="multi-trigger-card__remove" type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button>
     <DeviceScopeModal :open="scopeVisible" :product-id="trigger.productId" :model-value="scope" @cancel="scopeVisible = false" @save="saveScope" />
   </article>
 </template>
@@ -128,7 +132,211 @@ watch(() => trigger.value.productId, value => { void loadMetadata(value); void l
 </script>
 
 <style scoped>
-.multi-trigger-card { position: relative; display: grid; grid-template-columns: 1.75rem var(--scene-linkage-title-column-width, 5.5rem) minmax(0, 1fr); gap: var(--space-3, 12px); align-items: center; padding: var(--space-4, 16px); margin-top: var(--space-3, 12px); background: #fffdf8; border: 1px solid #f5dfc7; border-radius: var(--radius-jet-sm, 10px); }
-.multi-trigger-card__header { display: contents; }.multi-trigger-card__header > strong { grid-column: 2; }.multi-trigger-card__icon { display: grid; grid-column: 1; place-items: center; width: 28px; height: 28px; border-radius: 6px; }.multi-trigger-card--alarm .multi-trigger-card__header > strong { align-self: start; margin-top: 7px; }.multi-trigger-card--alarm .multi-trigger-card__icon { align-self: start; margin-top: 4px; }.multi-trigger-card__row { display: flex; grid-column: 3; flex-wrap: wrap; gap: var(--space-3, 12px); align-items: center; min-width: 0; padding-right: 2.5rem; }.multi-trigger-card__repeat-options { display: grid; grid-column: 3; }.multi-trigger-card__icon--manual, .multi-trigger-card__icon--offline { color: #4e5969; background: #f2f3f5; }.multi-trigger-card__icon--repeat { color: #1e5eff; background: #e8f0ff; }.multi-trigger-card__icon--date, .multi-trigger-card__icon--online { color: #0e8a5f; background: #e6f5ee; }.multi-trigger-card__icon--interval, .multi-trigger-card__icon--state { color: #6c4fe0; background: #efebff; }.multi-trigger-card__icon--property { color: #1e5eff; background: #e8f0ff; }.multi-trigger-card__icon--event { color: #d02f5a; background: #ffecf0; }.multi-trigger-card__icon--alarm { color: #ff4d4f; background: #fff1f0; }
-.multi-trigger-card__product { flex: 0 0 var(--scene-linkage-resource-select-width, 21rem); width: var(--scene-linkage-resource-select-width, 21rem) !important; min-width: var(--scene-linkage-resource-select-width, 21rem); }.multi-trigger-card__scope { min-width: 10rem; }.multi-trigger-card__thing { flex: 0 0 15rem; width: 15rem !important; }.multi-trigger-card__output { flex: 0 0 10rem; width: 10rem !important; }.multi-trigger-card__term { width: 5.5rem; }.multi-trigger-card__value { width: 9rem; }.multi-trigger-card__repeat-options { display: grid; gap: var(--space-3, 12px); padding: var(--space-3, 12px); padding-right: 3rem; background: var(--ant-color-fill-quaternary); border-radius: 6px; }.multi-trigger-card :deep(.alarm-trigger-row__target-select) { flex: 0 0 18rem !important; width: 18rem !important; min-width: 18rem; }.multi-trigger-card :deep(.alarm-trigger-row__product) { flex: 0 0 var(--scene-linkage-resource-select-width, 21rem); width: var(--scene-linkage-resource-select-width, 21rem) !important; min-width: var(--scene-linkage-resource-select-width, 21rem); }.multi-trigger-card :deep(.alarm-trigger-row__alarm-config) { flex-basis: calc(100% - 3rem); }.multi-trigger-card__row :deep(.device-state-trigger) { flex: 1 1 auto; }.multi-trigger-card__remove { position: absolute; right: var(--space-3, 12px); bottom: var(--space-3, 12px); padding: 0; color: #ff4d4f !important; }.multi-trigger-card__remove :deep(.anticon) { color: #ff4d4f !important; }
+.multi-trigger-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.75rem var(--scene-linkage-title-column-width, 5.5rem) minmax(0, 1fr);
+  gap: var(--space-3, 12px);
+  align-items: center;
+  padding: var(--space-4, 16px);
+  margin-top: var(--space-3, 12px);
+  overflow-x: auto;
+  background: #fffdf8;
+  border: 1px solid #f5dfc7;
+  border-radius: var(--radius-jet-sm, 10px);
+}
+
+.multi-trigger-card__header {
+  display: contents;
+}
+
+.multi-trigger-card__header > strong {
+  grid-column: 2;
+}
+
+.multi-trigger-card__icon {
+  display: grid;
+  grid-column: 1;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.multi-trigger-card--alarm .multi-trigger-card__header > strong {
+  align-self: start;
+  margin-top: 7px;
+}
+
+.multi-trigger-card--alarm .multi-trigger-card__icon {
+  align-self: start;
+  margin-top: 4px;
+}
+
+.multi-trigger-card__content {
+  display: grid;
+  grid-column: 3;
+  grid-template-columns: minmax(0, max-content) auto;
+  grid-template-rows: auto auto;
+  gap: var(--space-3, 12px);
+  align-items: center;
+  min-width: max-content;
+}
+
+.multi-trigger-card__main {
+  display: flex;
+  grid-column: 1;
+  grid-row: 1;
+  gap: var(--space-3, 12px);
+  align-items: center;
+  min-width: max-content;
+}
+
+.multi-trigger-card__row {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: var(--space-3, 12px);
+  align-items: center;
+  min-width: max-content;
+}
+
+.multi-trigger-card__main > :deep(.alarm-trigger-source-row),
+.multi-trigger-card__main > :deep(.ai-event-trigger-row) {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  width: max-content;
+  min-width: max-content;
+}
+
+.multi-trigger-card__main > :deep(.alarm-trigger-source-row) > :last-child {
+  flex: 0 0 auto;
+  min-width: max-content;
+}
+
+.multi-trigger-card__main :deep(.alarm-trigger-row),
+.multi-trigger-card__main :deep(.visual-ai-alarm-trigger-row),
+.multi-trigger-card__main :deep(.visual-ai-alarm-selector) {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  width: max-content;
+  min-width: max-content;
+}
+
+.multi-trigger-card__repeat-options {
+  display: grid;
+  grid-column: 1;
+  grid-row: 2;
+  gap: var(--space-3, 12px);
+  width: max-content;
+  min-width: max-content;
+  padding: var(--space-3, 12px);
+  background: var(--ant-color-fill-quaternary);
+  border-radius: 6px;
+}
+
+.multi-trigger-card__icon--manual,
+.multi-trigger-card__icon--offline {
+  color: #4e5969;
+  background: #f2f3f5;
+}
+
+.multi-trigger-card__icon--repeat {
+  color: #1e5eff;
+  background: #e8f0ff;
+}
+
+.multi-trigger-card__icon--date,
+.multi-trigger-card__icon--online {
+  color: #0e8a5f;
+  background: #e6f5ee;
+}
+
+.multi-trigger-card__icon--interval,
+.multi-trigger-card__icon--state {
+  color: #6c4fe0;
+  background: #efebff;
+}
+
+.multi-trigger-card__icon--property {
+  color: #1e5eff;
+  background: #e8f0ff;
+}
+
+.multi-trigger-card__icon--event {
+  color: #d02f5a;
+  background: #ffecf0;
+}
+
+.multi-trigger-card__icon--alarm {
+  color: #ff4d4f;
+  background: #fff1f0;
+}
+
+.multi-trigger-card__product {
+  flex: 0 0 var(--scene-linkage-resource-select-width, 18rem);
+  width: var(--scene-linkage-resource-select-width, 18rem) !important;
+  min-width: var(--scene-linkage-resource-select-width, 18rem);
+}
+
+.multi-trigger-card__scope {
+  display: inline-flex;
+  flex: 0 0 var(--scene-linkage-device-select-width, 18rem);
+  width: var(--scene-linkage-device-select-width, 18rem);
+  min-width: var(--scene-linkage-device-select-width, 18rem);
+  align-items: center;
+  justify-content: center;
+}
+
+.multi-trigger-card__scope-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.multi-trigger-card__thing,
+.multi-trigger-card__output {
+  flex: 0 0 var(--scene-linkage-thing-model-select-width, 18rem);
+  width: var(--scene-linkage-thing-model-select-width, 18rem) !important;
+  min-width: var(--scene-linkage-thing-model-select-width, 18rem);
+}
+
+.multi-trigger-card__term {
+  flex: 0 0 var(--scene-linkage-compact-select-width, 8rem);
+  width: var(--scene-linkage-compact-select-width, 8rem);
+}
+
+.multi-trigger-card__value {
+  flex: 0 0 var(--scene-linkage-value-input-width, 11rem);
+  width: var(--scene-linkage-value-input-width, 11rem);
+}
+
+.multi-trigger-card :deep(.alarm-trigger-row__target-select),
+.multi-trigger-card :deep(.alarm-trigger-row__product) {
+  flex: 0 0 var(--scene-linkage-resource-select-width, 18rem) !important;
+  width: var(--scene-linkage-resource-select-width, 18rem) !important;
+  min-width: var(--scene-linkage-resource-select-width, 18rem);
+}
+
+.multi-trigger-card :deep(.alarm-trigger-row__alarm-config) {
+  flex-basis: calc(100% - 3rem);
+}
+
+.multi-trigger-card__row :deep(.device-state-trigger) {
+  flex: 1 1 auto;
+}
+
+.multi-trigger-card__remove {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  flex: none;
+  align-self: center;
+  padding: 0;
+  color: #ff4d4f !important;
+}
+
+.multi-trigger-card__remove :deep(.anticon) {
+  color: #ff4d4f !important;
+}
 </style>

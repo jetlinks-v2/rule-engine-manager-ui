@@ -28,6 +28,8 @@
       <span class="alarm-trigger-row__word">{{ $t('IotSceneLinkage.alarmPhrase.ofAlarm') }}</span>
       <a-select
         class="alarm-trigger-row__alarm-select"
+        popup-class-name="scene-editor__resource-dropdown"
+        :dropdown-match-select-width="false"
         :value="modelValue.alarmConfigId"
         :options="options"
         :loading="loading"
@@ -45,6 +47,8 @@
       <span class="alarm-trigger-row__word">{{ $t('IotSceneLinkage.alarmPhrase.statusChange') }}</span>
       <a-select
         class="alarm-trigger-row__mode-select alarm-trigger-row__transition-select"
+        popup-class-name="scene-editor__compact-dropdown"
+        :dropdown-match-select-width="false"
         :value="modeValue"
         :options="modeOptions"
         @change="changeMode"
@@ -351,21 +355,24 @@ async function loadSelectedDevice(id?: string) {
 }
 
 .alarm-trigger-row__product {
-	flex: 0 0 var(--scene-linkage-resource-select-width, 21rem);
-	width: var(--scene-linkage-resource-select-width, 21rem);
-	min-width: var(--scene-linkage-resource-select-width, 21rem);
+	display: flex;
+	flex: 0 0 var(--scene-linkage-resource-select-width, 18rem);
+	width: var(--scene-linkage-resource-select-width, 18rem);
+	min-width: var(--scene-linkage-resource-select-width, 18rem);
 }
 
 .alarm-trigger-row__device {
-	grid-column: 2;
-	grid-row: 1;
+	display: flex;
+	flex: 0 0 var(--scene-linkage-resource-select-width, 18rem);
+	width: var(--scene-linkage-resource-select-width, 18rem);
+	min-width: var(--scene-linkage-resource-select-width, 18rem);
 }
 
 .alarm-trigger-row__alarm-config {
 	display: grid;
 	grid-column: 1 / -1;
 	grid-row: 2;
-	grid-template-columns: max-content minmax(10rem, 18rem) max-content 11.5rem;
+	grid-template-columns: max-content var(--scene-linkage-resource-select-width, 18rem) max-content var(--scene-linkage-compact-select-width, 8rem);
 	gap: 8px;
 	min-width: 0;
 	align-items: center;

@@ -1,15 +1,19 @@
 <template>
   <a-modal
     :open="open"
-    :title="$t('IotSceneLinkage.title.triggerPicker')"
     :footer="null"
     :width="520"
     :mask-closable="false"
     wrap-class-name="trigger-picker-modal"
     @cancel="close"
   >
+    <template #title>
+      <div class="trigger-picker__title">
+        <span>{{ $t('IotSceneLinkage.title.triggerPicker') }}</span>
+        <small>{{ $t('IotSceneLinkage.editor.triggerPickerHint') }}</small>
+      </div>
+    </template>
     <div :class="['trigger-picker__body', { 'trigger-picker__body--expanded': selectedProvider }]">
-      <p class="trigger-picker__hint">{{ $t('IotSceneLinkage.editor.triggerPickerHint') }}</p>
       <div class="trigger-picker__categories">
         <div
           v-for="category in categories"
@@ -150,6 +154,27 @@ function close() {
 </script>
 
 <style scoped>
+.trigger-picker__title {
+  display: flex;
+  gap: var(--space-2, 8px);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.trigger-picker__title span {
+  flex: none;
+}
+
+.trigger-picker__title small {
+  overflow: hidden;
+  color: var(--ant-color-text-tertiary);
+  font-size: .75rem;
+  font-weight: 400;
+  line-height: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .trigger-picker__header {
   display: flex;
   gap: 1.25rem;
@@ -186,25 +211,17 @@ function close() {
 }
 
 .trigger-picker__body {
-  height: 22.125rem;
-  padding: 1rem .9375rem .9375rem;
+  height: 20.75rem;
+  padding: .75rem .875rem;
   overflow: auto;
   background: var(--jet-theme-bg-container);
   border: 1px solid var(--jet-theme-border-secondary);
   border-radius: 1rem;
-	margin-top: 1rem;
+  margin-top: .5rem;
 }
 
 .trigger-picker__body--expanded {
-  height: 27.375rem;
-}
-
-.trigger-picker__hint {
-  margin: 0 0 .75rem;
-  color: #1d2129;
-  font-size: 1rem;
-  font-weight: 500;
-  line-height: 1.375rem;
+  height: 26rem;
 }
 
 .trigger-picker__categories,

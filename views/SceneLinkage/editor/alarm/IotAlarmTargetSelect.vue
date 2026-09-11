@@ -9,6 +9,7 @@
     :disabled="disabled"
     :loading="loading"
     :dropdown-match-select-width="dropdownMatchSelectWidth"
+    popup-class-name="scene-editor__resource-dropdown"
     @dropdownVisibleChange="handleVisibleChange"
     @search="handleSearch"
     @change="handleChange"
@@ -61,7 +62,7 @@ const keyword = ref('')
 const remoteOptions = ref<IotAlarmTargetSelectOption[]>([])
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 
-const dropdownMatchSelectWidth = computed(() => props.rich ? 336 : true)
+const dropdownMatchSelectWidth = computed(() => props.rich ? false : true)
 
 const options = computed(() => {
   const staticOptions = [...props.staticOptions]

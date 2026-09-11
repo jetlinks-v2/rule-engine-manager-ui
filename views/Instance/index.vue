@@ -13,24 +13,28 @@
                     :params="params"
                 >
                     <template #headerLeftRender>
-                        <a-flex :gap="16">
+                        <div class="rule-instance-toolbar">
+                            <h2 class="rule-instance-toolbar__title">
+                                {{ $t('Instance.index.title') }}
+                            </h2>
                             <ConditionFilter
+                                class="rule-instance-toolbar__search"
                                 :fields="filterFields"
                                 @change="handleSearch"
                             />
-                            <a-space>
-                                <j-permission-button
-                                    type="primary"
-                                    @click="add"
-                                    :hasPermission="`${permissionKey}:add`"
-                                >
-                                    <template #icon
-                                    ><AIcon type="PlusOutlined"
-                                    /></template>
-                                    {{ $t('Instance.index.020452-0') }}
-                                </j-permission-button>
-                            </a-space>
-                        </a-flex>
+                        </div>
+                    </template>
+                    <template #headerRightRender>
+                        <j-permission-button
+                            type="primary"
+                            @click="add"
+                            :hasPermission="`${permissionKey}:add`"
+                        >
+                            <template #icon
+                                ><AIcon type="PlusOutlined"
+                            /></template>
+                            {{ $t('Instance.index.020452-0') }}
+                        </j-permission-button>
                     </template>
                     <template #card="slotProps">
                         <CardBox
@@ -437,6 +441,30 @@ onMounted(() => {
 });
 </script>
 <style scoped>
+.rule-instance-toolbar {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    align-items: center;
+    min-width: 0;
+}
+
+.rule-instance-toolbar__title {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.85);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 32px;
+    white-space: nowrap;
+}
+
+.rule-instance-toolbar__search {
+    flex: 1 1 360px;
+    min-width: 280px;
+    max-width: 640px;
+}
+
 .rule-instance-thumbnail-frame {
     width: 5rem;
     height: 5rem;
