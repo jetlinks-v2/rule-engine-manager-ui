@@ -324,7 +324,7 @@ watch(() => props.condition.type === 'deviceProperty' ? props.condition.productI
 
 .scene-condition-row__footer {
 	display: flex;
-	flex: 0 0 auto;
+	flex: 1 0 auto;
 	gap: var(--space-3, 12px);
 	align-items: center;
 	min-width: max-content;
@@ -349,7 +349,8 @@ watch(() => props.condition.type === 'deviceProperty' ? props.condition.productI
 .scene-condition-row__remove {
 	flex: none;
 	align-self: center;
-	margin-left: var(--space-1, 4px);
+	width: auto;
+	margin-left: auto;
 }
 
 .scene-condition-row__footer :deep(.alarm-state-condition-row) {

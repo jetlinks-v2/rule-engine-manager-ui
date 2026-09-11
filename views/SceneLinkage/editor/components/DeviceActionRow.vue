@@ -311,7 +311,7 @@ watch(() => props.action.config?.message?.inputs, inputs => {
 
 <style scoped>
 .device-action-row { padding: 14px; margin-bottom: 10px; border: 1px solid var(--jet-theme-border-secondary); border-radius: 8px; }
-.device-action-row__main { display: grid; grid-template-columns: 22px 28px max-content var(--scene-linkage-resource-select-width, 18rem) var(--scene-linkage-device-select-width, 18rem) max-content auto; gap: 10px; align-items: center; width: 100%; min-width: 0; overflow-x: auto; }
+.device-action-row__main { display: grid; grid-template-columns: 22px 28px max-content var(--scene-linkage-resource-select-width, 18rem) var(--scene-linkage-device-select-width, 18rem) max-content minmax(2rem, 1fr); gap: 10px; align-items: center; width: 100%; min-width: 0; overflow-x: auto; }
 .device-action-row__label { flex: none; white-space: nowrap; }
 .device-action-row__index, .device-action-row__icon { display: grid; flex: none; place-items: center; width: 28px; height: 28px; border-radius: 6px; }
 .device-action-row__index { width: 22px; height: 22px; color: var(--ant-color-primary); background: var(--ant-color-fill-secondary); border-radius: 50%; font-size: 12px; font-weight: 600; }
@@ -326,6 +326,6 @@ watch(() => props.action.config?.message?.inputs, inputs => {
 .device-action-row__operation-group { display: flex; flex: none; gap: 10px; align-items: center; min-width: 0; }
 .device-action-row__operation { flex: 0 0 var(--scene-linkage-thing-model-select-width, 18rem); width: var(--scene-linkage-thing-model-select-width, 18rem); min-width: var(--scene-linkage-thing-model-select-width, 18rem); }
 .device-action-row__write-value { flex: 0 0 var(--scene-linkage-value-input-width, 11rem); width: var(--scene-linkage-value-input-width, 11rem) !important; }
-.device-action-row__remove { grid-column: 7; align-self: center; justify-self: end; }
+.device-action-row__remove { grid-column: 7; align-self: center; justify-self: end; width: auto; min-width: auto; }
 .device-action-row__main :deep(.ant-input) { width: 140px; }
 </style>

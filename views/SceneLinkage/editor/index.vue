@@ -196,12 +196,12 @@
 				                   :invalid="hasError('condition') && item.type === 'timeRange' && ['IotSceneLinkage.message.timeRangeRequired', 'IotSceneLinkage.message.timeRangeInvalid'].includes(validation.message)"
 				                   :error-message="errorMessage('condition')" @update="updateCondition(index, $event)"
 				                   @remove="form.additionalConditions.splice(index, 1)"/>
-				<a-button type="text" class="scene-editor__extra-condition-add" @click="conditionVisible = true">
+				<a-button class="scene-editor__add scene-editor__extra-condition-add" @click="conditionVisible = true">
 					<AIcon type="PlusOutlined"/>
 					{{ $t('IotSceneLinkage.editor.addCondition') }}
 				</a-button>
 			</section>
-			<a-button v-else-if="hasTrigger" type="text" class="scene-editor__extra-condition-add"
+			<a-button v-else-if="hasTrigger" class="scene-editor__add scene-editor__extra-condition-add"
 			          @click="conditionVisible = true">
 				<AIcon type="PlusOutlined"/>
 				{{ $t('IotSceneLinkage.editor.addCondition') }}

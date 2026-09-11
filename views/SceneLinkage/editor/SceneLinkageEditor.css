@@ -282,10 +282,21 @@
 .scene-editor__extra-condition-add {
     align-self: flex-start;
     display: inline-flex;
-    width: auto;
-    padding-inline: 0;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--space-1, 4px);
+    box-sizing: border-box;
+    width: fit-content;
+    max-width: 100%;
+    padding-inline: var(--space-4, 16px);
     margin-top: var(--space-2, 8px);
     color: var(--color-jet-text-secondary);
+    line-height: 22px;
+}
+
+.scene-editor__extra-condition-add .anticon {
+    display: inline-flex;
+    align-items: center;
 }
 
 .scene-editor__extra-condition-add:hover,
@@ -419,6 +430,8 @@
     flex: none;
     margin-left: auto;
     align-self: center;
+    justify-self: end;
+    width: auto;
 }
 
 .scene-editor__field {

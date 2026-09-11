@@ -1,13 +1,18 @@
 <template>
   <a-modal
     :open="open"
-    :title="$t('IotSceneLinkage.title.actionPicker')"
     :footer="null"
     :width="520"
     :mask-closable="false"
+    wrap-class-name="action-picker-modal"
     @cancel="$emit('cancel')"
   >
-    <p class="action-picker__hint">{{ $t('IotSceneLinkage.editor.actionPickerHint') }}</p>
+    <template #title>
+      <div class="action-picker__title">
+        <span>{{ $t('IotSceneLinkage.title.actionPicker') }}</span>
+        <small>{{ $t('IotSceneLinkage.editor.actionPickerHint') }}</small>
+      </div>
+    </template>
     <div class="action-picker__items">
       <button
         v-for="item in actions"
@@ -75,14 +80,43 @@ function select(type: ActionType) {
 </script>
 
 <style scoped>
-.action-picker__hint {
-	margin-bottom: var(--space-3, 12px);
-	color: var(--ant-color-text-secondary);
+:global(.action-picker-modal .ant-modal-header) {
+	margin-bottom: 0 !important;
+}
+
+:global(.action-picker-modal .ant-modal-title) {
+	padding-bottom: var(--space-1, 4px) !important;
+}
+
+:global(.action-picker-modal .ant-modal-body) {
+	padding-top: 0;
+}
+
+.action-picker__title {
+	display: flex;
+	gap: var(--space-2, 8px);
+	align-items: baseline;
+	min-width: 0;
+}
+
+.action-picker__title span {
+	flex: none;
+}
+
+.action-picker__title small {
+	overflow: hidden;
+	color: var(--ant-color-text-tertiary);
+	font-size: .75rem;
+	font-weight: 400;
+	line-height: 1rem;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .action-picker__items {
 	display: grid;
 	gap: var(--space-2, 8px);
+	padding-top: var(--space-2, 8px);
 }
 
 .action-picker__item {
