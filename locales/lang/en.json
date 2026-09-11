@@ -551,6 +551,7 @@
 	"Timer.util.803811-17": "Execute once",
 	"Timer.util.803811-18": "Execute once every {0} {1}",
 	"Timer.util.803811-19": "Custom calendar with {0} rules in total",
+	"Instance.index.title": "Rule orchestration",
 	"Instance.index.020452-0": "Add",
 	"Instance.index.020452-1": "Active",
 	"Instance.index.020452-2": "Disabled",

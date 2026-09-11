@@ -551,6 +551,7 @@
 	"Timer.util.803811-17": "执行1次",
 	"Timer.util.803811-18": "每{0}{1}执行1次",
 	"Timer.util.803811-19": "自定义日历 共{0}个规则",
+	"Instance.index.title": "规则编排",
 	"Instance.index.020452-0": "新增",
 	"Instance.index.020452-1": "正常",
 	"Instance.index.020452-2": "禁用",
