@@ -1,170 +1,273 @@
 <template>
-  <main class="scene-record-timeline">
-    <header class="scene-record-timeline__header">
-      <a-button type="text" @click="emit('back')"><AIcon type="LeftOutlined" /></a-button>
-      <h2>{{ $t('IotSceneLinkage.title.recordsForScene', { name: scene.name }) }}</h2>
-    </header>
-
-    <a-spin :spinning="loading && !records.length">
-      <a-empty v-if="!records.length" :description="$t('IotSceneLinkage.scope.empty')" />
-      <article v-for="record in records" :key="record.id" class="scene-record-timeline__card">
-        <header class="scene-record-timeline__card-header">
-          <strong>{{ scene.name }}</strong>
-          <span>{{ formatTime(record.createTime) }}</span>
-          <j-badge-status
-            :status="record.hasError ? 'error' : 'success'"
-            :text="record.hasError ? $t('IotSceneLinkage.record.failed') : $t('IotSceneLinkage.record.success')"
-          />
-          <a-button
-            type="link"
-            :disabled="!record.contextId"
-            @click="toggleRecord(record)"
+  <JlDrawerShell
+    :open="open"
+    :width="760"
+    icon="HistoryOutlined"
+    :title="$t('IotSceneLinkage.title.records')"
+    :sub="scene.name"
+    @update:open="emit('update:open', $event)"
+  >
+    <section class="scene-record-timeline">
+      <a-spin :spinning="state.loading && !state.records.length">
+        <a-result
+          v-if="state.loadError && !state.records.length"
+          status="error"
+          :title="$t('IotSceneLinkage.record.loadFailed')"
+        >
+          <template #extra>
+            <a-button type="primary" @click="emit('retry')">{{ $t('IotSceneLinkage.action.retry') }}</a-button>
+          </template>
+        </a-result>
+        <a-empty
+          v-else-if="!state.records.length"
+          :description="$t('IotSceneLinkage.record.empty')"
+        />
+        <template v-else>
+          <article
+            v-for="record in state.records"
+            :key="record.id"
+            class="scene-record-timeline__card"
+            :class="{ 'scene-record-timeline__card--expanded': state.expandedContextId === record.contextId }"
           >
-            {{ expandedContextId === record.contextId ? $t('IotSceneLinkage.action.collapse') : $t('IotSceneLinkage.action.viewDetail') }}
-          </a-button>
-        </header>
+            <header class="scene-record-timeline__card-header">
+              <div class="scene-record-timeline__card-meta">
+                <j-badge-status
+                  :status="record.hasError ? 'error' : 'success'"
+                  :text="record.hasError ? $t('IotSceneLinkage.record.failed') : $t('IotSceneLinkage.record.success')"
+                />
+                <time>{{ formatSceneExecutionTime(record.createTime) }}</time>
+                <span class="scene-record-timeline__card-summary">{{ formatAction(record.action) }}</span>
+                <span v-if="record.useNanos != null" class="scene-record-timeline__duration">
+                  {{ $t('IotSceneLinkage.record.duration', { duration: formatSceneExecutionDuration(record.useNanos) }) }}
+                </span>
+              </div>
+              <a-button
+                type="link"
+                :disabled="!record.contextId"
+                @click="emit('toggle-record', record)"
+              >
+                {{ state.expandedContextId === record.contextId ? $t('IotSceneLinkage.action.collapse') : $t('IotSceneLinkage.action.viewDetail') }}
+              </a-button>
+            </header>
 
-        <section v-if="expandedContextId === record.contextId" class="scene-record-timeline__details">
-          <a-spin :spinning="detailLoading">
-            <a-empty
-              v-if="!detailLoading && !detailRecords.length"
-              :description="$t('IotSceneLinkage.scope.empty')"
-            />
-            <div v-else class="scene-record-timeline__nodes">
-              <section v-for="detail in detailRecords" :key="detail.id" class="scene-record-timeline__node">
-                <i :class="detail.hasError ? 'scene-record-timeline__dot--error' : 'scene-record-timeline__dot--success'" />
-                <div>
-                  <header>
-                    <b>{{ detail.nodeName || detail.action || $t('IotSceneLinkage.action.execute') }}</b>
-                    <small>{{ formatTime(detail.createTime || detail.timestamp) }}</small>
-                    <j-badge-status
-                      :status="detail.hasError ? 'error' : 'success'"
-                      :text="detail.hasError ? $t('IotSceneLinkage.record.failed') : $t('IotSceneLinkage.record.success')"
-                    />
-                  </header>
-                  <p>{{ detail.errorDetail || $t('IotSceneLinkage.record.success') }}</p>
+            <section v-if="state.expandedContextId === record.contextId" class="scene-record-timeline__details">
+              <a-spin :spinning="state.detailLoading">
+                <a-result
+                  v-if="state.detailError"
+                  status="error"
+                  :title="$t('IotSceneLinkage.record.loadFailed')"
+                >
+                  <template #extra>
+                    <a-button type="link" @click="emit('retry-detail')">{{ $t('IotSceneLinkage.action.retry') }}</a-button>
+                  </template>
+                </a-result>
+                <a-empty
+                  v-else-if="!state.detailLoading && !state.detailRecords.length"
+                  :description="$t('IotSceneLinkage.record.empty')"
+                />
+                <div v-else class="scene-record-timeline__nodes">
+                  <section v-for="detail in state.detailRecords" :key="detail.id" class="scene-record-timeline__node">
+                    <i :class="detail.hasError ? 'scene-record-timeline__dot--error' : 'scene-record-timeline__dot--success'" />
+                    <div>
+                      <header>
+                        <b>{{ detail.nodeName || formatAction(detail.action) }}</b>
+                        <small>{{ formatSceneExecutionTime(detail.createTime || detail.timestamp) }}</small>
+                        <span v-if="detail.useNanos != null" class="scene-record-timeline__duration">
+                          {{ $t('IotSceneLinkage.record.duration', { duration: formatSceneExecutionDuration(detail.useNanos) }) }}
+                        </span>
+                        <j-badge-status
+                          :status="detail.hasError ? 'error' : 'success'"
+                          :text="detail.hasError ? $t('IotSceneLinkage.record.failed') : $t('IotSceneLinkage.record.success')"
+                        />
+                      </header>
+                      <p class="scene-record-timeline__node-result">{{ detail.errorDetail || $t('IotSceneLinkage.record.success') }}</p>
+                    </div>
+                  </section>
                 </div>
-              </section>
-            </div>
-          </a-spin>
-        </section>
-      </article>
-      <div v-if="records.length < total" class="scene-record-timeline__more">
-        <a-button :loading="loading" @click="loadMore">{{ $t('IotSceneLinkage.action.loadMore') }}</a-button>
-      </div>
-    </a-spin>
-  </main>
+              </a-spin>
+            </section>
+          </article>
+          <div v-if="state.records.length < state.total" class="scene-record-timeline__more">
+            <a-button :loading="state.loading" @click="state.loadError ? emit('retry') : emit('load-more')">
+              {{ state.loadError ? $t('IotSceneLinkage.action.retry') : $t('IotSceneLinkage.action.loadMore') }}
+            </a-button>
+          </div>
+        </template>
+      </a-spin>
+    </section>
+  </JlDrawerShell>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, type PropType } from 'vue'
-import dayjs from 'dayjs'
-import { querySceneContextRecords, querySceneRecordsByScene } from '../../../api/scene-linkage'
-import { normalizeResult } from '../utils'
+import type { PropType } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { formatSceneExecutionDuration, formatSceneExecutionTime, type SceneExecutionRecord, type SceneExecutionRecordState } from '../hooks/useSceneExecutionRecords'
+import { enumText } from '../utils'
 
 interface SceneInfo {
   id: string
   name?: string
 }
 
-interface SceneRecord {
-  id: string
-  contextId?: string
-  createTime?: number | string
-  timestamp?: number | string
-  nodeName?: string
-  action?: string
-  hasError?: boolean
-  errorDetail?: string
-}
-
-const props = defineProps({
+defineProps({
+  open: {
+    type: Boolean,
+    required: true,
+  },
   scene: {
     type: Object as PropType<SceneInfo>,
     required: true,
   },
+  state: {
+    type: Object as PropType<SceneExecutionRecordState>,
+    required: true,
+  },
 })
 
-const emit = defineEmits(['back'])
-const loading = ref(false)
-const records = ref<SceneRecord[]>([])
-const total = ref(0)
-const pageIndex = ref(0)
-const pageSize = 10
-const expandedContextId = ref('')
-const detailLoading = ref(false)
-const detailRecords = ref<SceneRecord[]>([])
-let detailRequestVersion = 0
+const emit = defineEmits<{
+  (event: 'update:open', value: boolean): void
+  (event: 'toggle-record', record: SceneExecutionRecord): void
+  (event: 'load-more'): void
+  (event: 'retry'): void
+  (event: 'retry-detail'): void
+}>()
 
-function formatTime(value: unknown) {
-  const time = Number(value)
-  return Number.isFinite(time) ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : String(value || '-')
+const { t: $t } = useI18n()
+
+function formatAction(value: SceneExecutionRecord['action']) {
+  return enumText(value, $t('IotSceneLinkage.action.execute'))
 }
-
-async function load() {
-  loading.value = true
-  try {
-    const result = normalizeResult<SceneRecord>(await querySceneRecordsByScene(props.scene.id, {
-      pageIndex: pageIndex.value,
-      pageSize,
-      sorts: [{ name: 'createTime', order: 'desc' }],
-    }))
-    records.value = pageIndex.value ? [...records.value, ...result.data] : result.data
-    total.value = result.total
-  } finally {
-    loading.value = false
-  }
-}
-
-function loadMore() {
-  pageIndex.value += 1
-  load()
-}
-
-async function toggleRecord(record: SceneRecord) {
-  if (!record.contextId) return
-  if (expandedContextId.value === record.contextId) {
-    expandedContextId.value = ''
-    detailRecords.value = []
-    return
-  }
-
-  const requestVersion = ++detailRequestVersion
-  expandedContextId.value = record.contextId
-  detailLoading.value = true
-  detailRecords.value = []
-  try {
-    const result = normalizeResult<SceneRecord>(await querySceneContextRecords(props.scene.id, record.contextId, {
-      paging: false,
-      sorts: [{ name: 'createTime', order: 'asc' }],
-    }))
-    // 快速切换执行实例时，仅渲染最后一次展开操作对应的节点记录。
-    if (requestVersion === detailRequestVersion) detailRecords.value = result.data
-  } finally {
-    if (requestVersion === detailRequestVersion) detailLoading.value = false
-  }
-}
-
-onMounted(load)
 </script>
 
 <style scoped>
-.scene-record-timeline { width: min(100%, 980px); margin: 0 auto; padding: 24px; }
-.scene-record-timeline__header { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
-.scene-record-timeline__header h2 { margin: 0; }
-.scene-record-timeline__card { padding: 18px 20px; margin-bottom: 14px; background: #fff; border: 1px solid #e5e6eb; border-radius: 8px; }
-.scene-record-timeline__card-header { display: flex; align-items: center; gap: 12px; }
-.scene-record-timeline__card-header .ant-btn { margin-left: auto; }
-.scene-record-timeline__card-header > span,
-.scene-record-timeline__node small { color: var(--ant-color-text-tertiary); font-size: 12px; }
-.scene-record-timeline__details { padding-top: 18px; margin-top: 16px; border-top: 1px solid #f0f0f0; }
-.scene-record-timeline__nodes { display: grid; gap: 14px; }
-.scene-record-timeline__node { position: relative; display: flex; gap: 14px; }
-.scene-record-timeline__node:not(:last-child)::before { position: absolute; top: 18px; bottom: -14px; left: 8px; border-left: 1px solid #e5e6eb; content: ''; }
-.scene-record-timeline__node > i { z-index: 1; flex: none; width: 16px; height: 16px; background: #00b578; border-radius: 50%; box-shadow: 0 0 0 4px #e8ffea; }
-.scene-record-timeline__node > i.scene-record-timeline__dot--error { background: #f53f3f; box-shadow: 0 0 0 4px #ffece8; }
-.scene-record-timeline__node > div { display: grid; gap: 6px; min-width: 0; }
-.scene-record-timeline__node header { display: flex; align-items: center; gap: 8px; }
-.scene-record-timeline__node p { width: max-content; max-width: 640px; padding: 6px 8px; margin: 0; background: #f7f8fa; border-radius: 4px; }
-.scene-record-timeline__more { padding: 8px; text-align: center; }
+.scene-record-timeline {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.scene-record-timeline__card {
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+}
+
+.scene-record-timeline__card--expanded {
+  border-color: var(--ant-color-primary);
+}
+
+.scene-record-timeline__card-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: 2rem;
+}
+
+.scene-record-timeline__card-header > .ant-btn {
+  margin-left: auto;
+}
+
+.scene-record-timeline__card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.scene-record-timeline__card-meta time,
+.scene-record-timeline__node small,
+.scene-record-timeline__duration {
+  color: var(--ant-color-text-tertiary);
+  font-size: var(--fs-12);
+}
+
+.scene-record-timeline__card-summary {
+  flex: 0 0 4.5rem;
+  max-width: 4.5rem;
+  overflow: hidden;
+  color: var(--ant-color-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scene-record-timeline__card-meta > .scene-record-timeline__duration {
+  flex: 0 0 5rem;
+}
+
+.scene-record-timeline__details {
+  padding-top: var(--space-4);
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.scene-record-timeline__nodes {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.scene-record-timeline__node {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.scene-record-timeline__node:not(:last-child)::before {
+  position: absolute;
+  top: 1rem;
+  bottom: calc(-1 * var(--space-4));
+  left: 0.5rem;
+  border-left: 1px solid var(--line);
+  content: '';
+}
+
+.scene-record-timeline__node > i {
+  z-index: 1;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  background: var(--ant-color-success);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--ant-color-success) 12%, transparent);
+}
+
+.scene-record-timeline__node > i.scene-record-timeline__dot--error {
+  background: var(--ant-color-error);
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--ant-color-error) 12%, transparent);
+}
+
+.scene-record-timeline__node > div {
+  display: grid;
+  flex: 1;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.scene-record-timeline__node header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.scene-record-timeline__node-result {
+  max-width: 100%;
+  padding: var(--space-2) var(--space-3);
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--ant-color-text-secondary);
+  background: var(--bg-sunken);
+  border-radius: var(--r-2);
+}
+
+.scene-record-timeline__more {
+  padding-top: var(--space-1);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .scene-record-timeline__card-summary {
+    max-width: 100%;
+  }
+}
 </style>

@@ -1,8 +1,7 @@
 <template>
   <j-page-container>
     <full-page has-padding transparent-background>
-      <SceneRecordTimeline v-if="recordScene" :scene="recordScene" @back="recordScene = undefined" />
-      <section v-else class="scene-list">
+      <section class="scene-list">
         <div class="scene-list-table">
           <div class="scene-list-toolbar">
             <h2 class="scene-list-toolbar__title">{{ $t('IotSceneLinkage.title.list') }}</h2>
@@ -58,16 +57,6 @@
               <template v-else-if="column.dataIndex === 'lastExecute'">{{ record.lastExecute || '-' }}</template>
               <template v-else-if="column.dataIndex === 'actions'">
                 <div class="scene-list__actions">
-                <span>
-                  <j-permission-button
-                    v-if="sceneTriggerType(record.scene) === 'manual'"
-                    type="link"
-                    :hasPermission="scenePermission('tigger')"
-                    @click="confirmExecute(record.scene)"
-                  >
-                    {{ $t('IotSceneLinkage.action.execute') }}
-                  </j-permission-button>
-                </span>
                   <j-permission-button type="link" :hasPermission="`${permissionKey}:update`" @click="openEditor(record.scene.id)">
                     {{ $t('IotSceneLinkage.action.edit') }}
                   </j-permission-button>
@@ -75,7 +64,17 @@
                     <a-button type="link"><AIcon type="MoreOutlined" /></a-button>
                     <template #overlay>
                       <a-menu>
-                        <a-menu-item @click="recordScene = record.scene">{{ $t('IotSceneLinkage.action.records') }}</a-menu-item>
+                        <a-menu-item v-if="sceneTriggerType(record.scene) === 'manual'">
+                          <j-permission-button
+                            class="scene-list__menu-action"
+                            type="text"
+                            :hasPermission="scenePermission('tigger')"
+                            @click="confirmExecute(record.scene)"
+                          >
+                            {{ $t('IotSceneLinkage.action.execute') }}
+                          </j-permission-button>
+                        </a-menu-item>
+                        <a-menu-item @click="openRecordDrawer(record.scene)">{{ $t('IotSceneLinkage.action.records') }}</a-menu-item>
                         <a-menu-item :disabled="!hasScenePermission('add')" @click="exportTemplate(record.scene)">
                           {{ $t('IotSceneLinkage.action.exportTemplate') }}
                         </a-menu-item>
@@ -96,6 +95,17 @@
           </a-table>
         </div>
       </section>
+      <SceneRecordTimeline
+        v-if="recordScene"
+        :open="recordDrawerOpen"
+        :scene="recordScene"
+        :state="recordState"
+        @update:open="updateRecordDrawerOpen"
+        @toggle-record="recordLogs.toggleRecord"
+        @load-more="recordLogs.loadMore"
+        @retry="recordLogs.reload"
+        @retry-detail="recordLogs.retryDetail"
+      />
       <SceneTemplateImportModal
         v-if="templateImportVisible"
         @close="templateImportVisible = false"
@@ -118,8 +128,15 @@ import { deleteScene, disableScene, enableScene, executeScene, getSceneDetail, q
 import { normalizeResult } from './utils'
 import SceneRecordTimeline from './components/SceneRecordTimeline.vue'
 import SceneTemplateImportModal from './components/SceneTemplateImportModal.vue'
+import { useSceneExecutionRecords } from './hooks/useSceneExecutionRecords'
 import { formatDeviceScopeText, formatDeviceScopeTitle, formatProductScopeText, type SceneDeviceScopeValue } from './editor/deviceScopeLabel'
 import { toSceneTemplate } from './sceneCompatibility'
+
+interface SceneRecordTarget {
+  id: string
+  name?: string
+}
+
 const { t } = useI18n()
 const authStore = useAuthStore()
 const menuStore = useMenuStore()
@@ -148,14 +165,17 @@ const terms = ref<ConditionFilterTerm[]>([])
 const queryTerms = ref<ConditionFilterTerm[]>([])
 const pageIndex = ref(0)
 const pageSize = ref(10)
-const recordScene = ref<any>()
+const recordScene = ref<SceneRecordTarget>()
+const recordDrawerOpen = ref(false)
+const recordLogs = useSceneExecutionRecords()
+const recordState = computed(() => recordLogs.state.value)
 const templateImportVisible = ref(false)
 const triggerTypeOptions = computed(() => ['manual', 'timer', 'device', 'alarm', 'multi'].map(value => ({
   label: t(`IotSceneLinkage.triggerType.${value}`),
   value,
 })))
 const filterCommonFields: ConditionFilterCommonField[] = [{ label: t('IotSceneLinkage.form.name'), value: 'name' }, { label: t('IotSceneLinkage.form.triggerType'), value: 'triggerType' }, { label: t('IotSceneLinkage.form.state'), value: 'state' }]
-const filterFields = computed<ConditionFilterField[]>(() => [{ dataIndex: 'name', title: t('IotSceneLinkage.form.name'), search: { type: 'string', defaultTermType: 'like', handleParamsItem: term => ({ ...term, value: term.termType === 'like' && typeof term.value === 'string' && !term.value.includes('%') ? `%${term.value}%` : term.value }) } }, { dataIndex: 'triggerType', title: t('IotSceneLinkage.form.triggerType'), search: { type: 'select', defaultTermType: 'eq', options: triggerTypeOptions.value } }, { dataIndex: 'state', title: t('IotSceneLinkage.form.state'), search: { type: 'select', defaultTermType: 'eq', options: [{ label: t('IotSceneLinkage.state.started'), value: 'started' }, { label: t('IotSceneLinkage.state.disable'), value: 'disable' }] } }])
+const filterFields = computed<ConditionFilterField[]>(() => [{ dataIndex: 'name', title: t('IotSceneLinkage.form.name'), search: { type: 'string', defaultTermType: 'like' } }, { dataIndex: 'triggerType', title: t('IotSceneLinkage.form.triggerType'), search: { type: 'select', defaultTermType: 'eq', options: triggerTypeOptions.value } }, { dataIndex: 'state', title: t('IotSceneLinkage.form.state'), search: { type: 'select', defaultTermType: 'eq', options: [{ label: t('IotSceneLinkage.state.started'), value: 'started' }, { label: t('IotSceneLinkage.state.disable'), value: 'disable' }] } }])
 const columns = computed(() => [{ title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 230 }, { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule' }, { title: t('IotSceneLinkage.column.state'), dataIndex: 'state', width: 100 }, { title: t('IotSceneLinkage.column.action'), dataIndex: 'actions', width: 160 }])
 const pagination = computed(() => ({ current: pageIndex.value + 1, pageSize: pageSize.value, total: total.value, showSizeChanger: true, showQuickJumper: true }))
 const stateValue = (scene: any) => scene.state?.value || scene.state
@@ -230,6 +250,17 @@ function changePage(pager: any) {
 async function openEditor(id?: string) {
   // 由菜单运行时解析当前部署的父路由，保证 SaaS 与私有化均可进入同一个 Editor 子页。
   menuStore.jumpPage(`${sceneRouteKey.value}/Editor`, { params: id ? { id } : {} })
+}
+
+function openRecordDrawer(scene: SceneRecordTarget) {
+  recordScene.value = scene
+  recordDrawerOpen.value = true
+  void recordLogs.open(scene.id)
+}
+
+function updateRecordDrawerOpen(open: boolean) {
+  recordDrawerOpen.value = open
+  if (!open) recordScene.value = undefined
 }
 
 /** 读取完整场景后再导出，列表摘要不足以生成可重新导入的模板。 */
@@ -340,13 +371,17 @@ onMounted(reload)
 
 .scene-list__actions {
   display: grid;
-  grid-template-columns: 40px 40px 24px;
+  grid-template-columns: 40px 24px;
   gap: var(--space-2);
   align-items: center;
 }
 
-.scene-list__actions > span {
-  min-width: 0;
+.scene-list :deep(.scene-list__menu-action) {
+  width: 100%;
+  height: auto;
+  padding: 0;
+  color: inherit;
+  text-align: left;
 }
 
 .scene-list__delete-tooltip {
