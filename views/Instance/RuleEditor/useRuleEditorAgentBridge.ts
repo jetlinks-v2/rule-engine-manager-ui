@@ -5,6 +5,7 @@ import { createRuleEditorProposalLinkHandler } from './proposalLinks';
 import { createRuleEditorReferenceNodeBridge } from './referenceNodeBridge';
 import {
   createEmptyRuleEditorToolRuntime,
+  orderRuleEditorRemoteTools,
   toRuleEditorClientToolDefinition,
   type RemoteRuleEditorToolDefinition,
   type RuleEditorToolExecutionContext,
@@ -193,8 +194,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     return `rule-editor:${(hash >>> 0).toString(36)}`;
   };
 
-  const createRuntime = () => createAiClientToolRuntime(() => remoteTools.value
-      .filter((tool) => tool?.id)
+  const createRuntime = () => createAiClientToolRuntime(() => orderRuleEditorRemoteTools(remoteTools.value)
       .map((tool) => toRuleEditorClientToolDefinition(tool, executeRemoteTool, remoteSourceRevision)), {
       toolsName: t('RuleEditor.agent.toolsName'),
       toolsDescription: t('RuleEditor.agent.toolsDescription'),

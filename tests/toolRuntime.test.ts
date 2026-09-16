@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  APPLY_CANVAS_PLAN_BINDING_GUIDE,
   createEmptyRuleEditorToolRuntime,
+  orderRuleEditorRemoteTools,
   toRuleEditorClientToolDefinition,
   type RemoteRuleEditorToolDefinition,
 } from '../views/Instance/RuleEditor/toolRuntime';
@@ -72,16 +74,22 @@ test('apply tool exposes one canonical root schema without duplicate input schem
   const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({}));
 
   assert.deepEqual(definition.routing?.capabilities, ['rule-editor.canvas.apply']);
-  assert.deepEqual(definition.routing?.accepts, ['rule-editor.canvas-plan']);
+  assert.equal(definition.routing?.accepts, undefined);
   assert.equal(definition.routing?.evidencePolicy, 'required');
   assert.equal(definition.routing?.exposure, 'auto');
+  assert.deepEqual(definition.routing?.intents, ['apply-canvas-plan', 'bind plan output to canvas-changes']);
+  assert.equal(definition.routing?.help?.quickstartSection, APPLY_CANVAS_PLAN_BINDING_GUIDE);
+  assert.ok(definition.description?.includes(APPLY_CANVAS_PLAN_BINDING_GUIDE));
   assert.deepEqual(definition.routing?.produces, ['canvas-changes', 'topology-diagram']);
   assert.deepEqual(definition.routing?.outputShapes, [
     'rule-editor.canvas-changes',
     'diagram.flowchart',
   ]);
   assert.equal(definition._meta?.clientToolContract.outputs[0].kind, 'state-events');
-  assert.equal(definition._meta?.clientToolContract.outputs[1].kind, 'artifact');
+  assert.equal(definition._meta?.clientToolContract.outputs[1].kind, 'lookup');
+  assert.equal(definition._meta?.clientToolContract.outputs[1].type, 'presentation');
+  assert.equal(definition._meta?.clientToolContract.outputs[1].audience, 'client-presentation');
+  assert.equal(definition._meta?.clientToolContract.outputs[1].delivery, 'inline');
   assert.equal(definition._meta?.clientToolContract.outputs[1].mediaType, 'application/vnd.mermaid');
   assert.deepEqual(definition.expands?._schema, canonicalPlanSchema);
   assert.equal(definition.inputs?.[0].expands, undefined);
@@ -117,6 +125,151 @@ test('server-bound execution context never enters tool arguments or declaration'
   assert.equal(captured.args, args);
   assert.equal(Object.hasOwn(captured.args, 'executionContext'), false);
   assert.deepEqual(captured.executionContext, executionContext);
+});
+
+test('apply keeps iframe description and appends the canvas-changes plan binding guide', () => {
+  const tool = applyTool();
+  tool.description = 'Apply an authorized canvas plan.';
+  const definition = toRuleEditorClientToolDefinition(tool, async () => ({}));
+
+  assert.equal(
+    definition.description,
+    `Apply an authorized canvas plan. ${APPLY_CANVAS_PLAN_BINDING_GUIDE}`,
+  );
+});
+
+test('JSON-string apply steps and completion are parsed before iframe execute', async () => {
+  const captured: Record<string, any> = {};
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async (_toolId, args) => {
+    captured.args = args;
+    return {
+      ok: false,
+      success: false,
+      code: 'rule_editor.canvas_plan.preflight_failed',
+      failureDisposition: 'request',
+      recoveryAction: 'repair',
+    };
+  });
+  const original = {
+    flowMode: 'realtime-stream',
+    completion: '{"mode":"partial-draft"}',
+    steps: '[{"op":"insert-node","nodeType":"delay"}]',
+    extra: 1,
+  };
+
+  const result = await definition.execute(original, {}, {} as any);
+
+  assert.equal(result.code, 'rule_editor.canvas_plan.preflight_failed');
+  assert.notEqual(captured.args, original);
+  assert.deepEqual(captured.args, {
+    flowMode: 'realtime-stream',
+    completion: { mode: 'partial-draft' },
+    steps: [{ op: 'insert-node', nodeType: 'delay' }],
+    extra: 1,
+  });
+  assert.equal(original.completion, '{"mode":"partial-draft"}');
+  assert.equal(original.steps, '[{"op":"insert-node","nodeType":"delay"}]');
+
+  const completionOnly = {
+    flowMode: 'realtime-stream',
+    completion: '{"mode":"complete-topology"}',
+    steps: [{ op: 'connect' }],
+  };
+  await definition.execute(completionOnly, {}, {} as any);
+  assert.notEqual(captured.args, completionOnly);
+  assert.deepEqual(captured.args.completion, { mode: 'complete-topology' });
+  assert.equal(captured.args.steps, completionOnly.steps);
+});
+
+test('object apply arguments pass through unchanged and skip JSON coercion', async () => {
+  const captured: Record<string, any> = {};
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async (_toolId, args) => {
+    captured.args = args;
+    return { ok: false, success: false, code: 'unchanged' };
+  });
+  const args = {
+    flowMode: 'realtime-stream',
+    completion: { mode: 'partial-draft' },
+    steps: [{ op: 'connect' }],
+  };
+
+  await definition.execute(args, {}, {} as any);
+
+  assert.equal(captured.args, args);
+});
+
+test('invalid JSON apply arguments return a structured failure without calling iframe', async () => {
+  let called = false;
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async () => {
+    called = true;
+    return { ok: true };
+  });
+
+  const invalidSteps = await definition.execute({
+    completion: { mode: 'partial-draft' },
+    steps: '[{"op":',
+  }, {}, {} as any);
+  assert.equal(called, false);
+  assert.deepEqual(invalidSteps, {
+    ok: false,
+    success: false,
+    code: 'rule_editor.canvas_plan.invalid_arguments',
+    message: 'steps must be a structured array, not an unparsable JSON string',
+    failureDisposition: 'request',
+    recoveryAction: 'repair',
+    retryable: false,
+    repair: { field: '/steps' },
+  });
+
+  const invalidCompletion = await definition.execute({
+    completion: 'not-json',
+    steps: [],
+  }, {}, {} as any);
+  assert.equal(called, false);
+  assert.equal(invalidCompletion.code, 'rule_editor.canvas_plan.invalid_arguments');
+  assert.equal(invalidCompletion.repair.field, '/completion');
+
+  const primitiveJson = await definition.execute({
+    completion: { mode: 'partial-draft' },
+    steps: '"insert-node"',
+  }, {}, {} as any);
+  assert.equal(called, false);
+  assert.equal(primitiveJson.code, 'rule_editor.canvas_plan.invalid_arguments');
+  assert.equal(primitiveJson.failureDisposition, 'request');
+  assert.equal(primitiveJson.repair.field, '/steps');
+
+  const objectSteps = await definition.execute({
+    completion: { mode: 'partial-draft' },
+    steps: '{"op":"insert-node"}',
+  }, {}, {} as any);
+  assert.equal(called, false);
+  assert.equal(objectSteps.code, 'rule_editor.canvas_plan.invalid_arguments');
+  assert.equal(objectSteps.repair.field, '/steps');
+
+  const arrayCompletion = await definition.execute({
+    completion: '["partial-draft"]',
+    steps: [],
+  }, {}, {} as any);
+  assert.equal(called, false);
+  assert.equal(arrayCompletion.code, 'rule_editor.canvas_plan.invalid_arguments');
+  assert.equal(arrayCompletion.repair.field, '/completion');
+});
+
+test('mixed remote tools keep apply first without reordering sibling reads', () => {
+  const ordered = orderRuleEditorRemoteTools([
+    { id: 'rule_editor_get_context' },
+    { id: '' },
+    { id: 'rule_editor_list_nodes' },
+    { id: 'rule_editor_apply_canvas_actions' },
+    { id: 'rule_editor_validate_flow' },
+  ]);
+
+  assert.deepEqual(ordered.map((tool) => tool.id), [
+    'rule_editor_apply_canvas_actions',
+    'rule_editor_get_context',
+    'rule_editor_list_nodes',
+    'rule_editor_validate_flow',
+  ]);
 });
 
 test('legacy parent fallback keeps a per-input schema when no root schema is declared', () => {
@@ -359,22 +512,162 @@ test('apply evidence rejects malformed flow, revision, and state changes', async
   }
 });
 
-test('unrelated remote tools keep their original execution contract', async () => {
+test('typed remote read tools wrap success with producer-owned evidence', async () => {
   const remote = {
     id: 'rule_editor_get_context',
     name: 'context',
     write: false,
     annotations: { idempotentHint: true },
   } satisfies RemoteRuleEditorToolDefinition;
-  const payload = { ok: true, canvasRevision: 3 };
+  const payload = { ok: true, ruleId: 'rule-1', canvasRevision: 3 };
   const definition = toRuleEditorClientToolDefinition(remote, async () => payload, 'revision-7');
 
-  assert.equal(definition.routing, undefined);
+  assert.deepEqual(definition.routing?.produces, ['canvas-context']);
   assert.equal(definition._meta?.clientToolAdapter?.source, 'rule-editor-iframe');
   assert.equal(definition._meta?.clientToolAdapter?.sourceRevision, 'revision-7');
   assert.equal(definition.annotations?.readOnlyHint, true);
   assert.equal(definition.annotations?.idempotentHint, true);
+
+  const result = await definition.execute({}, {}, {} as any);
+  assert.equal(result.success, true);
+  assert.equal(result.ruleId, 'rule-1');
+  assert.equal(result.outputBindings[0].name, 'canvas-context');
+  assert.equal(result.outputBindings[0].path, '$.ruleId');
+
+  const truncated = await toRuleEditorClientToolDefinition(remote, async () => ({
+    ok: true,
+    ruleId: 'rule-1',
+    truncated: true,
+  })).execute({}, {}, {} as any);
+  assert.equal(truncated.complete, false);
+  assert.equal(truncated.truncated, true);
+});
+
+test('typed record-set remotes stay non-exhaustive unless the source proves completeness', async () => {
+  const remote = {
+    id: 'rule_editor_list_nodes',
+    name: 'list nodes',
+    write: false,
+  } satisfies RemoteRuleEditorToolDefinition;
+
+  const unproven = await toRuleEditorClientToolDefinition(remote, async () => ({
+    ok: true,
+    nodes: [{ id: 'n1' }],
+  })).execute({}, {}, {} as any);
+  assert.equal(unproven.success, true);
+  assert.equal(unproven.complete, false);
+  assert.equal(unproven.truncated, true);
+  assert.equal(unproven.outputBindings[0].complete, false);
+  assert.equal(unproven.outputBindings[0].truncated, true);
+
+  const proven = await toRuleEditorClientToolDefinition(remote, async () => ({
+    ok: true,
+    nodes: [{ id: 'n1' }],
+    complete: true,
+  })).execute({}, {}, {} as any);
+  assert.equal(proven.complete, true);
+  assert.equal(proven.truncated, false);
+  assert.equal(proven.outputBindings[0].complete, true);
+});
+
+test('typed remote failures stay structured and never throw unclassified errors', async () => {
+  const remote = {
+    id: 'rule_editor_list_nodes',
+    name: 'list nodes',
+    write: false,
+  } satisfies RemoteRuleEditorToolDefinition;
+
+  const canonicalFailure = {
+    ok: false,
+    success: false,
+    code: 'rule_editor.nodes.unavailable',
+    failureDisposition: 'dependency',
+    recoveryAction: 'retry',
+  };
+  const canonicalDefinition = toRuleEditorClientToolDefinition(remote, async () => canonicalFailure);
+  assert.equal(await canonicalDefinition.execute({}, {}, {} as any), canonicalFailure);
+
+  const wrappedDefinition = toRuleEditorClientToolDefinition(remote, async () => ({ ok: false, message: 'bridge down' }));
+  assert.deepEqual(await wrappedDefinition.execute({}, {}, {} as any), {
+    ok: false,
+    success: false,
+    code: 'rule_editor.remote.failed',
+    message: 'bridge down',
+    failureDisposition: 'tool',
+    recoveryAction: 'terminal',
+    retryable: false,
+  });
+
+  const errorFieldDefinition = toRuleEditorClientToolDefinition(remote, async () => ({ ok: false, error: 'missing node' }));
+  assert.equal((await errorFieldDefinition.execute({}, {}, {} as any)).message, 'missing node');
+
+  const thrownDefinition = toRuleEditorClientToolDefinition(remote, async () => {
+    throw new Error('iframe crashed');
+  });
+  assert.deepEqual(await thrownDefinition.execute({}, {}, {} as any), {
+    ok: false,
+    success: false,
+    code: 'rule_editor.remote.failed',
+    message: 'iframe crashed',
+    failureDisposition: 'tool',
+    recoveryAction: 'terminal',
+    retryable: false,
+  });
+
+  const unknownThrowDefinition = toRuleEditorClientToolDefinition(remote, async () => {
+    throw 'boom';
+  });
+  assert.equal((await unknownThrowDefinition.execute({}, {}, {} as any)).message, 'rule editor tool failed');
+
+  const invalidDefinition = toRuleEditorClientToolDefinition(remote, async () => 'not-an-object');
+  assert.equal((await invalidDefinition.execute({}, {}, {} as any)).code, 'rule_editor.remote.invalid_result');
+
+  const applyThrown = toRuleEditorClientToolDefinition(applyTool(), async () => {
+    throw new Error('apply bridge down');
+  });
+  assert.equal((await applyThrown.execute({}, {}, {} as any)).code, 'rule_editor.remote.failed');
+
+  const applyWrapped = toRuleEditorClientToolDefinition(applyTool(), async () => ({ ok: false, message: 'apply rejected' }));
+  assert.deepEqual(await applyWrapped.execute({}, {}, {} as any), {
+    ok: false,
+    success: false,
+    code: 'rule_editor.remote.failed',
+    message: 'apply rejected',
+    failureDisposition: 'tool',
+    recoveryAction: 'terminal',
+    retryable: false,
+  });
+
+  const applyClarify = toRuleEditorClientToolDefinition(applyTool(), async () => ({
+    ok: false,
+    success: false,
+    code: 'clarification-required',
+    recoveryAction: 'clarify',
+  }));
+  const clarifyResult = await applyClarify.execute({}, {}, {} as any);
+  assert.equal(clarifyResult.code, 'clarification-required');
+  assert.equal(clarifyResult.failureDisposition, 'tool');
+  assert.equal(clarifyResult.recoveryAction, 'clarify');
+});
+
+test('unrelated write tools keep their original execution contract', async () => {
+  const remote = {
+    id: 'rule_editor_insert_node',
+    name: 'insert',
+    write: true,
+  } satisfies RemoteRuleEditorToolDefinition;
+  const payload = { ok: true, nodeId: 'n1' };
+  const definition = toRuleEditorClientToolDefinition(remote, async () => payload);
+
+  assert.equal(definition.routing, undefined);
+  assert.equal(definition._meta?.clientToolContract, undefined);
   assert.equal(await definition.execute({}, {}, {} as any), payload);
+  await assert.rejects(
+    toRuleEditorClientToolDefinition(remote, async () => {
+      throw new Error('write failed');
+    }).execute({}, {}, {} as any),
+    /write failed/,
+  );
 });
 
 test('empty runtime reports translated metadata and rejects execution before bridge readiness', async () => {

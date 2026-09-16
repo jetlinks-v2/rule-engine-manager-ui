@@ -1,6 +1,6 @@
 import {
   createAiClientToolFailureResult,
-  defineAiClientToolContract,
+  type AiClientToolContractFragment,
   type AiClientToolDefinition,
   type AiClientToolExecutionContext,
   type AiClientToolRuntime,
@@ -11,6 +11,12 @@ import {
   resolveRuleEditorToolDisplayName,
   type RuleEditorRemoteToolDefinition,
 } from './confirmOptions';
+import {
+  APPLY_CANVAS_CONTRACT,
+  APPLY_CANVAS_PLAN_BINDING_GUIDE,
+  APPLY_CANVAS_TOOL_ID,
+  resolveRuleEditorRemoteContract,
+} from './toolRuntimeContracts';
 
 export interface RemoteRuleEditorToolDefinition extends RuleEditorRemoteToolDefinition {
   id: string;
@@ -79,38 +85,47 @@ interface RuleEditorCanvasApplyResult extends Record<string, unknown> {
   };
 }
 
-const APPLY_CANVAS_TOOL_ID = 'rule_editor_apply_canvas_actions';
-
-const APPLY_CANVAS_CONTRACT = defineAiClientToolContract({
-  routingKind: 'action',
-  routing: {
-    capabilities: ['rule-editor.canvas.apply'],
-    accepts: ['rule-editor.canvas-plan'],
-    intents: ['apply-canvas-plan'],
-    evidencePolicy: 'required',
-    validationHints: ['canvas-changes-exist', 'canvas-revision-advanced', 'topology-completion-satisfied'],
-    cost: 'medium',
-    // FLAT only exposes a deferred tool after a high-confidence route. Atomic canvas apply is the
-    // editor's primary action, so it must remain directly available even when routing is inconclusive.
-    exposure: 'auto',
-  },
-  outputs: [{
-    kind: 'state-events',
-    name: 'canvas-changes',
-    shape: 'rule-editor.canvas-changes',
-    path: '$.changes',
-  }, {
-    kind: 'artifact',
-    name: 'topology-diagram',
-    shape: 'diagram.flowchart',
-    path: '$.presentation.mermaid',
-    mediaType: 'application/vnd.mermaid',
-    delivery: 'inline',
-  }],
-});
-
 const isRecord = (value: unknown): value is Record<string, unknown> => (
   Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+);
+
+const APPLY_CANVAS_JSON_FIELDS = ['steps', 'completion'] as const;
+
+const isApplyCanvasJsonValue = (
+  field: typeof APPLY_CANVAS_JSON_FIELDS[number],
+  value: unknown,
+) => (field === 'steps' ? Array.isArray(value) : isRecord(value));
+
+const parseApplyCanvasJsonField = (
+  field: typeof APPLY_CANVAS_JSON_FIELDS[number],
+  value: string,
+): unknown | undefined => {
+  try {
+    const parsed = JSON.parse(value);
+    return isApplyCanvasJsonValue(field, parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const coerceApplyCanvasPlanArguments = (
+  args: Record<string, any>,
+): { ok: true; args: Record<string, any> } | { ok: false; field: string } => {
+  let next: Record<string, any> | undefined;
+  for (const field of APPLY_CANVAS_JSON_FIELDS) {
+    const value = (next || args)[field];
+    if (typeof value !== 'string') continue;
+    const parsed = parseApplyCanvasJsonField(field, value);
+    if (parsed === undefined) {
+      return { ok: false, field };
+    }
+    next = { ...(next || args), [field]: parsed };
+  }
+  return { ok: true, args: next || args };
+};
+
+const applyCanvasDescription = (description?: string) => (
+  [description?.trim(), APPLY_CANVAS_PLAN_BINDING_GUIDE].filter(Boolean).join(' ')
 );
 
 const isRuleEditorFlowMode = (value: unknown): value is RuleEditorFlowMode => (
@@ -257,6 +272,105 @@ const withCanvasApplyEvidence = (result: RuleEditorCanvasApplyResult) => (
   })
 );
 
+const REMOTE_RECOVERY_ACTIONS = new Set(['retry', 'repair', 'clarify', 'terminal'] as const);
+
+const toRemoteToolFailure = (
+  code: string,
+  message: string,
+  recoveryAction: 'retry' | 'repair' | 'clarify' | 'terminal' = 'terminal',
+  repair?: Record<string, unknown>,
+  failureDisposition: 'request' | 'tool' | 'dependency' = 'tool',
+) => ({
+  ok: false as const,
+  ...createAiClientToolFailureResult({
+    code,
+    message,
+    failureDisposition,
+    recoveryAction,
+    retryable: recoveryAction === 'retry',
+    ...(repair ? { repair } : {}),
+  }),
+});
+
+const isCanonicalFailure = (value: Record<string, unknown>) => (
+  typeof value.code === 'string'
+  && Boolean(value.code)
+  && typeof value.failureDisposition === 'string'
+);
+
+const toRemoteFailureResult = (value: Record<string, unknown>) => {
+  if (isCanonicalFailure(value)) return value;
+  const recoveryAction = typeof value.recoveryAction === 'string'
+    && REMOTE_RECOVERY_ACTIONS.has(value.recoveryAction as 'retry')
+    ? value.recoveryAction as 'retry' | 'repair' | 'clarify' | 'terminal'
+    : 'terminal';
+  return toRemoteToolFailure(
+    typeof value.code === 'string' && value.code
+      ? value.code
+      : 'rule_editor.remote.failed',
+    typeof value.message === 'string' && value.message
+      ? value.message
+      : typeof value.error === 'string' && value.error
+        ? value.error
+        : 'rule editor tool failed',
+    recoveryAction,
+    isRecord(value.repair) ? value.repair : undefined,
+  );
+};
+
+const resolveRemoteCoverage = (
+  result: Record<string, unknown>,
+  contract: AiClientToolContractFragment,
+) => {
+  const hasUnprovenRecordWindow = contract._meta.clientToolContract.outputs.some((output) => (
+    output.kind === 'record-set' && result.complete !== true && result.truncated !== false
+  ));
+  const truncated = result.truncated === true || hasUnprovenRecordWindow;
+  return {
+    truncated,
+    complete: result.complete === true ? !truncated : !truncated && !hasUnprovenRecordWindow,
+  };
+};
+
+const collectRemoteOutputStates = (
+  result: Record<string, unknown>,
+  contract: AiClientToolContractFragment,
+) => {
+  const coverage = resolveRemoteCoverage(result, contract);
+  return contract._meta.clientToolContract.outputs.flatMap((output) => (
+    output.path
+      ? [{
+          name: output.name,
+          path: output.path,
+          ...(output.mediaType ? { mediaType: output.mediaType } : {}),
+          complete: output.kind === 'record-set' ? coverage.complete : !coverage.truncated,
+          truncated: output.kind === 'record-set' ? coverage.truncated : result.truncated === true,
+        }]
+      : []
+  ));
+};
+
+const withRemoteContractResult = (
+  result: unknown,
+  contract: AiClientToolContractFragment,
+) => {
+  if (!isRecord(result)) {
+    return toRemoteToolFailure(
+      'rule_editor.remote.invalid_result',
+      'rule editor tool returned a non-canonical result',
+    );
+  }
+  if (result.success === false || result.ok === false) {
+    return toRemoteFailureResult(result);
+  }
+  const coverage = resolveRemoteCoverage(result, contract);
+  return withAiClientToolContractEvidence(result, contract, {
+    complete: coverage.complete,
+    truncated: coverage.truncated,
+    outputs: collectRemoteOutputStates(result, contract),
+  });
+};
+
 const normalizeToolInputs = (
   tool: RemoteRuleEditorToolDefinition,
   rootSchemaOwnsContract = false,
@@ -305,13 +419,14 @@ export const toRuleEditorClientToolDefinition = (
   sourceRevision = 'unversioned',
 ): AiClientToolDefinition<Record<string, any>> => {
   const isApplyCanvasTool = tool.id === APPLY_CANVAS_TOOL_ID;
+  const remoteContract = resolveRuleEditorRemoteContract(tool.id);
   const remoteExpands = isRecord(tool.expands) ? tool.expands : undefined;
   const rootSchemaOwnsContract = isRecord(remoteExpands?._schema);
   return {
     id: tool.id,
     name: resolveRuleEditorToolDisplayName(tool),
-    description: tool.description,
-    ...(isApplyCanvasTool ? APPLY_CANVAS_CONTRACT : {}),
+    description: isApplyCanvasTool ? applyCanvasDescription(tool.description) : tool.description,
+    ...(remoteContract || {}),
     inputs: normalizeToolInputs(tool, rootSchemaOwnsContract),
     output: tool.output || { type: 'object' },
     ...(remoteExpands ? { expands: remoteExpands } : {}),
@@ -321,7 +436,7 @@ export const toRuleEditorClientToolDefinition = (
     },
     confirm: resolveRuleEditorConfirmOptions(tool),
     _meta: {
-      ...(isApplyCanvasTool ? APPLY_CANVAS_CONTRACT._meta : {}),
+      ...(remoteContract?._meta || {}),
       clientToolAdapter: {
         version: RULE_EDITOR_REMOTE_ADAPTER_VERSION,
         source: 'rule-editor-iframe',
@@ -329,27 +444,58 @@ export const toRuleEditorClientToolDefinition = (
       },
     },
     execute: async (args, _context, call) => {
-      const result: unknown = await execute(
-        tool.id,
-        args,
-        call?.executionContext,
-      );
-      if (!isApplyCanvasTool || (isRecord(result) && (result.success === false || result.ok === false))) {
-        return result;
+      try {
+        let executeArgs = args;
+        if (isApplyCanvasTool) {
+          const coerced = coerceApplyCanvasPlanArguments(args);
+          if (!coerced.ok) {
+            return toRemoteToolFailure(
+              'rule_editor.canvas_plan.invalid_arguments',
+              `${coerced.field} must be a structured ${coerced.field === 'steps' ? 'array' : 'object'}, not an unparsable JSON string`,
+              'repair',
+              { field: `/${coerced.field}` },
+              'request',
+            );
+          }
+          executeArgs = coerced.args;
+        }
+        const result: unknown = await execute(
+          tool.id,
+          executeArgs,
+          call?.executionContext,
+        );
+        if (isApplyCanvasTool) {
+          if (isRecord(result) && (result.success === false || result.ok === false)) {
+            return toRemoteFailureResult(result);
+          }
+          if (isCanvasApplySuccess(result)) {
+            return withCanvasApplyEvidence(result);
+          }
+          return toRemoteToolFailure(
+            'rule_editor.canvas_plan.invalid_result',
+            'canvas plan returned a non-canonical result',
+          );
+        }
+        if (!remoteContract) {
+          return result;
+        }
+        return withRemoteContractResult(result, remoteContract);
+      } catch (error) {
+        if (!remoteContract && !isApplyCanvasTool) throw error;
+        return toRemoteToolFailure(
+          'rule_editor.remote.failed',
+          error instanceof Error && error.message
+            ? error.message
+            : 'rule editor tool failed',
+        );
       }
-      if (isCanvasApplySuccess(result)) {
-        return withCanvasApplyEvidence(result);
-      }
-      return {
-        ok: false,
-        ...createAiClientToolFailureResult({
-          code: 'rule_editor.canvas_plan.invalid_result',
-          message: 'canvas plan returned a non-canonical result',
-          failureDisposition: 'tool',
-          recoveryAction: 'terminal',
-          retryable: false,
-        }),
-      };
     },
   };
 };
+
+export {
+  APPLY_CANVAS_PLAN_BINDING_GUIDE,
+  APPLY_CANVAS_TOOL_ID,
+  RULE_EDITOR_TYPED_REMOTE_TOOL_IDS,
+  orderRuleEditorRemoteTools,
+} from './toolRuntimeContracts';

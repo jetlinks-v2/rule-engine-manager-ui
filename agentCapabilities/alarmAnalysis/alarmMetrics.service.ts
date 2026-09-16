@@ -16,6 +16,7 @@ import {
 import {
   buildAlarmRecordTerms,
   dictValue,
+  createBoundedQueryEvidence,
   formatLocalDateTime,
   inputError,
   loadAlarmSources,
@@ -234,12 +235,12 @@ export const alarmMetricsService = {
     })).filter(item => item.id).sort((left, right) => right.count - left.count).slice(0, limit)
     return createDomainAgentToolResult({
       domain: 'alarm',
+      status: data.length ? undefined : 'empty',
       timeRange: range,
       filters: { source, groupBy, limit },
-      summary: { source: sourceValue(source), groupBy, returned: data.length },
+      summary: { source: sourceValue(source), groupBy, returned: data.length, requestedLimit: limit },
       data,
-      total: data.length,
-      cardinality: createDomainAgentRecordSetCardinality({ returnedCount: data.length }),
+      ...createBoundedQueryEvidence(data.length, limit),
     })
   }),
 }
