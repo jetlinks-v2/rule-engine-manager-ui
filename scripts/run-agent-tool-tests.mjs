@@ -106,6 +106,7 @@ const realCoreRuntime = {
         } from ${JSON.stringify(path.join(coreAiChatRoot, 'clientToolResult.ts'))};
         export {
           createAiClientToolCatalogReport,
+          createAiClientToolCatalogSnapshot,
         } from ${JSON.stringify(path.join(coreAiChatRoot, 'clientToolCatalog.ts'))};
         export {
           AI_CLIENT_TOOL_ROUTING_EXPAND_KEY,

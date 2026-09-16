@@ -487,8 +487,14 @@ export const toRuleEditorClientToolDefinition = (
 ): AiClientToolDefinition<Record<string, any>> => {
   const isApplyCanvasTool = tool.id === APPLY_CANVAS_TOOL_ID;
   const remoteContract = resolveRuleEditorRemoteContract(tool.id);
-  const remoteExpands = isRecord(tool.expands) ? tool.expands : undefined;
-  const rootSchemaOwnsContract = isRecord(remoteExpands?._schema);
+  const remoteExpands = isRecord(tool.expands) ? { ...tool.expands } : {};
+  if (tool.write === true) {
+    // Non-read-only remotes must publish typed effect, or AgentConversation isolates them
+    // from session.init.tools and FLAT business_execution returns model_unknown_tool.
+    remoteExpands.effect = 'WRITE';
+  }
+  const rootSchemaOwnsContract = isRecord(remoteExpands._schema);
+  const publishedExpands = Object.keys(remoteExpands).length ? remoteExpands : undefined;
   return {
     id: tool.id,
     name: resolveRuleEditorToolDisplayName(tool),
@@ -496,7 +502,7 @@ export const toRuleEditorClientToolDefinition = (
     ...(remoteContract || {}),
     inputs: normalizeToolInputs(tool, rootSchemaOwnsContract),
     output: tool.output || { type: 'object' },
-    ...(remoteExpands ? { expands: remoteExpands } : {}),
+    ...(publishedExpands ? { expands: publishedExpands } : {}),
     annotations: {
       readOnlyHint: tool.write !== true,
       ...(tool.annotations || {}),

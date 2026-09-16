@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   AI_CLIENT_TOOL_ROUTING_EXPAND_KEY,
   createAiClientToolCatalogReport,
+  createAiClientToolCatalogSnapshot,
   normalizeAiClientToolRoutingMetadata,
 } from '@jetlinks-web-core/layout/components/AiChat/clientTools';
 import {
@@ -216,6 +217,7 @@ test('parent catalog drops remotes with agentVisible false and keeps apply first
     { id: 'rule_editor_get_tool_manual', agentVisible: false },
     { id: 'rule_editor_connect_nodes_batch', write: true, agentVisible: false },
     { id: 'rule_editor_layout_nodes', write: true, agentVisible: false },
+    { id: 'rule_editor_propose_canvas_actions', write: true, agentVisible: false },
     applyTool(),
     remoteTool('rule_editor_get_context'),
     remoteTool('rule_editor_edit_node', true),
@@ -227,5 +229,63 @@ test('parent catalog drops remotes with agentVisible false and keeps apply first
     'rule_editor_edit_node',
   ]);
   assert.equal(tools[0]?.id, APPLY_CANVAS_TOOL_ID);
+  assert.equal(tools.some((tool) => tool.id === 'rule_editor_propose_canvas_actions'), false);
   assert.equal(tools.some((tool) => tool.id === 'rule_editor_apply_canvas_add_nodes'), false);
+});
+
+test('session catalog snapshot admits apply by exact id so FLAT business_execution can call it', () => {
+  const tools = orderRuleEditorRemoteTools([
+    { id: 'rule_editor_propose_canvas_actions', write: true, agentVisible: false },
+    applyTool(),
+    remoteTool('rule_editor_edit_node', true),
+    remoteTool('rule_editor_delete_node', true),
+    remoteTool('rule_editor_get_context'),
+  ]);
+  const snapshot = createAiClientToolCatalogSnapshot(
+    tools.map((tool) => toRuleEditorClientToolDefinition(tool, async () => ({}))),
+    {
+      requireRouting: false,
+      requireResultBindings: true,
+    },
+  );
+  const ids = snapshot.wireDefinitions.map((tool) => tool.id);
+  assert.equal(ids[0], APPLY_CANVAS_TOOL_ID);
+  assert.equal(ids.includes(APPLY_CANVAS_TOOL_ID), true);
+  assert.equal(ids.includes('rule_editor_edit_node'), true);
+  assert.equal(ids.includes('rule_editor_delete_node'), true);
+  assert.equal(ids.includes('rule_editor_propose_canvas_actions'), false);
+  const writeIds = [APPLY_CANVAS_TOOL_ID, 'rule_editor_edit_node', 'rule_editor_delete_node'];
+  writeIds.forEach((id) => {
+    const wire = snapshot.wireDefinitions.find((tool) => tool.id === id) as {
+      expands?: { effect?: string };
+    };
+    assert.equal(wire?.expands?.effect, 'WRITE', id);
+    assert.equal(
+      snapshot.report.issues.some((issue) => (
+        issue.toolId === id && issue.code === 'effect_required_for_side_effect'
+      )),
+      false,
+      id,
+    );
+  });
+  const insertSnapshot = createAiClientToolCatalogSnapshot(
+    [toRuleEditorClientToolDefinition(remoteTool('rule_editor_insert_node', true), async () => ({}))],
+    {
+      requireRouting: false,
+      requireResultBindings: true,
+    },
+  );
+  assert.equal(insertSnapshot.wireDefinitions[0]?.id, 'rule_editor_insert_node');
+  assert.equal(
+    (insertSnapshot.wireDefinitions[0] as { expands?: { effect?: string } })?.expands?.effect,
+    'WRITE',
+  );
+  assert.equal(
+    snapshot.report.tools.find((tool) => tool.toolId === APPLY_CANVAS_TOOL_ID)?.effectStatus,
+    'legacy',
+  );
+  assert.equal(
+    snapshot.report.tools.find((tool) => tool.toolId === APPLY_CANVAS_TOOL_ID)?.contractStatus,
+    'typed',
+  );
 });

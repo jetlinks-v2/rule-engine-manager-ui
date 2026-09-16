@@ -108,8 +108,35 @@ test('apply tool exposes one canonical root schema without duplicate input schem
   assert.equal(definition._meta?.clientToolContract.outputs[1].delivery, 'inline');
   assert.equal(definition._meta?.clientToolContract.outputs[1].mediaType, 'application/vnd.mermaid');
   assert.deepEqual(definition.expands?._schema, canonicalPlanSchema);
+  assert.equal(definition.expands?.effect, 'WRITE');
   assert.equal(definition.inputs?.[0].expands, undefined);
   assert.equal(definition.annotations?.readOnlyHint, false);
+});
+
+test('adapter publishes WRITE for every write remote, not only apply by id', () => {
+  const remoteWrite = (id: string): RemoteRuleEditorToolDefinition => ({
+    id,
+    name: id,
+    write: true,
+  });
+  [
+    applyTool(),
+    remoteWrite('rule_editor_edit_node'),
+    remoteWrite('rule_editor_delete_node'),
+    remoteWrite('rule_editor_delete_link'),
+    remoteWrite('rule_editor_insert_node'),
+  ].forEach((tool) => {
+    const definition = toRuleEditorClientToolDefinition(tool, async () => ({}));
+    assert.equal(definition.expands?.effect, 'WRITE', tool.id);
+    assert.equal(definition.annotations?.readOnlyHint, false, tool.id);
+  });
+
+  const read = toRuleEditorClientToolDefinition({
+    id: 'rule_editor_get_context',
+    name: 'rule_editor_get_context',
+  }, async () => ({}));
+  assert.equal(read.expands?.effect, undefined);
+  assert.equal(read.annotations?.readOnlyHint, true);
 });
 
 test('server-bound execution context never enters tool arguments or declaration', async () => {
@@ -334,6 +361,7 @@ test('parent catalog filter uses agentVisible and does not expose a second apply
   const ordered = orderRuleEditorRemoteTools([
     { id: 'rule_editor_focus_node', agentVisible: false },
     { id: 'rule_editor_get_debug_logs', agentVisible: false },
+    { id: 'rule_editor_propose_canvas_actions', agentVisible: false },
     { id: 'rule_editor_apply_canvas_actions' },
     { id: 'rule_editor_search_node_types' },
   ]);
@@ -764,6 +792,13 @@ test('empty runtime reports translated metadata and rejects execution before bri
 });
 
 test('parent write prompt treats page-bound subscribe/forward/push as apply with op', () => {
+  const compactZh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.compact']);
+  const compactEn = String((enLang as Record<string, string>)['RuleEditor.agent.system.compact']);
+  assert.match(compactZh, /rule_editor_apply_canvas_actions/);
+  assert.match(compactZh, /可点击应用按钮/);
+  assert.match(compactEn, /rule_editor_apply_canvas_actions/);
+  assert.match(compactEn, /clickable apply button/);
+
   const zh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.write']);
   const en = String((enLang as Record<string, string>)['RuleEditor.agent.system.write']);
 
@@ -780,6 +815,7 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(zh, /帮我执行/);
   assert.match(zh, /只能调用 rule_editor_apply_canvas_actions/);
   assert.match(zh, /不要调用 rule_editor_propose_canvas_actions/);
+  assert.match(zh, /可点击应用按钮/);
   assert.equal(zh.includes('insert_node'), false);
 
   assert.match(en, /how to do this/);
@@ -794,6 +830,7 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(en, /cannot one-click insert/);
   assert.match(en, /execute now/);
   assert.match(en, /call only rule_editor_apply_canvas_actions/);
-  assert.match(en, /Do not call the proposal tool/);
+  assert.match(en, /Do not call rule_editor_propose_canvas_actions/);
+  assert.match(en, /clickable apply button/);
   assert.equal(en.includes('insert_node'), false);
 });
