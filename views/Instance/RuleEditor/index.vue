@@ -64,7 +64,7 @@ import { useRuleEditorAgentComposerExtensions } from './useRuleEditorAgentCompos
 
 const RULE_EDITOR_CLIENT_ID = 'ruleEditorChat';
 const RULE_EDITOR_SUBJECT_TYPE = 'ruleInstance';
-const RULE_EDITOR_RESOURCE_VERSION = '2026091619';
+const RULE_EDITOR_RESOURCE_VERSION = '2026091621';
 
 const props = defineProps({
   open: {
@@ -267,7 +267,7 @@ watch(
 );
 
 watch(
-  () => [bridge.ready.value, bridge.version.value, bridge.contextVersion.value, props.open, ruleId.value],
+  () => [bridge.ready.value, bridge.version.value, props.open, ruleId.value],
   () => {
     syncRuleEditorAgent();
   },

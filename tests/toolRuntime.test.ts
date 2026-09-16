@@ -7,6 +7,7 @@ import {
   toRuleEditorClientToolDefinition,
   type RemoteRuleEditorToolDefinition,
 } from '../views/Instance/RuleEditor/toolRuntime';
+import { shouldAdvanceRuleEditorContextVersion } from '../views/Instance/RuleEditor/ruleEditorAgentContext';
 import enLang from '../locales/lang/en.json';
 import zhLang from '../locales/lang/zh.json';
 
@@ -281,6 +282,31 @@ test('object apply arguments pass through unchanged and skip JSON coercion', asy
   await definition.execute(args, {}, {} as any);
 
   assert.equal(captured.args, args);
+});
+
+test('parent coerce lifts string connect aliases before iframe execute', async () => {
+  const captured: Record<string, any> = {};
+  const originalSteps = [
+    { op: 'insert-node', nodeType: 'topic-source', alias: 'msgSub', config: {} },
+    { op: 'connect', source: 'msgSub', target: 'ql' },
+  ];
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async (_toolId, args) => {
+    captured.args = args;
+    return { ok: false, success: false, code: 'unchanged' };
+  });
+  const args = {
+    flowMode: 'realtime-stream',
+    completion: { mode: 'partial-draft', sources: ['msgSub'] },
+    steps: originalSteps,
+  };
+
+  await definition.execute(args, {}, {} as any);
+
+  assert.notEqual(captured.args, args);
+  assert.deepEqual(captured.args.steps[1].source, { kind: 'alias', value: 'msgSub' });
+  assert.deepEqual(captured.args.steps[1].target, { kind: 'alias', value: 'ql' });
+  assert.deepEqual(captured.args.completion.sources, [{ kind: 'alias', value: 'msgSub' }]);
+  assert.equal(originalSteps[1].source, 'msgSub');
 });
 
 test('invalid JSON apply arguments return a structured failure without calling iframe', async () => {
@@ -796,8 +822,10 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   const compactEn = String((enLang as Record<string, string>)['RuleEditor.agent.system.compact']);
   assert.match(compactZh, /rule_editor_apply_canvas_actions/);
   assert.match(compactZh, /可点击应用按钮/);
+  assert.match(compactZh, /同一次 steps 写全所有 connect/);
   assert.match(compactEn, /rule_editor_apply_canvas_actions/);
   assert.match(compactEn, /clickable apply button/);
+  assert.match(compactEn, /every connect in that same steps array/);
 
   const zh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.write']);
   const en = String((enLang as Record<string, string>)['RuleEditor.agent.system.write']);
@@ -810,7 +838,8 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(zh, /rule_editor_search_node_types/);
   assert.match(zh, /rule_editor_get_node_type_detail/);
   assert.match(zh, /rule_editor_apply_canvas_actions/);
-  assert.match(zh, /steps\[\]\.op/);
+  assert.match(zh, /全部 connect 放进同一次 steps/);
+  assert.match(zh, /不要先插入再第二次 apply 只连线/);
   assert.match(zh, /禁止回复编辑器无法一键插入/);
   assert.match(zh, /帮我执行/);
   assert.match(zh, /只能调用 rule_editor_apply_canvas_actions/);
@@ -832,5 +861,32 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(en, /call only rule_editor_apply_canvas_actions/);
   assert.match(en, /Do not call rule_editor_propose_canvas_actions/);
   assert.match(en, /clickable apply button/);
+  assert.match(en, /every connect in that same steps array/);
+  assert.match(en, /do not insert then apply again only to connect/);
   assert.equal(en.includes('insert_node'), false);
+});
+
+test('context-only ticks do not advance version when digest is unchanged or a tool call is in flight', () => {
+  const first = shouldAdvanceRuleEditorContextVersion({
+    previousDigest: '',
+    nextContext: { canvasRevision: 1, nodeCount: 2 },
+    inFlightClientToolCall: false,
+  });
+  assert.equal(first.advance, true);
+
+  const same = shouldAdvanceRuleEditorContextVersion({
+    previousDigest: first.digest,
+    nextContext: { canvasRevision: 1, nodeCount: 2 },
+    inFlightClientToolCall: false,
+  });
+  assert.equal(same.advance, false);
+  assert.equal(same.digest, first.digest);
+
+  const inFlight = shouldAdvanceRuleEditorContextVersion({
+    previousDigest: first.digest,
+    nextContext: { canvasRevision: 2, nodeCount: 4 },
+    inFlightClientToolCall: true,
+  });
+  assert.equal(inFlight.advance, false);
+  assert.notEqual(inFlight.digest, first.digest);
 });

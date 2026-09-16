@@ -139,7 +139,76 @@ const readApplyPlanSource = (value: unknown): Record<string, any> | undefined =>
     : value as Record<string, any>;
 };
 
-const coerceApplyCanvasPlanArguments = (
+const liftStringNodeReference = (value: string): { kind: 'alias'; value: string } => ({
+  kind: 'alias',
+  value: value.trim(),
+});
+
+const coerceCanvasNodeReference = (value: unknown): unknown => (
+  typeof value === 'string' && value.trim() ? liftStringNodeReference(value) : value
+);
+
+const coerceCanvasNodeReferenceList = (value: unknown): unknown => (
+  Array.isArray(value) ? value.map((item) => coerceCanvasNodeReference(item)) : value
+);
+
+const stepHasStringNodeRef = (step: unknown): boolean => {
+  if (!isRecord(step)) return false;
+  return typeof step.source === 'string'
+    || typeof step.target === 'string'
+    || typeof step.node === 'string'
+    || (Array.isArray(step.nodes) && step.nodes.some((item) => typeof item === 'string'))
+    || (Array.isArray(step.connections) && step.connections.some((item) => (
+      isRecord(item) && (typeof item.source === 'string' || typeof item.target === 'string')
+    )));
+};
+
+const completionHasStringNodeRef = (completion: unknown): boolean => (
+  isRecord(completion)
+  && (
+    (Array.isArray(completion.sources) && completion.sources.some((item) => typeof item === 'string'))
+    || (Array.isArray(completion.terminals) && completion.terminals.some((item) => typeof item === 'string'))
+  )
+);
+
+const coerceCanvasPlanNodeReferences = (plan: Record<string, any>) => {
+  if (isRecord(plan.completion)) {
+    if (Array.isArray(plan.completion.sources)) {
+      plan.completion.sources = coerceCanvasNodeReferenceList(plan.completion.sources);
+    }
+    if (Array.isArray(plan.completion.terminals)) {
+      plan.completion.terminals = coerceCanvasNodeReferenceList(plan.completion.terminals);
+    }
+  }
+  if (!Array.isArray(plan.steps)) return;
+  for (const step of plan.steps) {
+    if (!isRecord(step)) continue;
+    if (typeof step.node === 'string') step.node = coerceCanvasNodeReference(step.node);
+    if (typeof step.source === 'string') step.source = coerceCanvasNodeReference(step.source);
+    if (typeof step.target === 'string') step.target = coerceCanvasNodeReference(step.target);
+    if (Array.isArray(step.nodes)) {
+      step.nodes = coerceCanvasNodeReferenceList(step.nodes);
+    }
+    if (Array.isArray(step.connections)) {
+      step.connections = step.connections.map((connection) => (
+        isRecord(connection)
+          ? {
+            ...connection,
+            source: coerceCanvasNodeReference(connection.source),
+            target: coerceCanvasNodeReference(connection.target),
+          }
+          : connection
+      ));
+    }
+    if (Array.isArray(step.configReferences)) {
+      step.configReferences = step.configReferences.map((item) => (
+        isRecord(item) ? { ...item, ref: coerceCanvasNodeReference(item.ref) } : item
+      ));
+    }
+  }
+};
+
+export const coerceApplyCanvasPlanArguments = (
   args: Record<string, any>,
 ): { ok: true; args: Record<string, any> } | { ok: false; field: string } => {
   const needsUnwrap = (args.flowMode == null || args.steps == null)
@@ -147,7 +216,9 @@ const coerceApplyCanvasPlanArguments = (
   const hasStringField = APPLY_CANVAS_JSON_FIELDS.some((field) => typeof args[field] === 'string')
     || typeof args.actions === 'string';
   const hasEnvelope = APPLY_CANVAS_ENVELOPE_KEYS.some((key) => key in args);
-  if (!needsUnwrap && !hasStringField && !hasEnvelope) {
+  const hasStringNodeRef = Array.isArray(args.steps) && args.steps.some(stepHasStringNodeRef);
+  const hasStringCompletionRef = completionHasStringNodeRef(args.completion);
+  if (!needsUnwrap && !hasStringField && !hasEnvelope && !hasStringNodeRef && !hasStringCompletionRef) {
     return { ok: true, args };
   }
 
@@ -188,6 +259,13 @@ const coerceApplyCanvasPlanArguments = (
   for (const key of APPLY_CANVAS_ENVELOPE_KEYS) {
     delete next[key];
   }
+  if (Array.isArray(next.steps) && next.steps.some(stepHasStringNodeRef)) {
+    next.steps = next.steps.map((step: unknown) => (isRecord(step) ? { ...step } : step));
+  }
+  if (completionHasStringNodeRef(next.completion)) {
+    next.completion = { ...next.completion };
+  }
+  coerceCanvasPlanNodeReferences(next);
   return { ok: true, args: next };
 };
 

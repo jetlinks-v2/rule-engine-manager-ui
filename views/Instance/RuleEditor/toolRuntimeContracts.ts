@@ -8,9 +8,10 @@ import {
 export const APPLY_CANVAS_TOOL_ID = 'rule_editor_apply_canvas_actions';
 
 export const APPLY_CANVAS_PLAN_BINDING_GUIDE = [
+  'A complete flow is one apply with complete-topology and every connect in the same steps.',
   'This is the only model-declared canvas write tool.',
-  'plan_update step outputBindings must be canvas-changes.',
-  'Submit steps and completion as structured objects, not JSON strings.',
+  'outputBindings must be canvas-changes.',
+  'Submit steps/completion as objects, not JSON strings.',
 ].join(' ');
 
 export const orderRuleEditorRemoteTools = <T extends { id?: string; agentVisible?: boolean }>(
