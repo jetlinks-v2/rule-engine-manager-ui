@@ -95,14 +95,10 @@ test('agent-visible read remotes compile as typed without requiring catalog-wide
     'rule_editor_find_nodes',
     'rule_editor_get_node_detail',
     'rule_editor_get_node_contract',
-    'rule_editor_get_tool_manual',
     'rule_editor_get_node_type_manual',
     'rule_editor_search_node_types',
     'rule_editor_get_node_type_detail',
     'rule_editor_execute_node_tool',
-    'rule_editor_list_node_templates',
-    'rule_editor_focus_node',
-    'rule_editor_get_debug_logs',
     'rule_editor_validate_flow',
   ]);
 
@@ -195,4 +191,41 @@ test('hidden write and proposal tools remain legacy when requireRouting stays of
   report.tools.forEach((tool) => {
     assert.equal(tool.contractStatus, 'legacy', tool.toolId);
   });
+});
+
+test('hidden read remotes still compile typed from leftover adapter contracts', () => {
+  const leftoverIds = [
+    'rule_editor_get_tool_manual',
+    'rule_editor_list_node_templates',
+    'rule_editor_focus_node',
+    'rule_editor_get_debug_logs',
+  ];
+  leftoverIds.forEach((id) => {
+    assert.equal((RULE_EDITOR_TYPED_REMOTE_TOOL_IDS as readonly string[]).includes(id), false, id);
+  });
+  const report = reportFor(leftoverIds.map((id) => remoteTool(id)));
+  assert.equal(report.valid, true);
+  assert.equal(report.summary.typed, leftoverIds.length);
+  leftoverIds.forEach((id) => {
+    assert.equal(report.tools.find((tool) => tool.toolId === id)?.contractStatus, 'typed', id);
+  });
+});
+
+test('parent catalog drops remotes with agentVisible false and keeps apply first', () => {
+  const tools = orderRuleEditorRemoteTools([
+    { id: 'rule_editor_get_tool_manual', agentVisible: false },
+    { id: 'rule_editor_connect_nodes_batch', write: true, agentVisible: false },
+    { id: 'rule_editor_layout_nodes', write: true, agentVisible: false },
+    applyTool(),
+    remoteTool('rule_editor_get_context'),
+    remoteTool('rule_editor_edit_node', true),
+  ]);
+
+  assert.deepEqual(tools.map((tool) => tool.id), [
+    APPLY_CANVAS_TOOL_ID,
+    'rule_editor_get_context',
+    'rule_editor_edit_node',
+  ]);
+  assert.equal(tools[0]?.id, APPLY_CANVAS_TOOL_ID);
+  assert.equal(tools.some((tool) => tool.id === 'rule_editor_apply_canvas_add_nodes'), false);
 });

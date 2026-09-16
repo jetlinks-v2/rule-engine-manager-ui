@@ -26,6 +26,7 @@ export interface RemoteRuleEditorToolDefinition extends RuleEditorRemoteToolDefi
   output?: Record<string, any>;
   expands?: Record<string, any>;
   annotations?: Record<string, any>;
+  agentVisible?: boolean;
 }
 
 export const RULE_EDITOR_REMOTE_ADAPTER_VERSION = 'rule-editor-remote-definition/v1' as const;
@@ -90,6 +91,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> => (
 );
 
 const APPLY_CANVAS_JSON_FIELDS = ['steps', 'completion'] as const;
+const APPLY_CANVAS_ENVELOPE_KEYS = [
+  'actions',
+  'allowMultiple',
+  'action',
+  'label',
+  'title',
+  'description',
+  'summary',
+  'ttlSeconds',
+  'plan',
+] as const;
 
 const isApplyCanvasJsonValue = (
   field: typeof APPLY_CANVAS_JSON_FIELDS[number],
@@ -108,20 +120,75 @@ const parseApplyCanvasJsonField = (
   }
 };
 
+const parseJsonValue = (value: string): unknown | undefined => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+};
+
+const isCompletionModeString = (value: string): value is RuleEditorCompletionMode => (
+  RULE_EDITOR_COMPLETION_MODES.some((mode) => mode === value.trim())
+);
+
+const readApplyPlanSource = (value: unknown): Record<string, any> | undefined => {
+  if (!isRecord(value)) return undefined;
+  return isRecord(value.plan) && !Array.isArray(value.plan)
+    ? value.plan as Record<string, any>
+    : value as Record<string, any>;
+};
+
 const coerceApplyCanvasPlanArguments = (
   args: Record<string, any>,
 ): { ok: true; args: Record<string, any> } | { ok: false; field: string } => {
-  let next: Record<string, any> | undefined;
+  const needsUnwrap = (args.flowMode == null || args.steps == null)
+    && (args.actions != null || args.action != null);
+  const hasStringField = APPLY_CANVAS_JSON_FIELDS.some((field) => typeof args[field] === 'string')
+    || typeof args.actions === 'string';
+  const hasEnvelope = APPLY_CANVAS_ENVELOPE_KEYS.some((key) => key in args);
+  if (!needsUnwrap && !hasStringField && !hasEnvelope) {
+    return { ok: true, args };
+  }
+
+  const next: Record<string, any> = { ...args };
+  if (next.flowMode == null || next.steps == null) {
+    let actionsValue = next.actions ?? next.action;
+    if (typeof actionsValue === 'string') {
+      const parsed = parseJsonValue(actionsValue);
+      if (parsed === undefined) return { ok: false, field: 'actions' };
+      actionsValue = parsed;
+    }
+    const action = Array.isArray(actionsValue) ? actionsValue[0] : actionsValue;
+    const source = readApplyPlanSource(action);
+    if (source) {
+      if (next.flowMode == null && source.flowMode != null) next.flowMode = source.flowMode;
+      if (next.completion == null && source.completion != null) next.completion = source.completion;
+      if (next.steps == null && source.steps != null) next.steps = source.steps;
+      if (next.rollbackOnValidationError == null && source.rollbackOnValidationError != null) {
+        next.rollbackOnValidationError = source.rollbackOnValidationError;
+      }
+    }
+  }
+
   for (const field of APPLY_CANVAS_JSON_FIELDS) {
-    const value = (next || args)[field];
+    const value = next[field];
     if (typeof value !== 'string') continue;
+    if (field === 'completion' && isCompletionModeString(value)) {
+      next[field] = { mode: value.trim() };
+      continue;
+    }
     const parsed = parseApplyCanvasJsonField(field, value);
     if (parsed === undefined) {
       return { ok: false, field };
     }
-    next = { ...(next || args), [field]: parsed };
+    next[field] = parsed;
   }
-  return { ok: true, args: next || args };
+
+  for (const key of APPLY_CANVAS_ENVELOPE_KEYS) {
+    delete next[key];
+  }
+  return { ok: true, args: next };
 };
 
 const applyCanvasDescription = (description?: string) => (

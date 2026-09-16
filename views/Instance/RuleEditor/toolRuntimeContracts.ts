@@ -13,9 +13,9 @@ export const APPLY_CANVAS_PLAN_BINDING_GUIDE = [
   'Submit steps and completion as structured objects, not JSON strings.',
 ].join(' ');
 
-export const orderRuleEditorRemoteTools = <T extends { id?: string }>(
+export const orderRuleEditorRemoteTools = <T extends { id?: string; agentVisible?: boolean }>(
   tools: readonly T[],
-): T[] => [...tools.filter((tool) => Boolean(tool?.id))].sort((left, right) => {
+): T[] => [...tools.filter((tool) => Boolean(tool?.id) && tool.agentVisible !== false)].sort((left, right) => {
   const leftApply = left.id === APPLY_CANVAS_TOOL_ID;
   const rightApply = right.id === APPLY_CANVAS_TOOL_ID;
   if (leftApply === rightApply) return 0;
@@ -191,9 +191,19 @@ export const RULE_EDITOR_TYPED_REMOTE_CONTRACTS: Record<string, AiClientToolCont
   ),
 };
 
-export const RULE_EDITOR_TYPED_REMOTE_TOOL_IDS = Object.freeze(
-  Object.keys(RULE_EDITOR_TYPED_REMOTE_CONTRACTS),
-);
+export const RULE_EDITOR_TYPED_REMOTE_TOOL_IDS = Object.freeze([
+  'rule_editor_get_context',
+  'rule_editor_get_graph_summary',
+  'rule_editor_list_nodes',
+  'rule_editor_find_nodes',
+  'rule_editor_get_node_detail',
+  'rule_editor_get_node_contract',
+  'rule_editor_get_node_type_manual',
+  'rule_editor_search_node_types',
+  'rule_editor_get_node_type_detail',
+  'rule_editor_execute_node_tool',
+  'rule_editor_validate_flow',
+]);
 
 export const resolveRuleEditorRemoteContract = (toolId: string) => (
   toolId === APPLY_CANVAS_TOOL_ID

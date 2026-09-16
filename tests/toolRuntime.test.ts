@@ -7,8 +7,28 @@ import {
   toRuleEditorClientToolDefinition,
   type RemoteRuleEditorToolDefinition,
 } from '../views/Instance/RuleEditor/toolRuntime';
+import enLang from '../locales/lang/en.json';
+import zhLang from '../locales/lang/zh.json';
 
 const canonicalStepsSchema = {
+  type: 'array',
+  items: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['op'],
+    properties: {
+      op: {
+        type: 'string',
+        enum: ['insert-node', 'insert-template', 'edit-node', 'connect', 'connect-batch', 'layout'],
+      },
+      nodeType: { type: 'string' },
+      source: { type: 'object' },
+      target: { type: 'object' },
+    },
+  },
+};
+
+const legacyOneOfStepsSchema = {
   type: 'array',
   items: {
     oneOf: [
@@ -40,18 +60,14 @@ const canonicalPlanSchema = {
   properties: {
     flowMode: { type: 'string', enum: ['request-response', 'realtime-stream', 'one-way-trigger'] },
     completion: {
-      oneOf: [
-        { type: 'object', required: ['mode'], properties: { mode: { const: 'partial-draft' } } },
-        {
-          type: 'object',
-          required: ['mode', 'sources', 'terminals'],
-          properties: {
-            mode: { const: 'complete-topology' },
-            sources: { type: 'array' },
-            terminals: { type: 'array' },
-          },
-        },
-      ],
+      type: 'object',
+      additionalProperties: false,
+      required: ['mode'],
+      properties: {
+        mode: { type: 'string', enum: ['complete-topology', 'partial-draft'] },
+        sources: { type: 'array' },
+        terminals: { type: 'array' },
+      },
     },
     steps: canonicalStepsSchema,
   },
@@ -181,6 +197,48 @@ test('JSON-string apply steps and completion are parsed before iframe execute', 
   assert.equal(captured.args.steps, completionOnly.steps);
 });
 
+test('JSON-string apply actions envelope is unwrapped before iframe execute', async () => {
+  const captured: Record<string, any> = {};
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async (_toolId, args) => {
+    captured.args = args;
+    return {
+      ok: false,
+      success: false,
+      code: 'rule_editor.canvas_plan.preflight_failed',
+      failureDisposition: 'request',
+      recoveryAction: 'repair',
+    };
+  });
+  const plan = {
+    flowMode: 'realtime-stream',
+    completion: { mode: 'partial-draft' },
+    steps: [{ op: 'insert-node', nodeType: 'delay' }],
+  };
+
+  await definition.execute({ actions: JSON.stringify([plan]) }, {}, {} as any);
+  assert.deepEqual(captured.args, plan);
+
+  await definition.execute({ actions: JSON.stringify(plan) }, {}, {} as any);
+  assert.deepEqual(captured.args, plan);
+
+  await definition.execute({
+    actions: [{ label: '写入', plan }],
+  }, {}, {} as any);
+  assert.deepEqual(captured.args, plan);
+
+  const invalidActions = await definition.execute({ actions: '[{"flowMode":' }, {}, {} as any);
+  assert.deepEqual(invalidActions, {
+    ok: false,
+    success: false,
+    code: 'rule_editor.canvas_plan.invalid_arguments',
+    message: 'actions must be a structured object, not an unparsable JSON string',
+    failureDisposition: 'request',
+    recoveryAction: 'repair',
+    retryable: false,
+    repair: { field: '/actions' },
+  });
+});
+
 test('object apply arguments pass through unchanged and skip JSON coercion', async () => {
   const captured: Record<string, any> = {};
   const definition = toRuleEditorClientToolDefinition(applyTool(), async (_toolId, args) => {
@@ -272,12 +330,33 @@ test('mixed remote tools keep apply first without reordering sibling reads', () 
   ]);
 });
 
+test('parent catalog filter uses agentVisible and does not expose a second apply alias', () => {
+  const ordered = orderRuleEditorRemoteTools([
+    { id: 'rule_editor_focus_node', agentVisible: false },
+    { id: 'rule_editor_get_debug_logs', agentVisible: false },
+    { id: 'rule_editor_apply_canvas_actions' },
+    { id: 'rule_editor_search_node_types' },
+  ]);
+
+  assert.deepEqual(ordered.map((tool) => tool.id), [
+    'rule_editor_apply_canvas_actions',
+    'rule_editor_search_node_types',
+  ]);
+  assert.equal(ordered.filter((tool) => String(tool.id).startsWith('rule_editor_apply_')).length, 1);
+});
+
 test('legacy parent fallback keeps a per-input schema when no root schema is declared', () => {
   const tool = applyTool();
   delete tool.expands;
+  tool.inputs = [{
+    id: 'steps',
+    required: true,
+    valueType: { type: 'array' },
+    expands: { _schema: legacyOneOfStepsSchema },
+  }];
   const definition = toRuleEditorClientToolDefinition(tool, async () => ({}));
 
-  assert.deepEqual(definition.inputs?.[0].expands._schema.items.oneOf, canonicalStepsSchema.items.oneOf);
+  assert.deepEqual(definition.inputs?.[0].expands._schema.items.oneOf, legacyOneOfStepsSchema.items.oneOf);
 });
 
 test('successful apply result carries canonical state-change evidence', async () => {
@@ -682,4 +761,39 @@ test('empty runtime reports translated metadata and rejects execution before bri
   assert.equal(typeof runtime.subscribeClientTools(() => undefined), 'function');
   runtime.dispose();
   await assert.rejects(runtime.handleClientToolCall({} as any), /translated:RuleEditor\.bridge\.error\.notReady/);
+});
+
+test('parent write prompt treats page-bound subscribe/forward/push as apply with op', () => {
+  const zh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.write']);
+  const en = String((enLang as Record<string, string>)['RuleEditor.agent.system.write']);
+
+  assert.match(zh, /如何做/);
+  assert.match(zh, /SQL 写法/);
+  assert.match(zh, /视为方案咨询/);
+  assert.equal(zh.includes('默认把“我想实现'), false);
+  assert.match(zh, /订阅、转发、推送到第三方接口/);
+  assert.match(zh, /rule_editor_search_node_types/);
+  assert.match(zh, /rule_editor_get_node_type_detail/);
+  assert.match(zh, /rule_editor_apply_canvas_actions/);
+  assert.match(zh, /steps\[\]\.op/);
+  assert.match(zh, /禁止回复编辑器无法一键插入/);
+  assert.match(zh, /帮我执行/);
+  assert.match(zh, /只能调用 rule_editor_apply_canvas_actions/);
+  assert.match(zh, /不要调用 rule_editor_propose_canvas_actions/);
+  assert.equal(zh.includes('insert_node'), false);
+
+  assert.match(en, /how to do this/);
+  assert.match(en, /SQL writing/);
+  assert.match(en, /design consultation/);
+  assert.equal(en.includes('I want to implement'), false);
+  assert.match(en, /subscribe, forward, push to a third-party API/);
+  assert.match(en, /rule_editor_search_node_types/);
+  assert.match(en, /rule_editor_get_node_type_detail/);
+  assert.match(en, /rule_editor_apply_canvas_actions/);
+  assert.match(en, /steps\[\]\.op/);
+  assert.match(en, /cannot one-click insert/);
+  assert.match(en, /execute now/);
+  assert.match(en, /call only rule_editor_apply_canvas_actions/);
+  assert.match(en, /Do not call the proposal tool/);
+  assert.equal(en.includes('insert_node'), false);
 });
