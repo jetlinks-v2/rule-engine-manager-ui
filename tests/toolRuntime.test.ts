@@ -566,6 +566,7 @@ test('successful apply result carries canonical state-change evidence', async ()
     topologyLinkCount: 1,
     topologyDiagramAvailable: true,
   });
+  assert.equal(Object.hasOwn(result, 'topology'), false);
   assert.equal(result.outputBindings[0].name, 'canvas-changes');
   assert.equal(result.outputBindings[0].recordCount, 1);
   assert.equal(result.outputBindings[0].shape, 'rule-editor.canvas-changes');
@@ -588,7 +589,7 @@ test('topology-only complete-topology success synthesizes verified mermaid prese
     ],
     links: [{ source: 'n1', target: 'n2', sourcePort: 0 }],
   };
-  const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({
+  const iframeResult = {
     ok: true,
     success: true,
     contract: 'rule-editor.canvas-apply-result/v1',
@@ -604,7 +605,8 @@ test('topology-only complete-topology success synthesizes verified mermaid prese
     validation: { issueCount: 0 },
     canvasRevision: 7,
     rolledBack: false,
-  }));
+  };
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async () => iframeResult);
 
   const result = await definition.execute({}, {}, {} as any);
   const expectedMermaid = [
@@ -614,7 +616,13 @@ test('topology-only complete-topology success synthesizes verified mermaid prese
     '  n1 --> n2',
   ].join('\n');
 
+  assert.equal(Object.hasOwn(iframeResult, 'presentation'), false);
+  assert.equal(iframeResult.topology, topology);
   assert.equal(result.presentation.mermaid, expectedMermaid);
+  assert.equal(Object.hasOwn(result, 'topology'), false);
+  assert.equal(result.topology, undefined);
+  assert.equal(result.evidence.facts.topologyNodeCount, 2);
+  assert.equal(result.evidence.facts.topologyLinkCount, 1);
   assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
   assert.equal(result.outputBindings[1].name, 'topology-diagram');
   assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
@@ -707,6 +715,7 @@ test('model-facing apply success omits executor dumps that would poison terminal
   assert.equal(iframeResult.configApplications[0].appliedConfig.url, poisonUrl);
   assert.equal(iframeResult.changes[0].url, poisonUrl);
   assert.equal(iframeResult.topology.nodes[0].url, poisonUrl);
+  assert.equal(iframeResult.topology.nodes[0].label, 'Transform');
   assert.deepEqual(result.changes, [{ kind: 'node-inserted', nodeId: 'node-1', nodeType: 'function' }]);
   assert.deepEqual(result.completion, {
     mode: 'complete-topology',
@@ -714,13 +723,10 @@ test('model-facing apply success omits executor dumps that would poison terminal
     sourceCount: 1,
     terminalCount: 1,
   });
-  assert.deepEqual(result.topology.nodes[0], {
-    key: 'n1',
-    label: 'Transform',
-    type: 'function',
-    source: true,
-    terminal: false,
-  });
+  assert.equal(Object.hasOwn(result, 'topology'), false);
+  assert.equal(result.topology, undefined);
+  assert.equal(serialized.includes('"label":"Transform"'), false);
+  assert.equal(serialized.includes('"label":"Sink"'), false);
   assert.deepEqual(result.validation, { issueCount: 0, truncated: false, issues: [{ code: 'ok', message: 'noop' }] });
   assert.equal(result.canvasRevision, 10);
   assert.equal(result.presentation.mermaid, [
@@ -730,6 +736,8 @@ test('model-facing apply success omits executor dumps that would poison terminal
     '  n1 --> n2',
   ].join('\n'));
   assert.equal(result.evidence.resultStatus, 'applied');
+  assert.equal(result.evidence.facts.topologyNodeCount, 2);
+  assert.equal(result.evidence.facts.topologyLinkCount, 1);
   assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
   assert.equal(result.outputBindings[0].name, 'canvas-changes');
   assert.equal(result.outputBindings[1].name, 'topology-diagram');
@@ -784,6 +792,10 @@ test('three-node complete-topology snapshot synthesizes both verified edges', as
   ].join('\n');
 
   assert.equal(result.presentation.mermaid, expectedMermaid);
+  assert.equal(Object.hasOwn(result, 'topology'), false);
+  assert.equal(JSON.stringify(result).includes('"label":"订阅属性上报"'), false);
+  assert.equal(result.evidence.facts.topologyNodeCount, 3);
+  assert.equal(result.evidence.facts.topologyLinkCount, 2);
   assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
   assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), true);
 });
@@ -819,7 +831,10 @@ test('single-node complete-topology does not synthesize a topology diagram', asy
   const result = await definition.execute({}, {}, {} as any);
 
   assert.equal(result.evidence.resultStatus, 'applied');
+  assert.equal(Object.hasOwn(result, 'topology'), false);
   assert.equal(result.presentation, undefined);
+  assert.equal(result.evidence.facts.topologyNodeCount, 1);
+  assert.equal(result.evidence.facts.topologyLinkCount, 0);
   assert.equal(result.evidence.facts.topologyDiagramAvailable, false);
   assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
 });
@@ -899,7 +914,10 @@ test('oversized verified mermaid stays topology-only instead of failing a succes
   const result = await definition.execute({}, {}, {} as any);
 
   assert.equal(result.evidence.resultStatus, 'applied');
+  assert.equal(Object.hasOwn(result, 'topology'), false);
   assert.equal(result.presentation, undefined);
+  assert.equal(result.evidence.facts.topologyNodeCount, nodeCount);
+  assert.equal(result.evidence.facts.topologyLinkCount, links.length);
   assert.equal(result.evidence.facts.topologyDiagramAvailable, false);
   assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
 });
@@ -929,6 +947,7 @@ test('partial draft keeps state-change evidence without claiming task completion
   assert.equal(result.evidence.facts.topologySatisfied, false);
   assert.equal(result.evidence.facts.topologyDiagramAvailable, false);
   assert.equal(result.presentation, undefined);
+  assert.equal(Object.hasOwn(result, 'topology'), false);
   assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
 });
 

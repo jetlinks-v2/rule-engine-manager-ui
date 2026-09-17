@@ -497,28 +497,6 @@ const toModelFacingCompletion = (
   terminalCount: completion.terminalCount,
 });
 
-const toModelFacingTopology = (
-  topology: RuleEditorTopologySnapshot,
-): RuleEditorTopologySnapshot => ({
-  contract: 'rule-editor.topology-snapshot/v1',
-  complete: true,
-  truncated: topology.truncated,
-  nodeCount: topology.nodeCount,
-  linkCount: topology.linkCount,
-  nodes: topology.nodes.map(node => ({
-    key: node.key,
-    label: node.label,
-    type: node.type,
-    source: node.source,
-    terminal: node.terminal,
-  })),
-  links: topology.links.map(link => ({
-    source: link.source,
-    target: link.target,
-    sourcePort: link.sourcePort,
-  })),
-});
-
 const toModelFacingValidationIssue = (issue: unknown) => {
   if (!isRecord(issue)) return issue;
   const projected: Record<string, unknown> = {};
@@ -542,7 +520,8 @@ const toModelFacingValidation = (validation: RuleEditorCanvasApplyResult['valida
   return Object.keys(projected).length ? projected : undefined;
 };
 
-// Compact model-facing success: keep write evidence, drop executor dumps that poison COMPOSITE.
+// Compact model-facing success: keep write evidence and mermaid for capture, drop topology
+// labels the model would copy into a second graph, and drop executor dumps that poison COMPOSITE.
 const toModelFacingCanvasApplyResult = (
   result: RuleEditorCanvasApplyResult,
 ): RuleEditorCanvasApplyResult => {
@@ -560,7 +539,6 @@ const toModelFacingCanvasApplyResult = (
   if (typeof result.resultStatus === 'string' && result.resultStatus) {
     projected.resultStatus = result.resultStatus;
   }
-  if (result.topology !== undefined) projected.topology = toModelFacingTopology(result.topology);
   if (result.presentation !== undefined) {
     projected.presentation = { mermaid: result.presentation.mermaid };
   }
@@ -572,22 +550,25 @@ const toModelFacingCanvasApplyResult = (
   return projected;
 };
 
-const withCanvasApplyEvidence = (result: RuleEditorCanvasApplyResult) => (
+const withCanvasApplyEvidence = (
+  result: RuleEditorCanvasApplyResult,
+  source: RuleEditorCanvasApplyResult = result,
+) => (
   withAiClientToolContractEvidence(result, APPLY_CANVAS_CONTRACT, {
-    complete: result.completion.satisfied,
+    complete: source.completion.satisfied,
     truncated: false,
-    resultStatus: result.completion.satisfied ? 'applied' : 'partial',
+    resultStatus: source.completion.satisfied ? 'applied' : 'partial',
     facts: {
-      flowMode: result.flowMode,
-      completionMode: result.completion.mode,
-      topologySatisfied: result.completion.satisfied,
-      sourceCount: result.completion.sourceCount,
-      terminalCount: result.completion.terminalCount,
-      canvasRevision: result.canvasRevision,
-      rolledBack: result.rolledBack,
-      validationIssueCount: result.validation?.issueCount,
-      topologyNodeCount: result.topology?.nodeCount,
-      topologyLinkCount: result.topology?.linkCount,
+      flowMode: source.flowMode,
+      completionMode: source.completion.mode,
+      topologySatisfied: source.completion.satisfied,
+      sourceCount: source.completion.sourceCount,
+      terminalCount: source.completion.terminalCount,
+      canvasRevision: source.canvasRevision,
+      rolledBack: source.rolledBack,
+      validationIssueCount: source.validation?.issueCount,
+      topologyNodeCount: source.topology?.nodeCount,
+      topologyLinkCount: source.topology?.linkCount,
       topologyDiagramAvailable: Boolean(result.presentation?.mermaid),
     },
     outputs: [
@@ -814,7 +795,10 @@ export const toRuleEditorClientToolDefinition = (
           }
           const withPresentation = attachVerifiedTopologyPresentation(result);
           if (isCanvasApplySuccess(withPresentation)) {
-            return withCanvasApplyEvidence(toModelFacingCanvasApplyResult(withPresentation));
+            return withCanvasApplyEvidence(
+              toModelFacingCanvasApplyResult(withPresentation),
+              withPresentation,
+            );
           }
           return toRemoteToolFailure(
             'rule_editor.canvas_plan.invalid_result',
