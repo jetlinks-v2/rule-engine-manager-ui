@@ -1256,11 +1256,19 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(compactZh, /rule_editor_apply_canvas_actions/);
   assert.match(compactZh, /compositions/);
   assert.match(compactZh, /insert-composition/);
+  assert.match(compactZh, /zip-output/);
+  assert.match(compactZh, /function-mapper/);
+  assert.match(compactZh, /rule_editor_execute_node_tool/);
+  assert.match(compactZh, /QueryDeviceDetail/);
   assert.match(compactZh, /可点击应用按钮/);
   assert.match(compactZh, /同一次 steps 写全所有 connect/);
   assert.match(compactEn, /rule_editor_apply_canvas_actions/);
   assert.match(compactEn, /compositions/);
   assert.match(compactEn, /insert-composition/);
+  assert.match(compactEn, /zip-output/);
+  assert.match(compactEn, /function-mapper/);
+  assert.match(compactEn, /rule_editor_execute_node_tool/);
+  assert.match(compactEn, /QueryDeviceDetail/);
   assert.match(compactEn, /clickable apply button/);
   assert.match(compactEn, /every connect in that same steps array/);
 
@@ -1275,6 +1283,10 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(zh, /rule_editor_search_node_types/);
   assert.match(zh, /compositions/);
   assert.match(zh, /insert-composition/);
+  assert.match(zh, /zip-output/);
+  assert.match(zh, /function-mapper/);
+  assert.match(zh, /rule_editor_execute_node_tool/);
+  assert.match(zh, /QueryDeviceDetail/);
   assert.match(zh, /对 steps 中每个类型|各调用一次 rule_editor_get_node_type_detail|每个将出现的类型/);
   assert.match(zh, /TARGET|对外字段名/);
   assert.match(en, /TARGET/);
@@ -1295,6 +1307,10 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(en, /rule_editor_search_node_types/);
   assert.match(en, /compositions/);
   assert.match(en, /insert-composition/);
+  assert.match(en, /zip-output/);
+  assert.match(en, /function-mapper/);
+  assert.match(en, /rule_editor_execute_node_tool/);
+  assert.match(en, /QueryDeviceDetail/);
   assert.match(en, /rule_editor_get_node_type_detail/);
   assert.match(en, /once per type|per planned type|each type that will appear/);
   assert.match(en, /rule_editor_apply_canvas_actions/);
