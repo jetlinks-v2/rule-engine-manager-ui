@@ -335,12 +335,51 @@ const isTopologySnapshot = (value: unknown): value is RuleEditorTopologySnapshot
   ));
 };
 
+const TOPOLOGY_MERMAID_MAX_LENGTH = 16 * 1024;
+
+const canPublishTopologyDiagram = (topology: unknown): topology is RuleEditorTopologySnapshot => (
+  isTopologySnapshot(topology)
+  && !topology.truncated
+  && topology.nodeCount >= 2
+  && topology.linkCount >= 1
+);
+
+const isPublishableTopologyMermaid = (mermaid: string) => (
+  Boolean(mermaid.trim()) && mermaid.length <= TOPOLOGY_MERMAID_MAX_LENGTH
+);
+
 // The diagram is presentation of this exact verified snapshot, never a second model-authored graph.
 const toVerifiedTopologyMermaid = (topology: RuleEditorTopologySnapshot) => [
   'flowchart LR',
   ...topology.nodes.map(node => `  ${node.key}["${node.label}"]`),
   ...topology.links.map(link => `  ${link.source} --> ${link.target}`),
 ].join('\n');
+
+// Iframe executor stays topology-only. Parent synthesizes mermaid from that snapshot so the
+// declared topology-diagram binding exists for terminal evidence. Never overwrite iframe mermaid.
+const attachVerifiedTopologyPresentation = (value: unknown): unknown => {
+  if (!isRecord(value) || value.presentation !== undefined) {
+    return value;
+  }
+  const topology = value.topology;
+  const completion = value.completion;
+  if (!canPublishTopologyDiagram(topology)
+    || !isRecord(completion)
+    || completion.mode !== 'complete-topology'
+    || completion.satisfied !== true) {
+    return value;
+  }
+  const mermaid = toVerifiedTopologyMermaid(topology);
+  if (!isPublishableTopologyMermaid(mermaid)) {
+    return value;
+  }
+  return {
+    ...value,
+    presentation: {
+      mermaid,
+    },
+  };
+};
 
 const hasValidTopologyPresentation = (value: Record<string, unknown>) => {
   const topology = value.topology;
@@ -349,12 +388,8 @@ const hasValidTopologyPresentation = (value: Record<string, unknown>) => {
   if (presentation === undefined) return true;
   if (!isRecord(presentation)
     || typeof presentation.mermaid !== 'string'
-    || !presentation.mermaid.trim()
-    || presentation.mermaid.length > 16 * 1024
-    || !isTopologySnapshot(topology)
-    || topology.truncated
-    || topology.nodeCount < 2
-    || topology.linkCount < 1) {
+    || !isPublishableTopologyMermaid(presentation.mermaid)
+    || !canPublishTopologyDiagram(topology)) {
     return false;
   }
   return presentation.mermaid === toVerifiedTopologyMermaid(topology);
@@ -619,8 +654,9 @@ export const toRuleEditorClientToolDefinition = (
           if (isRecord(result) && (result.success === false || result.ok === false)) {
             return toRemoteFailureResult(result);
           }
-          if (isCanvasApplySuccess(result)) {
-            return withCanvasApplyEvidence(result);
+          const withPresentation = attachVerifiedTopologyPresentation(result);
+          if (isCanvasApplySuccess(withPresentation)) {
+            return withCanvasApplyEvidence(withPresentation);
           }
           return toRemoteToolFailure(
             'rule_editor.canvas_plan.invalid_result',

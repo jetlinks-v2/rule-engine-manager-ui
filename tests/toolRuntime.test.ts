@@ -470,6 +470,220 @@ test('successful apply result carries canonical state-change evidence', async ()
   assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
 });
 
+test('topology-only complete-topology success synthesizes verified mermaid presentation', async () => {
+  const topology = {
+    contract: 'rule-editor.topology-snapshot/v1',
+    complete: true,
+    truncated: false,
+    nodeCount: 2,
+    linkCount: 1,
+    nodes: [
+      { key: 'n1', label: '订阅属性上报', type: 'device-message-subscribe', source: true, terminal: false },
+      { key: 'n2', label: 'HTTP 请求', type: 'http-request', source: false, terminal: true },
+    ],
+    links: [{ source: 'n1', target: 'n2', sourcePort: 0 }],
+  };
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({
+    ok: true,
+    success: true,
+    contract: 'rule-editor.canvas-apply-result/v1',
+    flowMode: 'realtime-stream',
+    completion: {
+      mode: 'complete-topology',
+      satisfied: true,
+      sourceCount: 1,
+      terminalCount: 1,
+    },
+    changes: [{ kind: 'node-inserted', nodeId: 'node-1' }],
+    topology,
+    validation: { issueCount: 0 },
+    canvasRevision: 7,
+    rolledBack: false,
+  }));
+
+  const result = await definition.execute({}, {}, {} as any);
+  const expectedMermaid = [
+    'flowchart LR',
+    '  n1["订阅属性上报"]',
+    '  n2["HTTP 请求"]',
+    '  n1 --> n2',
+  ].join('\n');
+
+  assert.equal(result.presentation.mermaid, expectedMermaid);
+  assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
+  assert.equal(result.outputBindings[1].name, 'topology-diagram');
+  assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
+  assert.equal(result.outputBindings[1].mediaType, 'application/vnd.mermaid');
+});
+
+test('three-node complete-topology snapshot synthesizes both verified edges', async () => {
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({
+    ok: true,
+    success: true,
+    contract: 'rule-editor.canvas-apply-result/v1',
+    flowMode: 'realtime-stream',
+    completion: {
+      mode: 'complete-topology',
+      satisfied: true,
+      sourceCount: 1,
+      terminalCount: 1,
+    },
+    changes: [
+      { kind: 'node-inserted', nodeId: 'node-1' },
+      { kind: 'link-created' },
+      { kind: 'link-created' },
+    ],
+    topology: {
+      contract: 'rule-editor.topology-snapshot/v1',
+      complete: true,
+      truncated: false,
+      nodeCount: 3,
+      linkCount: 2,
+      nodes: [
+        { key: 'n1', label: '订阅属性上报', type: 'device-message-subscribe', source: true, terminal: false },
+        { key: 'n2', label: '函数处理', type: 'function', source: false, terminal: false },
+        { key: 'n3', label: 'HTTP 请求', type: 'http-request', source: false, terminal: true },
+      ],
+      links: [
+        { source: 'n1', target: 'n2', sourcePort: 0 },
+        { source: 'n2', target: 'n3', sourcePort: 0 },
+      ],
+    },
+    canvasRevision: 10,
+    rolledBack: false,
+  }));
+
+  const result = await definition.execute({}, {}, {} as any);
+  const expectedMermaid = [
+    'flowchart LR',
+    '  n1["订阅属性上报"]',
+    '  n2["函数处理"]',
+    '  n3["HTTP 请求"]',
+    '  n1 --> n2',
+    '  n2 --> n3',
+  ].join('\n');
+
+  assert.equal(result.presentation.mermaid, expectedMermaid);
+  assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
+  assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), true);
+});
+
+test('single-node complete-topology does not synthesize a topology diagram', async () => {
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({
+    ok: true,
+    success: true,
+    contract: 'rule-editor.canvas-apply-result/v1',
+    flowMode: 'one-way-trigger',
+    completion: {
+      mode: 'complete-topology',
+      satisfied: true,
+      sourceCount: 1,
+      terminalCount: 1,
+    },
+    changes: [{ kind: 'node-inserted', nodeId: 'node-1' }],
+    topology: {
+      contract: 'rule-editor.topology-snapshot/v1',
+      complete: true,
+      truncated: false,
+      nodeCount: 1,
+      linkCount: 0,
+      nodes: [
+        { key: 'n1', label: 'Run once', type: 'one-shot', source: true, terminal: true },
+      ],
+      links: [],
+    },
+    canvasRevision: 3,
+    rolledBack: false,
+  }));
+
+  const result = await definition.execute({}, {}, {} as any);
+
+  assert.equal(result.evidence.resultStatus, 'applied');
+  assert.equal(result.presentation, undefined);
+  assert.equal(result.evidence.facts.topologyDiagramAvailable, false);
+  assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
+});
+
+test('truncated topology snapshot does not synthesize a mermaid presentation', async () => {
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({
+    ok: true,
+    success: true,
+    contract: 'rule-editor.canvas-apply-result/v1',
+    flowMode: 'realtime-stream',
+    completion: {
+      mode: 'complete-topology',
+      satisfied: true,
+      sourceCount: 1,
+      terminalCount: 1,
+    },
+    changes: [{ kind: 'node-inserted', nodeId: 'node-1' }],
+    topology: {
+      contract: 'rule-editor.topology-snapshot/v1',
+      complete: true,
+      truncated: true,
+      nodeCount: 8,
+      linkCount: 7,
+      nodes: [],
+      links: [],
+    },
+    canvasRevision: 4,
+    rolledBack: false,
+  }));
+
+  const result = await definition.execute({}, {}, {} as any);
+
+  assert.equal(result.code, 'rule_editor.canvas_plan.invalid_result');
+  assert.equal(result.presentation, undefined);
+  assert.equal(result.outputBindings, undefined);
+});
+
+test('oversized verified mermaid stays topology-only instead of failing a successful apply', async () => {
+  const nodeCount = 100;
+  const nodes = Array.from({ length: nodeCount }, (_, index) => ({
+    key: `n${index + 1}`,
+    label: `N${String(index + 1).padStart(3, '0')}-${'x'.repeat(150)}`,
+    type: 'transform',
+    source: index === 0,
+    terminal: index === nodeCount - 1,
+  }));
+  const links = Array.from({ length: nodeCount - 1 }, (_, index) => ({
+    source: `n${index + 1}`,
+    target: `n${index + 2}`,
+    sourcePort: 0,
+  }));
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({
+    ok: true,
+    success: true,
+    contract: 'rule-editor.canvas-apply-result/v1',
+    flowMode: 'realtime-stream',
+    completion: {
+      mode: 'complete-topology',
+      satisfied: true,
+      sourceCount: 1,
+      terminalCount: 1,
+    },
+    changes: [{ kind: 'node-inserted', nodeId: 'node-1' }],
+    topology: {
+      contract: 'rule-editor.topology-snapshot/v1',
+      complete: true,
+      truncated: false,
+      nodeCount,
+      linkCount: links.length,
+      nodes,
+      links,
+    },
+    canvasRevision: 11,
+    rolledBack: false,
+  }));
+
+  const result = await definition.execute({}, {}, {} as any);
+
+  assert.equal(result.evidence.resultStatus, 'applied');
+  assert.equal(result.presentation, undefined);
+  assert.equal(result.evidence.facts.topologyDiagramAvailable, false);
+  assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
+});
+
 test('partial draft keeps state-change evidence without claiming task completion', async () => {
   const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({
     ok: true,
@@ -493,6 +707,9 @@ test('partial draft keeps state-change evidence without claiming task completion
   assert.equal(result.evidence.complete, false);
   assert.equal(result.evidence.resultStatus, 'partial');
   assert.equal(result.evidence.facts.topologySatisfied, false);
+  assert.equal(result.evidence.facts.topologyDiagramAvailable, false);
+  assert.equal(result.presentation, undefined);
+  assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
 });
 
 test('structured bridge failure remains the authoritative repair result', async () => {
