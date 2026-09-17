@@ -242,6 +242,74 @@ test('JSON-string apply steps and completion are parsed before iframe execute', 
   assert.equal(captured.args.steps, completionOnly.steps);
 });
 
+test('JSON-string apply steps with raw newlines in nested literals are repaired before iframe execute', async () => {
+  const captured: Record<string, any> = {};
+  let called = false;
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async (_toolId, args) => {
+    called = true;
+    captured.args = args;
+    return {
+      ok: false,
+      success: false,
+      code: 'rule_editor.canvas_plan.preflight_failed',
+      failureDisposition: 'request',
+      recoveryAction: 'repair',
+    };
+  });
+  const executeSteps = async (steps: string) => definition.execute({
+    flowMode: 'realtime-stream',
+    completion: { mode: 'partial-draft' },
+    steps,
+  }, {}, {} as any);
+  const stepsWithRawNewline = '[{"op":"insert-node","nodeType":"sql","alias":"query","config":{"sql":"select \n  id from events"}}]';
+  const original = {
+    flowMode: 'realtime-stream',
+    completion: { mode: 'partial-draft' },
+    steps: stepsWithRawNewline,
+  };
+
+  await definition.execute(original, {}, {} as any);
+
+  assert.equal(called, true);
+  assert.equal(Array.isArray(captured.args.steps), true);
+  assert.equal(captured.args.steps[0].op, 'insert-node');
+  assert.equal(captured.args.steps[0].config.sql, 'select \n  id from events');
+  assert.equal(original.steps, stepsWithRawNewline);
+
+  await executeSteps(`[
+\t{"op":"insert-node","nodeType":"sql","alias":"query","config":{"sql":"select \n  id from events"}}
+]`);
+  assert.equal(captured.args.steps[0].config.sql, 'select \n  id from events');
+
+  await executeSteps('[{"op":"insert-node","nodeType":"sql","alias":"query","config":{"sql":"keep\\nthen \n raw"}}]');
+  assert.equal(captured.args.steps[0].config.sql, 'keep\nthen \n raw');
+
+  await executeSteps('[{"op":"insert-node","nodeType":"sql","alias":"query","config":{"sql":"a\tb\rc"}}]');
+  assert.equal(captured.args.steps[0].config.sql, 'a\tb\rc');
+
+  const actionsWithRawNewline = '[{"flowMode":"realtime-stream","completion":{"mode":"partial-draft"},"steps":[{"op":"insert-node","nodeType":"sql","alias":"query","config":{"sql":"select \n  id from events"}}]}]';
+  await definition.execute({ actions: actionsWithRawNewline }, {}, {} as any);
+  assert.equal(Array.isArray(captured.args.steps), true);
+  assert.equal(captured.args.steps[0].config.sql, 'select \n  id from events');
+
+  called = false;
+  const truncated = await executeSteps('[{"op":');
+  assert.equal(called, false);
+  assert.equal(truncated.code, 'rule_editor.canvas_plan.invalid_arguments');
+  assert.equal(truncated.failureDisposition, 'request');
+  assert.equal(truncated.recoveryAction, 'repair');
+  assert.equal(truncated.retryable, false);
+  assert.equal(truncated.repair.field, '/steps');
+  assert.match(truncated.message, /JSON array of operation objects/);
+  assert.match(truncated.message, /not a string wrapper/);
+
+  const truncatedInString = await executeSteps('[{"op":"insert-node","config":{"sql":"select \n');
+  assert.equal(called, false);
+  assert.equal(truncatedInString.code, 'rule_editor.canvas_plan.invalid_arguments');
+  assert.equal(truncatedInString.repair.field, '/steps');
+  assert.match(truncatedInString.message, /not a string wrapper/);
+});
+
 test('JSON-string apply actions envelope is unwrapped before iframe execute', async () => {
   const captured: Record<string, any> = {};
   const definition = toRuleEditorClientToolDefinition(applyTool(), async (_toolId, args) => {
@@ -276,7 +344,7 @@ test('JSON-string apply actions envelope is unwrapped before iframe execute', as
     ok: false,
     success: false,
     code: 'rule_editor.canvas_plan.invalid_arguments',
-    message: 'actions must be a structured object, not an unparsable JSON string',
+    message: 'actions must be a structured object, not an unparsable JSON string. The next call must pass a JSON object, not a string wrapper.',
     failureDisposition: 'request',
     recoveryAction: 'repair',
     retryable: false,
@@ -342,7 +410,7 @@ test('invalid JSON apply arguments return a structured failure without calling i
     ok: false,
     success: false,
     code: 'rule_editor.canvas_plan.invalid_arguments',
-    message: 'steps must be a structured array, not an unparsable JSON string',
+    message: 'steps must be a structured array, not an unparsable JSON string. The next call must pass a JSON array of operation objects, not a string wrapper.',
     failureDisposition: 'request',
     recoveryAction: 'repair',
     retryable: false,

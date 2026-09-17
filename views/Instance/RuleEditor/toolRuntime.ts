@@ -110,24 +110,75 @@ const isApplyCanvasJsonValue = (
   value: unknown,
 ) => (field === 'steps' ? Array.isArray(value) : isRecord(value));
 
-const parseApplyCanvasJsonField = (
-  field: typeof APPLY_CANVAS_JSON_FIELDS[number],
-  value: string,
-): unknown | undefined => {
-  try {
-    const parsed = JSON.parse(value);
-    return isApplyCanvasJsonValue(field, parsed) ? parsed : undefined;
-  } catch {
-    return undefined;
+const describeApplyCanvasJsonFieldFailure = (field: string): string => (
+  field === 'steps'
+    ? 'steps must be a structured array, not an unparsable JSON string. The next call must pass a JSON array of operation objects, not a string wrapper.'
+    : `${field} must be a structured object, not an unparsable JSON string. The next call must pass a JSON object, not a string wrapper.`
+);
+
+// Repair only unescaped controls inside JSON string literals. Do not invent brackets.
+// Keep in sync with iframe parseJsonStructured / escapeUnescapedJsonStringControlChars.
+const escapeUnescapedJsonStringControlChars = (text: string): string => {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text.charAt(index);
+    if (!inString) {
+      if (character === '"') inString = true;
+      result += character;
+      continue;
+    }
+    if (escaped) {
+      result += character;
+      escaped = false;
+      continue;
+    }
+    if (character === '\\') {
+      result += character;
+      escaped = true;
+      continue;
+    }
+    if (character === '"') {
+      result += character;
+      inString = false;
+      continue;
+    }
+    if (character === '\n') {
+      result += '\\n';
+      continue;
+    }
+    if (character === '\r') {
+      result += '\\r';
+      continue;
+    }
+    if (character === '\t') {
+      result += '\\t';
+      continue;
+    }
+    result += character;
   }
+  return result;
 };
 
 const parseJsonValue = (value: string): unknown | undefined => {
   try {
     return JSON.parse(value);
   } catch {
-    return undefined;
+    try {
+      return JSON.parse(escapeUnescapedJsonStringControlChars(value));
+    } catch {
+      return undefined;
+    }
   }
+};
+
+const parseApplyCanvasJsonField = (
+  field: typeof APPLY_CANVAS_JSON_FIELDS[number],
+  value: string,
+): unknown | undefined => {
+  const parsed = parseJsonValue(value);
+  return parsed !== undefined && isApplyCanvasJsonValue(field, parsed) ? parsed : undefined;
 };
 
 const isCompletionModeString = (value: string): value is RuleEditorCompletionMode => (
@@ -639,7 +690,7 @@ export const toRuleEditorClientToolDefinition = (
           if (!coerced.ok) {
             return toRemoteToolFailure(
               'rule_editor.canvas_plan.invalid_arguments',
-              `${coerced.field} must be a structured ${coerced.field === 'steps' ? 'array' : 'object'}, not an unparsable JSON string`,
+              describeApplyCanvasJsonFieldFailure(coerced.field),
               'repair',
               { field: `/${coerced.field}` },
               'request',
