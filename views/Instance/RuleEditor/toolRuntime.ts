@@ -15,6 +15,8 @@ import {
   APPLY_CANVAS_CONTRACT,
   APPLY_CANVAS_PLAN_BINDING_GUIDE,
   APPLY_CANVAS_TOOL_ID,
+  TOPOLOGY_DIAGRAM_MEDIA_TYPE,
+  TOPOLOGY_DIAGRAM_OUTPUT_NAME,
   resolveRuleEditorRemoteContract,
 } from './toolRuntimeContracts';
 
@@ -441,9 +443,9 @@ const withCanvasApplyEvidence = (result: RuleEditorCanvasApplyResult) => (
         truncated: false,
       },
       ...(result.presentation?.mermaid ? [{
-        name: 'topology-diagram',
+        name: TOPOLOGY_DIAGRAM_OUTPUT_NAME,
         path: '$.presentation.mermaid',
-        mediaType: 'application/vnd.mermaid',
+        mediaType: TOPOLOGY_DIAGRAM_MEDIA_TYPE,
         recordCount: 1,
         complete: true,
         truncated: false,
@@ -684,5 +686,8 @@ export {
   APPLY_CANVAS_PLAN_BINDING_GUIDE,
   APPLY_CANVAS_TOOL_ID,
   RULE_EDITOR_TYPED_REMOTE_TOOL_IDS,
+  TOPOLOGY_DIAGRAM_MEDIA_TYPE,
+  TOPOLOGY_DIAGRAM_OUTPUT_NAME,
+  TOPOLOGY_DIAGRAM_SHAPE,
   orderRuleEditorRemoteTools,
 } from './toolRuntimeContracts';

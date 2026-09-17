@@ -74,6 +74,7 @@ test('apply tool stays typed after the real core runtime projects routing into e
   assert.deepEqual(routing.intents, ['apply-canvas-plan', 'bind plan output to canvas-changes']);
   assert.equal(routing.help?.quickstartSection, APPLY_CANVAS_PLAN_BINDING_GUIDE);
   assert.deepEqual(routing.produces, ['canvas-changes', 'topology-diagram']);
+  assert.equal(definition._meta?.clientToolContract.outputs[1].mediaType, 'text/vnd.mermaid');
   assert.deepEqual(routing.resultDeliveries, ['inline']);
 
   const report = reportFor([applyTool()]);

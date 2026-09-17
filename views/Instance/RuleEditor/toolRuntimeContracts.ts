@@ -7,6 +7,12 @@ import {
 
 export const APPLY_CANVAS_TOOL_ID = 'rule_editor_apply_canvas_actions';
 
+export const TOPOLOGY_DIAGRAM_OUTPUT_NAME = 'topology-diagram';
+export const TOPOLOGY_DIAGRAM_SHAPE = 'diagram.flowchart';
+// Keep mermaid text, but do not reuse application/vnd.mermaid: Capability.supports
+// matches that media type for every mermaid producer and would leak preferred delivery.
+export const TOPOLOGY_DIAGRAM_MEDIA_TYPE = 'text/vnd.mermaid';
+
 export const APPLY_CANVAS_PLAN_BINDING_GUIDE = [
   'A complete flow is one apply with complete-topology and every connect in the same steps.',
   'This is the only model-declared canvas write tool.',
@@ -96,10 +102,10 @@ export const APPLY_CANVAS_CONTRACT = defineAiClientToolContract({
   }, {
     kind: 'lookup',
     type: 'presentation',
-    name: 'topology-diagram',
-    shape: 'diagram.flowchart',
+    name: TOPOLOGY_DIAGRAM_OUTPUT_NAME,
+    shape: TOPOLOGY_DIAGRAM_SHAPE,
     path: '$.presentation.mermaid',
-    mediaType: 'application/vnd.mermaid',
+    mediaType: TOPOLOGY_DIAGRAM_MEDIA_TYPE,
     audience: 'client-presentation',
     delivery: 'inline',
   }],

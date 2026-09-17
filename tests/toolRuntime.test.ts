@@ -5,9 +5,14 @@ import {
   createEmptyRuleEditorToolRuntime,
   orderRuleEditorRemoteTools,
   toRuleEditorClientToolDefinition,
+  TOPOLOGY_DIAGRAM_MEDIA_TYPE,
   type RemoteRuleEditorToolDefinition,
 } from '../views/Instance/RuleEditor/toolRuntime';
 import { shouldAdvanceRuleEditorContextVersion } from '../views/Instance/RuleEditor/ruleEditorAgentContext';
+import {
+  RULE_EDITOR_FLOWCHART_PRESENTATION,
+  RULE_EDITOR_FLOWCHART_PRESENTATION_TYPE,
+} from '../agentCapabilities/ruleEditor/constants';
 import enLang from '../locales/lang/en.json';
 import zhLang from '../locales/lang/zh.json';
 
@@ -107,7 +112,7 @@ test('apply tool exposes one canonical root schema without duplicate input schem
   assert.equal(definition._meta?.clientToolContract.outputs[1].type, 'presentation');
   assert.equal(definition._meta?.clientToolContract.outputs[1].audience, 'client-presentation');
   assert.equal(definition._meta?.clientToolContract.outputs[1].delivery, 'inline');
-  assert.equal(definition._meta?.clientToolContract.outputs[1].mediaType, 'application/vnd.mermaid');
+  assert.equal(definition._meta?.clientToolContract.outputs[1].mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
   assert.deepEqual(definition.expands?._schema, canonicalPlanSchema);
   assert.equal(definition.expands?.effect, 'WRITE');
   assert.equal(definition.inputs?.[0].expands, undefined);
@@ -466,7 +471,7 @@ test('successful apply result carries canonical state-change evidence', async ()
   assert.equal(result.outputBindings[0].recordCount, 1);
   assert.equal(result.outputBindings[0].shape, 'rule-editor.canvas-changes');
   assert.equal(result.outputBindings[1].name, 'topology-diagram');
-  assert.equal(result.outputBindings[1].mediaType, 'application/vnd.mermaid');
+  assert.equal(result.outputBindings[1].mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
   assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
 });
 
@@ -513,7 +518,7 @@ test('topology-only complete-topology success synthesizes verified mermaid prese
   assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
   assert.equal(result.outputBindings[1].name, 'topology-diagram');
   assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
-  assert.equal(result.outputBindings[1].mediaType, 'application/vnd.mermaid');
+  assert.equal(result.outputBindings[1].mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
 });
 
 test('three-node complete-topology snapshot synthesizes both verified edges', async () => {
@@ -1081,6 +1086,40 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(en, /every connect in that same steps array/);
   assert.match(en, /do not insert then apply again only to connect/);
   assert.equal(en.includes('insert_node'), false);
+});
+
+test('preferred flowchart presentation does not reuse global mermaid media type or type', () => {
+  assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION_TYPE, 'flowchart');
+  assert.notEqual(RULE_EDITOR_FLOWCHART_PRESENTATION_TYPE, 'mermaid');
+  assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
+  assert.equal(TOPOLOGY_DIAGRAM_MEDIA_TYPE, 'text/vnd.mermaid');
+  assert.notEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.mediaType, 'application/vnd.mermaid');
+  assert.deepEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.preferredInputShapes, ['diagram.flowchart']);
+  assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.deliveryPolicy, 'preferred');
+  assert.deepEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.contentResponsibilities, ['topology', 'process.flow']);
+  assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.narrativePolicy.mode, 'card-first');
+  assert.deepEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.narrativePolicy.allowedTextRoles, ['summary', 'next_step']);
+});
+
+test('presentation and compact prompts do not ask the model to select a renderer', () => {
+  const presentationZh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.presentation']);
+  const presentationEn = String((enLang as Record<string, string>)['RuleEditor.agent.system.presentation']);
+  const compactZh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.compact']);
+  const compactEn = String((enLang as Record<string, string>)['RuleEditor.agent.system.compact']);
+
+  for (const text of [presentationZh, presentationEn, compactZh, compactEn]) {
+    assert.match(text, /topology-diagram/);
+    assert.equal(text.includes('必须选择'), false);
+    assert.equal(text.includes('must be selected'), false);
+    assert.equal(/select(?:ed)? for the installed/i.test(text), false);
+    assert.equal(text.includes('JSON AnswerSpec'), true);
+    assert.equal(text.includes('http://'), false);
+    assert.equal(text.includes('上线'), false);
+  }
+  assert.match(presentationZh, /不要选择 renderer/);
+  assert.match(presentationEn, /Do not select a renderer/);
+  assert.match(presentationZh, /partial-draft/);
+  assert.match(presentationEn, /partial-draft/);
 });
 
 test('context-only ticks do not advance version when digest is unchanged or a tool call is in flight', () => {
