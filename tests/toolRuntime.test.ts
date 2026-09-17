@@ -219,6 +219,16 @@ test('JSON-string apply steps and completion are parsed before iframe execute', 
   assert.equal(original.completion, '{"mode":"partial-draft"}');
   assert.equal(original.steps, '[{"op":"insert-node","nodeType":"delay"}]');
 
+  const newlineSteps = {
+    flowMode: 'realtime-stream',
+    completion: { mode: 'partial-draft' },
+    steps: '\n[{"op":"insert-node","nodeType":"delay"}]',
+  };
+  await definition.execute(newlineSteps, {}, {} as any);
+  assert.deepEqual(captured.args.steps, [{ op: 'insert-node', nodeType: 'delay' }]);
+  assert.deepEqual(captured.args.completion, { mode: 'partial-draft' });
+  assert.equal(newlineSteps.steps, '\n[{"op":"insert-node","nodeType":"delay"}]');
+
   const completionOnly = {
     flowMode: 'realtime-stream',
     completion: '{"mode":"complete-topology"}',
@@ -344,6 +354,25 @@ test('invalid JSON apply arguments return a structured failure without calling i
   assert.equal(called, false);
   assert.equal(invalidCompletion.code, 'rule_editor.canvas_plan.invalid_arguments');
   assert.equal(invalidCompletion.repair.field, '/completion');
+
+  const emptySteps = await definition.execute({
+    flowMode: 'realtime-stream',
+    completion: { mode: 'partial-draft' },
+    steps: '',
+  }, {}, {} as any);
+  assert.equal(called, false);
+  assert.equal(emptySteps.code, 'rule_editor.canvas_plan.invalid_arguments');
+  assert.equal(emptySteps.failureDisposition, 'request');
+  assert.equal(emptySteps.repair.field, '/steps');
+
+  const emptyCompletion = await definition.execute({
+    flowMode: 'realtime-stream',
+    completion: '',
+    steps: [{ op: 'insert-node', nodeType: 'delay' }],
+  }, {}, {} as any);
+  assert.equal(called, false);
+  assert.equal(emptyCompletion.code, 'rule_editor.canvas_plan.invalid_arguments');
+  assert.equal(emptyCompletion.repair.field, '/completion');
 
   const primitiveJson = await definition.execute({
     completion: { mode: 'partial-draft' },
