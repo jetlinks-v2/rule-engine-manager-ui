@@ -2,168 +2,173 @@
     <j-page-container>
         <div>
             <FullPage>
-                <JProTable
-                    :columns="columns"
-                    :request="queryList"
-                    ref="tableRef"
-                    :defaultParams="{
+                
+	                <JProTable
+	                  :columns="columns"
+	                  :request="queryList"
+	                  ref="tableRef"
+	                  :defaultParams="{
                         sorts: [{ name: 'createTime', order: 'desc' }],
                     }"
-                    modeValue="CARD"
-                    :params="params"
-                >
-                    <template #headerLeftRender>
-                        <div class="rule-instance-toolbar">
-                            <h2 class="rule-instance-toolbar__title">
-                                {{ $t('Instance.index.title') }}
-                            </h2>
-                            <ConditionFilter
-                                class="rule-instance-toolbar__search"
-                                :fields="filterFields"
-                                @change="handleSearch"
-                            />
-                        </div>
-                    </template>
-                    <template #headerRightRender>
-                        <j-permission-button
-                            type="primary"
-                            @click="add"
-                            :hasPermission="`${permissionKey}:add`"
-                        >
-                            <template #icon
-                                ><AIcon type="PlusOutlined"
-                            /></template>
-                            {{ $t('Instance.index.020452-0') }}
-                        </j-permission-button>
-                    </template>
-                    <template #card="slotProps">
-                        <CardBox
-                            :value="slotProps"
-                            :actions="getActions(slotProps, 'card')"
-                            v-bind="slotProps"
-                            :status="slotProps.state?.value"
-                            :statusText="slotProps.state?.text"
-                            @click="openRuleEditor"
-                            :statusNames="{
+	                  modeValue="CARD"
+	                  :params="params"
+	                  class="pro-table__no-padding"
+	                >
+		                <template #headerLeftRender>
+			                <div class="rule-instance-toolbar">
+				                <h2 class="rule-instance-toolbar__title">
+					                {{ $t('Instance.index.title') }}
+				                </h2>
+			                </div>
+		                </template>
+		                <template #headerRightRender>
+			                <a-flex :gap="16" align="center">
+				                <ConditionFilter
+				                  class="rule-instance-toolbar__search"
+				                  :fields="filterFields"
+				                  @change="handleSearch"
+				                />
+				                <j-permission-button
+				                  type="primary"
+				                  @click="add"
+				                  :hasPermission="`${permissionKey}:add`"
+				                >
+					                <template #icon
+					                ><AIcon type="PlusOutlined"
+					                /></template>
+					                {{ $t('Instance.index.020452-0') }}
+				                </j-permission-button>
+			                </a-flex>
+		                </template>
+		                <template #card="slotProps">
+			                <CardBox
+			                  :value="slotProps"
+			                  :actions="getActions(slotProps, 'card')"
+			                  v-bind="slotProps"
+			                  :status="slotProps.state?.value"
+			                  :statusText="slotProps.state?.text"
+			                  @click="openRuleEditor"
+			                  :statusNames="{
                                 started: 'processing',
                                 disable: 'error',
                             }"
-                        >
-                            <template #img>
-                                <slot name="img">
-                                    <a-popover
-                                        :open="previewRuleId === getRulePreviewKey(slotProps)"
-                                        trigger="hover"
-                                        placement="rightTop"
-                                        overlayClassName="rule-instance-thumbnail-popover"
-                                        @open-change="handleRulePreviewOpenChange(slotProps, $event)"
-                                    >
-                                        <template #content>
-                                            <div class="rule-instance-thumbnail-preview">
-                                                <img
-                                                    :src="getRuleImage(slotProps)"
-                                                    :alt="slotProps.name"
-                                                />
-                                            </div>
-                                        </template>
-                                        <button
-                                            class="rule-instance-thumbnail-frame"
-                                            type="button"
-                                            :aria-label="$t('Instance.index.020452-17')"
-                                            @click.stop="openRuleEditor(slotProps)"
-                                            @mouseenter="openRulePreview(slotProps)"
-                                            @mouseleave="closeRulePreview"
-                                            @focus="openRulePreview(slotProps)"
-                                            @blur="closeRulePreview"
-                                        >
-                                            <img
-                                                class="rule-instance-thumbnail"
-                                                :src="getRuleImage(slotProps)"
-                                                :alt="slotProps.name"
-                                            />
-                                        </button>
-                                    </a-popover>
-                                </slot>
-                            </template>
-                            <template #content>
-                                <j-ellipsis style="width: calc(100% - 100px); margin-bottom: 18px;">
+			                >
+				                <template #img>
+					                <slot name="img">
+						                <a-popover
+						                  :open="previewRuleId === getRulePreviewKey(slotProps)"
+						                  trigger="hover"
+						                  placement="rightTop"
+						                  overlayClassName="rule-instance-thumbnail-popover"
+						                  @open-change="handleRulePreviewOpenChange(slotProps, $event)"
+						                >
+							                <template #content>
+								                <div class="rule-instance-thumbnail-preview">
+									                <img
+									                  :src="getRuleImage(slotProps)"
+									                  :alt="slotProps.name"
+									                />
+								                </div>
+							                </template>
+							                <button
+							                  class="rule-instance-thumbnail-frame"
+							                  type="button"
+							                  :aria-label="$t('Instance.index.020452-17')"
+							                  @click.stop="openRuleEditor(slotProps)"
+							                  @mouseenter="openRulePreview(slotProps)"
+							                  @mouseleave="closeRulePreview"
+							                  @focus="openRulePreview(slotProps)"
+							                  @blur="closeRulePreview"
+							                >
+								                <img
+								                  class="rule-instance-thumbnail"
+								                  :src="getRuleImage(slotProps)"
+								                  :alt="slotProps.name"
+								                />
+							                </button>
+						                </a-popover>
+					                </slot>
+				                </template>
+				                <template #content>
+					                <j-ellipsis style="width: calc(100% - 100px); margin-bottom: 18px;">
                                     <span
-                                        style="
+                                      style="
                                             font-weight: 600;
                                             font-size: 16px;
                                         "
                                     >
                                         {{ slotProps.name }}
                                     </span>
-                                </j-ellipsis>
-                                <a-row>
-                                    <a-col :span="12">
-                                        <j-ellipsis>
-                                            <div>
-                                                {{ slotProps.description }}
-                                            </div>
-                                        </j-ellipsis>
-                                    </a-col>
-                                </a-row>
-                            </template>
-                            <template #actions="item">
-                                <j-permission-button
-                                    :disabled="item.disabled"
-                                    :popConfirm="item.popConfirm"
-                                    :tooltip="{
+					                </j-ellipsis>
+					                <a-row>
+						                <a-col :span="12">
+							                <j-ellipsis>
+								                <div>
+									                {{ slotProps.description }}
+								                </div>
+							                </j-ellipsis>
+						                </a-col>
+					                </a-row>
+				                </template>
+				                <template #actions="item">
+					                <j-permission-button
+					                  :disabled="item.disabled"
+					                  :popConfirm="item.popConfirm"
+					                  :tooltip="{
                                         ...item.tooltip,
                                     }"
-                                    :hasPermission="permissionKey + ':' + item.key"
-                                    @click="item.onClick"
-                                >
-                                    <AIcon
-                                        type="DeleteOutlined"
-                                        v-if="item.key === 'delete'"
-                                    />
-                                    <template v-else>
-                                        <AIcon :type="item.icon" />
-                                        <span>{{ item?.text }}</span>
-                                    </template>
-                                </j-permission-button>
-                            </template>
-                        </CardBox>
-                    </template>
-                    <template #state="slotProps">
-                        <JBadgeStatus
-                            :text="slotProps.state?.text "
-                            :status="slotProps.state?.value"
-                            :statusNames="{
+					                  :hasPermission="permissionKey + ':' + item.key"
+					                  @click="item.onClick"
+					                >
+						                <AIcon
+						                  type="DeleteOutlined"
+						                  v-if="item.key === 'delete'"
+						                />
+						                <template v-else>
+							                <AIcon :type="item.icon" />
+							                <span>{{ item?.text }}</span>
+						                </template>
+					                </j-permission-button>
+				                </template>
+			                </CardBox>
+		                </template>
+		                <template #state="slotProps">
+			                <JBadgeStatus
+			                  :text="slotProps.state?.text "
+			                  :status="slotProps.state?.value"
+			                  :statusNames="{
                                 started: 'processing',
                                 disable: 'error',
                             }"
-                        />
-                    </template>
-                    <template #action="slotProps">
-                        <a-space>
-                            <template
-                                v-for="i in getActions(slotProps, 'table')"
-                                :key="i.key"
-                            >
-                                <j-permission-button
-                                    :disabled="i.disabled"
-                                    :popConfirm="i.popConfirm"
-                                    :tooltip="{
+			                />
+		                </template>
+		                <template #action="slotProps">
+			                <a-space>
+				                <template
+				                  v-for="i in getActions(slotProps, 'table')"
+				                  :key="i.key"
+				                >
+					                <j-permission-button
+					                  :disabled="i.disabled"
+					                  :popConfirm="i.popConfirm"
+					                  :tooltip="{
                                         ...i.tooltip,
                                     }"
-                                    @click="i.onClick"
-                                    type="link"
-                                    style="padding: 0px"
-                                    :hasPermission="permissionKey + ':' + i.key"
-                                    :danger="i.key === 'delete'"
-                                >
-                                    <template #icon
-                                        ><AIcon :type="i.icon"
-                                    /></template>
-                                </j-permission-button>
-                            </template>
-                        </a-space>
-                    </template>
-                </JProTable>
+					                  @click="i.onClick"
+					                  type="link"
+					                  style="padding: 0px"
+					                  :hasPermission="permissionKey + ':' + i.key"
+					                  :danger="i.key === 'delete'"
+					                >
+						                <template #icon
+						                ><AIcon :type="i.icon"
+						                /></template>
+					                </j-permission-button>
+				                </template>
+			                </a-space>
+		                </template>
+	                </JProTable>
+                
             </FullPage>
             <!-- {{ $t('Instance.index.020452-0') }}、{{ $t('Instance.index.020452-7') }} -->
             <Save
@@ -460,8 +465,8 @@ onMounted(() => {
 }
 
 .rule-instance-toolbar__search {
-    flex: 1 1 360px;
-    min-width: 280px;
+    flex: 1;
+    min-width: 400px;
     max-width: 640px;
 }
 
