@@ -1,6 +1,6 @@
 import {
   createAiClientToolFailureResult,
-  defineAiClientToolContract,
+  type AiClientToolContractFragment,
   type AiClientToolDefinition,
   type AiClientToolExecutionContext,
   type AiClientToolRuntime,
@@ -11,6 +11,12 @@ import {
   resolveRuleEditorToolDisplayName,
   type RuleEditorRemoteToolDefinition,
 } from './confirmOptions';
+import {
+  APPLY_CANVAS_CONTRACT,
+  APPLY_CANVAS_PLAN_BINDING_GUIDE,
+  APPLY_CANVAS_TOOL_ID,
+  resolveRuleEditorRemoteContract,
+} from './toolRuntimeContracts';
 
 export interface RemoteRuleEditorToolDefinition extends RuleEditorRemoteToolDefinition {
   id: string;
@@ -20,6 +26,7 @@ export interface RemoteRuleEditorToolDefinition extends RuleEditorRemoteToolDefi
   output?: Record<string, any>;
   expands?: Record<string, any>;
   annotations?: Record<string, any>;
+  agentVisible?: boolean;
 }
 
 export const RULE_EDITOR_REMOTE_ADAPTER_VERSION = 'rule-editor-remote-definition/v1' as const;
@@ -66,6 +73,8 @@ interface RuleEditorCanvasApplyResult extends Record<string, unknown> {
     sourceCount: number;
     terminalCount: number;
   };
+  complete?: boolean;
+  resultStatus?: string;
   changes: RuleEditorCanvasChange[];
   topology?: RuleEditorTopologySnapshot;
   presentation?: {
@@ -75,42 +84,257 @@ interface RuleEditorCanvasApplyResult extends Record<string, unknown> {
   rolledBack: false;
   validation?: {
     issueCount?: number;
-    [key: string]: unknown;
+    truncated?: boolean;
+    issues?: unknown[];
   };
+  instruction?: string;
 }
 
-const APPLY_CANVAS_TOOL_ID = 'rule_editor_apply_canvas_actions';
-
-const APPLY_CANVAS_CONTRACT = defineAiClientToolContract({
-  routingKind: 'action',
-  routing: {
-    capabilities: ['rule-editor.canvas.apply'],
-    accepts: ['rule-editor.canvas-plan'],
-    intents: ['apply-canvas-plan'],
-    evidencePolicy: 'required',
-    validationHints: ['canvas-changes-exist', 'canvas-revision-advanced', 'topology-completion-satisfied'],
-    cost: 'medium',
-    // FLAT only exposes a deferred tool after a high-confidence route. Atomic canvas apply is the
-    // editor's primary action, so it must remain directly available even when routing is inconclusive.
-    exposure: 'auto',
-  },
-  outputs: [{
-    kind: 'state-events',
-    name: 'canvas-changes',
-    shape: 'rule-editor.canvas-changes',
-    path: '$.changes',
-  }, {
-    kind: 'artifact',
-    name: 'topology-diagram',
-    shape: 'diagram.flowchart',
-    path: '$.presentation.mermaid',
-    mediaType: 'application/vnd.mermaid',
-    delivery: 'inline',
-  }],
-});
+const CANVAS_CHANGE_IDENTITY_KEYS = [
+  'nodeId',
+  'nodeType',
+  'sourceId',
+  'targetId',
+  'sourcePort',
+  'count',
+] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> => (
   Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+);
+
+const APPLY_CANVAS_JSON_FIELDS = ['steps', 'completion'] as const;
+const APPLY_CANVAS_ENVELOPE_KEYS = [
+  'actions',
+  'allowMultiple',
+  'action',
+  'label',
+  'title',
+  'description',
+  'summary',
+  'ttlSeconds',
+  'plan',
+] as const;
+
+const isApplyCanvasJsonValue = (
+  field: typeof APPLY_CANVAS_JSON_FIELDS[number],
+  value: unknown,
+) => (field === 'steps' ? Array.isArray(value) : isRecord(value));
+
+const describeApplyCanvasJsonFieldFailure = (field: string): string => (
+  field === 'steps'
+    ? 'steps must be a structured array, not an unparsable JSON string. The next call must pass a JSON array of operation objects, not a string wrapper.'
+    : `${field} must be a structured object, not an unparsable JSON string. The next call must pass a JSON object, not a string wrapper.`
+);
+
+// Repair only unescaped controls inside JSON string literals. Do not invent brackets.
+// Keep in sync with iframe parseJsonStructured / escapeUnescapedJsonStringControlChars.
+const escapeUnescapedJsonStringControlChars = (text: string): string => {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text.charAt(index);
+    if (!inString) {
+      if (character === '"') inString = true;
+      result += character;
+      continue;
+    }
+    if (escaped) {
+      result += character;
+      escaped = false;
+      continue;
+    }
+    if (character === '\\') {
+      result += character;
+      escaped = true;
+      continue;
+    }
+    if (character === '"') {
+      result += character;
+      inString = false;
+      continue;
+    }
+    if (character === '\n') {
+      result += '\\n';
+      continue;
+    }
+    if (character === '\r') {
+      result += '\\r';
+      continue;
+    }
+    if (character === '\t') {
+      result += '\\t';
+      continue;
+    }
+    result += character;
+  }
+  return result;
+};
+
+const parseJsonValue = (value: string): unknown | undefined => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    try {
+      return JSON.parse(escapeUnescapedJsonStringControlChars(value));
+    } catch {
+      return undefined;
+    }
+  }
+};
+
+const parseApplyCanvasJsonField = (
+  field: typeof APPLY_CANVAS_JSON_FIELDS[number],
+  value: string,
+): unknown | undefined => {
+  const parsed = parseJsonValue(value);
+  return parsed !== undefined && isApplyCanvasJsonValue(field, parsed) ? parsed : undefined;
+};
+
+const isCompletionModeString = (value: string): value is RuleEditorCompletionMode => (
+  RULE_EDITOR_COMPLETION_MODES.some((mode) => mode === value.trim())
+);
+
+const readApplyPlanSource = (value: unknown): Record<string, any> | undefined => {
+  if (!isRecord(value)) return undefined;
+  return isRecord(value.plan) && !Array.isArray(value.plan)
+    ? value.plan as Record<string, any>
+    : value as Record<string, any>;
+};
+
+const liftStringNodeReference = (value: string): { kind: 'alias'; value: string } => ({
+  kind: 'alias',
+  value: value.trim(),
+});
+
+const coerceCanvasNodeReference = (value: unknown): unknown => (
+  typeof value === 'string' && value.trim() ? liftStringNodeReference(value) : value
+);
+
+const coerceCanvasNodeReferenceList = (value: unknown): unknown => (
+  Array.isArray(value) ? value.map((item) => coerceCanvasNodeReference(item)) : value
+);
+
+const stepHasStringNodeRef = (step: unknown): boolean => {
+  if (!isRecord(step)) return false;
+  return typeof step.source === 'string'
+    || typeof step.target === 'string'
+    || typeof step.node === 'string'
+    || (Array.isArray(step.nodes) && step.nodes.some((item) => typeof item === 'string'))
+    || (Array.isArray(step.connections) && step.connections.some((item) => (
+      isRecord(item) && (typeof item.source === 'string' || typeof item.target === 'string')
+    )));
+};
+
+const completionHasStringNodeRef = (completion: unknown): boolean => (
+  isRecord(completion)
+  && (
+    (Array.isArray(completion.sources) && completion.sources.some((item) => typeof item === 'string'))
+    || (Array.isArray(completion.terminals) && completion.terminals.some((item) => typeof item === 'string'))
+  )
+);
+
+const coerceCanvasPlanNodeReferences = (plan: Record<string, any>) => {
+  if (isRecord(plan.completion)) {
+    if (Array.isArray(plan.completion.sources)) {
+      plan.completion.sources = coerceCanvasNodeReferenceList(plan.completion.sources);
+    }
+    if (Array.isArray(plan.completion.terminals)) {
+      plan.completion.terminals = coerceCanvasNodeReferenceList(plan.completion.terminals);
+    }
+  }
+  if (!Array.isArray(plan.steps)) return;
+  for (const step of plan.steps) {
+    if (!isRecord(step)) continue;
+    if (typeof step.node === 'string') step.node = coerceCanvasNodeReference(step.node);
+    if (typeof step.source === 'string') step.source = coerceCanvasNodeReference(step.source);
+    if (typeof step.target === 'string') step.target = coerceCanvasNodeReference(step.target);
+    if (Array.isArray(step.nodes)) {
+      step.nodes = coerceCanvasNodeReferenceList(step.nodes);
+    }
+    if (Array.isArray(step.connections)) {
+      step.connections = step.connections.map((connection) => (
+        isRecord(connection)
+          ? {
+            ...connection,
+            source: coerceCanvasNodeReference(connection.source),
+            target: coerceCanvasNodeReference(connection.target),
+          }
+          : connection
+      ));
+    }
+    if (Array.isArray(step.configReferences)) {
+      step.configReferences = step.configReferences.map((item) => (
+        isRecord(item) ? { ...item, ref: coerceCanvasNodeReference(item.ref) } : item
+      ));
+    }
+  }
+};
+
+export const coerceApplyCanvasPlanArguments = (
+  args: Record<string, any>,
+): { ok: true; args: Record<string, any> } | { ok: false; field: string } => {
+  const needsUnwrap = (args.flowMode == null || args.steps == null)
+    && (args.actions != null || args.action != null);
+  const hasStringField = APPLY_CANVAS_JSON_FIELDS.some((field) => typeof args[field] === 'string')
+    || typeof args.actions === 'string';
+  const hasEnvelope = APPLY_CANVAS_ENVELOPE_KEYS.some((key) => key in args);
+  const hasStringNodeRef = Array.isArray(args.steps) && args.steps.some(stepHasStringNodeRef);
+  const hasStringCompletionRef = completionHasStringNodeRef(args.completion);
+  if (!needsUnwrap && !hasStringField && !hasEnvelope && !hasStringNodeRef && !hasStringCompletionRef) {
+    return { ok: true, args };
+  }
+
+  const next: Record<string, any> = { ...args };
+  if (next.flowMode == null || next.steps == null) {
+    let actionsValue = next.actions ?? next.action;
+    if (typeof actionsValue === 'string') {
+      const parsed = parseJsonValue(actionsValue);
+      if (parsed === undefined) return { ok: false, field: 'actions' };
+      actionsValue = parsed;
+    }
+    const action = Array.isArray(actionsValue) ? actionsValue[0] : actionsValue;
+    const source = readApplyPlanSource(action);
+    if (source) {
+      if (next.flowMode == null && source.flowMode != null) next.flowMode = source.flowMode;
+      if (next.completion == null && source.completion != null) next.completion = source.completion;
+      if (next.steps == null && source.steps != null) next.steps = source.steps;
+      if (next.rollbackOnValidationError == null && source.rollbackOnValidationError != null) {
+        next.rollbackOnValidationError = source.rollbackOnValidationError;
+      }
+    }
+  }
+
+  for (const field of APPLY_CANVAS_JSON_FIELDS) {
+    const value = next[field];
+    if (typeof value !== 'string') continue;
+    if (field === 'completion' && isCompletionModeString(value)) {
+      next[field] = { mode: value.trim() };
+      continue;
+    }
+    const parsed = parseApplyCanvasJsonField(field, value);
+    if (parsed === undefined) {
+      return { ok: false, field };
+    }
+    next[field] = parsed;
+  }
+
+  for (const key of APPLY_CANVAS_ENVELOPE_KEYS) {
+    delete next[key];
+  }
+  if (Array.isArray(next.steps) && next.steps.some(stepHasStringNodeRef)) {
+    next.steps = next.steps.map((step: unknown) => (isRecord(step) ? { ...step } : step));
+  }
+  if (completionHasStringNodeRef(next.completion)) {
+    next.completion = { ...next.completion };
+  }
+  coerceCanvasPlanNodeReferences(next);
+  return { ok: true, args: next };
+};
+
+const applyCanvasDescription = (description?: string) => (
+  [description?.trim(), APPLY_CANVAS_PLAN_BINDING_GUIDE].filter(Boolean).join(' ')
 );
 
 const isRuleEditorFlowMode = (value: unknown): value is RuleEditorFlowMode => (
@@ -175,7 +399,20 @@ const isTopologySnapshot = (value: unknown): value is RuleEditorTopologySnapshot
   ));
 };
 
-// The diagram is presentation of this exact verified snapshot, never a second model-authored graph.
+const TOPOLOGY_MERMAID_MAX_LENGTH = 16 * 1024;
+
+const canPublishTopologyDiagram = (topology: unknown): topology is RuleEditorTopologySnapshot => (
+  isTopologySnapshot(topology)
+  && !topology.truncated
+  && topology.nodeCount >= 2
+  && topology.linkCount >= 1
+);
+
+const isPublishableTopologyMermaid = (mermaid: string) => (
+  Boolean(mermaid.trim()) && mermaid.length <= TOPOLOGY_MERMAID_MAX_LENGTH
+);
+
+// Used only to reject an unexpected iframe mermaid that does not match the snapshot.
 const toVerifiedTopologyMermaid = (topology: RuleEditorTopologySnapshot) => [
   'flowchart LR',
   ...topology.nodes.map(node => `  ${node.key}["${node.label}"]`),
@@ -186,15 +423,12 @@ const hasValidTopologyPresentation = (value: Record<string, unknown>) => {
   const topology = value.topology;
   const presentation = value.presentation;
   if (topology !== undefined && !isTopologySnapshot(topology)) return false;
+  // Missing mermaid is success. Default apply must not create a flowchart obligation.
   if (presentation === undefined) return true;
   if (!isRecord(presentation)
     || typeof presentation.mermaid !== 'string'
-    || !presentation.mermaid.trim()
-    || presentation.mermaid.length > 16 * 1024
-    || !isTopologySnapshot(topology)
-    || topology.truncated
-    || topology.nodeCount < 2
-    || topology.linkCount < 1) {
+    || !isPublishableTopologyMermaid(presentation.mermaid)
+    || !canPublishTopologyDiagram(topology)) {
     return false;
   }
   return presentation.mermaid === toVerifiedTopologyMermaid(topology);
@@ -219,23 +453,92 @@ const isCanvasApplySuccess = (value: unknown): value is RuleEditorCanvasApplyRes
     && value.rolledBack === false;
 };
 
-const withCanvasApplyEvidence = (result: RuleEditorCanvasApplyResult) => (
+const toModelFacingCanvasChange = (change: RuleEditorCanvasChange): RuleEditorCanvasChange => {
+  const projected: RuleEditorCanvasChange = { kind: change.kind };
+  for (const key of CANVAS_CHANGE_IDENTITY_KEYS) {
+    if (change[key] !== undefined) projected[key] = change[key];
+  }
+  return projected;
+};
+
+const toModelFacingCompletion = (
+  completion: RuleEditorCanvasApplyResult['completion'],
+): RuleEditorCanvasApplyResult['completion'] => ({
+  mode: completion.mode,
+  satisfied: completion.satisfied,
+  sourceCount: completion.sourceCount,
+  terminalCount: completion.terminalCount,
+});
+
+const toModelFacingValidationIssue = (issue: unknown) => {
+  if (!isRecord(issue)) return issue;
+  const projected: Record<string, unknown> = {};
+  if (typeof issue.path === 'string') projected.path = issue.path;
+  if (typeof issue.code === 'string') projected.code = issue.code;
+  if (typeof issue.message === 'string') projected.message = issue.message;
+  return Object.keys(projected).length ? projected : undefined;
+};
+
+const toModelFacingValidation = (validation: RuleEditorCanvasApplyResult['validation']) => {
+  if (!isRecord(validation)) return undefined;
+  const projected: NonNullable<RuleEditorCanvasApplyResult['validation']> = {};
+  if (typeof validation.issueCount === 'number') projected.issueCount = validation.issueCount;
+  if (typeof validation.truncated === 'boolean') projected.truncated = validation.truncated;
+  if (Array.isArray(validation.issues)) {
+    const issues = validation.issues
+      .map(toModelFacingValidationIssue)
+      .filter((issue): issue is Exclude<typeof issue, undefined> => issue !== undefined);
+    if (issues.length) projected.issues = issues;
+  }
+  return Object.keys(projected).length ? projected : undefined;
+};
+
+// Compact model-facing success: write evidence only. The canvas is the topology visualization;
+// do not emit mermaid or node labels the model would copy into a second graph.
+const toModelFacingCanvasApplyResult = (
+  result: RuleEditorCanvasApplyResult,
+): RuleEditorCanvasApplyResult => {
+  const projected: RuleEditorCanvasApplyResult = {
+    ok: true,
+    success: true,
+    contract: result.contract,
+    flowMode: result.flowMode,
+    completion: toModelFacingCompletion(result.completion),
+    changes: result.changes.map(toModelFacingCanvasChange),
+    canvasRevision: result.canvasRevision,
+    rolledBack: false,
+  };
+  if (typeof result.complete === 'boolean') projected.complete = result.complete;
+  if (typeof result.resultStatus === 'string' && result.resultStatus) {
+    projected.resultStatus = result.resultStatus;
+  }
+  const validation = toModelFacingValidation(result.validation);
+  if (validation) projected.validation = validation;
+  if (typeof result.instruction === 'string' && result.instruction) {
+    projected.instruction = result.instruction;
+  }
+  return projected;
+};
+
+const withCanvasApplyEvidence = (
+  result: RuleEditorCanvasApplyResult,
+  source: RuleEditorCanvasApplyResult = result,
+) => (
   withAiClientToolContractEvidence(result, APPLY_CANVAS_CONTRACT, {
-    complete: result.completion.satisfied,
+    complete: source.completion.satisfied,
     truncated: false,
-    resultStatus: result.completion.satisfied ? 'applied' : 'partial',
+    resultStatus: source.completion.satisfied ? 'applied' : 'partial',
     facts: {
-      flowMode: result.flowMode,
-      completionMode: result.completion.mode,
-      topologySatisfied: result.completion.satisfied,
-      sourceCount: result.completion.sourceCount,
-      terminalCount: result.completion.terminalCount,
-      canvasRevision: result.canvasRevision,
-      rolledBack: result.rolledBack,
-      validationIssueCount: result.validation?.issueCount,
-      topologyNodeCount: result.topology?.nodeCount,
-      topologyLinkCount: result.topology?.linkCount,
-      topologyDiagramAvailable: Boolean(result.presentation?.mermaid),
+      flowMode: source.flowMode,
+      completionMode: source.completion.mode,
+      topologySatisfied: source.completion.satisfied,
+      sourceCount: source.completion.sourceCount,
+      terminalCount: source.completion.terminalCount,
+      canvasRevision: source.canvasRevision,
+      rolledBack: source.rolledBack,
+      validationIssueCount: source.validation?.issueCount,
+      topologyNodeCount: source.topology?.nodeCount,
+      topologyLinkCount: source.topology?.linkCount,
     },
     outputs: [
       {
@@ -245,17 +548,108 @@ const withCanvasApplyEvidence = (result: RuleEditorCanvasApplyResult) => (
         complete: true,
         truncated: false,
       },
-      ...(result.presentation?.mermaid ? [{
-        name: 'topology-diagram',
-        path: '$.presentation.mermaid',
-        mediaType: 'application/vnd.mermaid',
-        recordCount: 1,
-        complete: true,
-        truncated: false,
-      }] : []),
     ],
   })
 );
+
+const REMOTE_RECOVERY_ACTIONS = new Set(['retry', 'repair', 'clarify', 'terminal'] as const);
+
+const toRemoteToolFailure = (
+  code: string,
+  message: string,
+  recoveryAction: 'retry' | 'repair' | 'clarify' | 'terminal' = 'terminal',
+  repair?: Record<string, unknown>,
+  failureDisposition: 'request' | 'tool' | 'dependency' = 'tool',
+) => ({
+  ok: false as const,
+  ...createAiClientToolFailureResult({
+    code,
+    message,
+    failureDisposition,
+    recoveryAction,
+    retryable: recoveryAction === 'retry',
+    ...(repair ? { repair } : {}),
+  }),
+});
+
+const isCanonicalFailure = (value: Record<string, unknown>) => (
+  typeof value.code === 'string'
+  && Boolean(value.code)
+  && typeof value.failureDisposition === 'string'
+);
+
+const toRemoteFailureResult = (value: Record<string, unknown>) => {
+  if (isCanonicalFailure(value)) return value;
+  const recoveryAction = typeof value.recoveryAction === 'string'
+    && REMOTE_RECOVERY_ACTIONS.has(value.recoveryAction as 'retry')
+    ? value.recoveryAction as 'retry' | 'repair' | 'clarify' | 'terminal'
+    : 'terminal';
+  return toRemoteToolFailure(
+    typeof value.code === 'string' && value.code
+      ? value.code
+      : 'rule_editor.remote.failed',
+    typeof value.message === 'string' && value.message
+      ? value.message
+      : typeof value.error === 'string' && value.error
+        ? value.error
+        : 'rule editor tool failed',
+    recoveryAction,
+    isRecord(value.repair) ? value.repair : undefined,
+  );
+};
+
+const resolveRemoteCoverage = (
+  result: Record<string, unknown>,
+  contract: AiClientToolContractFragment,
+) => {
+  const hasUnprovenRecordWindow = contract._meta.clientToolContract.outputs.some((output) => (
+    output.kind === 'record-set' && result.complete !== true && result.truncated !== false
+  ));
+  const truncated = result.truncated === true || hasUnprovenRecordWindow;
+  return {
+    truncated,
+    complete: result.complete === true ? !truncated : !truncated && !hasUnprovenRecordWindow,
+  };
+};
+
+const collectRemoteOutputStates = (
+  result: Record<string, unknown>,
+  contract: AiClientToolContractFragment,
+) => {
+  const coverage = resolveRemoteCoverage(result, contract);
+  return contract._meta.clientToolContract.outputs.flatMap((output) => (
+    output.path
+      ? [{
+          name: output.name,
+          path: output.path,
+          ...(output.mediaType ? { mediaType: output.mediaType } : {}),
+          complete: output.kind === 'record-set' ? coverage.complete : !coverage.truncated,
+          truncated: output.kind === 'record-set' ? coverage.truncated : result.truncated === true,
+        }]
+      : []
+  ));
+};
+
+const withRemoteContractResult = (
+  result: unknown,
+  contract: AiClientToolContractFragment,
+) => {
+  if (!isRecord(result)) {
+    return toRemoteToolFailure(
+      'rule_editor.remote.invalid_result',
+      'rule editor tool returned a non-canonical result',
+    );
+  }
+  if (result.success === false || result.ok === false) {
+    return toRemoteFailureResult(result);
+  }
+  const coverage = resolveRemoteCoverage(result, contract);
+  return withAiClientToolContractEvidence(result, contract, {
+    complete: coverage.complete,
+    truncated: coverage.truncated,
+    outputs: collectRemoteOutputStates(result, contract),
+  });
+};
 
 const normalizeToolInputs = (
   tool: RemoteRuleEditorToolDefinition,
@@ -305,23 +699,30 @@ export const toRuleEditorClientToolDefinition = (
   sourceRevision = 'unversioned',
 ): AiClientToolDefinition<Record<string, any>> => {
   const isApplyCanvasTool = tool.id === APPLY_CANVAS_TOOL_ID;
-  const remoteExpands = isRecord(tool.expands) ? tool.expands : undefined;
-  const rootSchemaOwnsContract = isRecord(remoteExpands?._schema);
+  const remoteContract = resolveRuleEditorRemoteContract(tool.id);
+  const remoteExpands = isRecord(tool.expands) ? { ...tool.expands } : {};
+  if (tool.write === true) {
+    // Non-read-only remotes must publish typed effect, or AgentConversation isolates them
+    // from session.init.tools and FLAT business_execution returns model_unknown_tool.
+    remoteExpands.effect = 'WRITE';
+  }
+  const rootSchemaOwnsContract = isRecord(remoteExpands._schema);
+  const publishedExpands = Object.keys(remoteExpands).length ? remoteExpands : undefined;
   return {
     id: tool.id,
     name: resolveRuleEditorToolDisplayName(tool),
-    description: tool.description,
-    ...(isApplyCanvasTool ? APPLY_CANVAS_CONTRACT : {}),
+    description: isApplyCanvasTool ? applyCanvasDescription(tool.description) : tool.description,
+    ...(remoteContract || {}),
     inputs: normalizeToolInputs(tool, rootSchemaOwnsContract),
     output: tool.output || { type: 'object' },
-    ...(remoteExpands ? { expands: remoteExpands } : {}),
+    ...(publishedExpands ? { expands: publishedExpands } : {}),
     annotations: {
       readOnlyHint: tool.write !== true,
       ...(tool.annotations || {}),
     },
     confirm: resolveRuleEditorConfirmOptions(tool),
     _meta: {
-      ...(isApplyCanvasTool ? APPLY_CANVAS_CONTRACT._meta : {}),
+      ...(remoteContract?._meta || {}),
       clientToolAdapter: {
         version: RULE_EDITOR_REMOTE_ADAPTER_VERSION,
         source: 'rule-editor-iframe',
@@ -329,27 +730,64 @@ export const toRuleEditorClientToolDefinition = (
       },
     },
     execute: async (args, _context, call) => {
-      const result: unknown = await execute(
-        tool.id,
-        args,
-        call?.executionContext,
-      );
-      if (!isApplyCanvasTool || (isRecord(result) && (result.success === false || result.ok === false))) {
-        return result;
+      try {
+        let executeArgs = args;
+        if (isApplyCanvasTool) {
+          const coerced = coerceApplyCanvasPlanArguments(args);
+          if (!coerced.ok) {
+            return toRemoteToolFailure(
+              'rule_editor.canvas_plan.invalid_arguments',
+              describeApplyCanvasJsonFieldFailure(coerced.field),
+              'repair',
+              { field: `/${coerced.field}` },
+              'request',
+            );
+          }
+          executeArgs = coerced.args;
+        }
+        const result: unknown = await execute(
+          tool.id,
+          executeArgs,
+          call?.executionContext,
+        );
+        if (isApplyCanvasTool) {
+          if (isRecord(result) && (result.success === false || result.ok === false)) {
+            return toRemoteFailureResult(result);
+          }
+          if (isCanvasApplySuccess(result)) {
+            return withCanvasApplyEvidence(
+              toModelFacingCanvasApplyResult(result),
+              result,
+            );
+          }
+          return toRemoteToolFailure(
+            'rule_editor.canvas_plan.invalid_result',
+            'canvas plan returned a non-canonical result',
+          );
+        }
+        if (!remoteContract) {
+          return result;
+        }
+        return withRemoteContractResult(result, remoteContract);
+      } catch (error) {
+        if (!remoteContract && !isApplyCanvasTool) throw error;
+        return toRemoteToolFailure(
+          'rule_editor.remote.failed',
+          error instanceof Error && error.message
+            ? error.message
+            : 'rule editor tool failed',
+        );
       }
-      if (isCanvasApplySuccess(result)) {
-        return withCanvasApplyEvidence(result);
-      }
-      return {
-        ok: false,
-        ...createAiClientToolFailureResult({
-          code: 'rule_editor.canvas_plan.invalid_result',
-          message: 'canvas plan returned a non-canonical result',
-          failureDisposition: 'tool',
-          recoveryAction: 'terminal',
-          retryable: false,
-        }),
-      };
     },
   };
 };
+
+export {
+  APPLY_CANVAS_PLAN_BINDING_GUIDE,
+  APPLY_CANVAS_TOOL_ID,
+  RULE_EDITOR_TYPED_REMOTE_TOOL_IDS,
+  TOPOLOGY_DIAGRAM_MEDIA_TYPE,
+  TOPOLOGY_DIAGRAM_OUTPUT_NAME,
+  TOPOLOGY_DIAGRAM_SHAPE,
+  orderRuleEditorRemoteTools,
+} from './toolRuntimeContracts';

@@ -5,11 +5,13 @@ import { createRuleEditorProposalLinkHandler } from './proposalLinks';
 import { createRuleEditorReferenceNodeBridge } from './referenceNodeBridge';
 import {
   createEmptyRuleEditorToolRuntime,
+  orderRuleEditorRemoteTools,
   toRuleEditorClientToolDefinition,
   type RemoteRuleEditorToolDefinition,
   type RuleEditorToolExecutionContext,
 } from './toolRuntime';
 import { useRuleEditorSharedAgentTools } from './useRuleEditorSharedAgentTools';
+import { shouldAdvanceRuleEditorContextVersion } from './ruleEditorAgentContext';
 
 const CHANNEL = 'jetlinks-rule-editor-agent';
 const REQUEST_TIMEOUT = 60000;
@@ -84,6 +86,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
   let runtimeInitialized = false;
   let remoteSourceRevision = 'rule-editor:empty';
   let unsubscribeRuntime: (() => void) | undefined;
+  let lastContextDigest = '';
 
   const activeFrameWindow = () => iframeRef.value?.contentWindow;
   const activeFrameOrigin = () => {
@@ -193,8 +196,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     return `rule-editor:${(hash >>> 0).toString(36)}`;
   };
 
-  const createRuntime = () => createAiClientToolRuntime(() => remoteTools.value
-      .filter((tool) => tool?.id)
+  const createRuntime = () => createAiClientToolRuntime(() => orderRuleEditorRemoteTools(remoteTools.value)
       .map((tool) => toRuleEditorClientToolDefinition(tool, executeRemoteTool, remoteSourceRevision)), {
       toolsName: t('RuleEditor.agent.toolsName'),
       toolsDescription: t('RuleEditor.agent.toolsDescription'),
@@ -270,6 +272,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
 
     if (data.type === 'rule-editor-agent:ready') {
       context.value = data.payload?.context || context.value;
+      lastContextDigest = JSON.stringify(context.value ?? {});
       contextVersion.value += 1;
       return;
     }
@@ -284,13 +287,23 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
         || createRemoteSourceRevision(remoteTools.value),
       );
       context.value = data.payload?.context || context.value;
+      lastContextDigest = JSON.stringify(context.value ?? {});
       contextVersion.value += 1;
       rebuildRuntime();
       return;
     }
     if (data.type === 'rule-editor-agent:context-change') {
-      context.value = data.payload?.context || {};
-      contextVersion.value += 1;
+      const nextContext = data.payload?.context || {};
+      const decision = shouldAdvanceRuleEditorContextVersion({
+        previousDigest: lastContextDigest,
+        nextContext,
+        inFlightClientToolCall: pendingCalls.size > 0,
+      });
+      lastContextDigest = decision.digest;
+      context.value = nextContext;
+      if (decision.advance) {
+        contextVersion.value += 1;
+      }
       return;
     }
     if (
@@ -310,6 +323,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     rejectPendingCalls(t('RuleEditor.bridge.error.notReady'));
     remoteTools.value = [];
     context.value = {};
+    lastContextDigest = '';
     replaceRuntime(createEmptyRuntime(), false);
     status.value = 'loading';
     startReadyTimer();
@@ -328,6 +342,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     rejectPendingCalls(t('RuleEditor.bridge.error.notReady'));
     remoteTools.value = [];
     context.value = {};
+    lastContextDigest = '';
     replaceRuntime(createEmptyRuntime(), false);
     status.value = 'idle';
     contextVersion.value += 1;
