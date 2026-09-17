@@ -14,6 +14,7 @@ import {
   toRuleEditorClientToolDefinition,
   type RemoteRuleEditorToolDefinition,
 } from '../views/Instance/RuleEditor/toolRuntime';
+import { resolveRuleEditorRemoteContract } from '../views/Instance/RuleEditor/toolRuntimeContracts';
 
 const applyTool = (): RemoteRuleEditorToolDefinition => ({
   id: 'rule_editor_apply_canvas_actions',
@@ -105,7 +106,6 @@ test('agent-visible read remotes compile as typed without requiring catalog-wide
     'rule_editor_get_context',
     'rule_editor_get_graph_summary',
     'rule_editor_list_nodes',
-    'rule_editor_find_nodes',
     'rule_editor_get_node_detail',
     'rule_editor_get_node_contract',
     'rule_editor_get_node_type_manual',
@@ -212,6 +212,7 @@ test('hidden read remotes still compile typed from leftover adapter contracts', 
     'rule_editor_list_node_templates',
     'rule_editor_focus_node',
     'rule_editor_get_debug_logs',
+    'rule_editor_find_nodes',
   ];
   leftoverIds.forEach((id) => {
     assert.equal((RULE_EDITOR_TYPED_REMOTE_TOOL_IDS as readonly string[]).includes(id), false, id);
@@ -300,4 +301,39 @@ test('session catalog snapshot admits apply by exact id so FLAT business_executi
     snapshot.report.tools.find((tool) => tool.toolId === APPLY_CANVAS_TOOL_ID)?.contractStatus,
     'typed',
   );
+});
+
+test('catalog has no parallel composition tools and keeps search compositions on the existing search id', () => {
+  const tools = orderRuleEditorRemoteTools([
+    applyTool(),
+    remoteTool('rule_editor_search_node_types'),
+    { id: 'rule_editor_find_nodes', agentVisible: false },
+    remoteTool('rule_editor_list_nodes'),
+  ]);
+  assert.equal(tools[0]?.id, APPLY_CANVAS_TOOL_ID);
+  assert.equal(tools.some((tool) => tool.id === 'rule_editor_find_nodes'), false);
+  assert.equal(tools.some((tool) => /search_compositions|get_composition_detail/.test(String(tool.id))), false);
+
+  const compiled = tools.map((tool) => toRuleEditorClientToolDefinition(tool, async () => ({})));
+  assert.equal(compiled[0]?.id, APPLY_CANVAS_TOOL_ID);
+  assert.deepEqual(compiled[0]?.routing?.produces, ['canvas-changes']);
+  const search = compiled.find((tool) => tool.id === 'rule_editor_search_node_types');
+  assert.deepEqual(search?.routing?.produces, ['node-types', 'compositions']);
+  assert.equal(
+    compiled.some((tool) => tool.id === 'rule_editor_search_compositions' || tool.id === 'rule_editor_get_composition_detail'),
+    false,
+  );
+
+  const searchContract = resolveRuleEditorRemoteContract('rule_editor_search_node_types');
+  assert.deepEqual(
+    searchContract?._meta?.resultBindings?.map((binding) => binding.path),
+    ['$.nodeTypes', '$.compositions'],
+  );
+
+  const report = reportFor(tools);
+  assert.equal(report.valid, true);
+  assert.equal(report.tools[0]?.toolId, APPLY_CANVAS_TOOL_ID);
+  assert.equal(report.tools[0]?.contractStatus, 'typed');
+  assert.ok(report.tools[0]?.routingStatus === 'valid');
+  assert.equal(report.issues.some((issue) => /search_compositions|get_composition_detail/.test(`${issue.toolId}`)), false);
 });

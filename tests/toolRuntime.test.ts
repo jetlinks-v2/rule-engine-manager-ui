@@ -1254,9 +1254,13 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   const compactZh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.compact']);
   const compactEn = String((enLang as Record<string, string>)['RuleEditor.agent.system.compact']);
   assert.match(compactZh, /rule_editor_apply_canvas_actions/);
+  assert.match(compactZh, /compositions/);
+  assert.match(compactZh, /insert-composition/);
   assert.match(compactZh, /可点击应用按钮/);
   assert.match(compactZh, /同一次 steps 写全所有 connect/);
   assert.match(compactEn, /rule_editor_apply_canvas_actions/);
+  assert.match(compactEn, /compositions/);
+  assert.match(compactEn, /insert-composition/);
   assert.match(compactEn, /clickable apply button/);
   assert.match(compactEn, /every connect in that same steps array/);
 
@@ -1269,6 +1273,8 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.equal(zh.includes('默认把“我想实现'), false);
   assert.match(zh, /订阅、转发、推送到第三方接口/);
   assert.match(zh, /rule_editor_search_node_types/);
+  assert.match(zh, /compositions/);
+  assert.match(zh, /insert-composition/);
   assert.match(zh, /对 steps 中每个类型|各调用一次 rule_editor_get_node_type_detail|每个将出现的类型/);
   assert.match(zh, /TARGET|对外字段名/);
   assert.match(en, /TARGET/);
@@ -1287,6 +1293,8 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.equal(en.includes('I want to implement'), false);
   assert.match(en, /subscribe, forward, push to a third-party API/);
   assert.match(en, /rule_editor_search_node_types/);
+  assert.match(en, /compositions/);
+  assert.match(en, /insert-composition/);
   assert.match(en, /rule_editor_get_node_type_detail/);
   assert.match(en, /once per type|per planned type|each type that will appear/);
   assert.match(en, /rule_editor_apply_canvas_actions/);

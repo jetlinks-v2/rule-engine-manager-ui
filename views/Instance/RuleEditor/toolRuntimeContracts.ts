@@ -147,7 +147,10 @@ export const RULE_EDITOR_TYPED_REMOTE_CONTRACTS: Record<string, AiClientToolCont
   rule_editor_search_node_types: remoteContract(
     'records',
     'rule-editor.node-type.search',
-    [recordSetOutput('node-types', 'rule-editor.node-types', '$.nodeTypes')],
+    [
+      recordSetOutput('node-types', 'rule-editor.node-types', '$.nodeTypes'),
+      recordSetOutput('compositions', 'rule-editor.compositions', '$.compositions'),
+    ],
   ),
   rule_editor_get_node_type_detail: remoteContract(
     'detail',
@@ -194,7 +197,6 @@ export const RULE_EDITOR_TYPED_REMOTE_TOOL_IDS = Object.freeze([
   'rule_editor_get_context',
   'rule_editor_get_graph_summary',
   'rule_editor_list_nodes',
-  'rule_editor_find_nodes',
   'rule_editor_get_node_detail',
   'rule_editor_get_node_contract',
   'rule_editor_get_node_type_manual',
