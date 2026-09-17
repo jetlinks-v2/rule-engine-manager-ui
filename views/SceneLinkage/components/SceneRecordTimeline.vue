@@ -72,9 +72,6 @@
                       <header>
                         <b>{{ detail.nodeName || formatAction(detail.action) }}</b>
                         <small>{{ formatSceneExecutionTime(detail.createTime || detail.timestamp) }}</small>
-                        <span v-if="detail.useNanos != null" class="scene-record-timeline__duration">
-                          {{ $t('IotSceneLinkage.record.duration', { duration: formatSceneExecutionDuration(detail.useNanos) }) }}
-                        </span>
                         <j-badge-status
                           :status="detail.hasError ? 'error' : 'success'"
                           :text="detail.hasError ? $t('IotSceneLinkage.record.failed') : $t('IotSceneLinkage.record.success')"
@@ -196,68 +193,66 @@ function formatAction(value: SceneExecutionRecord['action']) {
 }
 
 .scene-record-timeline__details {
-  padding-top: var(--space-4);
-  margin-top: var(--space-4);
-  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  margin-top: 16px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .scene-record-timeline__nodes {
   display: grid;
-  gap: var(--space-4);
+  gap: 14px;
 }
 
 .scene-record-timeline__node {
   position: relative;
   display: flex;
-  gap: var(--space-3);
+  gap: 14px;
 }
 
 .scene-record-timeline__node:not(:last-child)::before {
   position: absolute;
-  top: 1rem;
-  bottom: calc(-1 * var(--space-4));
-  left: 0.5rem;
-  border-left: 1px solid var(--line);
+  top: 18px;
+  bottom: -14px;
+  left: 8px;
+  border-left: 1px solid #e5e6eb;
   content: '';
 }
 
 .scene-record-timeline__node > i {
   z-index: 1;
   flex: none;
-  width: 1rem;
-  height: 1rem;
-  background: var(--ant-color-success);
+  width: 16px;
+  height: 16px;
+  background: #00b578;
   border-radius: 50%;
-  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--ant-color-success) 12%, transparent);
+  box-shadow: 0 0 0 4px #e8ffea;
 }
 
 .scene-record-timeline__node > i.scene-record-timeline__dot--error {
-  background: var(--ant-color-error);
-  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--ant-color-error) 12%, transparent);
+  background: #f53f3f;
+  box-shadow: 0 0 0 4px #ffece8;
 }
 
 .scene-record-timeline__node > div {
   display: grid;
-  flex: 1;
-  gap: var(--space-2);
+  gap: 6px;
   min-width: 0;
 }
 
 .scene-record-timeline__node header {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 8px;
   align-items: center;
 }
 
 .scene-record-timeline__node-result {
-  max-width: 100%;
-  padding: var(--space-2) var(--space-3);
+  width: max-content;
+  max-width: 640px;
+  padding: 6px 8px;
   margin: 0;
   overflow-wrap: anywhere;
-  color: var(--ant-color-text-secondary);
-  background: var(--bg-sunken);
-  border-radius: var(--r-2);
+  background: #f7f8fa;
+  border-radius: 4px;
 }
 
 .scene-record-timeline__more {
