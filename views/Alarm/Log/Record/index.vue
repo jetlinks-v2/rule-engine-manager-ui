@@ -1,7 +1,7 @@
 <template>
     <j-page-container>
     <FullPage transparentBackground>
-      <ContentPanel>
+      
         <pro-search
             :columns="columns"
             target="bind-channel"
@@ -49,7 +49,7 @@
                 {{ slotProps?.description || '--' }}
             </template>
         </JProTable>
-      </ContentPanel>
+      
     </FullPage>
     </j-page-container>
 </template>
