@@ -17,7 +17,7 @@ export const TOPOLOGY_DIAGRAM_MEDIA_TYPE = 'text/vnd.mermaid';
 export const APPLY_CANVAS_PLAN_BINDING_GUIDE = [
   'One complete-topology apply with every connect.',
   'Write-plan outputBindings stay canvas-changes.',
-  'Canvas is the topology; no flowchart card, canvas-actions-result, or Mermaid/AnswerSpec/scheme://.',
+  'Canvas is the topology; no flowchart card, canvas-actions-result, Mermaid/AnswerSpec, or fs:// handles.',
   'Prefer objects; JSON strings are parsed.',
 ].join(' ');
 
