@@ -6,6 +6,7 @@ import {
   orderRuleEditorRemoteTools,
   toRuleEditorClientToolDefinition,
   TOPOLOGY_DIAGRAM_MEDIA_TYPE,
+  TOPOLOGY_DIAGRAM_SHAPE,
   type RemoteRuleEditorToolDefinition,
 } from '../views/Instance/RuleEditor/toolRuntime';
 import { shouldAdvanceRuleEditorContextVersion } from '../views/Instance/RuleEditor/ruleEditorAgentContext';
@@ -105,11 +106,12 @@ test('apply tool exposes one canonical root schema without duplicate input schem
   assert.deepEqual(definition.routing?.produces, ['canvas-changes', 'topology-diagram']);
   assert.deepEqual(definition.routing?.outputShapes, [
     'rule-editor.canvas-changes',
-    'diagram.flowchart',
+    TOPOLOGY_DIAGRAM_SHAPE,
   ]);
   assert.equal(definition._meta?.clientToolContract.outputs[0].kind, 'state-events');
   assert.equal(definition._meta?.clientToolContract.outputs[1].kind, 'lookup');
   assert.equal(definition._meta?.clientToolContract.outputs[1].type, 'presentation');
+  assert.equal(definition._meta?.clientToolContract.outputs[1].shape, TOPOLOGY_DIAGRAM_SHAPE);
   assert.equal(definition._meta?.clientToolContract.outputs[1].audience, 'client-presentation');
   assert.equal(definition._meta?.clientToolContract.outputs[1].delivery, 'inline');
   assert.equal(definition._meta?.clientToolContract.outputs[1].mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
@@ -500,6 +502,7 @@ test('successful apply result carries canonical state-change evidence', async ()
   assert.equal(result.outputBindings[0].recordCount, 1);
   assert.equal(result.outputBindings[0].shape, 'rule-editor.canvas-changes');
   assert.equal(result.outputBindings[1].name, 'topology-diagram');
+  assert.equal(result.outputBindings[1].shape, TOPOLOGY_DIAGRAM_SHAPE);
   assert.equal(result.outputBindings[1].mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
   assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
 });
@@ -547,6 +550,7 @@ test('topology-only complete-topology success synthesizes verified mermaid prese
   assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
   assert.equal(result.outputBindings[1].name, 'topology-diagram');
   assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
+  assert.equal(result.outputBindings[1].shape, TOPOLOGY_DIAGRAM_SHAPE);
   assert.equal(result.outputBindings[1].mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
 });
 
@@ -1120,10 +1124,15 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
 test('preferred flowchart presentation does not reuse global mermaid media type or type', () => {
   assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION_TYPE, 'flowchart');
   assert.notEqual(RULE_EDITOR_FLOWCHART_PRESENTATION_TYPE, 'mermaid');
+  assert.equal(TOPOLOGY_DIAGRAM_SHAPE, 'presentation.flowchart');
+  // consumerPorts() treats presentation.* as renderer-native PRESENTATION; diagram.flowchart
+  // is STRUCTURED_DATA compile input and never auto-attaches via defaultResourceIds().
+  assert.equal(TOPOLOGY_DIAGRAM_SHAPE.startsWith('presentation.'), true);
   assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
   assert.equal(TOPOLOGY_DIAGRAM_MEDIA_TYPE, 'text/vnd.mermaid');
   assert.notEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.mediaType, 'application/vnd.mermaid');
-  assert.deepEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.preferredInputShapes, ['diagram.flowchart']);
+  assert.deepEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.preferredInputShapes, [TOPOLOGY_DIAGRAM_SHAPE]);
+  assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.preferredInputShapes.includes('diagram.flowchart'), false);
   assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.deliveryPolicy, 'preferred');
   assert.deepEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.contentResponsibilities, ['topology', 'process.flow']);
   assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.narrativePolicy.mode, 'card-first');
@@ -1147,6 +1156,14 @@ test('presentation and compact prompts do not ask the model to select a renderer
   }
   assert.match(presentationZh, /不要选择 renderer/);
   assert.match(presentationEn, /Do not select a renderer/);
+  assert.match(presentationZh, /scheme:\/\//);
+  assert.match(presentationEn, /scheme:\/\//);
+  assert.match(presentationZh, /appliedConfig/);
+  assert.match(presentationEn, /appliedConfig/);
+  assert.match(compactZh, /scheme:\/\//);
+  assert.match(compactEn, /scheme:\/\//);
+  assert.match(compactZh, /appliedConfig/);
+  assert.match(compactEn, /appliedConfig/);
   assert.match(presentationZh, /partial-draft/);
   assert.match(presentationEn, /partial-draft/);
 });

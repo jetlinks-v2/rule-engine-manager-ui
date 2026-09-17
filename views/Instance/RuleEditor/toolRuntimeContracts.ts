@@ -8,16 +8,19 @@ import {
 export const APPLY_CANVAS_TOOL_ID = 'rule_editor_apply_canvas_actions';
 
 export const TOPOLOGY_DIAGRAM_OUTPUT_NAME = 'topology-diagram';
-export const TOPOLOGY_DIAGRAM_SHAPE = 'diagram.flowchart';
+// Must be presentation.* so ClientPresentationCapabilities.consumerPorts() emits a
+// PRESENTATION port. diagram.flowchart is structured compile input and becomes
+// STRUCTURED_DATA, so defaultResourceIds() never auto-attaches the card.
+export const TOPOLOGY_DIAGRAM_SHAPE = 'presentation.flowchart';
 // Keep mermaid text, but do not reuse application/vnd.mermaid: Capability.supports
 // matches that media type for every mermaid producer and would leak preferred delivery.
 export const TOPOLOGY_DIAGRAM_MEDIA_TYPE = 'text/vnd.mermaid';
 
 export const APPLY_CANVAS_PLAN_BINDING_GUIDE = [
-  'A complete flow is one apply with complete-topology and every connect in the same steps.',
-  'This is the only model-declared canvas write tool.',
-  'outputBindings must be canvas-changes.',
-  'Submit steps/completion as objects, not JSON strings.',
+  'One complete-topology apply with every connect.',
+  'Write-plan outputBindings stay canvas-changes.',
+  'Card from topology-diagram; do not invent canvas-actions-result or emit Mermaid/AnswerSpec/scheme://.',
+  'Prefer objects; JSON strings are parsed.',
 ].join(' ');
 
 export const orderRuleEditorRemoteTools = <T extends { id?: string; agentVisible?: boolean }>(

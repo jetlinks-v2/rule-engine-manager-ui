@@ -10,6 +10,7 @@ import {
   APPLY_CANVAS_PLAN_BINDING_GUIDE,
   APPLY_CANVAS_TOOL_ID,
   RULE_EDITOR_TYPED_REMOTE_TOOL_IDS,
+  TOPOLOGY_DIAGRAM_SHAPE,
   orderRuleEditorRemoteTools,
   toRuleEditorClientToolDefinition,
   type RemoteRuleEditorToolDefinition,
@@ -74,8 +75,20 @@ test('apply tool stays typed after the real core runtime projects routing into e
   assert.deepEqual(routing.intents, ['apply-canvas-plan', 'bind plan output to canvas-changes']);
   assert.equal(routing.help?.quickstartSection, APPLY_CANVAS_PLAN_BINDING_GUIDE);
   assert.deepEqual(routing.produces, ['canvas-changes', 'topology-diagram']);
+  assert.deepEqual(routing.outputShapes, ['rule-editor.canvas-changes', TOPOLOGY_DIAGRAM_SHAPE]);
+  assert.equal(definition._meta?.clientToolContract.outputs[1].type, 'presentation');
+  assert.equal(definition._meta?.clientToolContract.outputs[1].shape, TOPOLOGY_DIAGRAM_SHAPE);
+  assert.equal(definition._meta?.clientToolContract.outputs[1].audience, 'client-presentation');
   assert.equal(definition._meta?.clientToolContract.outputs[1].mediaType, 'text/vnd.mermaid');
+  assert.equal(routing.producerPorts?.[1]?.type, 'presentation');
+  assert.equal(routing.producerPorts?.[1]?.shape, TOPOLOGY_DIAGRAM_SHAPE);
   assert.deepEqual(routing.resultDeliveries, ['inline']);
+  assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('outputBindings must be canvas-changes.'), false);
+  assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /Write-plan outputBindings stay canvas-changes/);
+  assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /topology-diagram/);
+  assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /JSON strings are parsed/);
+  assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('canvas-actions-result'), true);
+  assert.ok(APPLY_CANVAS_PLAN_BINDING_GUIDE.length <= 240, APPLY_CANVAS_PLAN_BINDING_GUIDE.length);
 
   const report = reportFor([applyTool()]);
   const tool = report.tools[0];
