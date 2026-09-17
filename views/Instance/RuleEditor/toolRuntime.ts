@@ -75,6 +75,8 @@ interface RuleEditorCanvasApplyResult extends Record<string, unknown> {
     sourceCount: number;
     terminalCount: number;
   };
+  complete?: boolean;
+  resultStatus?: string;
   changes: RuleEditorCanvasChange[];
   topology?: RuleEditorTopologySnapshot;
   presentation?: {
@@ -84,9 +86,20 @@ interface RuleEditorCanvasApplyResult extends Record<string, unknown> {
   rolledBack: false;
   validation?: {
     issueCount?: number;
-    [key: string]: unknown;
+    truncated?: boolean;
+    issues?: unknown[];
   };
+  instruction?: string;
 }
+
+const CANVAS_CHANGE_IDENTITY_KEYS = [
+  'nodeId',
+  'nodeType',
+  'sourceId',
+  'targetId',
+  'sourcePort',
+  'count',
+] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> => (
   Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -467,6 +480,98 @@ const isCanvasApplySuccess = (value: unknown): value is RuleEditorCanvasApplyRes
     && value.rolledBack === false;
 };
 
+const toModelFacingCanvasChange = (change: RuleEditorCanvasChange): RuleEditorCanvasChange => {
+  const projected: RuleEditorCanvasChange = { kind: change.kind };
+  for (const key of CANVAS_CHANGE_IDENTITY_KEYS) {
+    if (change[key] !== undefined) projected[key] = change[key];
+  }
+  return projected;
+};
+
+const toModelFacingCompletion = (
+  completion: RuleEditorCanvasApplyResult['completion'],
+): RuleEditorCanvasApplyResult['completion'] => ({
+  mode: completion.mode,
+  satisfied: completion.satisfied,
+  sourceCount: completion.sourceCount,
+  terminalCount: completion.terminalCount,
+});
+
+const toModelFacingTopology = (
+  topology: RuleEditorTopologySnapshot,
+): RuleEditorTopologySnapshot => ({
+  contract: 'rule-editor.topology-snapshot/v1',
+  complete: true,
+  truncated: topology.truncated,
+  nodeCount: topology.nodeCount,
+  linkCount: topology.linkCount,
+  nodes: topology.nodes.map(node => ({
+    key: node.key,
+    label: node.label,
+    type: node.type,
+    source: node.source,
+    terminal: node.terminal,
+  })),
+  links: topology.links.map(link => ({
+    source: link.source,
+    target: link.target,
+    sourcePort: link.sourcePort,
+  })),
+});
+
+const toModelFacingValidationIssue = (issue: unknown) => {
+  if (!isRecord(issue)) return issue;
+  const projected: Record<string, unknown> = {};
+  if (typeof issue.path === 'string') projected.path = issue.path;
+  if (typeof issue.code === 'string') projected.code = issue.code;
+  if (typeof issue.message === 'string') projected.message = issue.message;
+  return Object.keys(projected).length ? projected : undefined;
+};
+
+const toModelFacingValidation = (validation: RuleEditorCanvasApplyResult['validation']) => {
+  if (!isRecord(validation)) return undefined;
+  const projected: NonNullable<RuleEditorCanvasApplyResult['validation']> = {};
+  if (typeof validation.issueCount === 'number') projected.issueCount = validation.issueCount;
+  if (typeof validation.truncated === 'boolean') projected.truncated = validation.truncated;
+  if (Array.isArray(validation.issues)) {
+    const issues = validation.issues
+      .map(toModelFacingValidationIssue)
+      .filter((issue): issue is Exclude<typeof issue, undefined> => issue !== undefined);
+    if (issues.length) projected.issues = issues;
+  }
+  return Object.keys(projected).length ? projected : undefined;
+};
+
+// Compact model-facing success: keep write evidence, drop executor dumps that poison COMPOSITE.
+const toModelFacingCanvasApplyResult = (
+  result: RuleEditorCanvasApplyResult,
+): RuleEditorCanvasApplyResult => {
+  const projected: RuleEditorCanvasApplyResult = {
+    ok: true,
+    success: true,
+    contract: result.contract,
+    flowMode: result.flowMode,
+    completion: toModelFacingCompletion(result.completion),
+    changes: result.changes.map(toModelFacingCanvasChange),
+    canvasRevision: result.canvasRevision,
+    rolledBack: false,
+  };
+  if (typeof result.complete === 'boolean') projected.complete = result.complete;
+  if (typeof result.resultStatus === 'string' && result.resultStatus) {
+    projected.resultStatus = result.resultStatus;
+  }
+  if (result.topology !== undefined) projected.topology = toModelFacingTopology(result.topology);
+  if (result.presentation !== undefined) {
+    projected.presentation = { mermaid: result.presentation.mermaid };
+  }
+  const validation = toModelFacingValidation(result.validation);
+  if (validation) projected.validation = validation;
+  if (typeof result.instruction === 'string' && result.instruction) {
+    projected.instruction = result.instruction;
+  }
+  return projected;
+};
+
 const withCanvasApplyEvidence = (result: RuleEditorCanvasApplyResult) => (
   withAiClientToolContractEvidence(result, APPLY_CANVAS_CONTRACT, {
     complete: result.completion.satisfied,
@@ -709,7 +814,7 @@ export const toRuleEditorClientToolDefinition = (
           }
           const withPresentation = attachVerifiedTopologyPresentation(result);
           if (isCanvasApplySuccess(withPresentation)) {
-            return withCanvasApplyEvidence(withPresentation);
+            return withCanvasApplyEvidence(toModelFacingCanvasApplyResult(withPresentation));
           }
           return toRemoteToolFailure(
             'rule_editor.canvas_plan.invalid_result',

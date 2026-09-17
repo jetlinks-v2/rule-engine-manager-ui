@@ -622,6 +622,120 @@ test('topology-only complete-topology success synthesizes verified mermaid prese
   assert.equal(result.outputBindings[1].mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
 });
 
+test('model-facing apply success omits executor dumps that would poison terminal narrative', async () => {
+  const poisonUrl = 'http://example.test/hooks/transform';
+  const poisonSource = 'return { payload: msg, contentType: "application/json" };';
+  const iframeResult = {
+    ok: true,
+    success: true,
+    contract: 'rule-editor.canvas-apply-result/v1',
+    flowMode: 'realtime-stream',
+    completion: {
+      mode: 'complete-topology',
+      satisfied: true,
+      sourceCount: 1,
+      terminalCount: 1,
+    },
+    complete: true,
+    resultStatus: 'completed',
+    changes: [{
+      kind: 'node-inserted',
+      nodeId: 'node-1',
+      nodeType: 'function',
+      url: poisonUrl,
+      func: poisonSource,
+    }],
+    topology: {
+      contract: 'rule-editor.topology-snapshot/v1',
+      complete: true,
+      truncated: false,
+      nodeCount: 2,
+      linkCount: 1,
+      nodes: [
+        { key: 'n1', label: 'Transform', type: 'function', source: true, terminal: false, url: poisonUrl },
+        { key: 'n2', label: 'Sink', type: 'sink', source: false, terminal: true },
+      ],
+      links: [{ source: 'n1', target: 'n2', sourcePort: 0 }],
+    },
+    validation: {
+      issueCount: 0,
+      truncated: false,
+      issues: [{ code: 'ok', message: 'noop', func: poisonSource, url: poisonUrl }],
+    },
+    canvasRevision: 10,
+    rolledBack: false,
+    total: 3,
+    results: [{
+      index: 0,
+      op: 'insert-node',
+      result: {
+        ok: true,
+        node: {
+          id: 'node-1',
+          type: 'function',
+          func: poisonSource,
+          url: poisonUrl,
+          workspaceId: 'workspace-dump',
+        },
+      },
+    }],
+    configApplications: [{
+      index: 0,
+      op: 'insert-node',
+      nodeId: 'node-1',
+      requestedConfigFields: ['url', 'func'],
+      changedFields: ['url', 'func'],
+      appliedConfig: {
+        url: poisonUrl,
+        func: poisonSource,
+      },
+    }],
+  };
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async () => iframeResult);
+
+  const result = await definition.execute({}, {}, {} as any);
+  const serialized = JSON.stringify(result);
+
+  assert.equal(result.results, undefined);
+  assert.equal(result.configApplications, undefined);
+  assert.equal(result.total, undefined);
+  assert.equal(Object.hasOwn(result, 'results'), false);
+  assert.equal(Object.hasOwn(result, 'configApplications'), false);
+  assert.equal(serialized.includes(poisonUrl), false);
+  assert.equal(serialized.includes(poisonSource), false);
+  assert.equal(iframeResult.results[0].result.node.func, poisonSource);
+  assert.equal(iframeResult.configApplications[0].appliedConfig.url, poisonUrl);
+  assert.equal(iframeResult.changes[0].url, poisonUrl);
+  assert.equal(iframeResult.topology.nodes[0].url, poisonUrl);
+  assert.deepEqual(result.changes, [{ kind: 'node-inserted', nodeId: 'node-1', nodeType: 'function' }]);
+  assert.deepEqual(result.completion, {
+    mode: 'complete-topology',
+    satisfied: true,
+    sourceCount: 1,
+    terminalCount: 1,
+  });
+  assert.deepEqual(result.topology.nodes[0], {
+    key: 'n1',
+    label: 'Transform',
+    type: 'function',
+    source: true,
+    terminal: false,
+  });
+  assert.deepEqual(result.validation, { issueCount: 0, truncated: false, issues: [{ code: 'ok', message: 'noop' }] });
+  assert.equal(result.canvasRevision, 10);
+  assert.equal(result.presentation.mermaid, [
+    'flowchart LR',
+    '  n1["Transform"]',
+    '  n2["Sink"]',
+    '  n1 --> n2',
+  ].join('\n'));
+  assert.equal(result.evidence.resultStatus, 'applied');
+  assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
+  assert.equal(result.outputBindings[0].name, 'canvas-changes');
+  assert.equal(result.outputBindings[1].name, 'topology-diagram');
+  assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
+});
+
 test('three-node complete-topology snapshot synthesizes both verified edges', async () => {
   const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({
     ok: true,
