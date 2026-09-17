@@ -1258,6 +1258,10 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(compactZh, /insert-composition/);
   assert.match(compactZh, /zip-output/);
   assert.match(compactZh, /function-mapper/);
+  assert.match(compactZh, /定时|timer/);
+  assert.match(compactEn, /timer/);
+  assert.match(compactZh, /catch/);
+  assert.match(compactEn, /catch/);
   assert.match(compactZh, /rule_editor_execute_node_tool/);
   assert.match(compactZh, /QueryDeviceDetail/);
   assert.match(compactZh, /可点击应用按钮/);
@@ -1285,6 +1289,8 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(zh, /insert-composition/);
   assert.match(zh, /zip-output/);
   assert.match(zh, /function-mapper/);
+  assert.match(zh, /catch/);
+  assert.match(en, /catch/);
   assert.match(zh, /rule_editor_execute_node_tool/);
   assert.match(zh, /QueryDeviceDetail/);
   assert.match(zh, /对 steps 中每个类型|各调用一次 rule_editor_get_node_type_detail|每个将出现的类型/);
