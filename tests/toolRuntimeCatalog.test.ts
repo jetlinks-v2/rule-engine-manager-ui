@@ -10,7 +10,6 @@ import {
   APPLY_CANVAS_PLAN_BINDING_GUIDE,
   APPLY_CANVAS_TOOL_ID,
   RULE_EDITOR_TYPED_REMOTE_TOOL_IDS,
-  TOPOLOGY_DIAGRAM_SHAPE,
   orderRuleEditorRemoteTools,
   toRuleEditorClientToolDefinition,
   type RemoteRuleEditorToolDefinition,
@@ -74,18 +73,16 @@ test('apply tool stays typed after the real core runtime projects routing into e
   assert.equal(routing.accepts, undefined);
   assert.deepEqual(routing.intents, ['apply-canvas-plan', 'bind plan output to canvas-changes']);
   assert.equal(routing.help?.quickstartSection, APPLY_CANVAS_PLAN_BINDING_GUIDE);
-  assert.deepEqual(routing.produces, ['canvas-changes', 'topology-diagram']);
-  assert.deepEqual(routing.outputShapes, ['rule-editor.canvas-changes', TOPOLOGY_DIAGRAM_SHAPE]);
-  assert.equal(definition._meta?.clientToolContract.outputs[1].type, 'presentation');
-  assert.equal(definition._meta?.clientToolContract.outputs[1].shape, TOPOLOGY_DIAGRAM_SHAPE);
-  assert.equal(definition._meta?.clientToolContract.outputs[1].audience, 'client-presentation');
-  assert.equal(definition._meta?.clientToolContract.outputs[1].mediaType, 'text/vnd.mermaid');
-  assert.equal(routing.producerPorts?.[1]?.type, 'presentation');
-  assert.equal(routing.producerPorts?.[1]?.shape, TOPOLOGY_DIAGRAM_SHAPE);
+  assert.deepEqual(routing.produces, ['canvas-changes']);
+  assert.deepEqual(routing.outputShapes, ['rule-editor.canvas-changes']);
+  assert.equal(definition._meta?.clientToolContract.outputs.length, 1);
+  assert.equal(definition._meta?.clientToolContract.outputs[0].name, 'canvas-changes');
+  assert.equal(routing.producerPorts?.length, 1);
   assert.deepEqual(routing.resultDeliveries, ['inline']);
   assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('outputBindings must be canvas-changes.'), false);
   assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /Write-plan outputBindings stay canvas-changes/);
-  assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /topology-diagram/);
+  assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('topology-diagram'), false);
+  assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /Canvas is the topology/);
   assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /JSON strings are parsed/);
   assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('canvas-actions-result'), true);
   assert.ok(APPLY_CANVAS_PLAN_BINDING_GUIDE.length <= 240, APPLY_CANVAS_PLAN_BINDING_GUIDE.length);
@@ -98,7 +95,8 @@ test('apply tool stays typed after the real core runtime projects routing into e
   assert.equal(report.summary.malformedContract, 0);
   assert.equal(report.issues.some(issue => issue.code === 'result_binding_unexpected'), false);
   assert.equal(report.issues.some(issue => /artifact|audience|delivery/i.test(`${issue.code} ${issue.message}`)), false);
-  assert.ok(tool?.outputKinds.includes('lookup'));
+  assert.ok(tool?.outputKinds.includes('state-events'));
+  assert.equal(tool?.outputKinds.includes('lookup'), false);
   assert.equal(tool?.outputKinds.includes('artifact'), false);
 });
 

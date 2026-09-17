@@ -19,7 +19,7 @@ export const RULE_EDITOR_FLOWCHART_PRESENTATION = {
   defaultMode: 'preview' as const,
   purpose: 'conversation-preview' as const,
   preferredInputShapes: [TOPOLOGY_DIAGRAM_SHAPE],
-  deliveryPolicy: 'preferred' as const,
+  deliveryPolicy: 'explicit' as const,
   contentResponsibilities: ['topology', 'process.flow'],
   narrativePolicy: {
     mode: 'card-first' as const,

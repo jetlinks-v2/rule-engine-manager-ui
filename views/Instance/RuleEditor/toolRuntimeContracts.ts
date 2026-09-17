@@ -7,19 +7,17 @@ import {
 
 export const APPLY_CANVAS_TOOL_ID = 'rule_editor_apply_canvas_actions';
 
+// Kept for the optional explicit flowchart renderer. Default apply success must not
+// produce this output: the canvas is the visualization, and a preferred card creates
+// TERMINAL_EVIDENCE_PAUSED when the user did not ask for a chat flowchart.
 export const TOPOLOGY_DIAGRAM_OUTPUT_NAME = 'topology-diagram';
-// Must be presentation.* so ClientPresentationCapabilities.consumerPorts() emits a
-// PRESENTATION port. diagram.flowchart is structured compile input and becomes
-// STRUCTURED_DATA, so defaultResourceIds() never auto-attaches the card.
 export const TOPOLOGY_DIAGRAM_SHAPE = 'presentation.flowchart';
-// Keep mermaid text, but do not reuse application/vnd.mermaid: Capability.supports
-// matches that media type for every mermaid producer and would leak preferred delivery.
 export const TOPOLOGY_DIAGRAM_MEDIA_TYPE = 'text/vnd.mermaid';
 
 export const APPLY_CANVAS_PLAN_BINDING_GUIDE = [
   'One complete-topology apply with every connect.',
   'Write-plan outputBindings stay canvas-changes.',
-  'Card from topology-diagram; no canvas-actions-result or Mermaid/AnswerSpec/scheme://.',
+  'Canvas is the topology; no flowchart card, canvas-actions-result, or Mermaid/AnswerSpec/scheme://.',
   'Prefer objects; JSON strings are parsed.',
 ].join(' ');
 
@@ -101,15 +99,6 @@ export const APPLY_CANVAS_CONTRACT = defineAiClientToolContract({
     path: '$.changes',
     mediaType: 'application/json',
     audience: 'model-evidence',
-    delivery: 'inline',
-  }, {
-    kind: 'lookup',
-    type: 'presentation',
-    name: TOPOLOGY_DIAGRAM_OUTPUT_NAME,
-    shape: TOPOLOGY_DIAGRAM_SHAPE,
-    path: '$.presentation.mermaid',
-    mediaType: TOPOLOGY_DIAGRAM_MEDIA_TYPE,
-    audience: 'client-presentation',
     delivery: 'inline',
   }],
 });

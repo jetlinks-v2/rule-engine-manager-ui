@@ -103,18 +103,12 @@ test('apply tool exposes one canonical root schema without duplicate input schem
   assert.deepEqual(definition.routing?.intents, ['apply-canvas-plan', 'bind plan output to canvas-changes']);
   assert.equal(definition.routing?.help?.quickstartSection, APPLY_CANVAS_PLAN_BINDING_GUIDE);
   assert.ok(definition.description?.includes(APPLY_CANVAS_PLAN_BINDING_GUIDE));
-  assert.deepEqual(definition.routing?.produces, ['canvas-changes', 'topology-diagram']);
+  assert.deepEqual(definition.routing?.produces, ['canvas-changes']);
   assert.deepEqual(definition.routing?.outputShapes, [
     'rule-editor.canvas-changes',
-    TOPOLOGY_DIAGRAM_SHAPE,
   ]);
   assert.equal(definition._meta?.clientToolContract.outputs[0].kind, 'state-events');
-  assert.equal(definition._meta?.clientToolContract.outputs[1].kind, 'lookup');
-  assert.equal(definition._meta?.clientToolContract.outputs[1].type, 'presentation');
-  assert.equal(definition._meta?.clientToolContract.outputs[1].shape, TOPOLOGY_DIAGRAM_SHAPE);
-  assert.equal(definition._meta?.clientToolContract.outputs[1].audience, 'client-presentation');
-  assert.equal(definition._meta?.clientToolContract.outputs[1].delivery, 'inline');
-  assert.equal(definition._meta?.clientToolContract.outputs[1].mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
+  assert.equal(definition._meta?.clientToolContract.outputs.length, 1);
   assert.deepEqual(definition.expands?._schema, canonicalPlanSchema);
   assert.equal(definition.expands?.effect, 'WRITE');
   assert.equal(definition.inputs?.[0].expands, undefined);
@@ -564,19 +558,19 @@ test('successful apply result carries canonical state-change evidence', async ()
     validationIssueCount: 0,
     topologyNodeCount: 2,
     topologyLinkCount: 1,
-    topologyDiagramAvailable: true,
   });
   assert.equal(Object.hasOwn(result, 'topology'), false);
+  assert.equal(result.presentation, undefined);
+  assert.equal(result.evidence.facts.topologyDiagramAvailable, undefined);
+  assert.equal(JSON.stringify(result).includes('flowchart LR'), false);
   assert.equal(result.outputBindings[0].name, 'canvas-changes');
   assert.equal(result.outputBindings[0].recordCount, 1);
   assert.equal(result.outputBindings[0].shape, 'rule-editor.canvas-changes');
-  assert.equal(result.outputBindings[1].name, 'topology-diagram');
-  assert.equal(result.outputBindings[1].shape, TOPOLOGY_DIAGRAM_SHAPE);
-  assert.equal(result.outputBindings[1].mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
-  assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
+  assert.equal(result.outputBindings.length, 1);
+  assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
 });
 
-test('topology-only complete-topology success synthesizes verified mermaid presentation', async () => {
+test('topology-only complete-topology success does not emit a flowchart card', async () => {
   const topology = {
     contract: 'rule-editor.topology-snapshot/v1',
     complete: true,
@@ -609,25 +603,19 @@ test('topology-only complete-topology success synthesizes verified mermaid prese
   const definition = toRuleEditorClientToolDefinition(applyTool(), async () => iframeResult);
 
   const result = await definition.execute({}, {}, {} as any);
-  const expectedMermaid = [
-    'flowchart LR',
-    '  n1["订阅属性上报"]',
-    '  n2["HTTP 请求"]',
-    '  n1 --> n2',
-  ].join('\n');
 
   assert.equal(Object.hasOwn(iframeResult, 'presentation'), false);
   assert.equal(iframeResult.topology, topology);
-  assert.equal(result.presentation.mermaid, expectedMermaid);
+  assert.equal(result.presentation, undefined);
   assert.equal(Object.hasOwn(result, 'topology'), false);
   assert.equal(result.topology, undefined);
   assert.equal(result.evidence.facts.topologyNodeCount, 2);
   assert.equal(result.evidence.facts.topologyLinkCount, 1);
-  assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
-  assert.equal(result.outputBindings[1].name, 'topology-diagram');
-  assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
-  assert.equal(result.outputBindings[1].shape, TOPOLOGY_DIAGRAM_SHAPE);
-  assert.equal(result.outputBindings[1].mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
+  assert.notEqual(result.evidence.facts.topologyDiagramAvailable, true);
+  assert.equal(result.outputBindings[0].name, 'canvas-changes');
+  assert.equal(result.outputBindings.length, 1);
+  assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
+  assert.equal(JSON.stringify(result).includes('flowchart'), false);
 });
 
 test('model-facing apply success omits executor dumps that would poison terminal narrative', async () => {
@@ -729,22 +717,18 @@ test('model-facing apply success omits executor dumps that would poison terminal
   assert.equal(serialized.includes('"label":"Sink"'), false);
   assert.deepEqual(result.validation, { issueCount: 0, truncated: false, issues: [{ code: 'ok', message: 'noop' }] });
   assert.equal(result.canvasRevision, 10);
-  assert.equal(result.presentation.mermaid, [
-    'flowchart LR',
-    '  n1["Transform"]',
-    '  n2["Sink"]',
-    '  n1 --> n2',
-  ].join('\n'));
+  assert.equal(result.presentation, undefined);
   assert.equal(result.evidence.resultStatus, 'applied');
   assert.equal(result.evidence.facts.topologyNodeCount, 2);
   assert.equal(result.evidence.facts.topologyLinkCount, 1);
-  assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
+  assert.notEqual(result.evidence.facts.topologyDiagramAvailable, true);
   assert.equal(result.outputBindings[0].name, 'canvas-changes');
-  assert.equal(result.outputBindings[1].name, 'topology-diagram');
-  assert.equal(result.outputBindings[1].path, '$.presentation.mermaid');
+  assert.equal(result.outputBindings.length, 1);
+  assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
+  assert.equal(serialized.includes('flowchart'), false);
 });
 
-test('three-node complete-topology snapshot synthesizes both verified edges', async () => {
+test('three-node complete-topology snapshot stays canvas-changes only', async () => {
   const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({
     ok: true,
     success: true,
@@ -782,22 +766,15 @@ test('three-node complete-topology snapshot synthesizes both verified edges', as
   }));
 
   const result = await definition.execute({}, {}, {} as any);
-  const expectedMermaid = [
-    'flowchart LR',
-    '  n1["订阅属性上报"]',
-    '  n2["函数处理"]',
-    '  n3["HTTP 请求"]',
-    '  n1 --> n2',
-    '  n2 --> n3',
-  ].join('\n');
 
-  assert.equal(result.presentation.mermaid, expectedMermaid);
+  assert.equal(result.presentation, undefined);
   assert.equal(Object.hasOwn(result, 'topology'), false);
   assert.equal(JSON.stringify(result).includes('"label":"订阅属性上报"'), false);
+  assert.equal(JSON.stringify(result).includes('flowchart'), false);
   assert.equal(result.evidence.facts.topologyNodeCount, 3);
   assert.equal(result.evidence.facts.topologyLinkCount, 2);
-  assert.equal(result.evidence.facts.topologyDiagramAvailable, true);
-  assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), true);
+  assert.notEqual(result.evidence.facts.topologyDiagramAvailable, true);
+  assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
 });
 
 test('single-node complete-topology does not synthesize a topology diagram', async () => {
@@ -835,7 +812,7 @@ test('single-node complete-topology does not synthesize a topology diagram', asy
   assert.equal(result.presentation, undefined);
   assert.equal(result.evidence.facts.topologyNodeCount, 1);
   assert.equal(result.evidence.facts.topologyLinkCount, 0);
-  assert.equal(result.evidence.facts.topologyDiagramAvailable, false);
+  assert.notEqual(result.evidence.facts.topologyDiagramAvailable, true);
   assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
 });
 
@@ -872,7 +849,7 @@ test('truncated topology snapshot does not synthesize a mermaid presentation', a
   assert.equal(result.outputBindings, undefined);
 });
 
-test('oversized verified mermaid stays topology-only instead of failing a successful apply', async () => {
+test('large complete-topology stays canvas-changes only instead of failing a successful apply', async () => {
   const nodeCount = 100;
   const nodes = Array.from({ length: nodeCount }, (_, index) => ({
     key: `n${index + 1}`,
@@ -918,7 +895,7 @@ test('oversized verified mermaid stays topology-only instead of failing a succes
   assert.equal(result.presentation, undefined);
   assert.equal(result.evidence.facts.topologyNodeCount, nodeCount);
   assert.equal(result.evidence.facts.topologyLinkCount, links.length);
-  assert.equal(result.evidence.facts.topologyDiagramAvailable, false);
+  assert.notEqual(result.evidence.facts.topologyDiagramAvailable, true);
   assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
 });
 
@@ -945,7 +922,7 @@ test('partial draft keeps state-change evidence without claiming task completion
   assert.equal(result.evidence.complete, false);
   assert.equal(result.evidence.resultStatus, 'partial');
   assert.equal(result.evidence.facts.topologySatisfied, false);
-  assert.equal(result.evidence.facts.topologyDiagramAvailable, false);
+  assert.notEqual(result.evidence.facts.topologyDiagramAvailable, true);
   assert.equal(result.presentation, undefined);
   assert.equal(Object.hasOwn(result, 'topology'), false);
   assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
@@ -1292,8 +1269,9 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.equal(zh.includes('默认把“我想实现'), false);
   assert.match(zh, /订阅、转发、推送到第三方接口/);
   assert.match(zh, /rule_editor_search_node_types/);
-  assert.match(zh, /rule_editor_get_node_type_detail/);
-  assert.match(zh, /rule_editor_apply_canvas_actions/);
+  assert.match(zh, /对 steps 中每个类型|各调用一次 rule_editor_get_node_type_detail|每个将出现的类型/);
+  assert.match(zh, /TARGET|对外字段名/);
+  assert.match(en, /TARGET/);
   assert.match(zh, /全部 connect 放进同一次 steps/);
   assert.match(zh, /不要先插入再第二次 apply 只连线/);
   assert.match(zh, /禁止回复编辑器无法一键插入/);
@@ -1310,6 +1288,7 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(en, /subscribe, forward, push to a third-party API/);
   assert.match(en, /rule_editor_search_node_types/);
   assert.match(en, /rule_editor_get_node_type_detail/);
+  assert.match(en, /once per type|per planned type|each type that will appear/);
   assert.match(en, /rule_editor_apply_canvas_actions/);
   assert.match(en, /steps\[\]\.op/);
   assert.match(en, /cannot one-click insert/);
@@ -1322,41 +1301,41 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.equal(en.includes('insert_node'), false);
 });
 
-test('preferred flowchart presentation does not reuse global mermaid media type or type', () => {
+test('explicit flowchart presentation does not create a preferred terminal obligation', () => {
   assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION_TYPE, 'flowchart');
   assert.notEqual(RULE_EDITOR_FLOWCHART_PRESENTATION_TYPE, 'mermaid');
   assert.equal(TOPOLOGY_DIAGRAM_SHAPE, 'presentation.flowchart');
-  // consumerPorts() treats presentation.* as renderer-native PRESENTATION; diagram.flowchart
-  // is STRUCTURED_DATA compile input and never auto-attaches via defaultResourceIds().
   assert.equal(TOPOLOGY_DIAGRAM_SHAPE.startsWith('presentation.'), true);
   assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.mediaType, TOPOLOGY_DIAGRAM_MEDIA_TYPE);
   assert.equal(TOPOLOGY_DIAGRAM_MEDIA_TYPE, 'text/vnd.mermaid');
   assert.notEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.mediaType, 'application/vnd.mermaid');
   assert.deepEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.preferredInputShapes, [TOPOLOGY_DIAGRAM_SHAPE]);
   assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.preferredInputShapes.includes('diagram.flowchart'), false);
-  assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.deliveryPolicy, 'preferred');
+  assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.deliveryPolicy, 'explicit');
   assert.deepEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.contentResponsibilities, ['topology', 'process.flow']);
-  assert.equal(RULE_EDITOR_FLOWCHART_PRESENTATION.narrativePolicy.mode, 'card-first');
-  assert.deepEqual(RULE_EDITOR_FLOWCHART_PRESENTATION.narrativePolicy.allowedTextRoles, ['summary', 'next_step']);
 });
 
-test('presentation and compact prompts do not ask the model to select a renderer', () => {
+test('presentation and compact prompts keep the canvas as the only topology visualization', () => {
   const presentationZh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.presentation']);
   const presentationEn = String((enLang as Record<string, string>)['RuleEditor.agent.system.presentation']);
   const compactZh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.compact']);
   const compactEn = String((enLang as Record<string, string>)['RuleEditor.agent.system.compact']);
 
   for (const text of [presentationZh, presentationEn, compactZh, compactEn]) {
-    assert.match(text, /topology-diagram/);
+    assert.equal(text.includes('topology-diagram'), false);
     assert.equal(text.includes('必须选择'), false);
     assert.equal(text.includes('must be selected'), false);
     assert.equal(/select(?:ed)? for the installed/i.test(text), false);
+    assert.equal(/select a renderer/i.test(text), false);
+    assert.equal(text.includes('不要选择 renderer'), false);
     assert.equal(text.includes('JSON AnswerSpec'), true);
     assert.equal(text.includes('http://'), false);
     assert.equal(text.includes('上线'), false);
   }
-  assert.match(presentationZh, /不要选择 renderer/);
-  assert.match(presentationEn, /Do not select a renderer/);
+  assert.match(presentationZh, /画布是唯一拓扑可视化/);
+  assert.match(presentationEn, /canvas is the only topology visualization/i);
+  assert.match(presentationZh, /流程图卡片/);
+  assert.match(presentationEn, /flowchart card/i);
   assert.match(presentationZh, /scheme:\/\//);
   assert.match(presentationEn, /scheme:\/\//);
   assert.match(presentationZh, /appliedConfig/);

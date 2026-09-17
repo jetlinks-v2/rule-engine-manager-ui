@@ -15,8 +15,6 @@ import {
   APPLY_CANVAS_CONTRACT,
   APPLY_CANVAS_PLAN_BINDING_GUIDE,
   APPLY_CANVAS_TOOL_ID,
-  TOPOLOGY_DIAGRAM_MEDIA_TYPE,
-  TOPOLOGY_DIAGRAM_OUTPUT_NAME,
   resolveRuleEditorRemoteContract,
 } from './toolRuntimeContracts';
 
@@ -414,43 +412,18 @@ const isPublishableTopologyMermaid = (mermaid: string) => (
   Boolean(mermaid.trim()) && mermaid.length <= TOPOLOGY_MERMAID_MAX_LENGTH
 );
 
-// The diagram is presentation of this exact verified snapshot, never a second model-authored graph.
+// Used only to reject an unexpected iframe mermaid that does not match the snapshot.
 const toVerifiedTopologyMermaid = (topology: RuleEditorTopologySnapshot) => [
   'flowchart LR',
   ...topology.nodes.map(node => `  ${node.key}["${node.label}"]`),
   ...topology.links.map(link => `  ${link.source} --> ${link.target}`),
 ].join('\n');
 
-// Iframe executor stays topology-only. Parent synthesizes mermaid from that snapshot so the
-// declared topology-diagram binding exists for terminal evidence. Never overwrite iframe mermaid.
-const attachVerifiedTopologyPresentation = (value: unknown): unknown => {
-  if (!isRecord(value) || value.presentation !== undefined) {
-    return value;
-  }
-  const topology = value.topology;
-  const completion = value.completion;
-  if (!canPublishTopologyDiagram(topology)
-    || !isRecord(completion)
-    || completion.mode !== 'complete-topology'
-    || completion.satisfied !== true) {
-    return value;
-  }
-  const mermaid = toVerifiedTopologyMermaid(topology);
-  if (!isPublishableTopologyMermaid(mermaid)) {
-    return value;
-  }
-  return {
-    ...value,
-    presentation: {
-      mermaid,
-    },
-  };
-};
-
 const hasValidTopologyPresentation = (value: Record<string, unknown>) => {
   const topology = value.topology;
   const presentation = value.presentation;
   if (topology !== undefined && !isTopologySnapshot(topology)) return false;
+  // Missing mermaid is success. Default apply must not create a flowchart obligation.
   if (presentation === undefined) return true;
   if (!isRecord(presentation)
     || typeof presentation.mermaid !== 'string'
@@ -520,8 +493,8 @@ const toModelFacingValidation = (validation: RuleEditorCanvasApplyResult['valida
   return Object.keys(projected).length ? projected : undefined;
 };
 
-// Compact model-facing success: keep write evidence and mermaid for capture, drop topology
-// labels the model would copy into a second graph, and drop executor dumps that poison COMPOSITE.
+// Compact model-facing success: write evidence only. The canvas is the topology visualization;
+// do not emit mermaid or node labels the model would copy into a second graph.
 const toModelFacingCanvasApplyResult = (
   result: RuleEditorCanvasApplyResult,
 ): RuleEditorCanvasApplyResult => {
@@ -538,9 +511,6 @@ const toModelFacingCanvasApplyResult = (
   if (typeof result.complete === 'boolean') projected.complete = result.complete;
   if (typeof result.resultStatus === 'string' && result.resultStatus) {
     projected.resultStatus = result.resultStatus;
-  }
-  if (result.presentation !== undefined) {
-    projected.presentation = { mermaid: result.presentation.mermaid };
   }
   const validation = toModelFacingValidation(result.validation);
   if (validation) projected.validation = validation;
@@ -569,7 +539,6 @@ const withCanvasApplyEvidence = (
       validationIssueCount: source.validation?.issueCount,
       topologyNodeCount: source.topology?.nodeCount,
       topologyLinkCount: source.topology?.linkCount,
-      topologyDiagramAvailable: Boolean(result.presentation?.mermaid),
     },
     outputs: [
       {
@@ -579,14 +548,6 @@ const withCanvasApplyEvidence = (
         complete: true,
         truncated: false,
       },
-      ...(result.presentation?.mermaid ? [{
-        name: TOPOLOGY_DIAGRAM_OUTPUT_NAME,
-        path: '$.presentation.mermaid',
-        mediaType: TOPOLOGY_DIAGRAM_MEDIA_TYPE,
-        recordCount: 1,
-        complete: true,
-        truncated: false,
-      }] : []),
     ],
   })
 );
@@ -793,11 +754,10 @@ export const toRuleEditorClientToolDefinition = (
           if (isRecord(result) && (result.success === false || result.ok === false)) {
             return toRemoteFailureResult(result);
           }
-          const withPresentation = attachVerifiedTopologyPresentation(result);
-          if (isCanvasApplySuccess(withPresentation)) {
+          if (isCanvasApplySuccess(result)) {
             return withCanvasApplyEvidence(
-              toModelFacingCanvasApplyResult(withPresentation),
-              withPresentation,
+              toModelFacingCanvasApplyResult(result),
+              result,
             );
           }
           return toRemoteToolFailure(

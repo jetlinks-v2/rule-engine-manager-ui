@@ -64,7 +64,7 @@ import { useRuleEditorAgentComposerExtensions } from './useRuleEditorAgentCompos
 
 const RULE_EDITOR_CLIENT_ID = 'ruleEditorChat';
 const RULE_EDITOR_SUBJECT_TYPE = 'ruleInstance';
-const RULE_EDITOR_RESOURCE_VERSION = '2026091716';
+const RULE_EDITOR_RESOURCE_VERSION = '2026091717';
 
 const props = defineProps({
   open: {
