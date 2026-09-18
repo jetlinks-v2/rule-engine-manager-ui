@@ -86,6 +86,7 @@ test('apply tool stays typed after the real core runtime projects routing into e
   assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /Canvas is the topology/);
   assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /JSON strings are parsed/);
   assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('canvas-actions-result'), true);
+  assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('://'), false);
   assert.ok(APPLY_CANVAS_PLAN_BINDING_GUIDE.length <= 240, APPLY_CANVAS_PLAN_BINDING_GUIDE.length);
 
   const report = reportFor([applyTool()]);

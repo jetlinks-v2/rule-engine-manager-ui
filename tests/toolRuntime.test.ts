@@ -1298,6 +1298,8 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
 
   const zh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.write']);
   const en = String((enLang as Record<string, string>)['RuleEditor.agent.system.write']);
+  assert.equal(zh.includes('://'), false);
+  assert.equal(en.includes('://'), false);
 
   assert.match(zh, /如何做/);
   assert.match(zh, /SQL 写法/);
@@ -1407,6 +1409,7 @@ test('presentation and compact prompts keep the canvas as the only topology visu
     assert.equal(/select a renderer/i.test(text), false);
     assert.equal(text.includes('不要选择 renderer'), false);
     assert.equal(text.includes('JSON AnswerSpec'), true);
+    assert.equal(text.includes('://'), false);
     assert.equal(text.includes('http://'), false);
     assert.equal(text.includes('上线'), false);
   }
@@ -1414,18 +1417,18 @@ test('presentation and compact prompts keep the canvas as the only topology visu
   assert.match(presentationEn, /canvas is the only topology visualization/i);
   assert.match(presentationZh, /流程图卡片/);
   assert.match(presentationEn, /flowchart card/i);
-  assert.match(presentationZh, /fs:\/\//);
-  assert.match(presentationEn, /fs:\/\//);
+  assert.match(presentationZh, /内部文件句柄/);
+  assert.match(presentationEn, /internal file handles/);
+  assert.match(presentationZh, /用户业务地址/);
+  assert.match(presentationEn, /user business URLs/i);
   assert.equal(presentationZh.includes('scheme://'), false);
   assert.equal(presentationEn.includes('scheme://'), false);
   assert.match(presentationZh, /appliedConfig/);
   assert.match(presentationEn, /appliedConfig/);
-  assert.match(compactZh, /fs:\/\//);
-  assert.match(compactEn, /fs:\/\//);
-  assert.match(presentationZh, /http\(s\)/);
-  assert.match(presentationEn, /http\(s\)/);
-  assert.match(compactZh, /http\(s\)/);
-  assert.match(compactEn, /http\(s\)/);
+  assert.match(compactZh, /内部文件句柄/);
+  assert.match(compactEn, /internal file handles/);
+  assert.match(compactZh, /用户业务地址/);
+  assert.match(compactEn, /user business URLs/i);
   assert.equal(compactZh.includes('scheme://'), false);
   assert.equal(compactEn.includes('scheme://'), false);
   assert.match(compactZh, /appliedConfig/);
