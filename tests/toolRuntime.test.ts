@@ -1272,6 +1272,9 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(compactZh, /FunctionInvoke/);
   assert.match(compactZh, /不要先修复/);
   assert.match(compactZh, /zip-output 后再插 function/);
+  assert.match(compactZh, /要应用到当前画布吗/);
+  assert.match(compactZh, /不要再 apply\/edit\/layout/);
+  assert.match(compactZh, /自动 DAG 排版/);
   assert.match(compactEn, /complete goal on this page is a write/);
   assert.match(compactEn, /request-response, parallel query\/command, merge return, timer/);
   assert.match(compactEn, /fill serviceId on the canvas/);
@@ -1279,6 +1282,9 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(compactEn, /FunctionInvoke/);
   assert.match(compactEn, /do not repair first/);
   assert.match(compactEn, /function after zip-output/);
+  assert.match(compactEn, /apply it to the current canvas/);
+  assert.match(compactEn, /do not apply\/edit\/layout again/);
+  assert.match(compactEn, /Auto DAG layout/);
   assert.match(compactZh, /同一次 steps 写全所有 connect/);
   assert.match(compactEn, /rule_editor_apply_canvas_actions/);
   assert.match(compactEn, /compositions/);
@@ -1304,6 +1310,9 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(zh, /FunctionInvoke/);
   assert.match(zh, /不要先修复/);
   assert.match(zh, /zip-output 后再插 function/);
+  assert.match(zh, /要应用到当前画布吗/);
+  assert.match(zh, /不要再 apply\/edit\/layout/);
+  assert.match(zh, /自动 DAG 排版/);
   assert.match(zh, /rule_editor_search_node_types/);
   assert.match(zh, /compositions/);
   assert.match(zh, /insert-composition/);
@@ -1331,11 +1340,13 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.equal(en.includes('I want to implement'), false);
   assert.match(en, /subscribe, forward, push to a third-party API/);
   assert.match(en, /request-response, parallel query\/command, merge return, timer/);
-  assert.match(en, /never ask the user to fill serviceId/);
+  assert.match(en, /[Nn]ever ask the user to fill serviceId/);
   assert.match(en, /\$\{upstream/);
   assert.match(en, /FunctionInvoke/);
   assert.match(en, /do not repair first/);
   assert.match(en, /never insert a function after zip-output/);
+  assert.match(en, /apply it to the current canvas/);
+  assert.match(en, /do not apply\/edit\/layout again/);
   assert.match(en, /rule_editor_search_node_types/);
   assert.match(en, /compositions/);
   assert.match(en, /insert-composition/);
@@ -1361,9 +1372,11 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(directZh, /请求响应、并行查询\/指令、合并返回、定时/);
   assert.match(directZh, /不要只把订阅\/转发\/上线当落地/);
   assert.match(directZh, /到画布上指定 serviceId/);
+  assert.match(directZh, /要应用到当前画布吗/);
   assert.match(directEn, /request-response, parallel query\/command, merge return, timer/);
   assert.match(directEn, /do not treat only subscribe\/forward\/online as landing/);
-  assert.match(directEn, /never ask the user to fill serviceId on the canvas/);
+  assert.match(directEn, /[Nn]ever ask the user to fill serviceId on the canvas/);
+  assert.match(directEn, /apply this to the current canvas/);
 });
 
 test('explicit flowchart presentation does not create a preferred terminal obligation', () => {
