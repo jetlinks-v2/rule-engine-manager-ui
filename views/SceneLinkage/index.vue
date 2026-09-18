@@ -345,7 +345,6 @@ onMounted(reload)
   flex-wrap: wrap;
   gap: 16px;
   align-items: center;
-  padding: var(--space-4) var(--space-4) 0;
 }
 
 .scene-list-toolbar__title {
