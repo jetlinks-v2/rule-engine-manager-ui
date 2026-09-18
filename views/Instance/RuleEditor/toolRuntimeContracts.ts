@@ -15,7 +15,7 @@ export const TOPOLOGY_DIAGRAM_SHAPE = 'presentation.flowchart';
 export const TOPOLOGY_DIAGRAM_MEDIA_TYPE = 'text/vnd.mermaid';
 
 export const APPLY_CANVAS_PLAN_BINDING_GUIDE = [
-  'One complete-topology apply with every connect.',
+  'complete-topology uses insert-composition.',
   'Write-plan outputBindings stay canvas-changes.',
   'Canvas is the topology; no flowchart card, canvas-actions-result, Mermaid/AnswerSpec, or file handles.',
   'Prefer objects; JSON strings are parsed.',
