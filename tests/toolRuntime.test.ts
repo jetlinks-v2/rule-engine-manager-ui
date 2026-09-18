@@ -1359,8 +1359,8 @@ test('non-canonical edit_node unknownFields stay request-scope repair failures',
   assert.equal(String(misleadingDisposition.instruction).includes('{device,result}'), false);
 });
 
-test('parent resource stamp matches iframe cache-bust 2026091818', () => {
-  assert.equal(RULE_EDITOR_RESOURCE_VERSION, '2026091818');
+test('parent resource stamp matches iframe cache-bust 2026091819', () => {
+  assert.equal(RULE_EDITOR_RESOURCE_VERSION, '2026091819');
 });
 
 test('empty runtime reports translated metadata and rejects execution before bridge readiness', async () => {
