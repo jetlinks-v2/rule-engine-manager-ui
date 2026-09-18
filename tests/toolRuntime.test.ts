@@ -660,6 +660,7 @@ test('model-facing apply success omits executor dumps that would poison terminal
     },
     canvasRevision: 10,
     rolledBack: false,
+    instruction: '建议摘要：草稿已写入，尚未保存或发布。 终答只复述该建议摘要。不要再调用工具。',
     total: 3,
     results: [{
       index: 0,
@@ -704,7 +705,8 @@ test('model-facing apply success omits executor dumps that would poison terminal
   assert.equal(iframeResult.changes[0].url, poisonUrl);
   assert.equal(iframeResult.topology.nodes[0].url, poisonUrl);
   assert.equal(iframeResult.topology.nodes[0].label, 'Transform');
-  assert.deepEqual(result.changes, [{ kind: 'node-inserted', nodeId: 'node-1', nodeType: 'function' }]);
+  assert.deepEqual(result.changes, [{ kind: 'node-inserted', nodeType: 'function' }]);
+  assert.equal(Object.hasOwn(result.changes[0], 'nodeId'), false);
   assert.deepEqual(result.completion, {
     mode: 'complete-topology',
     satisfied: true,
@@ -726,6 +728,12 @@ test('model-facing apply success omits executor dumps that would poison terminal
   assert.equal(result.outputBindings.length, 1);
   assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
   assert.equal(serialized.includes('flowchart'), false);
+  assert.equal(result.evidence.claims[0].id, 'suggested-summary');
+  assert.equal(result.evidence.claims[0].binding, 'canvas-changes');
+  assert.equal(result.evidence.claims[0].visibility, 'user');
+  assert.match(String(result.evidence.claims[0].value), /建议摘要/);
+  assert.equal((result.evidence as { instruction?: string }).instruction, result.instruction);
+  assert.equal(String((result.evidence as { instruction?: string }).instruction || '').includes('://'), false);
 });
 
 test('three-node complete-topology snapshot stays canvas-changes only', async () => {
@@ -775,6 +783,7 @@ test('three-node complete-topology snapshot stays canvas-changes only', async ()
   assert.equal(result.evidence.facts.topologyLinkCount, 2);
   assert.notEqual(result.evidence.facts.topologyDiagramAvailable, true);
   assert.equal(result.outputBindings.some((binding: { name: string }) => binding.name === 'topology-diagram'), false);
+  assert.equal(result.changes.every((change: { nodeId?: unknown }) => !Object.hasOwn(change, 'nodeId')), true);
 });
 
 test('single-node complete-topology does not synthesize a topology diagram', async () => {
@@ -1375,10 +1384,26 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(directZh, /不要只把订阅\/转发\/上线当落地/);
   assert.match(directZh, /到画布上指定 serviceId/);
   assert.match(directZh, /要应用到当前画布吗/);
+  assert.match(directZh, /命令节点的 serviceId\/command 不是向用户确认的业务分叉/);
+  assert.match(directZh, /禁止向用户要 Service ID 或 Command/);
+  assert.match(directZh, /不要连搜再访谈/);
+  assert.match(directZh, /requiredWhen=insert/);
+  assert.equal(directZh.includes('只有工具确认确实缺少必填业务选择时'), false);
   assert.match(directEn, /request-response, parallel query\/command, merge return, timer/);
   assert.match(directEn, /do not treat only subscribe\/forward\/online as landing/);
   assert.match(directEn, /[Nn]ever ask the user to fill serviceId on the canvas/);
   assert.match(directEn, /apply this to the current canvas/);
+  assert.match(directEn, /never a user-facing business fork/);
+  assert.match(directEn, /never ask the user for Service ID or Command/);
+  assert.match(directEn, /do not search repeatedly then interview/);
+  assert.match(directEn, /requiredWhen=insert/);
+  assert.equal(/Ask one short question only when tools prove that a required business choice is missing/.test(directEn), false);
+
+  assert.match(zh, /命令 identity 不问用户/);
+  assert.match(zh, /不要连搜再访谈/);
+  assert.match(en, /command identity is never a user-facing fork/);
+  assert.match(en, /do not search repeatedly then interview/);
+  assert.match(en, /immediately one insert-composition/);
 });
 
 test('explicit flowchart presentation does not create a preferred terminal obligation', () => {

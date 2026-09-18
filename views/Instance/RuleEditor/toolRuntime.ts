@@ -91,7 +91,6 @@ interface RuleEditorCanvasApplyResult extends Record<string, unknown> {
 }
 
 const CANVAS_CHANGE_IDENTITY_KEYS = [
-  'nodeId',
   'nodeType',
   'sourceId',
   'targetId',
@@ -523,8 +522,9 @@ const toModelFacingCanvasApplyResult = (
 const withCanvasApplyEvidence = (
   result: RuleEditorCanvasApplyResult,
   source: RuleEditorCanvasApplyResult = result,
-) => (
-  withAiClientToolContractEvidence(result, APPLY_CANVAS_CONTRACT, {
+) => {
+  const instruction = typeof source.instruction === 'string' ? source.instruction.trim() : ''
+  const wrapped = withAiClientToolContractEvidence(result, APPLY_CANVAS_CONTRACT, {
     complete: source.completion.satisfied,
     truncated: false,
     resultStatus: source.completion.satisfied ? 'applied' : 'partial',
@@ -540,6 +540,15 @@ const withCanvasApplyEvidence = (
       topologyNodeCount: source.topology?.nodeCount,
       topologyLinkCount: source.topology?.linkCount,
     },
+    claims: instruction
+      ? [{
+          id: 'suggested-summary',
+          label: 'Suggested summary',
+          value: instruction,
+          binding: 'canvas-changes',
+          visibility: 'user',
+        }]
+      : undefined,
     outputs: [
       {
         name: 'canvas-changes',
@@ -550,7 +559,14 @@ const withCanvasApplyEvidence = (
       },
     ],
   })
-);
+  if (!instruction) {
+    return wrapped
+  }
+  return {
+    ...wrapped,
+    evidence: Object.assign({}, wrapped.evidence, { instruction }),
+  }
+}
 
 const REMOTE_RECOVERY_ACTIONS = new Set(['retry', 'repair', 'clarify', 'terminal'] as const);
 

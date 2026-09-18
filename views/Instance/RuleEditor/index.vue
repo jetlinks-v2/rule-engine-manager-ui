@@ -34,6 +34,7 @@
         @close="handleClose"
       />
       <div class="rule-editor-shell__body">
+        <!-- iframe remounts only when editorUrl changes (stamp in URL). Bumping RULE_EDITOR_RESOURCE_VERSION does not reload an already-open editor; leave and re-enter the page. -->
         <iframe
           v-if="editorUrl"
           :key="editorUrl"
@@ -64,7 +65,7 @@ import { useRuleEditorAgentComposerExtensions } from './useRuleEditorAgentCompos
 
 const RULE_EDITOR_CLIENT_ID = 'ruleEditorChat';
 const RULE_EDITOR_SUBJECT_TYPE = 'ruleInstance';
-const RULE_EDITOR_RESOURCE_VERSION = '2026091812';
+const RULE_EDITOR_RESOURCE_VERSION = '2026091813';
 
 const props = defineProps({
   open: {
