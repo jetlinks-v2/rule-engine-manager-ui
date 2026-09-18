@@ -1265,6 +1265,14 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(compactZh, /rule_editor_execute_node_tool/);
   assert.match(compactZh, /QueryDeviceDetail/);
   assert.match(compactZh, /可点击应用按钮/);
+  assert.match(compactZh, /本页完整业务目标一律落地/);
+  assert.match(compactZh, /请求响应、并行查询\/指令、合并返回、定时/);
+  assert.match(compactZh, /到画布上指定 serviceId/);
+  assert.match(compactZh, /zip-output 后再插 function/);
+  assert.match(compactEn, /complete goal on this page is a write/);
+  assert.match(compactEn, /request-response, parallel query\/command, merge return, timer/);
+  assert.match(compactEn, /fill serviceId on the canvas/);
+  assert.match(compactEn, /function after zip-output/);
   assert.match(compactZh, /同一次 steps 写全所有 connect/);
   assert.match(compactEn, /rule_editor_apply_canvas_actions/);
   assert.match(compactEn, /compositions/);
@@ -1284,6 +1292,9 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(zh, /视为方案咨询/);
   assert.equal(zh.includes('默认把“我想实现'), false);
   assert.match(zh, /订阅、转发、推送到第三方接口/);
+  assert.match(zh, /请求响应、并行查询\/指令、合并返回、定时/);
+  assert.match(zh, /到画布上指定 serviceId/);
+  assert.match(zh, /zip-output 后再插 function/);
   assert.match(zh, /rule_editor_search_node_types/);
   assert.match(zh, /compositions/);
   assert.match(zh, /insert-composition/);
@@ -1310,6 +1321,9 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(en, /design consultation/);
   assert.equal(en.includes('I want to implement'), false);
   assert.match(en, /subscribe, forward, push to a third-party API/);
+  assert.match(en, /request-response, parallel query\/command, merge return, timer/);
+  assert.match(en, /never ask the user to fill serviceId/);
+  assert.match(en, /never insert a function after zip-output/);
   assert.match(en, /rule_editor_search_node_types/);
   assert.match(en, /compositions/);
   assert.match(en, /insert-composition/);
@@ -1329,6 +1343,15 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(en, /every connect in that same steps array/);
   assert.match(en, /do not insert then apply again only to connect/);
   assert.equal(en.includes('insert_node'), false);
+
+  const directZh = String((zhLang as Record<string, string>)['RuleEditor.agent.system.directWritePriority']);
+  const directEn = String((enLang as Record<string, string>)['RuleEditor.agent.system.directWritePriority']);
+  assert.match(directZh, /请求响应、并行查询\/指令、合并返回、定时/);
+  assert.match(directZh, /不要只把订阅\/转发\/上线当落地/);
+  assert.match(directZh, /到画布上指定 serviceId/);
+  assert.match(directEn, /request-response, parallel query\/command, merge return, timer/);
+  assert.match(directEn, /do not treat only subscribe\/forward\/online as landing/);
+  assert.match(directEn, /never ask the user to fill serviceId on the canvas/);
 });
 
 test('explicit flowchart presentation does not create a preferred terminal obligation', () => {
