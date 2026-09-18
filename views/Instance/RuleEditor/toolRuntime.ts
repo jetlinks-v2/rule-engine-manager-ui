@@ -127,6 +127,67 @@ const describeApplyCanvasJsonFieldFailure = (field: string): string => (
     : `${field} must be a structured object, not an unparsable JSON string. The next call must pass a JSON object, not a string wrapper.`
 );
 
+export const BROKEN_CANVAS_STEPS_INSTRUCTION = 'steps 必须是 JSON 数组；complete-topology 只要 op+compositionId；不要把 op 粘在字符串尾部。';
+
+const extractSalvageCompositionId = (text: string): string => {
+  const quoted = /"compositionId"\s*:\s*"([^"]+)"/.exec(text);
+  if (quoted?.[1]) return quoted[1];
+  const matches = text.match(/\b(?:zip|rr|linear|timer):[A-Za-z0-9_.:>-]+/g) || [];
+  return matches.length === 1 ? matches[0] : '';
+};
+
+const salvageCompositionSteps = (value: string): Array<{ op: 'insert-composition'; compositionId: string }> | undefined => {
+  const compositionId = extractSalvageCompositionId(value);
+  return compositionId ? [{ op: 'insert-composition', compositionId }] : undefined;
+};
+
+const canonicalizeSalvageOp = (value: unknown) => String(value || '').trim().replace(/_/g, '-');
+
+const stepsHaveInsertComposition = (steps: unknown) => (
+  Array.isArray(steps) && steps.some((step) => (
+    isRecord(step)
+    && canonicalizeSalvageOp(step.op) === 'insert-composition'
+    && typeof step.compositionId === 'string'
+    && Boolean(step.compositionId.trim())
+  ))
+);
+
+const parsedStepsHaveOp = (steps: unknown) => (
+  Array.isArray(steps) && steps.some((step) => (
+    isRecord(step) && Boolean(String(step.op || '').trim())
+  ))
+);
+
+// Keep in sync with iframe coerceCanvasPlanStepsString.
+const coerceCanvasPlanStepsString = (value: string): { ok: true; steps: unknown[] } | {
+  ok: false
+  field: 'steps'
+  retryable: true
+  instruction: string
+} => {
+  const parsed = parseApplyCanvasJsonField('steps', value);
+  if (stepsHaveInsertComposition(parsed)) {
+    return { ok: true, steps: parsed as unknown[] };
+  }
+  // Salvage only when extract failed or recovered objects have no op (A23: op after ]).
+  // Do not replace a valid insert-node/connect array that merely mentions a compositionId.
+  if (!parsedStepsHaveOp(parsed)) {
+    const salvaged = salvageCompositionSteps(value);
+    if (salvaged) {
+      return { ok: true, steps: salvaged };
+    }
+  }
+  if (Array.isArray(parsed)) {
+    return { ok: true, steps: parsed };
+  }
+  return {
+    ok: false,
+    field: 'steps',
+    retryable: true,
+    instruction: BROKEN_CANVAS_STEPS_INSTRUCTION,
+  };
+};
+
 // Repair only unescaped controls inside JSON string literals. Do not invent brackets.
 // Keep in sync with iframe parseJsonStructured / escapeUnescapedJsonStringControlChars.
 const escapeUnescapedJsonStringControlChars = (text: string): string => {
@@ -318,7 +379,12 @@ const coerceCanvasPlanNodeReferences = (plan: Record<string, any>) => {
 
 export const coerceApplyCanvasPlanArguments = (
   args: Record<string, any>,
-): { ok: true; args: Record<string, any> } | { ok: false; field: string } => {
+): { ok: true; args: Record<string, any> } | {
+  ok: false
+  field: string
+  retryable?: boolean
+  instruction?: string
+} => {
   const needsUnwrap = (args.flowMode == null || args.steps == null)
     && (args.actions != null || args.action != null);
   const hasStringField = APPLY_CANVAS_JSON_FIELDS.some((field) => typeof args[field] === 'string')
@@ -355,6 +421,14 @@ export const coerceApplyCanvasPlanArguments = (
     if (typeof value !== 'string') continue;
     if (field === 'completion' && isCompletionModeString(value)) {
       next[field] = { mode: value.trim() };
+      continue;
+    }
+    if (field === 'steps') {
+      const coercedSteps = coerceCanvasPlanStepsString(value);
+      if (!coercedSteps.ok) {
+        return coercedSteps;
+      }
+      next[field] = coercedSteps.steps;
       continue;
     }
     const parsed = parseApplyCanvasJsonField(field, value);
@@ -803,10 +877,11 @@ export const toRuleEditorClientToolDefinition = (
         if (isApplyCanvasTool) {
           const coerced = coerceApplyCanvasPlanArguments(args);
           if (!coerced.ok) {
+            const retryable = coerced.retryable === true;
             return toRemoteToolFailure(
               'rule_editor.canvas_plan.invalid_arguments',
-              describeApplyCanvasJsonFieldFailure(coerced.field),
-              'repair',
+              coerced.instruction || describeApplyCanvasJsonFieldFailure(coerced.field),
+              retryable ? 'retry' : 'repair',
               { field: `/${coerced.field}` },
               'request',
             );

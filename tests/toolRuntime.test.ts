@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   APPLY_CANVAS_PLAN_BINDING_GUIDE,
+  BROKEN_CANVAS_STEPS_INSTRUCTION,
   createEmptyRuleEditorToolRuntime,
   orderRuleEditorRemoteTools,
   toRuleEditorClientToolDefinition,
@@ -301,17 +302,17 @@ test('JSON-string apply steps with raw newlines in nested literals are repaired 
   assert.equal(called, false);
   assert.equal(truncated.code, 'rule_editor.canvas_plan.invalid_arguments');
   assert.equal(truncated.failureDisposition, 'request');
-  assert.equal(truncated.recoveryAction, 'repair');
-  assert.equal(truncated.retryable, false);
+  assert.equal(truncated.recoveryAction, 'retry');
+  assert.equal(truncated.retryable, true);
   assert.equal(truncated.repair.field, '/steps');
-  assert.match(truncated.message, /JSON array of operation objects/);
-  assert.match(truncated.message, /not a string wrapper/);
+  assert.equal(truncated.message, BROKEN_CANVAS_STEPS_INSTRUCTION);
 
   const truncatedInString = await executeSteps('[{"op":"insert-node","config":{"sql":"select \n');
   assert.equal(called, false);
   assert.equal(truncatedInString.code, 'rule_editor.canvas_plan.invalid_arguments');
   assert.equal(truncatedInString.repair.field, '/steps');
-  assert.match(truncatedInString.message, /not a string wrapper/);
+  assert.equal(truncatedInString.retryable, true);
+  assert.equal(truncatedInString.message, BROKEN_CANVAS_STEPS_INSTRUCTION);
 });
 
 test('JSON-string apply actions envelope is unwrapped before iframe execute', async () => {
@@ -414,10 +415,10 @@ test('invalid JSON apply arguments return a structured failure without calling i
     ok: false,
     success: false,
     code: 'rule_editor.canvas_plan.invalid_arguments',
-    message: 'steps must be a structured array, not an unparsable JSON string. The next call must pass a JSON array of operation objects, not a string wrapper.',
+    message: BROKEN_CANVAS_STEPS_INSTRUCTION,
     failureDisposition: 'request',
-    recoveryAction: 'repair',
-    retryable: false,
+    recoveryAction: 'retry',
+    retryable: true,
     repair: { field: '/steps' },
   });
 
@@ -472,6 +473,58 @@ test('invalid JSON apply arguments return a structured failure without calling i
   assert.equal(called, false);
   assert.equal(arrayCompletion.code, 'rule_editor.canvas_plan.invalid_arguments');
   assert.equal(arrayCompletion.repair.field, '/completion');
+});
+
+test('parent coerce salvages A23 broken steps into one insert-composition', async () => {
+  const a23 = Buffer.from(
+    'W3siYWxpYXMiOiAiYml6Q29tcG9zaXRpb24iLCAiY29tcG9zaXRpb25JZCI6ICJ6aXA6cnVsZS1pbnB1dD56aXAtaW5wdXQ+emlwLW91dHB1dD5ydWxlLW91dHB1dCIsICJjb25maWciOiB7ImV4ZWN1dGVQYXlsb2FkIjogIntcImRldmljZUlkXCI6IFwiZGVtby1kZXZpY2UtMDAxXCIsIFwiY29tbWFuZFwiOiBcInNldFByb3BlcnR5XCIsIFwic2VydmljZUlkXCI6IFwiZGV2aWNlU2VydmljZTpkZXZpY2VcIiwgXCJwYXJhbXNcIjoge1widGVtcGVyYXR1cmVcIjogMjYuNX19IiwgImluY2x1ZGVFcnJvckJyYW5jaCI6IHRydWUsICJicmFuY2hlcyI6IFt7InR5cGUiOiAiY29tbWFuZC1zdXBwb3J0IiwgImFsaWFzIjogImRldmljZUluZm9DbWQiLCAib3V0cHV0QWxpYXMiOiAiZGV2aWNlIiwgIm1hcHBpbmciOiB7ImRldmljZSI6ICIke2RldmljZUluZm9DbWR9In0sICJjb25maWciOiB7InNvdXJjZSI6ICJmaXhlZCIsICJzZXJ2aWNlSWQiOiAiZGV2aWNlU2VydmljZTpkZXZpY2UiLCAiY29tbWFuZCI6ICJRdWVyeUJ5SWQiLCAicGFyYW1ldGVyIjogIntcImlkXCI6IFwiXCJ9In19LCB7InR5cGUiOiAiY29tbWFuZC1zdXBwb3J0IiwgImFsaWFzIjogImV4ZWNDbWQiLCAib3V0cHV0QWxpYXMiOiAicmVzdWx0IiwgIm1hcHBpbmciOiB7InJlc3VsdCI6ICIke2V4ZWNDbWR9In0sICJzb3VyY2VDb25maWciOiB7InNvdXJjZSI6ICJ1cHN0cmVhbSJ9fV19XSwgIm9wIjogImluc2VydC1jb21wb3NpdGlvbiJ9XQ==',
+    'base64',
+  ).toString('utf8');
+  assert.equal(a23.length, 742);
+  const captured: Record<string, any> = {};
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async (_toolId, args) => {
+    captured.args = args;
+    return {
+      ok: false,
+      success: false,
+      code: 'rule_editor.canvas_plan.preflight_failed',
+      failureDisposition: 'request',
+      recoveryAction: 'repair',
+    };
+  });
+  await definition.execute({
+    flowMode: 'request-response',
+    completion: { mode: 'complete-topology' },
+    steps: a23,
+  }, {}, {} as any);
+  assert.equal(captured.args.steps.length, 1);
+  assert.equal(captured.args.steps[0].op, 'insert-composition');
+  assert.equal(captured.args.steps[0].compositionId, 'zip:rule-input>zip-input>zip-output>rule-output');
+  assert.equal(Object.hasOwn(captured.args.steps[0], 'config'), false);
+  assert.equal(Object.hasOwn(captured.args.steps[0], 'slots'), false);
+});
+
+test('parent coerce does not salvage a valid insert-node JSON that mentions a compositionId', async () => {
+  const captured: Record<string, any> = {};
+  const definition = toRuleEditorClientToolDefinition(applyTool(), async (_toolId, args) => {
+    captured.args = args;
+    return { ok: false, success: false, code: 'unchanged' };
+  });
+  const steps = [{
+    op: 'insert-node',
+    nodeType: 'sql',
+    alias: 'query',
+    config: {
+      sql: 'select 1',
+      compositionId: 'zip:rule-input>zip-input>zip-output>rule-output',
+    },
+  }];
+  await definition.execute({
+    flowMode: 'realtime-stream',
+    completion: { mode: 'partial-draft' },
+    steps: JSON.stringify(steps),
+  }, {}, {} as any);
+  assert.deepEqual(captured.args.steps, steps);
 });
 
 test('mixed remote tools keep apply first without reordering sibling reads', () => {
@@ -1288,6 +1341,10 @@ test('parent compact prompt is the systemPrompt authority for complete-topology 
   assert.match(compactEn, /partial-draft/);
   assert.match(compactEn, /are ignored/);
   assert.match(compactEn, /requiredWhen=insert/);
+  assert.match(compactZh, /不要 slots\/config/);
+  assert.match(compactZh, /不要先 execute_node_tool/);
+  assert.match(compactEn, /copy compositions\[\]\.id only/);
+  assert.match(compactEn, /do not call execute_node_tool first/);
   for (const text of [compactZh, compactEn]) {
     assert.equal(text.includes('FunctionInvoke'), false);
     assert.equal(text.includes('QueryDeviceDetail'), false);
