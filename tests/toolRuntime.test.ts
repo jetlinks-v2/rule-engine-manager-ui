@@ -5,6 +5,7 @@ import {
   BROKEN_CANVAS_STEPS_INSTRUCTION,
   createEmptyRuleEditorToolRuntime,
   orderRuleEditorRemoteTools,
+  RULE_EDITOR_RESOURCE_VERSION,
   toRuleEditorClientToolDefinition,
   TOPOLOGY_DIAGRAM_MEDIA_TYPE,
   TOPOLOGY_DIAGRAM_SHAPE,
@@ -1306,6 +1307,60 @@ test('unrelated write tools keep their original execution contract', async () =>
     }).execute({}, {}, {} as any),
     /write failed/,
   );
+});
+
+test('non-canonical edit_node unknownFields stay request-scope repair failures', async () => {
+  const remote = {
+    id: 'rule_editor_edit_node',
+    name: 'edit',
+    write: true,
+  } satisfies RemoteRuleEditorToolDefinition;
+  const definition = toRuleEditorClientToolDefinition(remote, async () => ({
+    ok: false,
+    error: 'configuration contains unknown or unsupported fields',
+    unknownFields: ['message', 'from'],
+  }));
+  const result = await definition.execute({}, {}, {} as any) as Record<string, unknown>;
+
+  assert.equal(result.ok, false);
+  assert.equal(result.success, false);
+  assert.equal(result.code, 'rule_editor.node_config.unknown_fields');
+  assert.equal(result.failureDisposition, 'request');
+  assert.equal(result.recoveryAction, 'repair');
+  assert.equal(result.retryable, false);
+  assert.deepEqual(result.unknownFields, ['message', 'from']);
+  assert.equal(result.error, 'configuration contains unknown or unsupported fields');
+  assert.match(String(result.instruction), /未写入/);
+  assert.equal(String(result.instruction).includes('://'), false);
+  assert.equal(String(result.instruction).includes('QueryById'), false);
+  assert.equal(String(result.instruction).includes('FunctionInvoke'), false);
+
+  const crash = await toRuleEditorClientToolDefinition(remote, async () => ({
+    ok: false,
+    error: 'iframe crashed',
+  })).execute({}, {}, {} as any) as Record<string, unknown>;
+  assert.equal(crash.code, 'rule_editor.remote.failed');
+  assert.equal(crash.failureDisposition, 'tool');
+  assert.equal(crash.recoveryAction, 'terminal');
+  assert.equal(crash.retryable, false);
+
+  const misleadingDisposition = await toRuleEditorClientToolDefinition(remote, async () => ({
+    ok: false,
+    code: 'rule_editor.remote.failed',
+    failureDisposition: 'tool',
+    recoveryAction: 'terminal',
+    unknownFields: ['message', 'from'],
+  })).execute({}, {}, {} as any) as Record<string, unknown>;
+  assert.equal(misleadingDisposition.code, 'rule_editor.node_config.unknown_fields');
+  assert.equal(misleadingDisposition.failureDisposition, 'request');
+  assert.equal(misleadingDisposition.recoveryAction, 'repair');
+  assert.equal(misleadingDisposition.retryable, false);
+  assert.deepEqual(misleadingDisposition.unknownFields, ['message', 'from']);
+  assert.equal(String(misleadingDisposition.instruction).includes('{device,result}'), false);
+});
+
+test('parent resource stamp matches iframe cache-bust 2026091818', () => {
+  assert.equal(RULE_EDITOR_RESOURCE_VERSION, '2026091818');
 });
 
 test('empty runtime reports translated metadata and rejects execution before bridge readiness', async () => {

@@ -695,6 +695,9 @@ const withCanvasApplyEvidence = (
 }
 
 const REMOTE_RECOVERY_ACTIONS = new Set(['retry', 'repair', 'clarify', 'terminal'] as const);
+const UNKNOWN_NODE_CONFIG_ERROR = 'configuration contains unknown or unsupported fields';
+const UNKNOWN_NODE_CONFIG_CODE = 'rule_editor.node_config.unknown_fields';
+const UNKNOWN_NODE_CONFIG_INSTRUCTION = '这次编辑未写入，画布未改。只提交节点 owner 已声明的可写配置字段。';
 
 const toRemoteToolFailure = (
   code: string,
@@ -720,24 +723,63 @@ const isCanonicalFailure = (value: Record<string, unknown>) => (
   && typeof value.failureDisposition === 'string'
 );
 
+const isUnknownNodeConfigPreflight = (value: Record<string, unknown>) => {
+  if (Array.isArray(value.unknownFields) && value.unknownFields.length > 0) return true;
+  const text = [
+    typeof value.error === 'string' ? value.error : '',
+    typeof value.message === 'string' ? value.message : '',
+    typeof value.code === 'string' ? value.code : '',
+  ].join('\n');
+  return text.includes(UNKNOWN_NODE_CONFIG_ERROR) || text.includes(UNKNOWN_NODE_CONFIG_CODE);
+};
+
+const isCanonicalUnknownNodeConfigFailure = (value: Record<string, unknown>) => (
+  isUnknownNodeConfigPreflight(value)
+  && value.code === UNKNOWN_NODE_CONFIG_CODE
+  && value.failureDisposition === 'request'
+  && value.recoveryAction === 'repair'
+);
+
 const toRemoteFailureResult = (value: Record<string, unknown>) => {
-  if (isCanonicalFailure(value)) return value;
-  const recoveryAction = typeof value.recoveryAction === 'string'
-    && REMOTE_RECOVERY_ACTIONS.has(value.recoveryAction as 'retry')
-    ? value.recoveryAction as 'retry' | 'repair' | 'clarify' | 'terminal'
-    : 'terminal';
-  return toRemoteToolFailure(
-    typeof value.code === 'string' && value.code
-      ? value.code
-      : 'rule_editor.remote.failed',
+  if (isCanonicalUnknownNodeConfigFailure(value)) return value;
+  if (!isUnknownNodeConfigPreflight(value) && isCanonicalFailure(value)) return value;
+  const unknownConfigPreflight = isUnknownNodeConfigPreflight(value);
+  const recoveryAction = unknownConfigPreflight
+    ? 'repair'
+    : typeof value.recoveryAction === 'string'
+      && REMOTE_RECOVERY_ACTIONS.has(value.recoveryAction as 'retry')
+      ? value.recoveryAction as 'retry' | 'repair' | 'clarify' | 'terminal'
+      : 'terminal';
+  const wrapped = toRemoteToolFailure(
+    unknownConfigPreflight
+      ? UNKNOWN_NODE_CONFIG_CODE
+      : typeof value.code === 'string' && value.code
+        ? value.code
+        : 'rule_editor.remote.failed',
     typeof value.message === 'string' && value.message
       ? value.message
       : typeof value.error === 'string' && value.error
         ? value.error
-        : 'rule editor tool failed',
+        : unknownConfigPreflight
+          ? UNKNOWN_NODE_CONFIG_ERROR
+          : 'rule editor tool failed',
     recoveryAction,
-    isRecord(value.repair) ? value.repair : undefined,
+    unknownConfigPreflight
+      ? { field: '/config', preserveArguments: ['nodeId', 'config'], maxAttempts: 1 }
+      : isRecord(value.repair) ? value.repair : undefined,
+    unknownConfigPreflight ? 'request' : 'tool',
   );
+  if (!unknownConfigPreflight) return wrapped;
+  return {
+    ...wrapped,
+    ...(Array.isArray(value.unknownFields) ? { unknownFields: value.unknownFields } : {}),
+    error: typeof value.error === 'string' && value.error
+      ? value.error
+      : UNKNOWN_NODE_CONFIG_ERROR,
+    instruction: typeof value.instruction === 'string' && value.instruction
+      ? value.instruction
+      : UNKNOWN_NODE_CONFIG_INSTRUCTION,
+  };
 };
 
 const resolveRemoteCoverage = (
@@ -909,6 +951,9 @@ export const toRuleEditorClientToolDefinition = (
           );
         }
         if (!remoteContract) {
+          if (tool.write === true && isRecord(result) && (result.success === false || result.ok === false)) {
+            return toRemoteFailureResult(result);
+          }
           return result;
         }
         return withRemoteContractResult(result, remoteContract);
@@ -928,6 +973,7 @@ export const toRuleEditorClientToolDefinition = (
 export {
   APPLY_CANVAS_PLAN_BINDING_GUIDE,
   APPLY_CANVAS_TOOL_ID,
+  RULE_EDITOR_RESOURCE_VERSION,
   RULE_EDITOR_TYPED_REMOTE_TOOL_IDS,
   TOPOLOGY_DIAGRAM_MEDIA_TYPE,
   TOPOLOGY_DIAGRAM_OUTPUT_NAME,

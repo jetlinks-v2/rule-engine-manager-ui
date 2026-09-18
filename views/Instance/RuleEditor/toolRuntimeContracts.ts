@@ -6,6 +6,7 @@ import {
 } from '@jetlinks-web-core/layout/components/AiChat/clientTools';
 
 export const APPLY_CANVAS_TOOL_ID = 'rule_editor_apply_canvas_actions';
+export const RULE_EDITOR_RESOURCE_VERSION = '2026091818';
 
 // Kept for the optional explicit flowchart renderer. Default apply success must not
 // produce this output: the canvas is the visualization, and a preferred card creates
