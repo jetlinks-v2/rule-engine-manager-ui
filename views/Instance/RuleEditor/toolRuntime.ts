@@ -88,6 +88,7 @@ interface RuleEditorCanvasApplyResult extends Record<string, unknown> {
     issues?: unknown[];
   };
   instruction?: string;
+  warnings?: unknown[];
 }
 
 const CANVAS_CHANGE_IDENTITY_KEYS = [
@@ -183,11 +184,55 @@ const parseJsonValue = (value: string): unknown | undefined => {
   }
 };
 
+// Keep in sync with iframe extractLeadingJsonValue. Recover a leading array/object
+// when extra trailing fields were concatenated; do not invent missing brackets.
+const extractLeadingJsonValue = (text: string): unknown | undefined => {
+  const trimmed = text.trim();
+  if (!trimmed) return undefined;
+  const first = trimmed[0];
+  if (first !== '[' && first !== '{') return undefined;
+  const stack = [first];
+  let inString = false;
+  let escaped = false;
+  for (let index = 1; index < trimmed.length; index += 1) {
+    const character = trimmed[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (character === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (character === '"') inString = false;
+      continue;
+    }
+    if (character === '"') {
+      inString = true;
+      continue;
+    }
+    if (character === '[' || character === '{') {
+      stack.push(character);
+      continue;
+    }
+    if (character === ']' || character === '}') {
+      const expected = character === ']' ? '[' : '{';
+      if (stack[stack.length - 1] !== expected) return undefined;
+      stack.pop();
+      if (!stack.length) {
+        return parseJsonValue(trimmed.slice(0, index + 1));
+      }
+    }
+  }
+  return undefined;
+};
+
 const parseApplyCanvasJsonField = (
   field: typeof APPLY_CANVAS_JSON_FIELDS[number],
   value: string,
 ): unknown | undefined => {
-  const parsed = parseJsonValue(value);
+  const parsed = parseJsonValue(value) ?? extractLeadingJsonValue(value);
   return parsed !== undefined && isApplyCanvasJsonValue(field, parsed) ? parsed : undefined;
 };
 
@@ -289,7 +334,7 @@ export const coerceApplyCanvasPlanArguments = (
   if (next.flowMode == null || next.steps == null) {
     let actionsValue = next.actions ?? next.action;
     if (typeof actionsValue === 'string') {
-      const parsed = parseJsonValue(actionsValue);
+      const parsed = parseJsonValue(actionsValue) ?? extractLeadingJsonValue(actionsValue);
       if (parsed === undefined) return { ok: false, field: 'actions' };
       actionsValue = parsed;
     }
@@ -475,6 +520,7 @@ const toModelFacingValidationIssue = (issue: unknown) => {
   if (typeof issue.path === 'string') projected.path = issue.path;
   if (typeof issue.code === 'string') projected.code = issue.code;
   if (typeof issue.message === 'string') projected.message = issue.message;
+  if (typeof issue.op === 'string' && issue.op) projected.op = issue.op;
   return Object.keys(projected).length ? projected : undefined;
 };
 
@@ -515,6 +561,12 @@ const toModelFacingCanvasApplyResult = (
   if (validation) projected.validation = validation;
   if (typeof result.instruction === 'string' && result.instruction) {
     projected.instruction = result.instruction;
+  }
+  if (Array.isArray(result.warnings) && result.warnings.length) {
+    const warnings = result.warnings
+      .map(toModelFacingValidationIssue)
+      .filter((issue): issue is Exclude<typeof issue, undefined> => issue !== undefined);
+    if (warnings.length) projected.warnings = warnings;
   }
   return projected;
 };

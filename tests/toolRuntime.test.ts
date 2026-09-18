@@ -281,6 +281,16 @@ test('JSON-string apply steps with raw newlines in nested literals are repaired 
   await executeSteps('[{"op":"insert-node","nodeType":"sql","alias":"query","config":{"sql":"a\tb\rc"}}]');
   assert.equal(captured.args.steps[0].config.sql, 'a\tb\rc');
 
+  await executeSteps('[{"op":"insert-node","nodeType":"sql","alias":"query"}] , "rollbackOnValidationError": false}');
+  assert.equal(called, true);
+  assert.deepEqual(captured.args.steps, [
+    { op: 'insert-node', nodeType: 'sql', alias: 'query' },
+  ]);
+
+  await executeSteps('[{"op":"insert-node","nodeType":"sql","alias":"query","config":{"sql":"select \n  id"}}] , "rollbackOnValidationError": false}');
+  assert.equal(called, true);
+  assert.equal(captured.args.steps[0].config.sql, 'select \n  id');
+
   const actionsWithRawNewline = '[{"flowMode":"realtime-stream","completion":{"mode":"partial-draft"},"steps":[{"op":"insert-node","nodeType":"sql","alias":"query","config":{"sql":"select \n  id from events"}}]}]';
   await definition.execute({ actions: actionsWithRawNewline }, {}, {} as any);
   assert.equal(Array.isArray(captured.args.steps), true);
@@ -1267,6 +1277,7 @@ test('parent compact prompt is the systemPrompt authority for complete-topology 
   assert.match(compactZh, /insert-composition/);
   assert.match(compactZh, /可点击应用按钮/);
   assert.match(compactZh, /partial-draft/);
+  assert.match(compactZh, /会被忽略/);
   assert.match(compactZh, /requiredWhen=insert/);
   assert.match(compactZh, /source=upstream/);
   assert.match(compactEn, /complete goal on this page is a write/);
@@ -1275,6 +1286,7 @@ test('parent compact prompt is the systemPrompt authority for complete-topology 
   assert.match(compactEn, /compositions/);
   assert.match(compactEn, /insert-composition/);
   assert.match(compactEn, /partial-draft/);
+  assert.match(compactEn, /are ignored/);
   assert.match(compactEn, /requiredWhen=insert/);
   for (const text of [compactZh, compactEn]) {
     assert.equal(text.includes('FunctionInvoke'), false);
