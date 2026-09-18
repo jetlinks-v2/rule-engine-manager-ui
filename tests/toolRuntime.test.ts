@@ -1268,10 +1268,16 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(compactZh, /本页完整业务目标一律落地/);
   assert.match(compactZh, /请求响应、并行查询\/指令、合并返回、定时/);
   assert.match(compactZh, /到画布上指定 serviceId/);
+  assert.match(compactZh, /\$\{upstream/);
+  assert.match(compactZh, /FunctionInvoke/);
+  assert.match(compactZh, /不要先修复/);
   assert.match(compactZh, /zip-output 后再插 function/);
   assert.match(compactEn, /complete goal on this page is a write/);
   assert.match(compactEn, /request-response, parallel query\/command, merge return, timer/);
   assert.match(compactEn, /fill serviceId on the canvas/);
+  assert.match(compactEn, /\$\{upstream/);
+  assert.match(compactEn, /FunctionInvoke/);
+  assert.match(compactEn, /do not repair first/);
   assert.match(compactEn, /function after zip-output/);
   assert.match(compactZh, /同一次 steps 写全所有 connect/);
   assert.match(compactEn, /rule_editor_apply_canvas_actions/);
@@ -1294,6 +1300,9 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(zh, /订阅、转发、推送到第三方接口/);
   assert.match(zh, /请求响应、并行查询\/指令、合并返回、定时/);
   assert.match(zh, /到画布上指定 serviceId/);
+  assert.match(zh, /\$\{upstream/);
+  assert.match(zh, /FunctionInvoke/);
+  assert.match(zh, /不要先修复/);
   assert.match(zh, /zip-output 后再插 function/);
   assert.match(zh, /rule_editor_search_node_types/);
   assert.match(zh, /compositions/);
@@ -1323,6 +1332,9 @@ test('parent write prompt treats page-bound subscribe/forward/push as apply with
   assert.match(en, /subscribe, forward, push to a third-party API/);
   assert.match(en, /request-response, parallel query\/command, merge return, timer/);
   assert.match(en, /never ask the user to fill serviceId/);
+  assert.match(en, /\$\{upstream/);
+  assert.match(en, /FunctionInvoke/);
+  assert.match(en, /do not repair first/);
   assert.match(en, /never insert a function after zip-output/);
   assert.match(en, /rule_editor_search_node_types/);
   assert.match(en, /compositions/);
