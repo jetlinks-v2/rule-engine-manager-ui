@@ -5,16 +5,16 @@
         <div class="scene-list-table">
           <div class="scene-list-toolbar">
             <h2 class="scene-list-toolbar__title">{{ $t('IotSceneLinkage.title.list') }}</h2>
-            <ConditionFilter
-              class="scene-list-toolbar__search"
-              :fields="filterFields"
-              :common-fields="filterCommonFields"
-              :model-value="terms"
-              :placeholder="$t('IotSceneLinkage.placeholder.search')"
-              @update:model-value="terms = $event"
-              @change="reload($event)"
-            />
             <div class="scene-list-toolbar__actions">
+	            <ConditionFilter
+		            class="scene-list-toolbar__search"
+		            :fields="filterFields"
+		            :common-fields="filterCommonFields"
+		            :model-value="terms"
+		            :placeholder="$t('IotSceneLinkage.placeholder.search')"
+		            @update:model-value="terms = $event"
+		            @change="reload($event)"
+	            />
               <j-permission-button
                 :hasPermission="`${permissionKey}:add`"
                 @click="templateImportVisible = true"
@@ -358,8 +358,8 @@ onMounted(reload)
 
 .scene-list-toolbar__search {
   flex: 1 1 360px;
-  min-width: 280px;
-  max-width: 640px;
+  min-width: 25rem;
+  max-width: 40rem;
 }
 
 .scene-list-toolbar__actions {
