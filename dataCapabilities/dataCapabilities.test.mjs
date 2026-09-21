@@ -87,6 +87,10 @@ async function loadProvider(fileName) {
           path: 'jetlinks-web-core',
           namespace: 'alarm-data-capability-test',
         }))
+        buildApi.onResolve({ filter: /^@jetlinks-web-core\/data-capability$/ }, () => ({
+          path: 'jetlinks-data-capability',
+          namespace: 'alarm-data-capability-test',
+        }))
         buildApi.onResolve({ filter: /^@jetlinks-web-core\/locales$/ }, () => ({
           path: 'jetlinks-web-core-locales',
           namespace: 'alarm-data-capability-test',
@@ -98,6 +102,10 @@ async function loadProvider(fileName) {
         buildApi.onLoad({ filter: /^jetlinks-web-core$/, namespace: 'alarm-data-capability-test' }, () => ({
           loader: 'js',
           contents: 'export const request = { get() {}, post() {} };',
+        }))
+        buildApi.onLoad({ filter: /^jetlinks-data-capability$/, namespace: 'alarm-data-capability-test' }, () => ({
+          loader: 'js',
+          contents: 'import { request } from "@jetlinks-web/core"; export const getDataCapabilityRequest = context => context?.request ?? request;',
         }))
         buildApi.onLoad({ filter: /^jetlinks-web-core-locales$/, namespace: 'alarm-data-capability-test' }, () => ({
           loader: 'js',
