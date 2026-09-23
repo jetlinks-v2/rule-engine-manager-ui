@@ -1,5 +1,5 @@
-import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
-import { computed, ref, type Ref } from 'vue'
+import { useDashboardData } from '@jetlinks-web-core/components/DashBoardCanvas/runtime'
+import { computed, ref } from 'vue'
 import type {
   CountSummaryCardInfo,
   CountSummaryCardProps,
@@ -8,32 +8,6 @@ import type {
   CountSummaryMetricViewModel
 } from '../shared'
 import { mergeCountSummaryConfig } from '../shared'
-
-interface DashboardDataHookResult {
-  dataSourceList: Ref<CountSummaryDataItem[]>
-  getValue: (record: CountSummaryDataItem) => unknown
-}
-
-type DashboardDataHook = (
-  props: Readonly<CountSummaryCardProps>,
-  componentKey: string
-) => DashboardDataHookResult
-
-const createFallbackDashboardData = (): DashboardDataHookResult => ({
-  dataSourceList: ref([]),
-  getValue: () => undefined
-})
-
-const resolveDashboardDataHook = () => {
-  const { useDashboardData } = moduleRegistry.getResource('visualization-dashboard-ui', 'hooks') as {
-    useDashboardData?: DashboardDataHook
-  }
-
-  return {
-    hook: useDashboardData,
-    error: useDashboardData ? '' : '未注册 visualization-dashboard-ui 的仪表盘数据能力'
-  }
-}
 
 const stringifyMetricValue = (value: unknown) => {
   if (value === undefined || value === null || value === '') {
@@ -48,10 +22,8 @@ export const useCountSummaryCard = (
   componentKey: string,
   defaults: CountSummaryComponentConfig
 ) => {
-  const { hook, error: hookError } = resolveDashboardDataHook()
-  const dataState = hook ? hook(props, componentKey) : createFallbackDashboardData()
-
-  const error = ref(hookError)
+  const dataState = useDashboardData(props, componentKey)
+  const error = ref('')
 
   const config = computed(() =>
     mergeCountSummaryConfig(

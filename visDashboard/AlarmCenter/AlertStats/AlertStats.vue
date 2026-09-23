@@ -95,7 +95,6 @@ import rank7 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/
 import rank8 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/8.png'
 import rank9 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/9.png'
 import { Empty } from 'ant-design-vue'
-import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components'
@@ -141,7 +140,8 @@ interface QueryCondition {
   targetType: string
 }
 
-const { TimeSelect, Guide } = moduleRegistry.getResource('visualization-dashboard-ui', 'components')
+import { TimeSelect } from '@jetlinks-web-core/components/DashBoardCanvas/runtime'
+import { Guide } from '@jetlinks-web-core/components/DashBoardCanvas/runtime'
 
 const props = defineProps({
   info: {
