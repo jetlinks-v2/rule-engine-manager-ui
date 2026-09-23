@@ -2,19 +2,32 @@
   <j-page-container>
     <full-page has-padding transparent-background>
       <section class="scene-list">
-        <div class="scene-list-table">
-          <div class="scene-list-toolbar">
+        <j-pro-table
+          ref="tableRef"
+          mode="TABLE"
+          :body-style="{ padding: 0 }"
+          :columns="columns"
+          :request="queryScenes"
+          :params="tableParams"
+          :default-params="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
+          :pagination="{ showSizeChanger: true, showQuickJumper: true }"
+          row-key="id"
+          :scroll="{ x: 'max-content' }"
+        >
+          <template #headerLeftRender>
             <h2 class="scene-list-toolbar__title">{{ $t('IotSceneLinkage.title.list') }}</h2>
+          </template>
+          <template #headerRightRender>
             <div class="scene-list-toolbar__actions">
-	            <ConditionFilter
-		            class="scene-list-toolbar__search"
-		            :fields="filterFields"
-		            :common-fields="filterCommonFields"
-		            :model-value="terms"
-		            :placeholder="$t('IotSceneLinkage.placeholder.search')"
-		            @update:model-value="terms = $event"
-		            @change="reload($event)"
-	            />
+              <ConditionFilter
+                class="scene-list-toolbar__search"
+                :fields="filterFields"
+                :common-fields="filterCommonFields"
+                :model-value="terms"
+                :placeholder="$t('IotSceneLinkage.placeholder.search')"
+                @update:model-value="terms = $event"
+                @change="reload($event)"
+              />
               <j-permission-button
                 :hasPermission="`${permissionKey}:add`"
                 @click="templateImportVisible = true"
@@ -31,69 +44,86 @@
                 {{ $t('IotSceneLinkage.title.add') }}
               </j-permission-button>
             </div>
-          </div>
-          <a-table class="scene-list__table" :loading="loading" :columns="columns" :data-source="list" row-key="scene.id" :pagination="pagination" @change="changePage">
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.dataIndex === 'name'">
-                <strong>{{ record.scene.name }}</strong>
-                <div><a-tag class="scene-list__trigger-tag">{{ triggerLabel(record.scene) }}</a-tag></div>
+          </template>
+          <template #name="scene">
+            <strong>{{ scene.name }}</strong>
+            <div><a-tag class="scene-list__trigger-tag">{{ triggerLabel(scene) }}</a-tag></div>
+          </template>
+          <template #rule="scene">
+            <div class="scene-list__summary">
+              <template v-for="(part, index) in sceneSummaryParts(scene)" :key="`${part.keyword}-${index}`">
+                <b :class="part.kind === 'action' ? 'scene-list__summary-keyword--action' : 'scene-list__summary-keyword--trigger'">{{ part.keyword }}</b>
+                <span :class="`scene-list__summary-field--${part.kind}`" :title="part.title || part.value">{{ part.value }}</span>
               </template>
-              <template v-else-if="column.dataIndex === 'rule'">
-                <div class="scene-list__summary">
-                  <template v-for="(part, index) in sceneSummaryParts(record.scene)" :key="`${part.keyword}-${index}`">
-                    <b :class="part.kind === 'action' ? 'scene-list__summary-keyword--action' : 'scene-list__summary-keyword--trigger'">{{ part.keyword }}</b>
-                    <span :class="`scene-list__summary-field--${part.kind}`" :title="part.title || part.value">{{ part.value }}</span>
-                  </template>
-                </div>
-              </template>
-              <template v-else-if="column.dataIndex === 'state'">
-                <a-switch
-                  :checked="stateValue(record.scene) === 'started'"
-                  :disabled="!hasScenePermission('action')"
-                  :loading="pendingId === record.scene.id"
-                  @change="confirmToggle(record.scene)"
-                />
-              </template>
-              <template v-else-if="column.dataIndex === 'lastExecute'">{{ record.lastExecute || '-' }}</template>
-              <template v-else-if="column.dataIndex === 'actions'">
-                <div class="scene-list__actions">
-                  <j-permission-button type="link" :hasPermission="`${permissionKey}:update`" @click="openEditor(record.scene.id)">
-                    {{ $t('IotSceneLinkage.action.edit') }}
-                  </j-permission-button>
-                  <a-dropdown>
-                    <a-button type="link"><AIcon type="MoreOutlined" /></a-button>
-                    <template #overlay>
-                      <a-menu>
-                        <a-menu-item v-if="sceneTriggerType(record.scene) === 'manual'">
-                          <j-permission-button
-                            class="scene-list__menu-action"
-                            type="text"
-                            :hasPermission="scenePermission('tigger')"
-                            @click="confirmExecute(record.scene)"
-                          >
-                            {{ $t('IotSceneLinkage.action.execute') }}
-                          </j-permission-button>
-                        </a-menu-item>
-                        <a-menu-item @click="openRecordDrawer(record.scene)">{{ $t('IotSceneLinkage.action.records') }}</a-menu-item>
-                        <a-menu-item :disabled="!hasScenePermission('add')" @click="exportTemplate(record.scene)">
-                          {{ $t('IotSceneLinkage.action.exportTemplate') }}
-                        </a-menu-item>
-                        <a-menu-item v-if="stateValue(record.scene) !== 'disable'" danger disabled>
-                          <a-tooltip :title="$t('IotSceneLinkage.message.disableBeforeDelete')">
-                            <span class="scene-list__delete-tooltip">{{ $t('IotSceneLinkage.action.delete') }}</span>
-                          </a-tooltip>
-                        </a-menu-item>
-                        <a-menu-item v-else danger :disabled="!hasScenePermission('delete')" @click="confirmRemove(record.scene)">
-                          {{ $t('IotSceneLinkage.action.delete') }}
-                        </a-menu-item>
-                      </a-menu>
-                    </template>
-                  </a-dropdown>
-                </div>
-              </template>
-            </template>
-          </a-table>
-        </div>
+            </div>
+          </template>
+          <template #state="scene">
+            <a-switch
+              :checked="stateValue(scene) === 'started'"
+              :disabled="!hasScenePermission('action')"
+              :loading="pendingId === scene.id"
+              @change="confirmToggle(scene)"
+            />
+          </template>
+          <template #actions="scene">
+            <TableActions>
+              <TableActionsItem common>
+                <j-permission-button
+                  type="link"
+                  :hasPermission="`${permissionKey}:update`"
+                  :tooltip="{ title: $t('IotSceneLinkage.action.edit') }"
+                  @click="openEditor(scene.id)"
+                >
+                  <AIcon type="EditOutlined" />
+                </j-permission-button>
+              </TableActionsItem>
+              <TableActionsItem v-if="sceneTriggerType(scene) === 'manual'">
+                <j-permission-button
+                  type="text"
+                  :hasPermission="scenePermission('tigger')"
+                  @click="confirmExecute(scene)"
+                >
+                  <template #icon><AIcon type="PlayCircleOutlined" /></template>
+                  {{ $t('IotSceneLinkage.action.execute') }}
+                </j-permission-button>
+              </TableActionsItem>
+              <TableActionsItem>
+                <a-button type="text" @click="openRecordDrawer(scene)">
+                  <template #icon><AIcon type="HistoryOutlined" /></template>
+                  {{ $t('IotSceneLinkage.action.records') }}
+                </a-button>
+              </TableActionsItem>
+              <TableActionsItem>
+                <a-button type="text" :disabled="!hasScenePermission('add')" @click="exportTemplate(scene)">
+                  <template #icon><AIcon type="ExportOutlined" /></template>
+                  {{ $t('IotSceneLinkage.action.exportTemplate') }}
+                </a-button>
+              </TableActionsItem>
+              <TableActionsItem v-if="stateValue(scene) !== 'disable'">
+                <j-permission-button
+                  type="text"
+                  danger
+                  disabled
+                  :tooltip="{ title: $t('IotSceneLinkage.message.disableBeforeDelete') }"
+                >
+                  <template #icon><AIcon type="DeleteOutlined" /></template>
+                  {{ $t('IotSceneLinkage.action.delete') }}
+                </j-permission-button>
+              </TableActionsItem>
+              <TableActionsItem v-else>
+                <j-permission-button
+                  type="text"
+                  danger
+                  :hasPermission="scenePermission('delete')"
+                  @click="confirmRemove(scene)"
+                >
+                  <template #icon><AIcon type="DeleteOutlined" /></template>
+                  {{ $t('IotSceneLinkage.action.delete') }}
+                </j-permission-button>
+              </TableActionsItem>
+            </TableActions>
+          </template>
+        </j-pro-table>
       </section>
       <SceneRecordTimeline
         v-if="recordScene"
@@ -115,7 +145,7 @@
   </j-page-container>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Modal } from 'ant-design-vue'
@@ -125,7 +155,6 @@ import { useAuthStore } from '@jetlinks-web-core/store/auth'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { useScenePermission } from '@rule-engine-manager-ui/hook/usePermission'
 import { deleteScene, disableScene, enableScene, executeScene, getSceneDetail, queryScenes } from '../../api/scene-linkage'
-import { normalizeResult } from './utils'
 import SceneRecordTimeline from './components/SceneRecordTimeline.vue'
 import SceneTemplateImportModal from './components/SceneTemplateImportModal.vue'
 import { useSceneExecutionRecords } from './hooks/useSceneExecutionRecords'
@@ -157,14 +186,11 @@ const scenePermission = (action: string) => {
     || `${permissionKey.value}:${candidates[0]}`
 }
 const hasScenePermission = (action: string) => authStore.hasPermission(scenePermission(action))
-const list = ref<any[]>([])
-const total = ref(0)
-const loading = ref(false)
 const pendingId = ref('')
 const terms = ref<ConditionFilterTerm[]>([])
 const queryTerms = ref<ConditionFilterTerm[]>([])
-const pageIndex = ref(0)
-const pageSize = ref(10)
+const tableRef = ref<{ reload: () => void }>()
+const tableParams = computed(() => ({ terms: queryTerms.value }))
 const recordScene = ref<SceneRecordTarget>()
 const recordDrawerOpen = ref(false)
 const recordLogs = useSceneExecutionRecords()
@@ -176,8 +202,7 @@ const triggerTypeOptions = computed(() => ['manual', 'timer', 'device', 'alarm',
 })))
 const filterCommonFields: ConditionFilterCommonField[] = [{ label: t('IotSceneLinkage.form.name'), value: 'name' }, { label: t('IotSceneLinkage.form.triggerType'), value: 'triggerType' }, { label: t('IotSceneLinkage.form.state'), value: 'state' }]
 const filterFields = computed<ConditionFilterField[]>(() => [{ dataIndex: 'name', title: t('IotSceneLinkage.form.name'), search: { type: 'string', defaultTermType: 'like' } }, { dataIndex: 'triggerType', title: t('IotSceneLinkage.form.triggerType'), search: { type: 'select', defaultTermType: 'eq', options: triggerTypeOptions.value } }, { dataIndex: 'state', title: t('IotSceneLinkage.form.state'), search: { type: 'select', defaultTermType: 'eq', options: [{ label: t('IotSceneLinkage.state.started'), value: 'started' }, { label: t('IotSceneLinkage.state.disable'), value: 'disable' }] } }])
-const columns = computed(() => [{ title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 230 }, { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule' }, { title: t('IotSceneLinkage.column.state'), dataIndex: 'state', width: 100 }, { title: t('IotSceneLinkage.column.action'), dataIndex: 'actions', width: 160 }])
-const pagination = computed(() => ({ current: pageIndex.value + 1, pageSize: pageSize.value, total: total.value, showSizeChanger: true, showQuickJumper: true }))
+const columns = computed(() => [{ title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 230, scopedSlots: true }, { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule', scopedSlots: true }, { title: t('IotSceneLinkage.column.state'), dataIndex: 'state', width: 100, scopedSlots: true }, { title: t('IotSceneLinkage.column.action'), dataIndex: 'actions', width: 90, scopedSlots: true }])
 const stateValue = (scene: any) => scene.state?.value || scene.state
 const sceneTriggerType = (scene: any) => scene.triggerType || scene.trigger?.type
 const triggerLabel = (scene: any) => t(`IotSceneLinkage.triggerType.${sceneTriggerType(scene)}`)
@@ -225,27 +250,12 @@ const sceneSummaryParts = (scene: any) => {
   const titleParts = splitSceneSummaryParts(title)
   return splitSceneSummaryParts(sceneSummary(scene)).map((part, index) => ({ ...part, title: titleParts[index]?.value || title }))
 }
-async function reload(payload?: ConditionFilterChangePayload) {
-  // 翻页时沿用 ConditionFilter 已转换的查询条件，避免丢失名称模糊匹配的通配符。
-  if (payload) queryTerms.value = payload.terms
-  loading.value = true
-  try {
-    const result = normalizeResult<any>(await queryScenes({
-      pageIndex: pageIndex.value,
-      pageSize: pageSize.value,
-      terms: queryTerms.value,
-      sorts: [{ name: 'createTime', order: 'desc' }],
-    }))
-    list.value = result.data.map(scene => ({ scene }))
-    total.value = result.total
-  } finally {
-    loading.value = false
+function reload(payload?: ConditionFilterChangePayload) {
+  if (payload) {
+    queryTerms.value = payload.terms
+    return
   }
-}
-function changePage(pager: any) {
-  pageIndex.value = Number(pager.current || 1) - 1
-  pageSize.value = Number(pager.pageSize || 10)
-  reload()
+  tableRef.value?.reload()
 }
 async function openEditor(id?: string) {
   // 由菜单运行时解析当前部署的父路由，保证 SaaS 与私有化均可进入同一个 Editor 子页。
@@ -277,8 +287,8 @@ async function exportTemplate(scene: any) {
 
 function onTemplateImported() {
   templateImportVisible.value = false
-  pageIndex.value = 0
-  void reload()
+  // 重新提交当前筛选参数，让 ProTable 回到第一页并加载最新导入的场景。
+  queryTerms.value = [...queryTerms.value]
 }
 async function toggle(scene: any) {
   pendingId.value = scene.id
@@ -286,7 +296,7 @@ async function toggle(scene: any) {
     const enabled = stateValue(scene) !== 'started'
     enabled ? await enableScene(scene.id) : await disableScene(scene.id)
     onlyMessage(t(enabled ? 'IotSceneLinkage.message.enabled' : 'IotSceneLinkage.message.disabled', { name: scene.name }), 'success')
-    await reload()
+    reload()
   } finally {
     pendingId.value = ''
   }
@@ -301,7 +311,7 @@ function confirmToggle(scene: any) {
 async function execute(scene: any) {
   await executeScene(scene.id)
   onlyMessage(t('IotSceneLinkage.message.executed', { name: scene.name }), 'success')
-  await reload()
+  reload()
 }
 function confirmExecute(scene: any) {
   Modal.confirm({
@@ -322,29 +332,12 @@ async function remove(scene: any) {
   await deleteScene(scene.id)
   reload()
 }
-onMounted(reload)
 </script>
 <style scoped>
 .scene-list {
-  display: grid;
   width: 100%;
-  min-width: 0;
   gap: var(--space-4);
-  padding-bottom: var(--space-4);
-}
-
-.scene-list-table {
-  display: grid;
-  gap: var(--space-4);
-  border-radius: var(--jet-theme-radius);
-}
-
-.scene-list-toolbar {
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: center;
+	height: 100%;
 }
 
 .scene-list-toolbar__title {
@@ -366,41 +359,6 @@ onMounted(reload)
   display: flex;
   gap: var(--space-2);
   margin-left: auto;
-}
-
-.scene-list__actions {
-  display: grid;
-  grid-template-columns: 40px 24px;
-  gap: var(--space-2);
-  align-items: center;
-}
-
-.scene-list :deep(.scene-list__menu-action) {
-  width: 100%;
-  height: auto;
-  padding: 0;
-  color: inherit;
-  text-align: left;
-}
-
-.scene-list__delete-tooltip {
-  display: block;
-  cursor: not-allowed;
-}
-
-.scene-list :deep(.ant-table-pagination) {
-  margin: var(--space-4) 0 0;
-}
-
-.scene-list__table :deep(.ant-table-container) {
-  overflow: hidden;
-  border-radius: var(--r-2);
-}
-
-.scene-list__table :deep(.ant-table-thead > tr > th) {
-  background: var(--canvas);
-  font-weight: 600;
-  border-bottom: 1px solid var(--line);
 }
 
 .scene-list__trigger-tag {

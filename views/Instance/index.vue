@@ -143,10 +143,12 @@
 			                />
 		                </template>
 		                <template #action="slotProps">
-			                <a-space>
-				                <template
+			                <TableActions>
+				                <TableActionsItem
 				                  v-for="i in getActions(slotProps, 'table')"
 				                  :key="i.key"
+				                  :common="i.key === 'view' || i.key === 'update'"
+				                  v-slot="{ placement }"
 				                >
 					                <j-permission-button
 					                  :disabled="i.disabled"
@@ -155,17 +157,18 @@
                                         ...i.tooltip,
                                     }"
 					                  @click="i.onClick"
-					                  type="link"
-					                  style="padding: 0px"
+					                  :type="placement === 'inline' ? 'link' : 'text'"
+					                  :style="placement === 'inline' ? { padding: 0 } : undefined"
 					                  :hasPermission="permissionKey + ':' + i.key"
 					                  :danger="i.key === 'delete'"
 					                >
 						                <template #icon
 						                ><AIcon :type="i.icon"
 						                /></template>
+						                <span v-if="placement === 'more'">{{ i.text }}</span>
 					                </j-permission-button>
-				                </template>
-			                </a-space>
+				                </TableActionsItem>
+			                </TableActions>
 		                </template>
 	                </JProTable>
                 
