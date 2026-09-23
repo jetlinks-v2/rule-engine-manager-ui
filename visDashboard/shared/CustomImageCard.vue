@@ -76,8 +76,10 @@
 
 <script setup lang="ts">
 import { cloneDeep } from 'lodash-es'
-import { getImageByType } from '@visualization-dashboard-ui/utils/commonUtils'
-import imgLoadFail from '@visualization-dashboard-ui/assets/svg/imgLoadFail.svg'
+import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
+import imgLoadFail from '@rule-engine-manager-ui/assets/rule-engine/dashboard/imgLoadFail.svg'
+
+const { getImageByType } = moduleRegistry.getResource('visualization-dashboard-ui', 'utils')
 
 const props = defineProps({
   type: {

@@ -85,25 +85,24 @@
 </template>
 
 <script setup lang="ts" name="AlertStats">
-import rank1 from '@visualization-dashboard-ui/assets/dashboard/ranking/1.png'
-import rank2 from '@visualization-dashboard-ui/assets/dashboard/ranking/2.png'
-import rank3 from '@visualization-dashboard-ui/assets/dashboard/ranking/3.png'
-import rank4 from '@visualization-dashboard-ui/assets/dashboard/ranking/4.png'
-import rank5 from '@visualization-dashboard-ui/assets/dashboard/ranking/5.png'
-import rank6 from '@visualization-dashboard-ui/assets/dashboard/ranking/6.png'
-import rank7 from '@visualization-dashboard-ui/assets/dashboard/ranking/7.png'
-import rank8 from '@visualization-dashboard-ui/assets/dashboard/ranking/8.png'
-import rank9 from '@visualization-dashboard-ui/assets/dashboard/ranking/9.png'
+import rank1 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/1.png'
+import rank2 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/2.png'
+import rank3 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/3.png'
+import rank4 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/4.png'
+import rank5 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/5.png'
+import rank6 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/6.png'
+import rank7 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/7.png'
+import rank8 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/8.png'
+import rank9 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/9.png'
 import { Empty } from 'ant-design-vue'
-import TimeSelect from '@visualization-dashboard-ui/components/TimeSelect/index.vue'
-import Guide from '@visualization-dashboard-ui/components/Guide/index.vue'
+import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 import { LineChart } from 'echarts/charts'
 import dayjs from 'dayjs'
-import { isNoCommunity } from '@visualization-dashboard-ui/utils/commonUtils'
+import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { dashboard } from '@rule-engine-manager-ui/api/dashboard'
 import { useI18n } from 'vue-i18n'
 
@@ -141,6 +140,8 @@ interface QueryCondition {
   endTime: number
   targetType: string
 }
+
+const { TimeSelect, Guide } = moduleRegistry.getResource('visualization-dashboard-ui', 'components')
 
 const props = defineProps({
   info: {
