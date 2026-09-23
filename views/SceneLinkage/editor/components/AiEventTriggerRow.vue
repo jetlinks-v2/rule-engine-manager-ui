@@ -33,6 +33,8 @@
     <span class="ai-event-trigger-row__word">{{ $t('IotSceneLinkage.aiEvent.phrase.at') }}</span>
     <AiEventMediaTargetSelector
       :model-value="modelValue.mediaTargets || []"
+      :scene-id="modelValue.sceneId"
+      :task-target="modelValue.taskTarget"
       :disabled="!modelValue.taskTarget"
       @update:model-value="changeMedia"
     />
