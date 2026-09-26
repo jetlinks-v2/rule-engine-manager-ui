@@ -33,7 +33,12 @@
                   <span class="ai-event-media-channel-grid__image">
                     <img v-if="channelImage(channel)" :src="channelImage(channel)" :alt="channel.name || channel.channelId">
                     <span v-else class="ai-event-media-channel-grid__image-empty"><AIcon type="VideoCameraOutlined" /></span>
-                    <em class="ai-event-media-channel-grid__status">{{ channelStatus(channel) }}</em>
+                    <em
+                      class="ai-event-media-channel-grid__configuration-status"
+                      :data-status="channel.modelConfigured === true ? 'configured' : 'unconfigured'"
+                    >{{ $t(channel.modelConfigured === true
+                      ? 'IotSceneLinkage.aiEvent.cameraConfigured'
+                      : 'IotSceneLinkage.aiEvent.cameraUnconfigured') }}</em>
                   </span>
                 </button>
                 <div class="ai-event-media-channel-grid__meta">
@@ -96,10 +101,6 @@ function channelImage(channel: AiEventMediaChannel) {
   return channel.image || channel.others?.playerScreenshotCover || ''
 }
 
-function channelStatus(channel: AiEventMediaChannel) {
-  return channel.status?.text || channel.status?.value || $t('IotSceneLinkage.aiEvent.statusUnknown')
-}
-
 function toggle(channel: AiEventMediaChannel) {
   emit('toggle', channel)
 }
@@ -133,7 +134,9 @@ function loadMore() {
 .ai-event-media-channel-grid__image { position: relative; display: block; aspect-ratio: 1.7; overflow: hidden; background: var(--canvas, #f5f5f5); }
 .ai-event-media-channel-grid__image img { width: 100%; height: 100%; object-fit: cover; }
 .ai-event-media-channel-grid__image-empty { display: grid; width: 100%; height: 100%; place-items: center; color: var(--ink-4, #9ca3af); font-size: 2rem; }
-.ai-event-media-channel-grid__status { position: absolute; top: .5rem; left: .5rem; padding: .1875rem .4375rem; border-radius: 1rem; color: #fff; background: rgb(15 23 42 / 58%); font-size: .625rem; font-style: normal; }
+.ai-event-media-channel-grid__configuration-status { position: absolute; top: .5rem; left: .5rem; padding: .1875rem .4375rem; border-radius: 1rem; color: #fff; font-size: .625rem; font-style: normal; }
+.ai-event-media-channel-grid__configuration-status[data-status='configured'] { background: #16b59f; }
+.ai-event-media-channel-grid__configuration-status[data-status='unconfigured'] { background: #9ca3af; }
 .ai-event-media-channel-grid__select { position: absolute; z-index: 1; top: .5rem; right: .5rem; display: grid; width: 1.125rem; height: 1.125rem; place-items: center; padding: 0; border: .125rem solid #fff; border-radius: .1875rem; color: #fff; background: rgb(15 23 42 / 36%); cursor: pointer; font-size: .625rem; }
 .ai-event-media-channel-grid__item.is-selected .ai-event-media-channel-grid__select { border-color: var(--accent, #1677ff); background: var(--accent, #1677ff); }
 .ai-event-media-channel-grid__meta { display: flex; align-items: center; min-width: 0; padding: .375rem .5rem; }
