@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <FullPage transparentBackground>
-      <ContentPanel>
+      
         <pro-search
           :columns="columns"
           target="alarm-log-detail"
@@ -47,7 +47,7 @@
             </a-space>
           </template>
         </JProTable>
-      </ContentPanel>
+      
     </FullPage>
     <Info
       v-if="visible && alarmType !== 'device'"

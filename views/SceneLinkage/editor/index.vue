@@ -294,9 +294,9 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
-import { createSceneLinkage, getProduct, getSceneDetail, queryDevices, queryProducts, querySceneNotifyChannelTemplates, querySceneNotifyChannels, querySceneNotifyUsers, querySceneSupportedActions, querySceneSupportedTriggers, updateSceneLinkage, type SceneNotifyMethod, type SceneNotifyUser, type SceneProviderInfo } from '../../../api/scene-linkage'
+import { createSceneLinkage, getProduct, getSceneDetail, queryCurrentSceneNotifyUser, queryDevices, queryProducts, querySceneNotifyChannelTemplates, querySceneNotifyChannels, querySceneNotifyUsers, querySceneSupportedActions, querySceneSupportedTriggers, updateSceneLinkage, type SceneNotifyMethod, type SceneNotifyUser, type SceneProviderInfo } from '../../../api/scene-linkage'
 import { queryDeviceBoundGroups_api, queryDeviceGroupDetailList_api, queryDeviceSpaceAreaBindings_api, queryProjectSpaceAreaSettings_api } from '../../../api/scene-resources'
-import { mergeNotifyUsersById } from '../../../utils/notifyUser'
+import { canReceiveProfileBackedNotification, mergeNotifyUsersById } from '../../../utils/notifyUser'
 import IotAlarmTargetSelect, { type IotAlarmTargetSelectOption, type IotAlarmTargetSelectQuery } from './alarm/IotAlarmTargetSelect.vue'
 import { applyMultiTriggerForm, buildRequest, defaultForm, normalizeResult, toForm, type SceneConditionForm, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTriggerKind } from '../utils'
 import { getSceneCompatibility } from '../sceneCompatibility'
@@ -398,7 +398,7 @@ function updateTriggerEventOutput(value: string) { const output = eventOutputOpt
 function clearScope() { form.deviceIds = []; form.groupIds = []; form.propertyId = undefined; form.eventId = undefined; form.eventOutputId = undefined; form.eventOutputName = undefined; form.eventTermValue = undefined; properties.value = []; events.value = [] }
 function addCondition(type: SceneConditionForm['type']) { if (type === 'timeRange') { const existing = form.additionalConditions.find(item => item.type === 'timeRange'); if (existing?.type === 'timeRange') { conditionVisible.value = false; return }; form.additionalConditions.push({ type, ranges: [{ start: '09:00', end: '18:00' }] }) } else if (type === 'alarmState') form.additionalConditions.push({ type, alarm: { modes: [], state: 'warning', options: {} } }); else form.additionalConditions.push({ type, productId: '', selector: 'fixed', selectorValues: [], propertyId: '', termType: 'eq', value: '' }); conditionVisible.value = false }
 function updateCondition(index: number, condition: SceneConditionForm) { form.additionalConditions[index] = condition }
-async function addNotifyAction() { await Promise.all([loadNotifyMethods(true), loadNotifyUsers(true)]); form.actions.push({ type: 'sceneNotify', config: { userIds: [], notifyChannelIds: [] } }); actionPickerVisible.value = false; clearActionValidationIfResolved() }
+async function addNotifyAction() { await loadNotifyMethods(true); await loadNotifyUsers(true); form.actions.push({ type: 'sceneNotify', config: { userIds: [], notifyChannelIds: [] } }); actionPickerVisible.value = false; clearActionValidationIfResolved() }
 function addDelay() { form.actions.push({ type: 'delay', time: 1, unit: 'seconds' }); actionPickerVisible.value = false; clearActionValidationIfResolved() }
 function openAction(type: 'device') { actionPickerVisible.value = false; form.actions.push({ type, config: { productId: '', selector: 'fixed', selectorValues: [], message: { messageType: 'READ_PROPERTY', properties: [] } } }); clearActionValidationIfResolved() }
 function updateAction(index: number, action: any) { form.actions[index] = action; clearActionValidationIfResolved() }
@@ -425,8 +425,12 @@ const selectedNotifyUserIds = () => [...new Set(form.actions
   .map(String)
   .filter(Boolean))]
 const toSceneNotifyUsers = (users: any[]): SceneNotifyUser[] => users
-  .map(user => ({ id: String(user.id || ''), name: user.name, username: user.username, email: user.email, telephone: user.telephone }))
-  .filter((user): user is SceneNotifyUser => Boolean(user.id))
+  .map<SceneNotifyUser>(user => ({ id: String(user.id || ''), name: user.name, username: user.username, email: user.email, telephone: user.telephone }))
+  .filter(user => Boolean(user.id))
+const toSceneNotifyUser = (user: any): SceneNotifyUser | undefined =>
+  toSceneNotifyUsers([user])[0]
+const currentUserHasAvailableNotifyChannel = (user: SceneNotifyUser) =>
+  notifyMethods.value.some(method => canReceiveProfileBackedNotification(user, method.channelProvider))
 async function loadNotifyUsers(reset = true) {
   if (notifyUsersLoading.value || (!reset && notifyUsers.value.length >= notifyUsersTotal.value)) return
   const pageIndex = reset ? 0 : notifyUsersPageIndex.value + 1
@@ -434,18 +438,26 @@ async function loadNotifyUsers(reset = true) {
   notifyUsersLoading.value = true
   try {
     // Saved recipients may be outside the first dropdown page, so resolve them separately.
-    const [pageResponse, selectedResponse] = await Promise.all([
+    const [pageResponse, selectedResponse, currentUserResponse] = await Promise.all([
       querySceneNotifyUsers({ pageIndex, pageSize: 20 }),
       reset && userIds.length
         ? querySceneNotifyUsers({ paging: false, userIds }).catch(() => undefined)
         : Promise.resolve(undefined),
+      reset ? queryCurrentSceneNotifyUser().catch(() => undefined) : Promise.resolve(undefined),
     ])
     const page = normalizeResult(pageResponse)
     const selectedUsers = selectedResponse ? toSceneNotifyUsers(normalizeResult(selectedResponse).data) : []
+    const currentUser = currentUserResponse
+      ? toSceneNotifyUser(currentUserResponse.result ?? currentUserResponse)
+      : undefined
+    // Current-profile access is independent from user-management query permission; never use it to add another user.
+    const currentUserOption = currentUser && (userIds.includes(currentUser.id) || currentUserHasAvailableNotifyChannel(currentUser))
+      ? [currentUser]
+      : []
     const retainedUsers = reset ? notifyUsers.value.filter(user => userIds.includes(user.id)) : notifyUsers.value
     notifyUsers.value = mergeNotifyUsersById(
       retainedUsers,
-      mergeNotifyUsersById(selectedUsers, toSceneNotifyUsers(page.data)),
+      mergeNotifyUsersById(currentUserOption, mergeNotifyUsersById(selectedUsers, toSceneNotifyUsers(page.data))),
     )
     notifyUsersPageIndex.value = pageIndex
     notifyUsersTotal.value = Number(page.total ?? pageIndex * 20 + page.data.length)
@@ -587,7 +599,8 @@ async function init() {
   await nextTick()
   loadingScene.value = false
   if (form.actions.some(action => action.type === 'sceneNotify')) {
-    await Promise.all([loadNotifyMethods(), loadNotifyUsers()])
+    await loadNotifyMethods()
+    await loadNotifyUsers()
     await Promise.all(form.actions.map((action, index) => {
       const method = action.type === 'sceneNotify' ? notifyMethods.value.find(item => item.id === action.config?.notifyChannelIds?.[0]) : undefined
       return method ? refreshNotifyTemplate(index, method) : undefined

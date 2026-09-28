@@ -1,5 +1,7 @@
 import dayjs from 'dayjs'
 import i18n from '@jetlinks-web-core/locales'
+import { request as defaultRequest } from '@jetlinks-web/core'
+import type { DataCapabilityRequest } from '@jetlinks-web-core/data-capability'
 import {
   aggregateIotAlarms,
   countIotAlarms,
@@ -36,12 +38,13 @@ const t = (key: string) => String(i18n.global.t(key))
  */
 export async function loadActiveDeviceIds(
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<string[]> {
   const devices = await aggregateIotAlarms({
     columns: [{ column: 'id', alias: 'count', aggregation: 'COUNT' }],
     groupBy: [{ column: 'targetId', alias: 'targetId' }],
     filter: { terms: [stateTerm('active')] },
-  }, { signal })
+  }, { signal }, client)
 
   return Array.from(new Set(
     devices
@@ -57,18 +60,19 @@ export async function loadActiveDeviceIds(
 export async function loadDeviceAlarmSummary(
   query: DeviceAlarmTimeQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<DeviceAlarmSummaryData> {
   const range = resolveDefaultRange(query)
   const timeTerms = buildTimeTerms(range)
   const [total, active, urgent, devices] = await Promise.all([
-    countIotAlarms({ terms: timeTerms }, { signal }),
-    countIotAlarms({ terms: [...timeTerms, stateTerm('active')] }, { signal }),
-    countIotAlarms({ terms: [...timeTerms, { column: 'level', termType: 'eq', value: 1 }] }, { signal }),
+    countIotAlarms({ terms: timeTerms }, { signal }, client),
+    countIotAlarms({ terms: [...timeTerms, stateTerm('active')] }, { signal }, client),
+    countIotAlarms({ terms: [...timeTerms, { column: 'level', termType: 'eq', value: 1 }] }, { signal }, client),
     aggregateIotAlarms({
       columns: [{ column: 'id', alias: 'count', aggregation: 'COUNT' }],
       groupBy: [{ column: 'targetId', alias: 'targetId' }],
       filter: { terms: timeTerms },
-    }, { signal }),
+    }, { signal }, client),
   ])
 
   return {
@@ -87,6 +91,7 @@ export async function loadDeviceAlarmSummary(
 export async function loadDeviceAlarmRank(
   query: DeviceAlarmRankQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<DeviceAlarmRankRow[]> {
   const range = resolveDefaultRange(query)
   const aggregation = resolveDashboardAggregation(range.startTime, range.endTime)
@@ -104,7 +109,7 @@ export async function loadDeviceAlarmRank(
       time: aggregation.time,
       format: aggregation.format,
     },
-  }], { signal })
+  }], { signal }, client)
 
   return response
     .filter(item => text(item.group) === 'deviceAlarmRank')
@@ -122,6 +127,7 @@ export async function loadDeviceAlarmRank(
 export async function loadDeviceAlarmList(
   query: DeviceAlarmListQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<DeviceAlarmPageData> {
   const [page, levelOptions] = await Promise.all([
     queryIotAlarmPage({
@@ -130,8 +136,8 @@ export async function loadDeviceAlarmList(
       pageSize: query.pageSize,
       sorts: [{ name: 'alarmTime', order: 'desc' }],
       terms: buildListTerms(query),
-    }, { signal }),
-    loadAlarmLevelOptions(),
+    }, { signal }, client),
+    loadAlarmLevelOptions(client),
   ])
 
   return {
@@ -195,10 +201,10 @@ function normalizeAlarmRow(row: AlarmRecord, levelOptions: AlarmLevelOption[]): 
   }
 }
 
-async function loadAlarmLevelOptions(): Promise<AlarmLevelOption[]> {
-  const cached = getCachedAlarmLevelOptions()
+async function loadAlarmLevelOptions(client: DataCapabilityRequest): Promise<AlarmLevelOption[]> {
+  const cached = client === defaultRequest ? getCachedAlarmLevelOptions() : []
   if (cached.length) return cached
-  return queryAlarmLevelOptions().catch(() => [])
+  return queryAlarmLevelOptions(undefined, client).catch(() => [])
 }
 
 function toRankRow(value: UnknownRecord): Omit<DeviceAlarmRankRow, 'rank'> | undefined {

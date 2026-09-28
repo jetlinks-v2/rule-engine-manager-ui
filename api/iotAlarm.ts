@@ -1,4 +1,5 @@
 import { request } from '@jetlinks-web/core'
+import type { DataCapabilityRequest } from '@jetlinks-web-core/data-capability'
 
 export const IOT_ALARM_TARGET_TYPE = 'device'
 
@@ -22,10 +23,11 @@ const unwrap = (payload: unknown): unknown => {
 export async function queryIotAlarmPage(
   data: Record<string, unknown>,
   config?: Record<string, unknown>,
+  client: DataCapabilityRequest = request,
 ): Promise<AlarmPage> {
   const response = config
-    ? request.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_query`, data, config)
-    : request.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_query`, data)
+    ? client.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_query`, data, config)
+    : client.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_query`, data)
   const result = unwrap(await response)
   if (Array.isArray(result)) {
     const rows = result.filter(isAlarmRecord)
@@ -49,10 +51,11 @@ export async function queryIotAlarmPage(
 export async function countIotAlarms(
   data: Record<string, unknown>,
   config?: Record<string, unknown>,
+  client: DataCapabilityRequest = request,
 ): Promise<number> {
   const response = config
-    ? request.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_count`, data, config)
-    : request.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_count`, data)
+    ? client.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_count`, data, config)
+    : client.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_count`, data)
   const result = unwrap(await response)
   return Number(isAlarmRecord(result) ? result.total ?? result.count ?? 0 : result ?? 0)
 }
@@ -60,10 +63,11 @@ export async function countIotAlarms(
 export async function aggregateIotAlarms(
   data: Record<string, unknown>,
   config?: Record<string, unknown>,
+  client: DataCapabilityRequest = request,
 ): Promise<AlarmRecord[]> {
   const response = config
-    ? request.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_aggregation`, data, config)
-    : request.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_aggregation`, data)
+    ? client.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_aggregation`, data, config)
+    : client.post(`/alarm/record/${IOT_ALARM_TARGET_TYPE}/_aggregation`, data)
   const result = unwrap(await response)
   return Array.isArray(result) ? result.filter(isAlarmRecord) : []
 }
@@ -71,10 +75,11 @@ export async function aggregateIotAlarms(
 export async function queryIotDashboard(
   data: object,
   config?: Record<string, unknown>,
+  client: DataCapabilityRequest = request,
 ): Promise<AlarmRecord[]> {
   const response = config
-    ? request.post('/dashboard/_multi', data, config)
-    : request.post('/dashboard/_multi', data)
+    ? client.post('/dashboard/_multi', data, config)
+    : client.post('/dashboard/_multi', data)
   const result = unwrap(await response)
   return Array.isArray(result) ? result.filter(isAlarmRecord) : []
 }

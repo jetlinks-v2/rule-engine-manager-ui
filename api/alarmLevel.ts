@@ -1,4 +1,5 @@
 import { request } from '@jetlinks-web/core'
+import type { DataCapabilityRequest } from '@jetlinks-web-core/data-capability'
 import { langKey } from '@jetlinks-web-core/utils/consts'
 
 export type AlarmLevelTone = 'high' | 'med' | 'low'
@@ -31,12 +32,17 @@ type ApiResponse<T> = {
 let cachedAlarmLevelOptions: AlarmLevelOption[] = []
 let loadingPromise: Promise<AlarmLevelOption[]> | undefined
 
-export const queryAlarmLevelConfig = (signal?: AbortSignal) =>
-  request.get('/alarm/config/default/level', {}, signal ? { signal } : undefined) as Promise<
+export const queryAlarmLevelConfig = (signal?: AbortSignal, client: DataCapabilityRequest = request) =>
+  client.get('/alarm/config/default/level', {}, signal ? { signal } : undefined) as Promise<
     ApiResponse<AlarmLevelConfigResult> | AlarmLevelConfigResult
   >
 
-export async function queryAlarmLevelOptions(signal?: AbortSignal): Promise<AlarmLevelOption[]> {
+export async function queryAlarmLevelOptions(signal?: AbortSignal, client: DataCapabilityRequest = request): Promise<AlarmLevelOption[]> {
+  // Scoped identities must not read or populate the cross-user global cache.
+  if (client !== request) {
+    const response = await queryAlarmLevelConfig(signal, client)
+    return normalizeAlarmLevelOptions(unwrapResult<AlarmLevelConfigResult>(response)?.levels ?? [])
+  }
   if (signal) {
     const response = await queryAlarmLevelConfig(signal)
     const result = unwrapResult<AlarmLevelConfigResult>(response) ?? {}

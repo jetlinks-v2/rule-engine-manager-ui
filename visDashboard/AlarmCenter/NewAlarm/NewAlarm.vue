@@ -61,7 +61,7 @@
 
 <script lang="ts" setup>
 import { Empty } from 'ant-design-vue'
-import fireIcon from '@visualization-dashboard-ui/assets/dashboard/fire-icon.png'
+import fireIcon from '@rule-engine-manager-ui/assets/rule-engine/dashboard/fire-icon.png'
 import dayjs from 'dayjs'
 import { getAlarm as getLatestAlarm, getAlarmLevel as queryAlarmLevel } from '@rule-engine-manager-ui/api/dashboard'
 import { useI18n } from 'vue-i18n'

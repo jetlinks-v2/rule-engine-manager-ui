@@ -7,8 +7,8 @@
           :columns="columns"
           :request="handleSearch"
           :params="params"
-          :gridColumns="[1, 1, 1]"
-          :gridColumn="1"
+          :gridColumns="[2, 3, 4]"
+          :gridColumn="4"
           mode="CARD"
           ref="tableRef"
           class="pro-table__no-padding"
@@ -69,8 +69,8 @@
                   </j-ellipsis>
                 </div>
               </div>
-              <a-row :gutter="24">
-                <a-col :span="6" class="content-left">
+              <a-row :gutter="[16, 16]">
+                <a-col :span="12" class="content-left">
                   <div class="content-title">
                     {{ $t("TabComponent.index.165152-0") }}
                   </div>
@@ -82,7 +82,7 @@
                   </j-ellipsis
                   >
                 </a-col>
-                <a-col :span="6">
+                <a-col :span="12">
                   <div class="content-title">
                     {{ $t("TabComponent.index.165152-1") }}
                   </div>
@@ -96,7 +96,7 @@
                     </div>
                   </j-ellipsis>
                 </a-col>
-                <a-col :span="6">
+                <a-col :span="12">
                   <div class="content-title">
                     {{ $t("TabComponent.index.165152-4") }}
                   </div>
@@ -106,7 +106,7 @@
                     >
                   </j-ellipsis>
                 </a-col>
-                <a-col :span="6">
+                <a-col :span="12">
                   <div class="content-title">
                     {{ $t("TabComponent.index.165152-5") }}
                   </div>
@@ -547,7 +547,8 @@ onMounted(() => {
 
 .alarmTitle {
   display: flex;
-  width: 60%;
+  width: 100%;
+	margin: var(--space-4) 0;
 
   .alarmLevel {
     width: 30%;
@@ -556,7 +557,6 @@ onMounted(() => {
   }
 
   .alarmName {
-    max-width: 30%;
     color: #1a1a1a;
     margin-right: 10px;
   }

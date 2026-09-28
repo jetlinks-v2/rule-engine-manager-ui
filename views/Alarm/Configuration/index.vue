@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <FullPage transparentBackground>
-      <ContentPanel>
+      
         <div>
           <pro-search
             :columns="columns"
@@ -151,7 +151,7 @@
             </JProTable>
           </j-ellipsis>
         </div>
-      </ContentPanel>
+      
     </FullPage>
   </j-page-container>
   <HandTrigger

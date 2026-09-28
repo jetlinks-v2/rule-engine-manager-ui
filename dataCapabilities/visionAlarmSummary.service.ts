@@ -1,4 +1,6 @@
 import i18n from '@jetlinks-web-core/locales'
+import { request as defaultRequest } from '@jetlinks-web/core'
+import type { DataCapabilityRequest } from '@jetlinks-web-core/data-capability'
 import { aggregateAiAlarmHistory } from '../api/board'
 import type {
   TimeRangeQuery,
@@ -18,6 +20,7 @@ const t = (key: string) => String(i18n.global.t(key))
 export async function loadVisionAlarmCountSummary(
   query: TimeRangeQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmCountSummary> {
   const payload: Record<string, unknown> = {
     aggColumns: [
@@ -46,6 +49,7 @@ export async function loadVisionAlarmCountSummary(
   const response = await aggregateAiAlarmHistory(
     payload,
     signal ? { signal, hiddenError: true } : { hiddenError: true },
+    client,
   )
   const rows = extractRows(response)
   const row = rows[0]
@@ -87,4 +91,3 @@ function asRecord(value: unknown): UnknownRecord {
     ? value as UnknownRecord
     : {}
 }
-

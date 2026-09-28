@@ -89,7 +89,7 @@
 import { cloneDeep } from 'lodash-es'
 import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import { useI18n } from 'vue-i18n'
-import { isNoCommunity } from '@visualization-dashboard-ui/utils/commonUtils'
+import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 
 const { t: $t } = useI18n()
 

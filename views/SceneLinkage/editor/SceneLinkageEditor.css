@@ -582,10 +582,6 @@
     white-space: nowrap;
 }
 
-.ant-btn-default {
-    background: var(--jet-theme-bg-layout);
-}
-
 .scene-editor__debounce {
     display: flex;
     flex-wrap: wrap;

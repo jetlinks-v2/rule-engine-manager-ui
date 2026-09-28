@@ -1,4 +1,5 @@
 import i18n from '@jetlinks-web-core/locales'
+import { getDataCapabilityRequest } from '@jetlinks-web-core/data-capability'
 import type {
   CapabilitySchema,
   CapabilityFilterOperator,
@@ -97,7 +98,7 @@ const summarySource: DataSourceDefinition = {
     query<T = unknown>(request: DataSourceRequest, context: RuntimeContext) {
       return defer(() => loadDeviceAlarmSummary(
         toTimeQuery(request),
-        request.signal || context.signal,
+        request.signal || context.signal, getDataCapabilityRequest(context),
       )).pipe(map(data => ({ data: data as unknown as T })))
     },
   }),
@@ -119,7 +120,7 @@ const activeDeviceIdsSource: DataSourceDefinition = {
   create: (): DataSource => ({
     query<T = unknown>(request: DataSourceRequest, context: RuntimeContext) {
       return defer(() => loadActiveDeviceIds(
-        request.signal || context.signal,
+        request.signal || context.signal, getDataCapabilityRequest(context),
       )).pipe(map(data => ({ data: data as unknown as T })))
     },
   }),
@@ -147,7 +148,7 @@ const rankSource: DataSourceDefinition = {
     query<T = unknown>(request: DataSourceRequest, context: RuntimeContext) {
       return defer(() => loadDeviceAlarmRank(
         toRankQuery(request),
-        request.signal || context.signal,
+        request.signal || context.signal, getDataCapabilityRequest(context),
       )).pipe(map(data => ({ data: data as unknown as T })))
     },
   }),
@@ -194,7 +195,7 @@ const listSource: DataSourceDefinition = {
     query<T = unknown>(request: DataSourceRequest, context: RuntimeContext) {
       return defer(() => loadDeviceAlarmList(
         toListQuery(request),
-        request.signal || context.signal,
+        request.signal || context.signal, getDataCapabilityRequest(context),
       )).pipe(map(page => {
         const result = toPageResult(page)
         return {

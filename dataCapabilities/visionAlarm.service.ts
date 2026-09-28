@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
-import { request } from '@jetlinks-web/core'
+import { request as defaultRequest } from '@jetlinks-web/core'
+import type { DataCapabilityRequest } from '@jetlinks-web-core/data-capability'
 import i18n from '@jetlinks-web-core/locales'
 import {
   formatAlarmLevelLabel,
@@ -55,11 +56,12 @@ const requestConfig = (signal?: AbortSignal) => ({ signal, hiddenError: true })
 export async function loadVisionAlarmSummary(
   query: TimeRangeQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmBaseSummaryData> {
   const terms = buildTimeTerms(query)
   const [active, handled] = await Promise.all([
-    countVisionAlarms([...terms, stateTerm('active')], signal),
-    countVisionAlarms([...terms, stateTerm('handled')], signal),
+    countVisionAlarms([...terms, stateTerm('active')], signal, client),
+    countVisionAlarms([...terms, stateTerm('handled')], signal, client),
   ])
   const total = active + handled
   return {
@@ -75,14 +77,15 @@ export async function loadVisionAlarmSummary(
 export async function loadVisionAlarmLevelDistribution(
   query: TimeRangeQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmLevelDistributionRow[]> {
   const range = resolveRange(query, DAY)
-  const levels = await loadLevelOptions(signal)
+  const levels = await loadLevelOptions(signal, client)
   const counts = await Promise.all(levels.map(item =>
     countVisionAlarms([
       ...buildTimeTerms(range),
       { column: 'level', termType: 'eq', value: item.level },
-    ], signal)))
+    ], signal, client)))
   const total = counts.reduce((sum, count) => sum + count, 0)
   const highestIndex = counts.findIndex(count => count > 0)
   return levels.map((item, index) => ({
@@ -97,6 +100,7 @@ export async function loadVisionAlarmLevelDistribution(
 export async function loadVisionAlarmSceneRank(
   query: VisionAlarmRankQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmSceneRankRow[]> {
   const range = resolveRange(query, DAY)
   const [rows, scenes] = await Promise.all([
@@ -107,8 +111,8 @@ export async function loadVisionAlarmSceneRank(
       endWithTime: range.endTime,
       limit: Math.max(query.limit * 4, 40),
       queryParam: { paging: false, terms: [] },
-    }, signal),
-    querySceneRows(signal),
+    }, signal, client),
+    querySceneRows(signal, client),
   ])
   const names = new Map(scenes.map((row, index) => [
     text(row.id ?? row.category) || `scene-${index + 1}`,
@@ -127,6 +131,7 @@ export async function loadVisionAlarmSceneRank(
 export async function loadVisionAlarmSceneDistribution(
   query: TimeRangeQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmSceneDistributionRow[]> {
   const range = resolveRange(query, DAY)
   const [rows, scenes] = await Promise.all([
@@ -137,8 +142,8 @@ export async function loadVisionAlarmSceneDistribution(
       endWithTime: range.endTime,
       limit: 200,
       queryParam: { paging: false, terms: [] },
-    }, signal),
-    querySceneRows(signal),
+    }, signal, client),
+    querySceneRows(signal, client),
   ])
   const counts = new Map<string, number>()
   rows.forEach((row) => {
@@ -165,6 +170,7 @@ export async function loadVisionAlarmSceneDistribution(
 export async function loadVisionAlarmTypeDistribution(
   query: VisionAlarmTypeDistributionQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmTypeDistributionRow[]> {
   const range = resolveRange(query, DAY)
   const response = await aggregationRecord(VISION_TARGET, {
@@ -174,7 +180,7 @@ export async function loadVisionAlarmTypeDistribution(
       { column: 'alarmName', alias: 'typeName' },
     ],
     filter: { terms: buildTimeTerms(range) },
-  }, requestConfig(signal))
+  }, requestConfig(signal), client)
   const rows = rowsOf(response)
     .map((row): VisionAlarmTypeDistributionRow | undefined => {
       const typeId = text(row.typeId)
@@ -206,6 +212,7 @@ export async function loadVisionAlarmTypeDistribution(
 export async function loadVisionAlarmChannelRank(
   query: VisionAlarmRankQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmChannelRankRow[]> {
   const range = resolveRange(query, DAY)
   const rows = await queryHistoryAggregation({
@@ -218,7 +225,7 @@ export async function loadVisionAlarmChannelRank(
     endWithTime: range.endTime,
     limit: query.limit,
     queryParam: { paging: false, terms: [] },
-  }, signal)
+  }, signal, client)
   return toRankRows(rows, query.limit, 'channelId', 'channelName')
     .map(row => ({
       rank: row.rank,
@@ -232,6 +239,7 @@ export async function loadVisionAlarmChannelRank(
 export async function loadVisionAlarmLevelTrend(
   query: TimeRangeQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmLevelTrendRow[]> {
   const range = resolveRange(query, DAY)
   const bucket = resolveBucket(range.endTime - range.startTime)
@@ -249,8 +257,8 @@ export async function loadVisionAlarmLevelTrend(
       endWithTime: range.endTime,
       limit: 500,
       queryParam: { paging: false, terms: [] },
-    }, signal),
-    loadLevelOptions(signal),
+    }, signal, client),
+    loadLevelOptions(signal, client),
   ])
   return fillLevelTrend(rows, levels, range, bucket)
 }
@@ -258,12 +266,13 @@ export async function loadVisionAlarmLevelTrend(
 export async function loadVisionAlarmHandlingTrend(
   query: TimeRangeQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmHandlingTrendRow[]> {
   const range = resolveRange(query, DAY)
   const bucket = resolveBucket(range.endTime - range.startTime)
   const [activeRows, handledRows] = await Promise.all([
-    queryVisionAlarmHandlingTrend(range, bucket, 'active', signal),
-    queryVisionAlarmHandlingTrend(range, bucket, 'handled', signal),
+    queryVisionAlarmHandlingTrend(range, bucket, 'active', signal, client),
+    queryVisionAlarmHandlingTrend(range, bucket, 'handled', signal, client),
   ])
   return fillVisionAlarmHandlingTrend(activeRows, handledRows, range, bucket)
 }
@@ -271,6 +280,7 @@ export async function loadVisionAlarmHandlingTrend(
 export async function loadVisionAlarmAiReviewSummary(
   query: VisionAlarmAiReviewQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmAiReviewSummaryData> {
   const range = resolveRange(query, 7 * DAY)
   const duration = Math.max(range.endTime - range.startTime, 1)
@@ -279,10 +289,10 @@ export async function loadVisionAlarmAiReviewSummary(
     endTime: Math.max(range.startTime - 1, 0),
   }
   const [valid, filtered, previousValid, previousFiltered] = await Promise.all([
-    countAiReviews(1, range, query.spaceId, signal),
-    countAiReviews(0, range, query.spaceId, signal),
-    countAiReviews(1, previous, query.spaceId, signal),
-    countAiReviews(0, previous, query.spaceId, signal),
+    countAiReviews(1, range, query.spaceId, signal, client),
+    countAiReviews(0, range, query.spaceId, signal, client),
+    countAiReviews(1, previous, query.spaceId, signal, client),
+    countAiReviews(0, previous, query.spaceId, signal, client),
   ])
   const total = valid + filtered
   const previousTotal = previousValid + previousFiltered
@@ -307,13 +317,14 @@ export async function loadVisionAlarmAiReviewSummary(
 export async function loadVisionAlarmList(
   query: VisionAlarmListQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmPageData> {
   const range = resolveRange(query, dayjs().diff(dayjs().startOf('day')))
   const terms = [
     ...buildTimeTerms(range),
     ...buildVisionListTerms(query),
   ]
-  const response = await request.post(`/alarm/record/${VISION_TARGET}/_query`, {
+  const response = await client.post(`/alarm/record/${VISION_TARGET}/_query`, {
     paging: true,
     pageIndex: query.pageIndex,
     pageSize: query.pageSize,
@@ -323,7 +334,7 @@ export async function loadVisionAlarmList(
       : [{ name: 'lastAlarmTime', order: 'desc' }, { name: 'alarmTime', order: 'desc' }],
   }, requestConfig(signal))
   const page = pageOf(response)
-  const levels = await loadLevelOptions(signal)
+  const levels = await loadLevelOptions(signal, client)
   const levelMap = new Map(levels.map(item => [item.level, levelText(item)]))
   return {
     data: page.data.map(row => mapVisionAlarmRow(row, levelMap)),
@@ -336,13 +347,14 @@ export async function loadVisionAlarmList(
 export async function loadAlarmEventSummary(
   _query: AlarmEventSummaryQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<AlarmEventSummaryData> {
   const today = dayjs().startOf('day').valueOf()
   const [iot, vision, iotToday, visionToday] = await Promise.all([
-    loadDeviceAlarmSummary({}, signal),
-    loadVisionAlarmSummary({}, signal),
-    loadDeviceAlarmSummary({ startTime: today }, signal),
-    loadVisionAlarmSummary({ startTime: today }, signal),
+    loadDeviceAlarmSummary({}, signal, client),
+    loadVisionAlarmSummary({}, signal, client),
+    loadDeviceAlarmSummary({ startTime: today }, signal, client),
+    loadVisionAlarmSummary({ startTime: today }, signal, client),
   ])
   const total = iot.total + vision.total
   const active = iot.active + vision.active
@@ -369,9 +381,10 @@ export async function loadAlarmEventSummary(
 export async function loadAlarmEventList(
   query: AlarmEventListQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<AlarmEventPageData> {
   if (query.source === 'vision') {
-    const page = await loadVisionAlarmList(query, signal)
+    const page = await loadVisionAlarmList(query, signal, client)
     return {
       ...page,
       data: page.data.map(mapVisionEventRow),
@@ -384,7 +397,7 @@ export async function loadAlarmEventList(
     endTime: query.endTime,
     state: query.state,
     level: query.level,
-  }, signal)
+  }, signal, client)
   return {
     ...page,
     data: page.data.map(row => ({
@@ -431,8 +444,8 @@ function mapVisionEventRow(row: VisionAlarmListRow): AlarmEventListRow {
   }
 }
 
-async function countVisionAlarms(terms: QueryTerm[], signal?: AbortSignal): Promise<number> {
-  const response = await request.post(
+async function countVisionAlarms(terms: QueryTerm[], signal?: AbortSignal, client: DataCapabilityRequest = defaultRequest): Promise<number> {
+  const response = await client.post(
     `/alarm/record/${VISION_TARGET}/_count`,
     { terms },
     requestConfig(signal),
@@ -445,6 +458,7 @@ async function countAiReviews(
   range: Required<TimeRangeQuery>,
   spaceId: string | undefined,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<number> {
   const terms: QueryTerm[] = [
     { column: 'success', termType: 'eq', value: true },
@@ -454,7 +468,7 @@ async function countAiReviews(
     { column: 'timestamp', termType: 'btw', value: [range.startTime, range.endTime] },
   ]
   if (spaceId) terms.push({ column: 'spaceId', termType: 'eq', value: spaceId })
-  const response = await request.post(
+  const response = await client.post(
     '/ai/task/history/_count',
     { terms },
     { ...requestConfig(signal), params: { assetType: 'device' } },
@@ -465,9 +479,10 @@ async function countAiReviews(
 async function queryHistoryAggregation(
   payload: UnknownRecord,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<UnknownRecord[]> {
   try {
-    const response = await request.post(
+    const response = await client.post(
       '/ai/aggregate/task/alarm/history/_aggregation',
       payload,
       requestConfig(signal),
@@ -476,7 +491,7 @@ async function queryHistoryAggregation(
   } catch (error) {
     const compatible = toCompatibleAggregationPayload(payload)
     if (!compatible) throw error
-    const response = await request.post(
+    const response = await client.post(
       '/ai/aggregate/task/alarm/history/_aggregation',
       compatible,
       requestConfig(signal),
@@ -490,6 +505,7 @@ async function queryVisionAlarmHandlingTrend(
   bucket: { interval: string; format: string },
   state: 'active' | 'handled',
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<UnknownRecord[]> {
   const response = await aggregationRecord(VISION_TARGET, {
     columns: [{ column: 'id', alias: 'alarmCount', aggregation: 'COUNT' }],
@@ -502,12 +518,12 @@ async function queryVisionAlarmHandlingTrend(
       to: dayjs(range.endTime).format('YYYY-MM-DD HH:mm:ss'),
     },
     filter: { terms: [stateTerm(state)] },
-  }, requestConfig(signal))
+  }, requestConfig(signal), client)
   return rowsOf(response)
 }
 
-async function querySceneRows(signal?: AbortSignal): Promise<UnknownRecord[]> {
-  const response = await request.post('/ai/scene/tree/_query', {
+async function querySceneRows(signal?: AbortSignal, client: DataCapabilityRequest = defaultRequest): Promise<UnknownRecord[]> {
+  const response = await client.post('/ai/scene/tree/_query', {
     paging: true,
     pageIndex: 0,
     pageSize: 200,
@@ -517,9 +533,9 @@ async function querySceneRows(signal?: AbortSignal): Promise<UnknownRecord[]> {
   return rowsOf(response)
 }
 
-async function loadLevelOptions(signal?: AbortSignal): Promise<AlarmLevelOption[]> {
+async function loadLevelOptions(signal?: AbortSignal, client: DataCapabilityRequest = defaultRequest): Promise<AlarmLevelOption[]> {
   try {
-    return await queryAlarmLevelOptions(signal)
+    return await queryAlarmLevelOptions(signal, client)
   } catch (error) {
     if (isAbortError(error)) throw error
     return []

@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <FullPage transparentBackground>
-      <ContentPanel>
+      
         <JProTable
           ref="sceneRef"
           :columns="columns"
@@ -132,7 +132,7 @@
             </a-space>
           </template>
         </JProTable>
-      </ContentPanel>
+      
     </FullPage>
     <SaveModal v-if="visible" @close="visible = false" :data="current" :typeOptions="typeOptions" />
     <ImportModal v-if="importVisible" @close="importVisible = false" @save="importSuccess"/>

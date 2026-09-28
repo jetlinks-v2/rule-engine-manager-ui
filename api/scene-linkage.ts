@@ -213,6 +213,9 @@ export const querySceneContextRecords = (id: string, contextId: string, data: Re
 export const querySceneNotifyChannels = () =>
   request.get('/notify/channel/all')
 
+export const queryCurrentSceneNotifyUser = () =>
+  request.get('/user/detail')
+
 export const querySceneNotifyUsers = (data: {
   pageIndex?: number
   pageSize?: number

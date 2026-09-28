@@ -1,4 +1,6 @@
 import { loadVisionAlarmLevelTrend } from './visionAlarm.service'
+import { request as defaultRequest } from '@jetlinks-web/core'
+import type { DataCapabilityRequest } from '@jetlinks-web-core/data-capability'
 import type {
   TimeRangeQuery,
   VisionAlarmTrendRow,
@@ -8,8 +10,9 @@ import type {
 export async function loadVisionAlarmTrend(
   query: TimeRangeQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmTrendRow[]> {
-  const levelRows = await loadVisionAlarmLevelTrend(query, signal)
+  const levelRows = await loadVisionAlarmLevelTrend(query, signal, client)
   const totals = new Map<number, number>()
   levelRows.forEach((row) => {
     totals.set(row.timestamp, (totals.get(row.timestamp) ?? 0) + row.count)
@@ -18,4 +21,3 @@ export async function loadVisionAlarmTrend(
     .sort(([left], [right]) => left - right)
     .map(([timestamp, count]) => ({ timestamp, count }))
 }
-

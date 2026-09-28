@@ -1,4 +1,7 @@
 import i18n from '@jetlinks-web-core/locales'
+import { getDataCapabilityRequest } from '@jetlinks-web-core/data-capability'
+import { request as defaultRequest } from '@jetlinks-web/core'
+import type { DataCapabilityRequest } from '@jetlinks-web-core/data-capability'
 import type {
   CapabilitySchema,
   DataCapabilityProvider,
@@ -125,10 +128,11 @@ const spaceProperty = {
 async function loadVisionAlarmSummary(
   query: TimeRangeQuery,
   signal?: AbortSignal,
+  client: DataCapabilityRequest = defaultRequest,
 ): Promise<VisionAlarmSummaryData> {
   const [summary, countSummary] = await Promise.all([
-    loadVisionAlarmBaseSummary(query, signal),
-    loadVisionAlarmCountSummary(query, signal),
+    loadVisionAlarmBaseSummary(query, signal, client),
+    loadVisionAlarmCountSummary(query, signal, client),
   ])
   return { ...summary, ...countSummary }
 }
@@ -230,7 +234,7 @@ const sources: DataSourceDefinition[] = [
 function snapshotSource<TQuery, TData>(
   id: string,
   nameKey: string,
-  loader: (query: TQuery, signal?: AbortSignal) => Promise<TData>,
+  loader: (query: TQuery, signal?: AbortSignal, client?: DataCapabilityRequest) => Promise<TData>,
   mapper: (request: DataSourceRequest) => TQuery,
   outputSchema: DataSourceDefinition['outputSchema'],
 ): DataSourceDefinition {
@@ -274,7 +278,7 @@ function snapshotSource<TQuery, TData>(
 function pageSource<TQuery, TPage extends { data: unknown[] }>(
   id: string,
   nameKey: string,
-  loader: (query: TQuery, signal?: AbortSignal) => Promise<TPage>,
+  loader: (query: TQuery, signal?: AbortSignal, client?: DataCapabilityRequest) => Promise<TPage>,
   mapper: (request: DataSourceRequest) => TQuery,
   outputSchema: DataSourceDefinition['outputSchema'],
 ): DataSourceDefinition {
@@ -322,24 +326,24 @@ function pageSource<TQuery, TPage extends { data: unknown[] }>(
 }
 
 function createSnapshot<TQuery, TData>(
-  loader: (query: TQuery, signal?: AbortSignal) => Promise<TData>,
+  loader: (query: TQuery, signal?: AbortSignal, client?: DataCapabilityRequest) => Promise<TData>,
   mapper: (request: DataSourceRequest) => TQuery,
 ): DataSource {
   return {
     query<T = unknown>(request: DataSourceRequest, context: RuntimeContext) {
-      return defer(() => loader(mapper(request), request.signal || context.signal))
+      return defer(() => loader(mapper(request), request.signal || context.signal, getDataCapabilityRequest(context)))
         .pipe(map(data => ({ data: data as unknown as T })))
     },
   }
 }
 
 function createPage<TQuery, TPage extends { data: unknown[] }>(
-  loader: (query: TQuery, signal?: AbortSignal) => Promise<TPage>,
+  loader: (query: TQuery, signal?: AbortSignal, client?: DataCapabilityRequest) => Promise<TPage>,
   mapper: (request: DataSourceRequest) => TQuery,
 ): DataSource {
   return {
     query<T = unknown>(request: DataSourceRequest, context: RuntimeContext) {
-      return defer(() => loader(mapper(request), request.signal || context.signal))
+      return defer(() => loader(mapper(request), request.signal || context.signal, getDataCapabilityRequest(context)))
         .pipe(map(page => ({
           ...page,
           data: page.data as unknown as T,
