@@ -71,12 +71,22 @@ export interface AiEventMediaChannel {
   image?: string
   others?: { playerScreenshotCover?: string }
   status?: { value?: string; text?: string }
+  modelConfigured?: boolean
 }
 
 export interface AiEventSpace {
   id: string
   name?: string
   children?: AiEventSpace[]
+}
+
+export interface AiEventCameraBindingStatus {
+  cloudChannelEntityId: string
+  info?: Array<{
+    sceneId?: string
+    taskTarget?: string
+    state?: string | { value?: string }
+  }>
 }
 
 const pendingProductRequests = new Map<string, Promise<any>>()
@@ -178,12 +188,12 @@ export const queryAiEventSpaceTree = () =>
     sorts: [{ name: 'sortIndex', order: 'asc' }, { name: 'createTime', order: 'asc' }],
   }, { params: { assetType: 'device' } })
 
-export const queryAiEventSpaceChannels = (spaceId: string, data: Record<string, any> = {}) =>
+export const queryAiEventSpaceChannels = (spaceIds: string[], data: Record<string, any> = {}) =>
   request.post<AiEventMediaChannel[]>('/media/channel/_query', {
     pageIndex: 0,
     pageSize: 18,
     ...data,
-    terms: [{ column: 'channelId', termType: 'space-bind$channel', value: spaceId }, ...(data.terms ?? [])],
+    terms: [{ column: 'channelId', termType: 'space-bind$channel', value: spaceIds }, ...(data.terms ?? [])],
     sorts: data.sorts ?? [{ name: 'createTime', order: 'desc' }],
   })
 
@@ -203,6 +213,17 @@ export const queryAiEventMediaDeviceChannels = (deviceId: string, data: Record<s
     ...data,
     sorts: data.sorts ?? [{ name: 'createTime', order: 'desc' }],
   })
+
+/** Queries whether each cloud media channel has an enabled task for the selected visual event. */
+export const queryAiEventCameraBindingStatus = (data: {
+  cloudChannelEntityIds: string[]
+  sceneId?: string
+  taskTarget: string
+}) => request.post<AiEventCameraBindingStatus[]>('/ai/edge/task/channel/bind/_query', {
+  cloudChannelEntityIds: data.cloudChannelEntityIds,
+  ...(data.sceneId ? { sceneIds: [data.sceneId] } : {}),
+  taskTargets: [data.taskTarget],
+}, { hiddenError: true })
 
 export const querySceneRecordsByScene = (id: string, data: Record<string, any>) =>
   request.post(`/scene/${id}/record/_query`, data)

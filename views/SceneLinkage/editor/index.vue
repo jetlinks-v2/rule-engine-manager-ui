@@ -403,7 +403,22 @@ function addDelay() { form.actions.push({ type: 'delay', time: 1, unit: 'seconds
 function openAction(type: 'device') { actionPickerVisible.value = false; form.actions.push({ type, config: { productId: '', selector: 'fixed', selectorValues: [], message: { messageType: 'READ_PROPERTY', properties: [] } } }); clearActionValidationIfResolved() }
 function updateAction(index: number, action: any) { form.actions[index] = action; clearActionValidationIfResolved() }
 function clearValidationField(field: string) { if (hasError(field)) { validation.field = ''; validation.message = '' } }
-function hasIncompleteDeviceAction(action: any) { return action.type === 'device' && (!action.config?.productId || (action.config?.selector !== 'all' && !action.config?.selectorValues?.length) || !action.config?.message?.messageType) }
+function hasIncompleteDeviceAction(action: any) {
+  if (action.type !== 'device') return false
+  const message = action.config?.message || {}
+  const operationId = message.messageType === 'INVOKE_FUNCTION'
+    ? message.functionId
+    : message.messageType === 'READ_PROPERTY'
+      ? message.properties?.[0]
+      : message.messageType === 'WRITE_PROPERTY'
+        ? Object.keys(message.properties || {})[0]
+        : undefined
+  // Every device command needs its target thing-model entry; command type alone is not executable configuration.
+  return !action.config?.productId
+    || (action.config?.selector !== 'all' && !action.config?.selectorValues?.length)
+    || !message.messageType
+    || !operationId
+}
 function hasMissingWritePropertyValue(action: any) { return action.type === 'device' && action.config?.message?.messageType === 'WRITE_PROPERTY' && isEmptyValue(Object.values(action.config.message.properties || {})[0]) }
 function hasIncompleteNotifyAction(action: any) { return action.type === 'sceneNotify' && (!action.config?.notifyChannelIds?.length || !action.config?.userIds?.length) }
 function clearActionValidationIfResolved() {
