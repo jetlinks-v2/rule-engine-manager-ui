@@ -113,7 +113,7 @@
                   <j-ellipsis
                   >
                     <div>
-                      {{ slotProps?.actualDesc || "--" }}
+                      {{ slotProps?.actualDesc || $t('comm.table.empty-2') }}
                     </div>
                   </j-ellipsis
                   >

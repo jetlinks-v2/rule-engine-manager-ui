@@ -23,12 +23,12 @@
                             ? dayjs(slotsProps.handleTime).format(
                                   'YYYY-MM-DD HH:mm:ss',
                               )
-                            : '--'
+                            : $t('comm.table.empty-2')
                     }}
                 </span>
             </template>
             <template #handleType="slotProps">
-                <span>{{ slotProps.handleType?.text || '--' }}</span>
+                <span>{{ slotProps.handleType?.text || $t('comm.table.empty-2') }}</span>
             </template>
             <template #alarmDuration="slotProps">
                 <j-ellipsis><Duration :data="slotProps" /></j-ellipsis>
@@ -46,7 +46,7 @@
                 </span>
             </template>
             <template #description="slotProps">
-                {{ slotProps?.description || '--' }}
+                {{ slotProps?.description || $t('comm.table.empty') }}
             </template>
         </JProTable>
       
