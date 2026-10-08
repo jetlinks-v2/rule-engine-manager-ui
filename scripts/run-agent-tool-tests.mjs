@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, realpathSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -13,6 +13,15 @@ const outputDirectory = await mkdtemp(path.join(tmpdir(), 'rule-editor-agent-too
 const outputFile = path.join(outputDirectory, 'toolRuntime.test.mjs')
 const catalogOutputFile = path.join(outputDirectory, 'toolRuntimeCatalog.test.mjs')
 const agentCatalogOutputFile = path.join(outputDirectory, 'agentToolCatalog.test.mjs')
+const orchestrationOutputFile = path.join(outputDirectory, 'ruleEditorOrchestration.test.mjs')
+const bridgeOutputFile = path.join(outputDirectory, 'ruleEditorAgentBridge.test.mjs')
+const wireOutputFile = path.join(outputDirectory, 'ruleEditorClientToolWire.test.mjs')
+const lifecycleTestFile = path.join(packageRoot, 'tests/ruleEditorAgentLifecycle.test.mjs')
+const bridgeOnly = process.argv.includes('--bridge-only')
+const exportClientToolFixture = process.argv.includes('--export-client-tool-fixture')
+const wireOnly = exportClientToolFixture || process.argv.includes('--client-tool-fixture-only')
+const harnessOptions = new Set(['--bridge-only', '--export-client-tool-fixture', '--client-tool-fixture-only'])
+const testOptions = process.argv.slice(2).filter(option => !harnessOptions.has(option))
 
 const resolveCore = (specifier) => {
   const target = path.join(coreSourceRoot, specifier.slice('@jetlinks-web-core/'.length))
@@ -70,6 +79,14 @@ const runtimeMocks = {
             },
           };
         };
+        export const withAiClientToolEvidence = (result, options) => ({
+          ...result,
+          success: true,
+          complete: options.requestSatisfied ?? options.complete,
+          requestSatisfied: options.requestSatisfied ?? options.complete,
+          truncated: options.truncated,
+          evidence: { contract: 'ai-client-tool-evidence/v1', ...options },
+        });
         export const createAiClientToolFailureResult = (options) => ({ success: false, ...options });
       `,
     }))
@@ -78,6 +95,11 @@ const runtimeMocks = {
       contents: `
         export const resolveRuleEditorConfirmOptions = () => false;
         export const resolveRuleEditorToolDisplayName = tool => tool.name || tool.id;
+        export const resolveRuleEditorApplyConfirmationText = (args, preview) => ({
+          title: args.targetState === 'configured' ? 'Confirm Partial Configuration' : 'Confirm Canvas Change',
+          content: (preview ? '预检通过：' + preview.nodeCount + ' 个节点，' + preview.linkCount + ' 条连线。 ' : '')
+            + (args.targetState === 'configured' ? 'Partial draft only.' : 'Apply draft.'),
+        });
       `,
     }))
   },
@@ -103,6 +125,7 @@ const realCoreRuntime = {
         } from ${JSON.stringify(path.join(coreAiChatRoot, 'clientToolContract.ts'))};
         export {
           createAiClientToolFailureResult,
+          withAiClientToolEvidence,
         } from ${JSON.stringify(path.join(coreAiChatRoot, 'clientToolResult.ts'))};
         export {
           createAiClientToolCatalogReport,
@@ -119,14 +142,42 @@ const realCoreRuntime = {
       contents: `
         export const resolveRuleEditorConfirmOptions = () => false;
         export const resolveRuleEditorToolDisplayName = tool => tool.name || tool.id;
+        export const resolveRuleEditorApplyConfirmationText = (args, preview) => ({
+          title: args.targetState === 'configured' ? 'Confirm Partial Configuration' : 'Confirm Canvas Change',
+          content: (preview ? '预检通过：' + preview.nodeCount + ' 个节点，' + preview.linkCount + ' 条连线。 ' : '')
+            + (args.targetState === 'configured' ? 'Partial draft only.' : 'Apply draft.'),
+        });
       `,
     }))
   },
 }
 
-const agentCatalogRuntime = {
+const agentCatalogRuntime = (mountLifecycle = false) => ({
   name: 'rule-editor-agent-tool-catalog-runtime',
   setup(buildApi) {
+    if (mountLifecycle) {
+      buildApi.onResolve({ filter: /^@jetlinks-web\/utils$/ }, (args) => (
+        args.importer === path.join(packageRoot, 'views/Instance/RuleEditor/proposalLinks.ts')
+          ? { path: 'proposal-notification', namespace: 'rule-editor-bridge-test' }
+          : undefined
+      ))
+      buildApi.onLoad({ filter: /^proposal-notification$/, namespace: 'rule-editor-bridge-test' }, () => ({
+        loader: 'js',
+        contents: `export const onlyMessage = () => {
+          throw new Error('Unexpected proposal notification in bridge transport test')
+        }`,
+      }))
+      buildApi.onResolve({ filter: /^@jetlinks-web-core\/layout\/components\/AiChat\/routeCapabilityLoader$/ }, () => ({
+        path: 'shared-provider-loader',
+        namespace: 'rule-editor-bridge-test',
+      }))
+      buildApi.onLoad({ filter: /^shared-provider-loader$/, namespace: 'rule-editor-bridge-test' }, () => ({
+        loader: 'js',
+        contents: `export const loadHomeAgentCapabilityProviders = async () => {
+          await globalThis.__ruleEditorSharedToolsTest?.load?.()
+        }`,
+      }))
+    }
     buildApi.onResolve({ filter: /^@jetlinks-web-core\/locales$/ }, () => ({
       path: 'locales',
       namespace: 'rule-editor-agent-catalog',
@@ -135,10 +186,9 @@ const agentCatalogRuntime = {
       path: 'jetlinks-web-core-request',
       namespace: 'rule-editor-agent-catalog',
     }))
-    buildApi.onResolve({ filter: /^vue$/ }, () => ({
-      path: 'vue',
-      namespace: 'rule-editor-agent-catalog',
-    }))
+    buildApi.onResolve({ filter: /^vue$/ }, () => mountLifecycle
+      ? { path: realpathSync(path.resolve(packageRoot, '../../node_modules/vue/dist/vue.runtime.esm-bundler.js')) }
+      : { path: 'vue', namespace: 'rule-editor-agent-catalog' })
     buildApi.onResolve({ filter: /^vue-demi$/ }, () => ({
       path: 'vue',
       namespace: 'rule-editor-agent-catalog',
@@ -197,7 +247,7 @@ const agentCatalogRuntime = {
     }))
     buildApi.onLoad({ filter: /^locales$/, namespace: 'rule-editor-agent-catalog' }, () => ({
       loader: 'js',
-      contents: 'export default { global: { t: (key) => key } }',
+      contents: "export default { global: { locale: { value: 'zh-CN' }, t: (key) => key } }",
     }))
     buildApi.onLoad({
       filter: /^jetlinks-web-core-request$/,
@@ -239,7 +289,7 @@ const agentCatalogRuntime = {
         export const onBeforeMount = noop
         export const nextTick = async (fn) => fn && fn()
         export const onBeforeUnmount = noop
-        export const onMounted = noop
+        export const onMounted = ${mountLifecycle ? '(callback) => callback()' : 'noop'}
         export const onUnmounted = noop
         export const isReactive = () => false
         export const defineComponent = (value) => value
@@ -272,6 +322,10 @@ const agentCatalogRuntime = {
       contents: `
         export const registerHomeAgentCapabilityProvider = () => undefined
         export const createHomeAgentContinuationReceipt = (value) => value
+        export const HOME_AGENT_CAPABILITY_CHANGE_EVENT = 'jetlinks-home-agent-capability-change'
+        export const createHomeAgentRuntime = (options) => globalThis.__ruleEditorSharedToolsTest?.createRuntime(options) || {
+          clientTools: [], dispose() {}, handleClientToolCall() { throw new Error('No shared provider') }
+        }
       `,
     }))
     buildApi.onLoad({
@@ -282,64 +336,65 @@ const agentCatalogRuntime = {
       contents: "export const getProjectIdFromLocation = () => ''",
     }))
   },
-}
+})
 
 try {
-  await build({
-    entryPoints: [path.join(packageRoot, 'tests/toolRuntime.test.ts')],
-    outfile: outputFile,
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    target: 'node22',
-    sourcemap: 'inline',
-    logLevel: 'warning',
-    plugins: [runtimeMocks],
-  })
-  await build({
-    entryPoints: [path.join(packageRoot, 'tests/toolRuntimeCatalog.test.ts')],
-    outfile: catalogOutputFile,
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    target: 'node22',
-    sourcemap: 'inline',
-    logLevel: 'warning',
-    plugins: [realCoreRuntime],
-  })
-  await build({
-    entryPoints: [path.join(packageRoot, 'tests/agentToolCatalog.test.ts')],
-    outfile: agentCatalogOutputFile,
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    target: 'node22',
-    sourcemap: 'inline',
-    logLevel: 'warning',
-    banner: {
-      js: 'globalThis.window = globalThis.window || globalThis; globalThis.document = globalThis.document || { querySelector() { return null }, addEventListener() {} };',
-    },
-    define: {
-      'import.meta.env.BASE_URL': JSON.stringify('/'),
-      'import.meta.env.VITE_APP_BASE_API': JSON.stringify('/api'),
-      'import.meta.env.VITE_APP_ENVIRONMENT': JSON.stringify(''),
-      'import.meta.env.VITE_APP_NAME': JSON.stringify('iot'),
-      'import.meta.env.VITE_APP_PROJECT_CODE': JSON.stringify(''),
-      'import.meta.env.VITE_APP_RUNTIME_SCOPE': JSON.stringify('auto'),
-      'import.meta.env.VITE_MICRO_APP': JSON.stringify('false'),
-      'import.meta.env.VITE_PERSONAL_TOKEN_AI_KEY': JSON.stringify('personal_token'),
-      'import.meta.env.VITE_PERSONAL_TOKEN_KEY': JSON.stringify('X-Personal-Token'),
-      'import.meta.env.VITE_PERSONAL_TOKEN_URL_KEY': JSON.stringify(':X_Personal_Token'),
-      'import.meta.env.VITE_STORE_TOKEN_KEY': JSON.stringify('X-Access-Token'),
-      'import.meta.env.VITE_TOKEN_KEY': JSON.stringify('X-Access-Token'),
-      'import.meta.env.VITE_TOKEN_KEY_URL': JSON.stringify(':X_Access_Token'),
-      'import.meta.env.MODE': JSON.stringify('test'),
-      'import.meta.env.DEV': 'false',
-      'import.meta.env.PROD': 'true',
-    },
-    plugins: [agentCatalogRuntime],
-  })
-  const result = spawnSync(process.execPath, [
+  for (const [entryPoint, outfile, runtime] of (wireOnly ? [] : [
+    ['tests/toolRuntime.test.ts', outputFile, runtimeMocks],
+    ['tests/toolRuntimeCatalog.test.ts', catalogOutputFile, realCoreRuntime],
+  ])) {
+    await build({
+      entryPoints: [path.join(packageRoot, entryPoint)],
+      outfile,
+      bundle: true,
+      platform: 'node',
+      format: 'esm',
+      target: 'node22',
+      sourcemap: 'inline',
+      logLevel: 'warning',
+      plugins: [runtime],
+    })
+  }
+  for (const [entryPoint, outfile, mountLifecycle] of [
+    ['tests/agentToolCatalog.test.ts', agentCatalogOutputFile, false],
+    ['tests/ruleEditorOrchestration.test.ts', orchestrationOutputFile, false],
+    ['tests/ruleEditorAgentBridge.test.ts', bridgeOutputFile, true],
+    ['tests/ruleEditorClientToolWire.test.ts', wireOutputFile, false],
+  ].filter(([, outfile]) => !wireOnly || outfile === wireOutputFile)) {
+    await build({
+      entryPoints: [path.join(packageRoot, entryPoint)],
+      outfile,
+      bundle: true,
+      platform: 'node',
+      format: 'esm',
+      target: 'node22',
+      sourcemap: 'inline',
+      logLevel: 'warning',
+      banner: {
+        js: 'globalThis.window = globalThis.window || globalThis; globalThis.document = globalThis.document || { createElement() { return {} }, querySelector() { return null }, addEventListener() {} };',
+      },
+      define: {
+        'import.meta.env.BASE_URL': JSON.stringify('/'),
+        'import.meta.env.VITE_APP_BASE_API': JSON.stringify('/api'),
+        'import.meta.env.VITE_APP_ENVIRONMENT': JSON.stringify(''),
+        'import.meta.env.VITE_APP_NAME': JSON.stringify('iot'),
+        'import.meta.env.VITE_APP_PROJECT_CODE': JSON.stringify(''),
+        'import.meta.env.VITE_APP_RUNTIME_SCOPE': JSON.stringify('auto'),
+        'import.meta.env.VITE_MICRO_APP': JSON.stringify('false'),
+        'import.meta.env.VITE_PERSONAL_TOKEN_AI_KEY': JSON.stringify('personal_token'),
+        'import.meta.env.VITE_PERSONAL_TOKEN_KEY': JSON.stringify('X-Personal-Token'),
+        'import.meta.env.VITE_PERSONAL_TOKEN_URL_KEY': JSON.stringify(':X_Personal_Token'),
+        'import.meta.env.VITE_STORE_TOKEN_KEY': JSON.stringify('X-Access-Token'),
+        'import.meta.env.VITE_TOKEN_KEY': JSON.stringify('X-Access-Token'),
+        'import.meta.env.VITE_TOKEN_KEY_URL': JSON.stringify(':X_Access_Token'),
+        'import.meta.env.MODE': JSON.stringify('test'),
+        'import.meta.env.DEV': 'false',
+        'import.meta.env.PROD': 'true',
+      },
+      plugins: [agentCatalogRuntime(mountLifecycle)],
+    })
+  }
+  const result = bridgeOnly || wireOnly ? { status: 0 } : spawnSync(process.execPath, [
     '--test',
     '--experimental-test-coverage',
     '--test-coverage-lines=90',
@@ -353,10 +408,18 @@ try {
   })
   const catalogResult = spawnSync(process.execPath, [
     '--test',
-    catalogOutputFile,
-    agentCatalogOutputFile,
+    ...testOptions,
+    ...(wireOnly ? [wireOutputFile] : [
+      ...(bridgeOnly ? [] : [catalogOutputFile, agentCatalogOutputFile, orchestrationOutputFile, wireOutputFile]),
+      bridgeOutputFile,
+      lifecycleTestFile,
+    ]),
   ], {
     cwd: packageRoot,
+    env: {
+      ...process.env,
+      RULE_EDITOR_EXPORT_CLIENT_TOOL_FIXTURE: exportClientToolFixture ? '1' : '0',
+    },
     encoding: 'utf8',
     stdio: 'inherit',
   })

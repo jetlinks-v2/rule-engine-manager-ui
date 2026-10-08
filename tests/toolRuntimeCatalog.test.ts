@@ -9,6 +9,7 @@ import {
 import {
   APPLY_CANVAS_PLAN_BINDING_GUIDE,
   APPLY_CANVAS_TOOL_ID,
+  PREPARE_CANVAS_TOOL_ID,
   RULE_EDITOR_TYPED_REMOTE_TOOL_IDS,
   orderRuleEditorRemoteTools,
   toRuleEditorClientToolDefinition,
@@ -32,6 +33,14 @@ const applyTool = (): RemoteRuleEditorToolDefinition => ({
       },
     },
   },
+  inputs: [],
+});
+
+const prepareTool = (): RemoteRuleEditorToolDefinition => ({
+  id: PREPARE_CANVAS_TOOL_ID,
+  name: 'prepare canvas',
+  write: false,
+  expands: { _schema: { type: 'object', additionalProperties: false, properties: {} } },
   inputs: [],
 });
 
@@ -72,7 +81,7 @@ test('apply tool stays typed after the real core runtime projects routing into e
   assert.ok(routing, 'the producer-owned routing contract must survive core validation');
   assert.equal(routing.exposure, 'auto', 'FLAT must expose the editor primary action without route preselection');
   assert.equal(routing.accepts, undefined);
-  assert.deepEqual(routing.intents, ['apply-canvas-plan', 'bind plan output to canvas-changes']);
+  assert.deepEqual(routing.intents, ['apply-prepared-canvas-plan', 'bind plan output to canvas-changes']);
   assert.equal(routing.help?.quickstartSection, APPLY_CANVAS_PLAN_BINDING_GUIDE);
   assert.deepEqual(routing.produces, ['canvas-changes']);
   assert.deepEqual(routing.outputShapes, ['rule-editor.canvas-changes']);
@@ -84,8 +93,8 @@ test('apply tool stays typed after the real core runtime projects routing into e
   assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /Write-plan outputBindings stay canvas-changes/);
   assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('topology-diagram'), false);
   assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /Canvas is the topology/);
-  assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /JSON strings are parsed/);
-  assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('canvas-actions-result'), true);
+  assert.match(APPLY_CANVAS_PLAN_BINDING_GUIDE, /never stringify steps/);
+  assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('canvas-actions-result'), false);
   assert.equal(APPLY_CANVAS_PLAN_BINDING_GUIDE.includes('://'), false);
   assert.ok(APPLY_CANVAS_PLAN_BINDING_GUIDE.length <= 240, APPLY_CANVAS_PLAN_BINDING_GUIDE.length);
 
@@ -104,15 +113,16 @@ test('apply tool stays typed after the real core runtime projects routing into e
 
 test('agent-visible read remotes compile as typed without requiring catalog-wide routing', () => {
   assert.deepEqual([...RULE_EDITOR_TYPED_REMOTE_TOOL_IDS], [
+    PREPARE_CANVAS_TOOL_ID,
     'rule_editor_get_context',
     'rule_editor_get_graph_summary',
     'rule_editor_list_nodes',
     'rule_editor_get_node_detail',
     'rule_editor_get_node_contract',
+    'rule_editor_get_node_type_catalog',
     'rule_editor_get_node_type_manual',
     'rule_editor_search_node_types',
     'rule_editor_get_node_type_detail',
-    'rule_editor_execute_node_tool',
     'rule_editor_validate_flow',
   ]);
 
@@ -127,17 +137,82 @@ test('agent-visible read remotes compile as typed without requiring catalog-wide
   });
 });
 
-test('mixed read remotes keep apply first with canvas-changes after compile and catalogize', () => {
+test('node type and composition detail bind their actual result through the real core adapter', async () => {
+  const remote = {
+    id: 'rule_editor_get_node_type_detail',
+    name: 'node type detail',
+    write: false,
+    inputs: [
+      { id: 'type', required: true, valueType: 'string' },
+      { id: 'compositionId', valueType: 'string' },
+      { id: 'keyword', valueType: 'string' },
+    ],
+  } satisfies RemoteRuleEditorToolDefinition;
+  assert.equal(reportFor([remote]).valid, true);
+  for (const payload of [
+    { ok: true, type: 'source', fields: [], contracts: { output: { kind: 'object' } } },
+    { ok: true, composition: { id: 'source>sink', members: [{ type: 'source' }, { type: 'sink' }], slots: {} } },
+  ]) {
+    const calls: Array<{ id: string; args: Record<string, unknown> }> = [];
+    const definition = toRuleEditorClientToolDefinition(remote, async (id, args) => {
+      calls.push({ id, args });
+      return payload;
+    });
+    assert.deepEqual(definition.inputs?.map(input => input.id), ['type', 'compositionId', 'keyword']);
+    const args = { type: 'source', ...(payload.composition ? { compositionId: payload.composition.id } : {}) };
+    const result = await definition.execute(args, {}, {} as any);
+    assert.deepEqual(calls, [{ id: remote.id, args }]);
+    assert.equal(result.success, true);
+    assert.equal(result.complete, true);
+    assert.equal(result.outputBindings[0].name, 'node-type-detail');
+    assert.equal(result.outputBindings[0].path, '$');
+    assert.equal(result.outputBindings[0].complete, true);
+    if (payload.composition) {
+      assert.deepEqual(result.composition, payload.composition);
+      assert.equal(Object.hasOwn(result, 'type'), false);
+    } else {
+      assert.equal(result.type, payload.type);
+    }
+  }
+});
+
+test('remote search evidence binds only real result branches and never turns failures into success', async () => {
+  const remote = remoteTool('rule_editor_search_node_types');
+  for (const payload of [
+    {ok: true, total: 20, nodeTypes: [{type: 'source'}], complete: false, truncated: true},
+    {ok: true, total: 20, nodeTypes: [{type: 'source'}], complete: false, truncated: false},
+    {ok: true, total: 0, nodeTypes: [], compositions: [], complete: true, truncated: false},
+  ]) {
+    const definition = toRuleEditorClientToolDefinition(remote, async () => payload);
+    const result = await definition.execute({}, {}, {} as any);
+    assert.equal(result.complete, payload.complete);
+    assert.equal(result.truncated, payload.truncated);
+    assert.deepEqual(result.outputBindings.map((binding: {path: string}) => binding.path),
+      'compositions' in payload ? ['$.nodeTypes', '$.compositions'] : ['$.nodeTypes']);
+    assert.deepEqual(result.nodeTypes, payload.nodeTypes);
+  }
+  const failure = {ok: false, success: false, error: 'search unavailable'};
+  const definition = toRuleEditorClientToolDefinition(remote, async () => failure);
+  const result = await definition.execute({}, {}, {} as any);
+  assert.equal(result.success, false);
+  assert.equal(result.outputBindings, undefined);
+});
+
+test('mixed remotes keep prepare then apply first with typed prepared-plan evidence', () => {
   const tools = orderRuleEditorRemoteTools([
     remoteTool('rule_editor_get_context'),
     remoteTool('rule_editor_list_nodes'),
     applyTool(),
+    prepareTool(),
     remoteTool('rule_editor_get_graph_summary'),
     remoteTool('rule_editor_validate_flow'),
   ]);
 
-  assert.equal(tools[0]?.id, APPLY_CANVAS_TOOL_ID);
-  assert.deepEqual(tools.slice(1).map((tool) => tool.id), [
+  assert.deepEqual(tools.slice(0, 2).map((tool) => tool.id), [
+    PREPARE_CANVAS_TOOL_ID,
+    APPLY_CANVAS_TOOL_ID,
+  ]);
+  assert.deepEqual(tools.slice(2).map((tool) => tool.id), [
     'rule_editor_get_context',
     'rule_editor_list_nodes',
     'rule_editor_get_graph_summary',
@@ -145,18 +220,19 @@ test('mixed read remotes keep apply first with canvas-changes after compile and 
   ]);
 
   const compiled = tools.map((tool) => toRuleEditorClientToolDefinition(tool, async () => ({})));
-  assert.equal(compiled[0]?.id, APPLY_CANVAS_TOOL_ID);
-  assert.equal(compiled[0]?.routing?.exposure, 'auto');
-  assert.ok(compiled[0]?.routing?.produces?.includes('canvas-changes'));
-  assert.equal(compiled[0]?.routing?.produces?.includes('canvas-actions-result'), false);
-  assert.equal(compiled[0]?.routing?.help?.quickstartSection, APPLY_CANVAS_PLAN_BINDING_GUIDE);
+  assert.equal(compiled[0]?.id, PREPARE_CANVAS_TOOL_ID);
+  assert.deepEqual(compiled[0]?.routing?.capabilities, ['rule-editor.canvas.prepare']);
+  assert.deepEqual(compiled[0]?.routing?.produces, ['prepared-canvas-plan']);
+  assert.deepEqual(compiled[0]?.routing?.outputShapes, ['rule-editor.canvas-prepared-plan']);
+  assert.equal(compiled[1]?.id, APPLY_CANVAS_TOOL_ID);
+  assert.ok(compiled[1]?.routing?.produces?.includes('canvas-changes'));
 
   const report = reportFor(tools);
   assert.equal(report.valid, true);
-  assert.equal(report.tools[0]?.toolId, APPLY_CANVAS_TOOL_ID);
+  assert.equal(report.tools[0]?.toolId, PREPARE_CANVAS_TOOL_ID);
   assert.equal(report.tools[0]?.contractStatus, 'typed');
   assert.equal(report.tools[0]?.routingStatus, 'valid');
-  assert.equal(report.summary.typed, 5);
+  assert.equal(report.summary.typed, 6);
   assert.equal(report.summary.malformedContract, 0);
 });
 

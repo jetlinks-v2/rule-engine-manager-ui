@@ -62,7 +62,33 @@ const agentConfirmationCard = {
   },
 };
 
+export const resolveRuleEditorApplyConfirmationText = (
+  args: Record<string, any>,
+  preview?: { nodeCount?: number; linkCount?: number },
+) => {
+  const variant = args.targetState === 'skeleton'
+    ? 'skeleton'
+    : args.targetState === 'configured' && args.completion?.mode === 'partial-draft'
+      ? 'configured'
+      : 'default';
+  const content = t(`RuleEditor.bridge.confirm.${variant}.content`);
+  const previewText = preview && Number.isSafeInteger(preview.nodeCount) && Number.isSafeInteger(preview.linkCount)
+    ? t('RuleEditor.bridge.confirm.preview.counts', [preview.nodeCount, preview.linkCount])
+    : preview ? t('RuleEditor.bridge.confirm.preview.passed') : '';
+  return {
+    title: t(`RuleEditor.bridge.confirm.${variant}.title`),
+    content: previewText ? `${previewText} ${content}` : content,
+  };
+};
+
 const ruleEditorConfirmRules: AiClientToolConfirmRule<RuleEditorRemoteToolDefinition>[] = [
+  {
+    match: 'rule_editor_apply_canvas_actions',
+    ...agentConfirmationCard,
+    title: (args) => resolveRuleEditorApplyConfirmationText(args).title,
+    content: (args) => resolveRuleEditorApplyConfirmationText(args).content,
+    okText: t('RuleEditor.bridge.confirm.okText'),
+  },
   {
     match: ['insert', 'rule_editor_insert_node'],
     ...agentConfirmationCard,

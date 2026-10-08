@@ -6,7 +6,9 @@ import {
 } from '@jetlinks-web-core/layout/components/AiChat/clientTools';
 
 export const APPLY_CANVAS_TOOL_ID = 'rule_editor_apply_canvas_actions';
-export const RULE_EDITOR_RESOURCE_VERSION = '2026091819';
+export const PREPARE_CANVAS_TOOL_ID = 'rule_editor_prepare_canvas_actions';
+export const RULE_EDITOR_RESOURCE_VERSION = '2026093002';
+export const RULE_EDITOR_ORCHESTRATION_CONTRACT_VERSION = 'rule-editor-orchestration/v3';
 
 // Kept for the optional explicit flowchart renderer. Default apply success must not
 // produce this output: the canvas is the visualization, and a preferred card creates
@@ -16,19 +18,19 @@ export const TOPOLOGY_DIAGRAM_SHAPE = 'presentation.flowchart';
 export const TOPOLOGY_DIAGRAM_MEDIA_TYPE = 'text/vnd.mermaid';
 
 export const APPLY_CANVAS_PLAN_BINDING_GUIDE = [
-  'complete-topology uses insert-composition.',
+  'Use iframe schema; never rewrite plan.',
+  'Canvas is the topology. Topology completion is not task completion.',
   'Write-plan outputBindings stay canvas-changes.',
-  'Canvas is the topology; no flowchart card, canvas-actions-result, Mermaid/AnswerSpec, or file handles.',
-  'Prefer objects; JSON strings are parsed.',
+  'never stringify steps; completion is object; repair typed values.',
 ].join(' ');
 
 export const orderRuleEditorRemoteTools = <T extends { id?: string; agentVisible?: boolean }>(
   tools: readonly T[],
 ): T[] => [...tools.filter((tool) => Boolean(tool?.id) && tool.agentVisible !== false)].sort((left, right) => {
-  const leftApply = left.id === APPLY_CANVAS_TOOL_ID;
-  const rightApply = right.id === APPLY_CANVAS_TOOL_ID;
-  if (leftApply === rightApply) return 0;
-  return leftApply ? -1 : 1;
+  const rank = (id?: string) => (
+    id === PREPARE_CANVAS_TOOL_ID ? 0 : id === APPLY_CANVAS_TOOL_ID ? 1 : 2
+  );
+  return rank(left.id) - rank(right.id);
 });
 
 const modelJson = {
@@ -81,7 +83,7 @@ export const APPLY_CANVAS_CONTRACT = defineAiClientToolContract({
   routingKind: 'action',
   routing: {
     capabilities: ['rule-editor.canvas.apply'],
-    intents: ['apply-canvas-plan', 'bind plan output to canvas-changes'],
+    intents: ['apply-prepared-canvas-plan', 'bind plan output to canvas-changes'],
     evidencePolicy: 'required',
     validationHints: ['canvas-changes-exist', 'canvas-revision-advanced', 'topology-completion-satisfied'],
     cost: 'medium',
@@ -104,7 +106,30 @@ export const APPLY_CANVAS_CONTRACT = defineAiClientToolContract({
   }],
 });
 
+export const PREPARE_CANVAS_CONTRACT = defineAiClientToolContract({
+  routingKind: 'action',
+  routing: {
+    capabilities: ['rule-editor.canvas.prepare'],
+    intents: ['prepare-canvas-plan', 'prepare canvas plan before apply'],
+    evidencePolicy: 'required',
+    validationHints: ['prepared-canvas-plan-exists'],
+    cost: 'low',
+    exposure: 'auto',
+  },
+  outputs: [{
+    kind: 'state-events',
+    type: 'state',
+    name: 'prepared-canvas-plan',
+    shape: 'rule-editor.canvas-prepared-plan',
+    path: '$',
+    mediaType: 'application/json',
+    audience: 'model-evidence',
+    delivery: 'inline',
+  }],
+});
+
 export const RULE_EDITOR_TYPED_REMOTE_CONTRACTS: Record<string, AiClientToolContractFragment> = {
+  [PREPARE_CANVAS_TOOL_ID]: PREPARE_CANVAS_CONTRACT,
   rule_editor_get_context: remoteContract(
     'discovery',
     'rule-editor.canvas.context.read',
@@ -145,6 +170,11 @@ export const RULE_EDITOR_TYPED_REMOTE_CONTRACTS: Record<string, AiClientToolCont
     'rule-editor.node-type.manual.read',
     [lookupOutput('node-type-manuals', 'rule-editor.node-type-manuals', '$.manuals')],
   ),
+  rule_editor_get_node_type_catalog: remoteContract(
+    'detail',
+    'rule-editor.node-type.catalog.read',
+    [recordSetOutput('node-type-catalog', 'rule-editor.node-type-catalog', '$.items')],
+  ),
   rule_editor_search_node_types: remoteContract(
     'records',
     'rule-editor.node-type.search',
@@ -156,7 +186,7 @@ export const RULE_EDITOR_TYPED_REMOTE_CONTRACTS: Record<string, AiClientToolCont
   rule_editor_get_node_type_detail: remoteContract(
     'detail',
     'rule-editor.node-type.detail.read',
-    [lookupOutput('node-type-detail', 'rule-editor.node-type-detail', '$.type')],
+    [lookupOutput('node-type-detail', 'rule-editor.node-type-detail', '$')],
   ),
   rule_editor_execute_node_tool: remoteContract(
     'detail',
@@ -195,15 +225,16 @@ export const RULE_EDITOR_TYPED_REMOTE_CONTRACTS: Record<string, AiClientToolCont
 };
 
 export const RULE_EDITOR_TYPED_REMOTE_TOOL_IDS = Object.freeze([
+  PREPARE_CANVAS_TOOL_ID,
   'rule_editor_get_context',
   'rule_editor_get_graph_summary',
   'rule_editor_list_nodes',
   'rule_editor_get_node_detail',
-  'rule_editor_get_node_contract',
-  'rule_editor_get_node_type_manual',
+    'rule_editor_get_node_contract',
+    'rule_editor_get_node_type_catalog',
+    'rule_editor_get_node_type_manual',
   'rule_editor_search_node_types',
   'rule_editor_get_node_type_detail',
-  'rule_editor_execute_node_tool',
   'rule_editor_validate_flow',
 ]);
 
