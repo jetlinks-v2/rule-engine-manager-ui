@@ -996,5 +996,22 @@
 	"ParamsDropdown.FulFill-3147419-2": "Summarize data entries through aggregation functions.",
 	"ParamsDropdown.FulFill-3147419-3": "Please configure the conditions",
 	"FulFill.Terms-4029416-0": "Please select an agg function",
-	"FulFill.Terms-4029416-1": "Operator"
+	"FulFill.Terms-4029416-1": "Operator",
+	"TaskCenter.index.refresh": "Refresh Status",
+	"TaskCenter.index.name": "Task Name",
+	"TaskCenter.index.enabledState": "Enabled State",
+	"TaskCenter.index.executeState": "Execution State",
+	"TaskCenter.index.enabled": "Enabled",
+	"TaskCenter.index.disabled": "Disabled",
+	"TaskCenter.index.nodeCount": "Total Nodes",
+	"TaskCenter.index.runningCount": "Running Nodes",
+	"TaskCenter.index.abnormalCount": "Abnormal Nodes",
+	"TaskCenter.index.lastStateTime": "Last State Time",
+	"TaskCenter.index.viewLogs": "View Execution Logs",
+	"TaskCenter.LogDrawer.title": "{0} - Execution Logs",
+	"TaskCenter.LogDrawer.time": "Log Time",
+	"TaskCenter.LogDrawer.level": "Log Level",
+	"TaskCenter.LogDrawer.nodeId": "Node ID",
+	"TaskCenter.LogDrawer.message": "Message",
+	"TaskCenter.LogDrawer.context": "Context"
 }

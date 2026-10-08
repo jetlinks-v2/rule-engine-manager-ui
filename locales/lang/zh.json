@@ -997,5 +997,22 @@
 	"ParamsDropdown.FulFill-3147419-2": "通过聚合函数对数据项进行汇总",
 	"ParamsDropdown.FulFill-3147419-3": "请配置条件",
 	"FulFill.Terms-4029416-0": "请选择聚合函数",
-	"FulFill.Terms-4029416-1": "运算符"
+	"FulFill.Terms-4029416-1": "运算符",
+	"TaskCenter.index.refresh": "刷新状态",
+	"TaskCenter.index.name": "任务名称",
+	"TaskCenter.index.enabledState": "启用状态",
+	"TaskCenter.index.executeState": "执行状态",
+	"TaskCenter.index.enabled": "已启用",
+	"TaskCenter.index.disabled": "已禁用",
+	"TaskCenter.index.nodeCount": "节点总数",
+	"TaskCenter.index.runningCount": "运行中节点",
+	"TaskCenter.index.abnormalCount": "异常节点",
+	"TaskCenter.index.lastStateTime": "最近状态时间",
+	"TaskCenter.index.viewLogs": "查看执行日志",
+	"TaskCenter.LogDrawer.title": "{0} - 执行日志",
+	"TaskCenter.LogDrawer.time": "日志时间",
+	"TaskCenter.LogDrawer.level": "日志级别",
+	"TaskCenter.LogDrawer.nodeId": "节点 ID",
+	"TaskCenter.LogDrawer.message": "日志内容",
+	"TaskCenter.LogDrawer.context": "上下文"
 }

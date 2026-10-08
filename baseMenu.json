@@ -671,6 +671,40 @@
             "assetType": "ruleInstance"
           },
           {
+            "code": "rule-engine/TaskCenter",
+            "name": "任务中心",
+            "i18nMessages": {
+              "name": {
+                "zh_CN": "任务中心",
+                "en_US": "Task Center",
+                "en": "Task Center"
+              }
+            },
+            "owner": "iot",
+            "id": "cf21ed368f7740639beabf2b64bf754a",
+            "sortIndex": 3,
+            "url": "/iot/rule-engine/task-center",
+            "icon": "icon-yunweiguanli-1",
+            "showPage": [
+              "task-center"
+            ],
+            "permissions": [
+              {
+                "permission": "task-center",
+                "actions": [
+                  "query"
+                ]
+              }
+            ],
+            "buttons": [],
+            "accessSupport": {
+              "text": "支持",
+              "value": "support"
+            },
+            "supportDataAccess": true,
+            "assetType": "ruleInstance"
+          },
+          {
             "code": "rule-engine/Scene",
             "name": "场景联动",
             "i18nMessages": {
