@@ -12,7 +12,7 @@
           :default-params="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
           :pagination="{ showSizeChanger: true, showQuickJumper: true }"
           row-key="id"
-          :scroll="{ x: 'max-content' }"
+          :scroll="{ x: 1140 }"
         >
           <template #headerLeftRender>
             <h2 class="scene-list-toolbar__title">{{ $t('IotSceneLinkage.title.list') }}</h2>
@@ -50,12 +50,16 @@
             <div><a-tag class="scene-list__trigger-tag">{{ triggerLabel(scene) }}</a-tag></div>
           </template>
           <template #rule="scene">
-            <div class="scene-list__summary">
-              <template v-for="(part, index) in sceneSummaryParts(scene)" :key="`${part.keyword}-${index}`">
-                <b :class="part.kind === 'action' ? 'scene-list__summary-keyword--action' : 'scene-list__summary-keyword--trigger'">{{ part.keyword }}</b>
-                <span :class="`scene-list__summary-field--${part.kind}`" :title="part.title || part.value">{{ part.value }}</span>
-              </template>
-            </div>
+            <a-tooltip :title="sceneSummaryTitle(scene)">
+              <span class="scene-list__summary-tooltip-trigger">
+                <j-ellipsis :tooltip="false" class="scene-list__summary">
+                  <template v-for="(part, index) in sceneSummaryParts(scene)" :key="`${part.keyword}-${index}`">
+                    <b :class="part.kind === 'action' ? 'scene-list__summary-keyword--action' : 'scene-list__summary-keyword--trigger'">{{ part.keyword }}</b>
+                    <span :class="`scene-list__summary-field--${part.kind}`">{{ part.value }}</span>
+                  </template>
+                </j-ellipsis>
+              </span>
+            </a-tooltip>
           </template>
           <template #state="scene">
             <a-switch
@@ -202,7 +206,7 @@ const triggerTypeOptions = computed(() => ['manual', 'timer', 'device', 'alarm',
 })))
 const filterCommonFields: ConditionFilterCommonField[] = [{ label: t('IotSceneLinkage.form.name'), value: 'name' }, { label: t('IotSceneLinkage.form.triggerType'), value: 'triggerType' }, { label: t('IotSceneLinkage.form.state'), value: 'state' }]
 const filterFields = computed<ConditionFilterField[]>(() => [{ dataIndex: 'name', title: t('IotSceneLinkage.form.name'), search: { type: 'string', defaultTermType: 'like' } }, { dataIndex: 'triggerType', title: t('IotSceneLinkage.form.triggerType'), search: { type: 'select', defaultTermType: 'eq', options: triggerTypeOptions.value } }, { dataIndex: 'state', title: t('IotSceneLinkage.form.state'), search: { type: 'select', defaultTermType: 'eq', options: [{ label: t('IotSceneLinkage.state.started'), value: 'started' }, { label: t('IotSceneLinkage.state.disable'), value: 'disable' }] } }])
-const columns = computed(() => [{ title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 230, scopedSlots: true }, { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule', scopedSlots: true }, { title: t('IotSceneLinkage.column.state'), dataIndex: 'state', width: 100, scopedSlots: true }, { title: t('IotSceneLinkage.column.action'), dataIndex: 'actions', width: 90, scopedSlots: true }])
+const columns = computed(() => [{ title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 230, scopedSlots: true }, { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule', width: 720, scopedSlots: true }, { title: t('IotSceneLinkage.column.state'), dataIndex: 'state', width: 100, scopedSlots: true }, { title: t('IotSceneLinkage.column.action'), dataIndex: 'actions', width: 90, scopedSlots: true }])
 const stateValue = (scene: any) => scene.state?.value || scene.state
 const sceneTriggerType = (scene: any) => scene.triggerType || scene.trigger?.type
 const triggerLabel = (scene: any) => t(`IotSceneLinkage.triggerType.${sceneTriggerType(scene)}`)
@@ -372,15 +376,19 @@ async function remove(scene: any) {
 }
 
 .scene-list__summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  align-items: center;
+  min-width: 0;
+  max-width: 100%;
   color: var(--ant-color-text-secondary);
   line-height: 24px;
 }
 
+.scene-list__summary-tooltip-trigger {
+  display: block;
+  min-width: 0;
+}
+
 .scene-list__summary b {
+  margin-right: var(--space-1);
   font-weight: 600;
 }
 
@@ -394,6 +402,7 @@ async function remove(scene: any) {
 
 .scene-list__summary span {
   padding: 0;
+  margin-right: var(--space-1);
 }
 
 .scene-list__summary-field--trigger,

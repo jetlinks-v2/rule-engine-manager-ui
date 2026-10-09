@@ -1861,7 +1861,7 @@
 	"IotSceneLinkage.form.triggerType": "Trigger type",
 	"IotSceneLinkage.triggerType.manual": "Manual trigger",
 	"IotSceneLinkage.triggerType.timer": "Scheduled trigger",
-	"IotSceneLinkage.triggerType.device": "Trigger device",
+	"IotSceneLinkage.triggerType.device": "Device trigger",
 	"IotSceneLinkage.triggerType.alarm": "Alarm status change",
 	"IotSceneLinkage.triggerType.ai-event": "Visual event",
 	"IotSceneLinkage.triggerType.multi": "Multi-condition trigger",
