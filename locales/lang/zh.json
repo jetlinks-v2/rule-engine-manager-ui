@@ -1862,7 +1862,7 @@
 	"IotSceneLinkage.form.triggerType": "触发方式",
 	"IotSceneLinkage.triggerType.manual": "手动触发",
 	"IotSceneLinkage.triggerType.timer": "定时触发",
-	"IotSceneLinkage.triggerType.device": "触发设备",
+	"IotSceneLinkage.triggerType.device": "设备触发",
 	"IotSceneLinkage.triggerType.alarm": "告警状态变化",
 	"IotSceneLinkage.triggerType.ai-event": "视觉事件",
 	"IotSceneLinkage.triggerType.multi": "多条件触发",
