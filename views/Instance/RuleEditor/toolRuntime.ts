@@ -1101,13 +1101,30 @@ const resolveRemoteCoverage = (
   result: Record<string, unknown>,
   contract: AiClientToolContractFragment,
 ) => {
+  const bodyTruncated = result.fieldsTruncated === true
+    || (isRecord(result.manual) && result.manual.truncated === true);
   const hasUnprovenRecordWindow = contract._meta.clientToolContract.outputs.some((output) => (
     output.kind === 'record-set' && result.complete !== true && result.truncated !== false
+      && typeof result.exhaustive !== 'boolean'
   ));
-  const truncated = result.truncated === true || hasUnprovenRecordWindow;
+  const legacyTruncated = result.truncated === true || hasUnprovenRecordWindow;
+  // New owners separate a fulfilled bounded request from population coverage; old receipts stay conservative.
+  const requestSatisfied = !bodyTruncated && result.complete !== false
+    && (typeof result.requestSatisfied === 'boolean'
+      ? result.requestSatisfied
+      : !legacyTruncated && result.exhaustive !== false);
+  const exhaustive = !bodyTruncated && (typeof result.exhaustive === 'boolean'
+    ? result.exhaustive
+    : result.complete !== false && !legacyTruncated);
+  const displayTruncated = bodyTruncated || (typeof result.displayTruncated === 'boolean'
+    ? result.displayTruncated
+    : legacyTruncated);
   return {
-    truncated,
-    complete: result.complete !== false && !truncated && !hasUnprovenRecordWindow,
+    complete: requestSatisfied,
+    truncated: displayTruncated,
+    requestSatisfied,
+    exhaustive,
+    displayTruncated,
   };
 };
 
@@ -1123,8 +1140,8 @@ const collectRemoteOutputStates = (
           name: output.name,
           path: output.path,
           ...(output.mediaType ? { mediaType: output.mediaType } : {}),
-          complete: coverage.complete,
-          truncated: output.kind === 'record-set' ? coverage.truncated : result.truncated === true,
+          ...coverage,
+          completeness: coverage.exhaustive ? 'complete' as const : 'partial' as const,
         }]
       : []
   ));
@@ -1155,8 +1172,8 @@ const withRemoteContractResult = (
   }
   const coverage = resolveRemoteCoverage(result, contract);
   return withAiClientToolContractEvidence(result, contract, {
-    complete: coverage.complete,
-    truncated: coverage.truncated,
+    ...coverage,
+    ...(coverage.exhaustive ? {} : { supportsAbsenceClaim: false }),
     outputs: collectRemoteOutputStates(result, contract),
   });
 };
