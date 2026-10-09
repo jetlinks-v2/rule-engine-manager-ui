@@ -1,7 +1,12 @@
 import {useRulePermissionContext, useScenePermissionContext} from '@rule-engine-manager-ui/hook/usePermission'
 import {EventEmitter, DeviceEmitterKey, ACTION_DATA} from '@rule-engine-manager-ui/views/Scene/Save/util';
 import type { DataCapabilityProviderManifest } from '@jetlinks-web-core/data-capability'
+import type { AgentCapabilityProviderResource } from '@jetlinks-web-core/layout/components/AiChat/routeCapabilityLoader'
 import { ALARM_ANALYSIS_EXTENSION_KEY } from './agentCapabilities/alarmAnalysis/constants'
+import {
+    RULE_EDITOR_FLOWCHART_EXTENSION_KEY,
+    RULE_EDITOR_FLOWCHART_MENU_ANCHORS,
+} from './agentCapabilities/ruleEditor/constants'
 
 type HomeAgentProviderLoader = () => Promise<unknown>
 
@@ -78,6 +83,16 @@ export default {
         },
     } satisfies DataCapabilityProviderManifest,
     generalAgentExtensions: {
-        [ALARM_ANALYSIS_EXTENSION_KEY]: () => import('./agentCapabilities/alarmAnalysis/generalAgentExtension')
+        [ALARM_ANALYSIS_EXTENSION_KEY]: () => import('./agentCapabilities/alarmAnalysis/generalAgentExtension'),
+        [RULE_EDITOR_FLOWCHART_EXTENSION_KEY]: {
+            loader: () => import('./agentCapabilities/ruleEditor/generalAgentExtension'),
+            activation: {
+                version: 'general-agent-provider-activation/v1',
+                scopes: [
+                    { kind: 'path', values: [...RULE_EDITOR_FLOWCHART_MENU_ANCHORS] },
+                    { kind: 'menuCode', values: [...RULE_EDITOR_FLOWCHART_MENU_ANCHORS] },
+                ],
+            },
+        } satisfies AgentCapabilityProviderResource,
     }
 }

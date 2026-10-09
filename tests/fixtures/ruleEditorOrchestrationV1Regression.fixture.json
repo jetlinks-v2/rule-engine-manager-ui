@@ -1,0 +1,17 @@
+{
+  "fixtureVersion": "rule-editor-orchestration/v2-regression/v1",
+  "sanitized": true,
+  "baseline": {
+    "modelVisibleToolCount": 5,
+    "modelRounds": 4,
+    "canvasRevision": 20,
+    "canvasNodeCount": 0
+  },
+  "failures": [
+    "mapping-type-mismatch",
+    "unbounded-service-discovery",
+    "hidden-tool-next-query",
+    "repeated-prepare-no-progress",
+    "unverified-terminal-summary"
+  ]
+}

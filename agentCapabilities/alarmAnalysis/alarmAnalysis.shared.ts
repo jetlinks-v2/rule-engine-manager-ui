@@ -2,6 +2,7 @@ import i18n from '@jetlinks-web-core/locales'
 import {
   createDomainAgentErrorResult,
   createDomainAgentInputError,
+  createDomainAgentPreviewCardinality,
   DomainAgentInputError,
   resolveDomainAgentEnum,
   type DomainAgentTimeRange,
@@ -35,6 +36,21 @@ const TREND_INTERVAL_MS: Record<AlarmTrendInterval, number> = {
 const MAX_TREND_BUCKETS = 200
 
 export const normalizeText = (value: unknown) => String(value || '').trim()
+
+export const createBoundedQueryEvidence = (returnedCount: number, requestedLimit: number) => ({
+  truncated: true as const,
+  exhaustive: false as const,
+  supportsAbsenceClaim: false as const,
+  cardinality: createDomainAgentPreviewCardinality({ displayedCount: returnedCount }),
+  facts: {
+    evidenceWindow: {
+      returnedCount,
+      requestedLimit,
+      exhaustive: false as const,
+      populationCountSupported: false as const,
+    },
+  },
+})
 
 export const inputError = (
   code: string,

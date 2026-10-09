@@ -6,13 +6,19 @@ import {
 } from '@jetlinks-web-core/layout/components/AiChat/homeAgentCapabilities';
 import { loadHomeAgentCapabilityProviders } from '@jetlinks-web-core/layout/components/AiChat/routeCapabilityLoader';
 import type { AiClientToolCall } from '@jetlinks-web-core/layout/components/AiChat/clientTools';
+import i18n from '@jetlinks-web-core/locales';
+import { createRuleEditorToolUnavailableResult, type RuleEditorToolUnavailableReason } from './toolRuntime';
+import {
+  EXCLUDED_SHARED_TOOL_IDS,
+  isRuleEditorSharedToolAllowed,
+  projectRuleEditorSharedTool,
+  RULE_EDITOR_SHARED_TOOL_ALLOWLIST,
+} from './ruleEditorSharedToolIds';
 
-const EXCLUDED_SHARED_TOOL_IDS = new Set([
-  'client_tool_help',
-  'home_agent_get_context',
-  'home_agent_search_capabilities',
-  'home_agent_open_menu',
-]);
+export {
+  EXCLUDED_SHARED_TOOL_IDS,
+  RULE_EDITOR_SHARED_TOOL_ALLOWLIST,
+} from './ruleEditorSharedToolIds';
 
 const normalizeText = (value: unknown) => String(value || '').trim();
 
@@ -21,40 +27,48 @@ const toolKeys = (tool: Record<string, any>) => [
   normalizeText(tool.name),
 ].filter(Boolean);
 
-const isSharedToolAllowed = (tool: Record<string, any>) => (
-  !toolKeys(tool).some((key) => EXCLUDED_SHARED_TOOL_IDS.has(key))
-  && tool.annotations?.readOnlyHint === true
-  && tool.requiresConfirmation !== true
-);
-
 export const useRuleEditorSharedAgentTools = (enabled: Ref<boolean>) => {
   const runtime = ref<HomeAgentRuntime>();
   const version = ref(0);
+  const unavailableReason = ref<RuleEditorToolUnavailableReason>('providers-loading');
   let disposed = false;
   let loadingVersion = 0;
+
+  const disposeRuntime = () => {
+    runtime.value?.dispose();
+    runtime.value = undefined;
+  };
 
   const rebuildRuntime = async () => {
     const currentVersion = ++loadingVersion;
     if (!enabled.value) {
-      runtime.value = undefined;
+      unavailableReason.value = 'page-inactive';
+      disposeRuntime();
       version.value += 1;
       return;
     }
 
-    await loadHomeAgentCapabilityProviders({ loadAll: true });
-    if (disposed || currentVersion !== loadingVersion || !enabled.value) {
-      return;
-    }
+    unavailableReason.value = 'providers-loading';
+    try {
+      await loadHomeAgentCapabilityProviders({ loadAll: true });
+      if (disposed || currentVersion !== loadingVersion || !enabled.value) return;
 
-    runtime.value = createHomeAgentRuntime({
-      currentView: () => 'ruleEditorChat',
-    });
-    version.value += 1;
+      // Build the replacement first: a failed provider refresh must not detach valid readonly facts.
+      const nextRuntime = createHomeAgentRuntime({ currentView: () => 'ruleEditorChat' });
+      disposeRuntime();
+      runtime.value = nextRuntime;
+      unavailableReason.value = 'tool-not-available';
+      version.value += 1;
+    } catch {
+      if (disposed || currentVersion !== loadingVersion || !enabled.value) return;
+      unavailableReason.value = 'provider-load-failed';
+      version.value += 1;
+    }
   };
 
-  const sharedClientTools = computed(() => (
+  const sharedClientTools = computed<Record<string, any>[]>(() => (
     runtime.value?.clientTools || []
-  ).filter(isSharedToolAllowed));
+  ).filter(isRuleEditorSharedToolAllowed).map(projectRuleEditorSharedTool));
 
   const sharedToolKeys = computed(() => new Set(sharedClientTools.value.flatMap(toolKeys)));
 
@@ -65,16 +79,18 @@ export const useRuleEditorSharedAgentTools = (enabled: Ref<boolean>) => {
   });
 
   const handleClientToolCall = (call: AiClientToolCall) => {
-    if (!runtime.value) {
-      throw new Error('Shared rule editor tools are not ready');
+    const toolName = normalizeText(call.toolName);
+    if (disposed || !enabled.value || !runtime.value || !sharedToolKeys.value.has(toolName)) {
+      return Promise.resolve(createRuleEditorToolUnavailableResult(i18n.global.t, {
+        transport: 'shared',
+        reason: disposed || !enabled.value ? 'page-inactive' : unavailableReason.value,
+      }));
     }
     return runtime.value.handleClientToolCall(call);
   };
 
   const handleCapabilityChange = () => {
-    if (enabled.value) {
-      void rebuildRuntime();
-    }
+    if (enabled.value) void rebuildRuntime();
   };
 
   watch(enabled, () => {
@@ -87,7 +103,9 @@ export const useRuleEditorSharedAgentTools = (enabled: Ref<boolean>) => {
 
   onBeforeUnmount(() => {
     disposed = true;
+    loadingVersion += 1;
     window.removeEventListener(HOME_AGENT_CAPABILITY_CHANGE_EVENT, handleCapabilityChange);
+    disposeRuntime();
   });
 
   return {
@@ -95,6 +113,9 @@ export const useRuleEditorSharedAgentTools = (enabled: Ref<boolean>) => {
     workflowGuides,
     version,
     hasTool: (toolName: string) => sharedToolKeys.value.has(normalizeText(toolName)),
+    // Ownership stays stable during loading/permission changes; live admission is checked above.
+    ownsTool: (toolName: string) => RULE_EDITOR_SHARED_TOOL_ALLOWLIST.has(normalizeText(toolName))
+      || sharedToolKeys.value.has(normalizeText(toolName)),
     handleClientToolCall,
   };
 };

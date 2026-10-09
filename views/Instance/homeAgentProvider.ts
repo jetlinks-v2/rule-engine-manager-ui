@@ -6,7 +6,12 @@ import {
   type HomeAgentCapabilityProvider,
   type HomeAgentWorkflowGuide,
 } from '@jetlinks-web-core/layout/components/AiChat/homeAgentCapabilities';
-import type { AiClientToolDefinition } from '@jetlinks-web-core/layout/components/AiChat/clientTools';
+import {
+  clientToolOutput,
+  clientToolResult,
+  defineClientTool,
+  defineClientTools,
+} from '@jetlinks-web-core/layout/components/AiChat/clientToolApi';
 import { saveAiAgentHandoff } from '@jetlinks-web-core/layout/components/AiChat/agentHandoff';
 import { saveRule } from '../../api/instance';
 
@@ -175,6 +180,18 @@ const createHandoffContext = (
   });
 };
 
+const toCreateDraftFailure = (
+  code: string,
+  message: string,
+  recoveryAction: 'repair' | 'terminal' = 'terminal',
+) => clientToolResult.failure({
+  code,
+  message,
+  failureDisposition: recoveryAction === 'repair' ? 'request' : 'tool',
+  recoveryAction,
+  retryable: false,
+});
+
 const ensureCreateSuccess = (response: any) => {
   const status = Number(response?.status);
   const code = Number(response?.code);
@@ -183,7 +200,9 @@ const ensureCreateSuccess = (response: any) => {
     || (Number.isFinite(status) && (status < 200 || status >= 300))
     || (Number.isFinite(code) && code !== 0 && code !== 200)
   ) {
-    throw new Error(response?.message || 'rule draft create failed');
+    throw Object.assign(new Error(response?.message || 'rule draft create failed'), {
+      code: 'rule_engine.create_draft.failed',
+    });
   }
 };
 
@@ -230,93 +249,103 @@ const createDraftAndHandoff = async (
   context: HomeAgentCapabilityContext,
 ) => {
   if (!isRuleInstanceAvailable(context)) {
-    return {
-      ok: false,
-      error: i18n.global.t('Instance.homeAgent.tool.create.noPermission'),
-    };
+    return toCreateDraftFailure(
+      'rule_engine.create_draft.no_permission',
+      i18n.global.t('Instance.homeAgent.tool.create.noPermission'),
+    );
   }
 
-  const userGoal = resolveUserGoal(args, context);
-  const name = resolveRuleName(args);
-  const description = resolveRuleDescription(args, userGoal);
-  const draft = { name, description };
+  try {
+    const userGoal = resolveUserGoal(args, context);
+    const name = resolveRuleName(args);
+    const description = resolveRuleDescription(args, userGoal);
+    const draft = { name, description };
 
-  const rule = resolveCreatedRule(await saveRule(draft), draft);
-  const ruleId = String(rule.id);
-  const ruleName = normalizeText(rule.name) || name;
-  const ruleDescription = normalizeText(rule.description);
-  const query = { editorId: ruleId };
+    const rule = resolveCreatedRule(await saveRule(draft), draft);
+    const ruleId = String(rule.id);
+    const ruleName = normalizeText(rule.name) || name;
+    const ruleDescription = normalizeText(rule.description);
+    const query = { editorId: ruleId };
 
-  // The home agent only creates an empty draft. Canvas edits remain owned by ruleEditorChat.
-  const handoffPrepared = saveAiAgentHandoff({
-    clientId: RULE_EDITOR_CLIENT_ID,
-    subjectType: RULE_EDITOR_SUBJECT_TYPE,
-    subjectId: ruleId,
-    subjectName: ruleName,
-    routeName: RULE_INSTANCE_MENU_CODE,
-    menuCode: RULE_INSTANCE_MENU_CODE,
-    prompt: userGoal || i18n.global.t('Instance.homeAgent.ruleDraft.continuePrompt', [ruleName]),
-    label: i18n.global.t('Instance.homeAgent.ruleDraft.handoffLabel', [ruleName]),
-    source: 'rule-instance-home',
-    context: createHandoffContext(args, context, rule, userGoal),
-  });
-  context.navigateToMenu(RULE_INSTANCE_MENU_CODE, { query })
-    || context.navigateToMenu(RULE_INSTANCE_PATH, { query });
-
-  const navigation = {
-    menuCode: RULE_INSTANCE_MENU_CODE,
-    routeName: RULE_INSTANCE_MENU_CODE,
-    path: RULE_INSTANCE_PATH,
-    query,
-    link: buildRuleEditorLink(ruleId),
-    markdownLink: `[${ruleName}](${buildRuleEditorLink(ruleId)})`,
-  };
-
-  return {
-    ok: true,
-    created: {
-      type: RULE_EDITOR_SUBJECT_TYPE,
-      id: ruleId,
-      name: ruleName,
-      description: ruleDescription,
-    },
-    rule: {
-      id: ruleId,
-      name: ruleName,
-      description: ruleDescription,
-    },
-    subject: {
-      type: RULE_EDITOR_SUBJECT_TYPE,
-      id: ruleId,
-      name: ruleName,
+    // The home agent only creates an empty draft. Canvas edits remain owned by ruleEditorChat.
+    const handoffPrepared = saveAiAgentHandoff({
+      clientId: RULE_EDITOR_CLIENT_ID,
       subjectType: RULE_EDITOR_SUBJECT_TYPE,
       subjectId: ruleId,
       subjectName: ruleName,
-    },
-    continuation: createHomeAgentContinuationReceipt({
-      targetName: i18n.global.t('Instance.homeAgent.continuation.targetName'),
-      targetClientId: RULE_EDITOR_CLIENT_ID,
-      targetMenuCode: RULE_INSTANCE_MENU_CODE,
+      routeName: RULE_INSTANCE_MENU_CODE,
+      menuCode: RULE_INSTANCE_MENU_CODE,
+      prompt: userGoal || i18n.global.t('Instance.homeAgent.ruleDraft.continuePrompt', [ruleName]),
+      label: i18n.global.t('Instance.homeAgent.ruleDraft.handoffLabel', [ruleName]),
+      source: 'rule-instance-home',
+      context: createHandoffContext(args, context, rule, userGoal),
+    });
+    context.navigateToMenu(RULE_INSTANCE_MENU_CODE, { query })
+      || context.navigateToMenu(RULE_INSTANCE_PATH, { query });
+
+    const navigation = {
+      menuCode: RULE_INSTANCE_MENU_CODE,
       routeName: RULE_INSTANCE_MENU_CODE,
       path: RULE_INSTANCE_PATH,
-      subjectType: RULE_EDITOR_SUBJECT_TYPE,
-      subjectId: ruleId,
-      subjectName: ruleName,
-      businessObject: {
+      query,
+      link: buildRuleEditorLink(ruleId),
+      markdownLink: `[${ruleName}](${buildRuleEditorLink(ruleId)})`,
+    };
+
+    return {
+      ok: true,
+      created: {
         type: RULE_EDITOR_SUBJECT_TYPE,
         id: ruleId,
         name: ruleName,
         description: ruleDescription,
       },
+      rule: {
+        id: ruleId,
+        name: ruleName,
+        description: ruleDescription,
+      },
+      subject: {
+        type: RULE_EDITOR_SUBJECT_TYPE,
+        id: ruleId,
+        name: ruleName,
+        subjectType: RULE_EDITOR_SUBJECT_TYPE,
+        subjectId: ruleId,
+        subjectName: ruleName,
+      },
+      continuation: createHomeAgentContinuationReceipt({
+        targetName: i18n.global.t('Instance.homeAgent.continuation.targetName'),
+        targetClientId: RULE_EDITOR_CLIENT_ID,
+        targetMenuCode: RULE_INSTANCE_MENU_CODE,
+        routeName: RULE_INSTANCE_MENU_CODE,
+        path: RULE_INSTANCE_PATH,
+        subjectType: RULE_EDITOR_SUBJECT_TYPE,
+        subjectId: ruleId,
+        subjectName: ruleName,
+        businessObject: {
+          type: RULE_EDITOR_SUBJECT_TYPE,
+          id: ruleId,
+          name: ruleName,
+          description: ruleDescription,
+        },
+        navigation,
+        contextPrepared: !!handoffPrepared,
+      }),
       navigation,
-      contextPrepared: !!handoffPrepared,
-    }),
-    navigation,
-    ruleName,
-    summary: i18n.global.t('Instance.homeAgent.tool.create.summary', [ruleName]),
-    nextAction: i18n.global.t('Instance.homeAgent.tool.create.nextAction'),
-    replyPolicy: i18n.global.t('Instance.homeAgent.tool.create.replyPolicy'),
-  };
+      ruleName,
+      summary: i18n.global.t('Instance.homeAgent.tool.create.summary', [ruleName]),
+    };
+  } catch (error) {
+    const message = error instanceof Error && error.message
+      ? error.message
+      : i18n.global.t('Instance.homeAgent.tool.create.missingRuleId');
+    return toCreateDraftFailure(
+      error instanceof Error && (error as Error & { code?: string }).code
+        ? String((error as Error & { code?: string }).code)
+        : 'rule_engine.create_draft.failed',
+      message,
+    );
+  }
 };
 
 const getPromptExamples = () => [
@@ -350,14 +379,19 @@ const getWorkflowGuides = (): HomeAgentWorkflowGuide[] => [
   },
 ];
 
-const createRuleInstanceTools = (): AiClientToolDefinition<HomeAgentCapabilityContext>[] => ([
-  {
+export const createRuleInstanceTools = () => defineClientTools<HomeAgentCapabilityContext>([
+  defineClientTool<Record<string, any>, HomeAgentCapabilityContext, any>({
     id: CREATE_RULE_DRAFT_TOOL,
-    name: CREATE_RULE_DRAFT_TOOL,
-    displayName: i18n.global.t('Instance.homeAgent.tool.create.displayName'),
-    progressText: i18n.global.t('Instance.homeAgent.tool.create.progressText'),
-    description: i18n.global.t('Instance.homeAgent.tool.create.description'),
-    help: i18n.global.t('Instance.homeAgent.tool.create.help'),
+    description: {
+      text: i18n.global.t('Instance.homeAgent.tool.create.description'),
+      capabilities: ['rule-engine.instance.draft.create'],
+      intents: ['创建规则草稿并进入编排画布', 'create a rule draft and open the editor'],
+      help: i18n.global.t('Instance.homeAgent.tool.create.help'),
+    },
+    presentation: {
+      displayName: i18n.global.t('Instance.homeAgent.tool.create.displayName'),
+      progressText: i18n.global.t('Instance.homeAgent.tool.create.progressText'),
+    },
     inputs: TOOL_INPUTS.map((id) => ({
       id,
       name: id,
@@ -369,21 +403,32 @@ const createRuleInstanceTools = (): AiClientToolDefinition<HomeAgentCapabilityCo
           ? { type: 'array' }
           : 'string',
     })),
-    output: { type: 'object' },
-    annotations: { readOnlyHint: false, destructiveHint: false },
-    confirm: {
-      localConfirmation: true,
-      title: i18n.global.t('Instance.homeAgent.tool.create.confirmTitle'),
-      content: (toolArgs) => i18n.global.t('Instance.homeAgent.tool.create.confirmContent', [
-        resolveRuleName(toolArgs),
-      ]),
-      okText: i18n.global.t('Instance.homeAgent.tool.create.confirmOk'),
-      cancelText: i18n.global.t('verify.cancel'),
-      risk: { readOnly: false, parallelSafe: false },
+    effect: {
+      kind: 'WRITE',
+      idempotency: 'NON_IDEMPOTENT',
+      reversible: false,
+      confirmation: {
+        title: i18n.global.t('Instance.homeAgent.tool.create.confirmTitle'),
+        content: (toolArgs) => i18n.global.t('Instance.homeAgent.tool.create.confirmContent', [
+          resolveRuleName(toolArgs),
+        ]),
+        okText: i18n.global.t('Instance.homeAgent.tool.create.confirmOk'),
+        cancelText: i18n.global.t('verify.cancel'),
+      },
     },
+    output: clientToolOutput.stateChange({
+      name: 'navigation-receipt',
+      shape: 'navigation.receipt',
+      transition: 'NAVIGATION',
+    }),
+    owner: { module: 'rule-engine-manager-ui', group: 'rule-instance' },
     execute: createDraftAndHandoff,
-  },
-]);
+  }),
+]).map((tool) => (
+  tool.confirm && typeof tool.confirm === 'object'
+    ? { ...tool, confirm: { ...tool.confirm, localConfirmation: true } }
+    : tool
+));
 
 const createRuleInstanceCapabilities = (context: HomeAgentCapabilityContext) => [{
   id: 'rule-engine-instance:create-draft',

@@ -34,6 +34,7 @@
         @close="handleClose"
       />
       <div class="rule-editor-shell__body">
+        <!-- iframe remounts only when editorUrl changes (stamp in URL). Bumping RULE_EDITOR_RESOURCE_VERSION does not reload an already-open editor; leave and re-enter the page. -->
         <iframe
           v-if="editorUrl"
           :key="editorUrl"
@@ -59,12 +60,16 @@ import { useAIStore } from '@jetlinks-web-core/store';
 import { getBaseApi, isFromCloud } from '@jetlinks-web-core/utils';
 import RuleEditorHeader from './RuleEditorHeader.vue';
 import { useRuleEditorActions } from './useRuleEditorActions';
+import {
+  RULE_EDITOR_BUILTIN_TOOL_GROUPS,
+  appendRuleEditorTurnAdmission,
+} from './ruleEditorAgentProfile';
 import { useRuleEditorAgentBridge } from './useRuleEditorAgentBridge';
 import { useRuleEditorAgentComposerExtensions } from './useRuleEditorAgentComposerExtensions';
+import { RULE_EDITOR_RESOURCE_VERSION } from './toolRuntimeContracts';
 
 const RULE_EDITOR_CLIENT_ID = 'ruleEditorChat';
 const RULE_EDITOR_SUBJECT_TYPE = 'ruleInstance';
-const RULE_EDITOR_RESOURCE_VERSION = '2026072907';
 
 const props = defineProps({
   open: {
@@ -180,12 +185,7 @@ const isEditorActionDisabled = (action: 'deploy' | 'save' | 'import' | 'export')
   || bridgeActions.value[action] === false
 );
 
-const buildSystemPrompt = () => [
-  $t('RuleEditor.agent.system.role'), $t('RuleEditor.agent.system.userConstraints'),
-  $t('RuleEditor.agent.system.compact'),
-  $t('RuleEditor.agent.system.templateSemantics'),
-  $t('RuleEditor.agent.system.presentation'),
-].join('\n');
+const buildSystemPrompt = () => bridge.systemPrompt.value;
 
 const buildAgentParameters = () => ({
   ruleId: ruleId.value,
@@ -193,6 +193,7 @@ const buildAgentParameters = () => ({
   subjectType: RULE_EDITOR_SUBJECT_TYPE,
   subjectId: ruleId.value,
   subjectName: ruleName.value,
+  builtinToolGroups: RULE_EDITOR_BUILTIN_TOOL_GROUPS,
   clientTools: bridge.clientTools.value,
   clientToolsVersion: bridge.version.value,
   clientToolHandler: bridge.handleClientToolCall,
@@ -202,9 +203,10 @@ const buildAgentParameters = () => ({
   referenceProviders: composerExtensions.referenceProviders.value,
   composerAddActions: composerExtensions.composerAddActions.value,
   markdownLinkHandler: bridge.handleMarkdownLink,
+  beforeSendChat: appendRuleEditorTurnAdmission,
   systemPrompt: buildSystemPrompt(),
   openingStatement: $t('RuleEditor.agent.opening'),
-  promptExamples: [$t('RuleEditor.agent.prompt.inspect'), $t('RuleEditor.agent.prompt.findNode'), $t('RuleEditor.agent.prompt.validate')],
+  promptExamples: [],
   conversationTitle: $t('RuleEditor.agent.conversationTitle'),
   bubbleIcon: 'BranchesOutlined',
   bubbleIconBadge: 'ToolOutlined',
@@ -220,6 +222,18 @@ const refreshActiveAgentParameters = () => {
     ...aiStore.parameters,
     ...buildAgentParameters(),
   };
+};
+
+const prepareRuleEditorAgent = () => {
+  if (!props.open || !ruleId.value) {
+    return;
+  }
+  // iframe bridge 初始化可能较慢，先预占页面助手，避免首页助手在规则编辑器内继续展示。
+  aiStore.prepareAgentConversation(RULE_EDITOR_CLIENT_ID, {
+    subjectType: RULE_EDITOR_SUBJECT_TYPE,
+    subjectId: ruleId.value,
+    subjectName: ruleName.value,
+  });
 };
 
 const syncRuleEditorAgent = () => {
@@ -252,6 +266,7 @@ watch(
     clearEditorActionDone();
     editorActioning.value = '';
     if (visible && ruleId.value) {
+      prepareRuleEditorAgent();
       frameLoaded.value = false;
       bridge.reset();
       await nextTick();
@@ -259,15 +274,13 @@ watch(
     }
     frameLoaded.value = false;
     bridge.disposeBridge();
-    if (aiStore.activeClientId === RULE_EDITOR_CLIENT_ID) {
-      aiStore.hideAiButton();
-    }
+    aiStore.releaseAgentConversation(RULE_EDITOR_CLIENT_ID);
   },
   { immediate: true },
 );
 
 watch(
-  () => [bridge.ready.value, bridge.version.value, bridge.contextVersion.value, props.open, ruleId.value],
+  () => [bridge.ready.value, bridge.version.value, props.open, ruleId.value],
   () => {
     syncRuleEditorAgent();
   },
@@ -276,9 +289,7 @@ watch(
 
 onBeforeUnmount(() => {
   bridge.disposeBridge();
-  if (aiStore.activeClientId === RULE_EDITOR_CLIENT_ID) {
-    aiStore.hideAiButton();
-  }
+  aiStore.releaseAgentConversation(RULE_EDITOR_CLIENT_ID);
 });
 </script>
 <style src="./RuleEditorShell.less" scoped lang="less" />

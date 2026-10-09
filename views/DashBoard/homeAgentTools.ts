@@ -1,6 +1,24 @@
 import i18n from '@jetlinks-web-core/locales';
 import type { HomeAgentCapabilityContext } from '@jetlinks-web-core/layout/components/AiChat/homeAgentCapabilities';
-import type { AiClientToolDefinition } from '@jetlinks-web-core/layout/components/AiChat/clientTools';
+import {
+  clientToolOutput,
+  clientToolResult,
+  defineClientTool,
+  defineClientToolAnalyticalProducer,
+  defineClientToolBoundedAnalyticalProducer,
+  defineClientTools,
+  type ClientToolAnalyticalAuthoring,
+  type ClientToolAnalyticalSemanticIntentBindingDefinition,
+  type ClientToolDefinition,
+  type ClientToolInput,
+  type ClientToolOutput,
+} from '@jetlinks-web-core/layout/components/AiChat/clientToolApi';
+import {
+  DomainAgentInputError,
+  createDomainAgentTimeScopeContract,
+  domainAgentIntegerValueType,
+  resolveDomainAgentTimeRange,
+} from '@jetlinks-web-core/layout/components/AiChat/domainAgentTools';
 import {
   dashboard,
   getAlarm,
@@ -9,7 +27,10 @@ import {
   type DashboardMeasurementRequest,
 } from '@rule-engine-manager-ui/api/dashboard';
 import { getTargetTypes } from '@rule-engine-manager-ui/api/configuration';
-import { resolveAlarmRecordTimeRange } from './homeAgentTime';
+import {
+  createBoundedQueryEvidence,
+  formatLocalDateTime,
+} from '../../agentCapabilities/alarmAnalysis/alarmAnalysis.shared';
 import { metricInputs, recordInputs } from './homeAgentToolInputs';
 
 export const ALARM_DASHBOARD_OVERVIEW_TOOL = 'alarm_dashboard_get_overview';
@@ -23,20 +44,46 @@ type ApiResponse<T> = { status?: number; success?: boolean; result?: T; message?
 type DashboardResponseItem = { group?: string; data?: Record<string, any> };
 type ToolArgs = Record<string, any>;
 
+const t = (key: string, args?: unknown[]) => i18n.global.t(key, args as any);
+
 const DEFAULT_TREND_PARAMS = {
-  from: 'now-1d',
-  to: 'now',
   time: '1h',
   format: 'yyyy-MM-dd HH:mm:ss',
   limit: 24,
 };
 
 const DEFAULT_RANK_PARAMS = {
-  from: 'now-1d',
-  to: 'now',
   group: 'targetId',
   order: 'desc',
   limit: 10,
+};
+
+const toDashboardFailure = (error: unknown) => {
+  if (error instanceof DomainAgentInputError) {
+    return clientToolResult.failure({
+      code: error.code,
+      message: error.message,
+      failureDisposition: error.failureDisposition,
+      recoveryAction: error.recoveryAction,
+      retryable: error.retryable,
+      repair: error.repair,
+    });
+  }
+  return clientToolResult.failure({
+    code: 'alarm_dashboard.request_failed',
+    message: error instanceof Error && error.message ? error.message : 'alarm dashboard request failed',
+    failureDisposition: 'dependency',
+    recoveryAction: 'retry',
+    retryable: true,
+  });
+};
+
+const runDashboardTool = async <T>(action: () => Promise<T>) => {
+  try {
+    return await action();
+  } catch (error) {
+    return toDashboardFailure(error);
+  }
 };
 
 const ensureSuccess = <T>(response: ApiResponse<T> | undefined): T => {
@@ -61,12 +108,18 @@ const clampLimit = (value: unknown, defaultValue: number, max = 100) => {
   return Math.min(max, Math.max(1, Math.floor(numberValue)));
 };
 
+const dashboardTimeScope = () => createDomainAgentTimeScopeContract({
+  timeRange: t('DashBoard.homeAgent.tool.timeRange.preset'),
+  startTime: t('DashBoard.homeAgent.tool.timeRange.startTime'),
+  endTime: t('DashBoard.homeAgent.tool.timeRange.endTime'),
+});
+
 const pickMetricParams = (args: ToolArgs, defaults: Record<string, any>) => {
-  // Dashboard measurements parse date math server-side, so keep from/to as API expressions.
+  const range = resolveDomainAgentTimeRange(args);
   const params: Record<string, any> = {
     ...defaults,
-    from: args.from || args.start || args.startTime || defaults.from,
-    to: args.to || args.end || args.endTime || defaults.to,
+    from: formatLocalDateTime(range.start),
+    to: formatLocalDateTime(range.end),
     time: args.time || args.interval || defaults.time,
     format: args.format || defaults.format,
     limit: clampLimit(args.limit, defaults.limit || 10),
@@ -135,12 +188,11 @@ const queryAlarmTrend = async (args: ToolArgs = {}) => {
   return {
     ok: true,
     params,
-    total: summary.total,
     peak: summary.peak,
     latest: summary.latest,
     average: summary.average,
     series,
-    summary: i18n.global.t('DashBoard.homeAgent.tool.trend.summary', [
+    summary: t('DashBoard.homeAgent.tool.trend.summary', [
       params.from,
       params.to,
       summary.total,
@@ -159,15 +211,13 @@ const queryAlarmRank = async (args: ToolArgs = {}) => {
   };
   const items = await getDashboardItems(createRequest('rank', 'alarmRank', params));
   const ranking = toRankItems(items, 'alarmRank');
-  const total = ranking.reduce((sum, item) => sum + item.count, 0);
   const top = ranking[0];
   return {
     ok: true,
     params,
-    total,
     top,
     items: ranking,
-    summary: i18n.global.t('DashBoard.homeAgent.tool.rank.summary', [
+    summary: t('DashBoard.homeAgent.tool.rank.summary', [
       params.from,
       params.to,
       top?.targetName || '-',
@@ -203,7 +253,7 @@ const getTargetTypeOptions = async () => {
 
 const queryAlarmRecords = async (args: ToolArgs = {}) => {
   const limit = clampLimit(args.limit || args.pageSize, 10, 50);
-  const timeRange = resolveAlarmRecordTimeRange(args);
+  const range = resolveDomainAgentTimeRange(args);
   const rawTimeColumn = normalizeText(args.timeColumn);
   const timeColumn = ['alarmTime', 'lastAlarmTime'].includes(rawTimeColumn) ? rawTimeColumn : 'lastAlarmTime';
   const filters = [
@@ -215,13 +265,11 @@ const queryAlarmRecords = async (args: ToolArgs = {}) => {
   const terms: Record<string, any>[] = filters.length
     ? [{ terms: filters.map((item) => ({ ...item, termType: 'eq' })) }]
     : [];
-  if (timeRange.start !== undefined || timeRange.end !== undefined) {
-    terms.push({
-      column: timeColumn,
-      termType: 'btw',
-      value: [timeRange.start ?? 0, timeRange.end ?? Date.now()],
-    });
-  }
+  terms.push({
+    column: timeColumn,
+    termType: 'btw',
+    value: [range.start, range.end],
+  });
   const [levelsResponse, recordsResponse] = await Promise.all([
     getAlarmLevel().catch(() => undefined),
     getAlarm({
@@ -247,12 +295,9 @@ const queryAlarmRecords = async (args: ToolArgs = {}) => {
   }));
   return {
     ok: true,
-    total: toNumber(records.total),
-    timeRange: timeRange.start !== undefined || timeRange.end !== undefined
-      ? { column: timeColumn, from: timeRange.start, to: timeRange.end }
-      : undefined,
+    timeRange: { column: timeColumn, from: range.start, to: range.end },
     items: data,
-    summary: i18n.global.t('DashBoard.homeAgent.tool.records.summary', [toNumber(records.total), data.length]),
+    summary: t('DashBoard.homeAgent.tool.records.summary', [toNumber(records.total), data.length]),
   };
 };
 
@@ -271,22 +316,339 @@ const getOverview = async (args: ToolArgs = {}) => {
     rank,
     records,
     targetTypes,
-    summary: i18n.global.t('DashBoard.homeAgent.tool.overview.summary', [
+    series: trend.series,
+    summary: t('DashBoard.homeAgent.tool.overview.summary', [
       trend.params.from,
       trend.params.to,
-      trend.total,
+      summarizeSeries(trend.series).total,
       rank.top?.targetName || '-',
       rank.top?.count || 0,
-      records.total,
+      records.items.length,
     ]),
   };
 };
 
-export const createAlarmDashboardTools = (): AiClientToolDefinition<HomeAgentCapabilityContext>[] => ([
-  { id: ALARM_DASHBOARD_OVERVIEW_TOOL, name: ALARM_DASHBOARD_OVERVIEW_TOOL, displayName: i18n.global.t('DashBoard.homeAgent.tool.overview.displayName'), progressText: i18n.global.t('DashBoard.homeAgent.tool.overview.progressText'), description: i18n.global.t('DashBoard.homeAgent.tool.overview.description'), help: i18n.global.t('DashBoard.homeAgent.tool.overview.help'), inputs: [...metricInputs(), { id: 'recordsLimit', name: 'recordsLimit', description: i18n.global.t('DashBoard.homeAgent.tool.records.limit'), required: false, valueType: 'number' }], output: { type: 'object' }, annotations: { readOnlyHint: true }, execute: getOverview },
-  { id: ALARM_DASHBOARD_TARGET_TYPES_TOOL, name: ALARM_DASHBOARD_TARGET_TYPES_TOOL, displayName: i18n.global.t('DashBoard.homeAgent.tool.targetTypes.displayName'), progressText: i18n.global.t('DashBoard.homeAgent.tool.targetTypes.progressText'), description: i18n.global.t('DashBoard.homeAgent.tool.targetTypes.description'), help: i18n.global.t('DashBoard.homeAgent.tool.targetTypes.help'), inputs: [], output: { type: 'object' }, annotations: { readOnlyHint: true }, execute: getTargetTypeOptions },
-  { id: ALARM_DASHBOARD_CONFIG_STATS_TOOL, name: ALARM_DASHBOARD_CONFIG_STATS_TOOL, displayName: i18n.global.t('DashBoard.homeAgent.tool.configStats.displayName'), progressText: i18n.global.t('DashBoard.homeAgent.tool.configStats.progressText'), description: i18n.global.t('DashBoard.homeAgent.tool.configStats.description'), help: i18n.global.t('DashBoard.homeAgent.tool.configStats.help'), inputs: [], output: { type: 'object' }, annotations: { readOnlyHint: true }, execute: getConfigStats },
-  { id: ALARM_DASHBOARD_RECORDS_TOOL, name: ALARM_DASHBOARD_RECORDS_TOOL, displayName: i18n.global.t('DashBoard.homeAgent.tool.records.displayName'), progressText: i18n.global.t('DashBoard.homeAgent.tool.records.progressText'), description: i18n.global.t('DashBoard.homeAgent.tool.records.description'), help: i18n.global.t('DashBoard.homeAgent.tool.records.help'), inputs: recordInputs(), output: { type: 'object' }, annotations: { readOnlyHint: true }, execute: queryAlarmRecords },
-  { id: ALARM_DASHBOARD_TREND_TOOL, name: ALARM_DASHBOARD_TREND_TOOL, displayName: i18n.global.t('DashBoard.homeAgent.tool.trend.displayName'), progressText: i18n.global.t('DashBoard.homeAgent.tool.trend.progressText'), description: i18n.global.t('DashBoard.homeAgent.tool.trend.description'), help: i18n.global.t('DashBoard.homeAgent.tool.trend.help'), inputs: metricInputs(), output: { type: 'object' }, annotations: { readOnlyHint: true }, execute: queryAlarmTrend },
-  { id: ALARM_DASHBOARD_RANK_TOOL, name: ALARM_DASHBOARD_RANK_TOOL, displayName: i18n.global.t('DashBoard.homeAgent.tool.rank.displayName'), progressText: i18n.global.t('DashBoard.homeAgent.tool.rank.progressText'), description: i18n.global.t('DashBoard.homeAgent.tool.rank.description'), help: i18n.global.t('DashBoard.homeAgent.tool.rank.help'), inputs: [...metricInputs().filter((item) => !['time', 'format'].includes(item.id)), { id: 'group', name: 'group', description: i18n.global.t('DashBoard.homeAgent.tool.rank.group'), required: false, valueType: 'string' }, { id: 'order', name: 'order', description: i18n.global.t('DashBoard.homeAgent.tool.rank.order'), required: false, valueType: 'string' }], output: { type: 'object' }, annotations: { readOnlyHint: true }, execute: queryAlarmRank },
+const bindDashboardIntents = (
+  intents: readonly string[],
+  criterion: string,
+  measures: readonly string[],
+  dimensions: readonly string[],
+): readonly [
+  ClientToolAnalyticalSemanticIntentBindingDefinition,
+  ...ClientToolAnalyticalSemanticIntentBindingDefinition[],
+] => intents.map(intent => ({
+  intent,
+  criterion,
+  measures: [...measures] as [string, ...string[]],
+  dimensions: [...dimensions] as [string, ...string[]],
+})) as unknown as [
+  ClientToolAnalyticalSemanticIntentBindingDefinition,
+  ...ClientToolAnalyticalSemanticIntentBindingDefinition[],
+];
+
+const DASHBOARD_TREND_FIELDS = [
+  {
+    name: 'timestamp',
+    type: 'timestamp' as const,
+    role: 'temporal_dimension' as const,
+    axis: 'time',
+    encoding: 'epoch-millis' as const,
+    label: t('DashBoard.homeAgent.fields.time'),
+  },
+  { name: 'time', type: 'string' as const, role: 'label' as const, label: t('DashBoard.homeAgent.fields.time') },
+  {
+    name: 'value',
+    type: 'integer' as const,
+    role: 'measure' as const,
+    label: t('DashBoard.homeAgent.fields.alarmCount'),
+    format: 'integer' as const,
+    measure: 'alarm_count',
+    unit: 'count',
+    aggregation: 'count' as const,
+  },
+];
+
+const DASHBOARD_RANK_FIELDS = [
+  { name: 'targetId', type: 'string' as const, role: 'dimension' as const, label: t('DashBoard.homeAgent.fields.targetId') },
+  { name: 'targetName', type: 'string' as const, role: 'label' as const, label: t('DashBoard.homeAgent.fields.targetName') },
+  {
+    name: 'count',
+    type: 'integer' as const,
+    role: 'measure' as const,
+    label: t('DashBoard.homeAgent.fields.alarmCount'),
+    format: 'integer' as const,
+    measure: 'alarm_count',
+    unit: 'count',
+    aggregation: 'count' as const,
+  },
+];
+
+const DASHBOARD_TREND_CAPABILITY = defineClientToolAnalyticalProducer<Record<string, any>>({
+  producerKey: 'alarm.dashboard.trend',
+  factKey: 'alarm.records',
+  subjects: ['alarm'],
+  measures: [{ name: 'alarm_count', aggregations: ['count'], units: ['count'] }],
+  dimensions: ['time'],
+  filters: [],
+  grains: [],
+  criteria: ['trend'],
+  semanticIntentBindings: bindDashboardIntents(
+    [t('DashBoard.homeAgent.tool.trend.description')],
+    'trend',
+    ['alarm_count'],
+    ['time'],
+  ),
+  ordering: [{ axis: 'timestamp', direction: 'asc' }],
+  coverage: 'complete-or-partial',
+  output: 'alarm-dashboard-trend',
+});
+
+const DASHBOARD_OVERVIEW_CAPABILITY = defineClientToolAnalyticalProducer<Record<string, any>>({
+  producerKey: 'alarm.dashboard.overview',
+  factKey: 'alarm.records',
+  subjects: ['alarm'],
+  measures: [{ name: 'alarm_count', aggregations: ['count'], units: ['count'] }],
+  dimensions: ['time'],
+  filters: [],
+  grains: [],
+  criteria: ['summary'],
+  semanticIntentBindings: bindDashboardIntents(
+    [t('DashBoard.homeAgent.tool.overview.description')],
+    'summary',
+    ['alarm_count'],
+    ['time'],
+  ),
+  ordering: [{ axis: 'timestamp', direction: 'asc' }],
+  coverage: 'complete-or-partial',
+  output: 'alarm-dashboard-overview',
+});
+
+const DASHBOARD_RANK_CAPABILITY = defineClientToolBoundedAnalyticalProducer<Record<string, any>>({
+  producerKey: 'alarm.dashboard.rank',
+  factKey: 'alarm.records',
+  subjects: ['alarm'],
+  measures: [{ name: 'alarm_count', aggregations: ['count'], units: ['count'] }],
+  dimensions: ['target'],
+  filters: [],
+  grains: [],
+  criterion: {
+    name: 'rank',
+    measure: 'alarm_count',
+    direction: 'desc',
+    valueField: 'count',
+    coordinateField: 'targetId',
+    axis: 'target',
+  },
+  semanticIntentBindings: bindDashboardIntents(
+    [t('DashBoard.homeAgent.tool.rank.description')],
+    'rank',
+    ['alarm_count'],
+    ['target'],
+  ),
+  boundedBy: 'limit',
+  output: 'alarm-dashboard-rank',
+});
+
+const defineDashboardTool = (
+  definition: ClientToolDefinition<Record<string, any>, HomeAgentCapabilityContext, any>,
+) => defineClientTool(definition);
+
+const metricFilterInputs = (): ClientToolInput[] => (
+  metricInputs().filter((item) => !['from', 'to'].includes(item.id))
+);
+
+const recordFilterInputs = (): ClientToolInput[] => (
+  recordInputs().filter((item) => !['from', 'to', 'timeRange'].includes(item.id))
+);
+
+const readDashboardTool = (
+  id: string,
+  extraInputs: ClientToolInput[],
+  output: ClientToolOutput<any> | ClientToolOutput<any>[],
+  execute: (args: ToolArgs) => Promise<unknown>,
+  options: {
+    capabilities: [string, ...string[]];
+    intents?: string[];
+    notFor?: string[];
+    timeScoped?: boolean;
+    analytical?: ClientToolAnalyticalAuthoring<Record<string, any>>;
+  },
+) => {
+  const contract = options.timeScoped ? dashboardTimeScope() : undefined;
+  return defineDashboardTool({
+    id,
+    description: {
+      text: t(`DashBoard.homeAgent.tool.${toolLocaleKey(id)}.description`),
+      capabilities: options.capabilities,
+      ...(options.intents?.length ? { intents: options.intents } : {}),
+      ...(options.notFor?.length ? { notFor: options.notFor } : {}),
+      help: t(`DashBoard.homeAgent.tool.${toolLocaleKey(id)}.help`),
+    },
+    presentation: {
+      displayName: t(`DashBoard.homeAgent.tool.${toolLocaleKey(id)}.displayName`),
+      progressText: t(`DashBoard.homeAgent.tool.${toolLocaleKey(id)}.progressText`),
+    },
+    inputs: [...extraInputs, ...(contract?.inputs || [])],
+    inputAlternatives: contract?.inputAlternatives,
+    ...(contract ? { temporal: contract.temporal } : {}),
+    ...(options.analytical ? { analytical: options.analytical } : {}),
+    effect: { kind: 'READ' },
+    output,
+    owner: { module: 'rule-engine-manager-ui', group: 'alarm-dashboard' },
+    execute: (args) => runDashboardTool(() => execute(args)),
+  });
+};
+
+const toolLocaleKey = (id: string) => ({
+  [ALARM_DASHBOARD_OVERVIEW_TOOL]: 'overview',
+  [ALARM_DASHBOARD_TARGET_TYPES_TOOL]: 'targetTypes',
+  [ALARM_DASHBOARD_CONFIG_STATS_TOOL]: 'configStats',
+  [ALARM_DASHBOARD_RECORDS_TOOL]: 'records',
+  [ALARM_DASHBOARD_TREND_TOOL]: 'trend',
+  [ALARM_DASHBOARD_RANK_TOOL]: 'rank',
+}[id] || id);
+
+export const createAlarmDashboardTools = () => defineClientTools<HomeAgentCapabilityContext>([
+  readDashboardTool(
+    ALARM_DASHBOARD_OVERVIEW_TOOL,
+    [
+      ...metricFilterInputs(),
+      { id: 'recordsLimit', name: 'recordsLimit', description: t('DashBoard.homeAgent.tool.records.limit'), required: false, valueType: 'number' },
+    ],
+    clientToolOutput.aggregateSeries({
+      name: 'alarm-dashboard-overview',
+      shape: 'time-series.summary',
+      select: (result: any) => result.series,
+      recordPath: '$',
+      fields: DASHBOARD_TREND_FIELDS,
+      ordering: { keys: [{ field: 'timestamp', direction: 'asc' }], producerGuaranteed: true },
+    }),
+    getOverview,
+    {
+      capabilities: ['alarm.dashboard.overview.aggregate'],
+      intents: [t('DashBoard.homeAgent.tool.overview.description')],
+      timeScoped: true,
+      analytical: DASHBOARD_OVERVIEW_CAPABILITY,
+    },
+  ),
+  readDashboardTool(
+    ALARM_DASHBOARD_TARGET_TYPES_TOOL,
+    [],
+    [
+      clientToolOutput.lookup({
+        name: 'alarm-dashboard-target-type-id',
+        shape: 'alarm.target-type-ids',
+        select: (result: any) => (Array.isArray(result.items) ? result.items.map((item: any) => item?.id).filter(Boolean) : []),
+      }),
+      clientToolOutput.recordSet({
+        name: 'alarm-dashboard-target-types',
+        shape: 'alarm.target-types',
+        select: (result: any) => result.items,
+      }),
+    ],
+    getTargetTypeOptions,
+    { capabilities: ['alarm.dashboard.target-type.lookup'] },
+  ),
+  readDashboardTool(
+    ALARM_DASHBOARD_CONFIG_STATS_TOOL,
+    [],
+    clientToolOutput.detail({
+      name: 'alarm-dashboard-config-stats',
+      shape: 'alarm.config-stats',
+    }),
+    getConfigStats,
+    { capabilities: ['alarm.dashboard.config.aggregate'] },
+  ),
+  readDashboardTool(
+    ALARM_DASHBOARD_RECORDS_TOOL,
+    recordFilterInputs(),
+    [
+      clientToolOutput.lookup({
+        name: 'alarm-dashboard-record-id',
+        shape: 'alarm.record-ids',
+        select: (result: any) => (Array.isArray(result.items) ? result.items.map((item: any) => item?.id).filter(Boolean) : []),
+      }),
+      clientToolOutput.recordSet({
+        name: 'alarm-dashboard-records',
+        shape: 'alarm.records',
+        select: (result: any) => result.items,
+      }),
+    ],
+    queryAlarmRecords,
+    {
+      capabilities: ['alarm.dashboard.records.read'],
+      notFor: [t('DashBoard.homeAgent.tool.trend.description')],
+      timeScoped: true,
+    },
+  ),
+  readDashboardTool(
+    ALARM_DASHBOARD_TREND_TOOL,
+    metricFilterInputs(),
+    clientToolOutput.aggregateSeries({
+      name: 'alarm-dashboard-trend',
+      shape: 'time-series.summary',
+      select: (result: any) => result.series,
+      recordPath: '$',
+      fields: DASHBOARD_TREND_FIELDS,
+      ordering: { keys: [{ field: 'timestamp', direction: 'asc' }], producerGuaranteed: true },
+    }),
+    queryAlarmTrend,
+    {
+      capabilities: ['alarm.dashboard.trend.aggregate'],
+      intents: [t('DashBoard.homeAgent.tool.trend.description')],
+      notFor: [t('DashBoard.homeAgent.tool.records.description')],
+      timeScoped: true,
+      analytical: DASHBOARD_TREND_CAPABILITY,
+    },
+  ),
+  readDashboardTool(
+    ALARM_DASHBOARD_RANK_TOOL,
+    [
+      ...metricFilterInputs().filter((item) => !['time', 'format', 'limit'].includes(item.id)),
+      {
+        id: 'group',
+        name: 'group',
+        description: t('DashBoard.homeAgent.tool.rank.group'),
+        required: false,
+        valueType: 'string',
+      },
+      { id: 'order', name: 'order', description: t('DashBoard.homeAgent.tool.rank.order'), required: false, valueType: 'string' },
+      {
+        id: 'limit',
+        name: 'limit',
+        description: t('DashBoard.homeAgent.tool.limit'),
+        required: false,
+        valueType: domainAgentIntegerValueType(1, 100),
+        defaultValue: 10,
+      },
+    ],
+    clientToolOutput.aggregateSeries({
+      name: 'alarm-dashboard-rank',
+      shape: 'tabular.summary',
+      select: (result: any) => result.items,
+      recordPath: '$',
+      fields: DASHBOARD_RANK_FIELDS,
+    }),
+    async (args) => {
+      const result = await queryAlarmRank(args);
+      const evidence = createBoundedQueryEvidence(
+        result.items.length,
+        Number(result.params.limit) || result.items.length,
+      );
+      return clientToolResult.partial(result, {
+        displayTruncated: evidence.truncated,
+        exhaustive: evidence.exhaustive,
+        supportsAbsenceClaim: evidence.supportsAbsenceClaim,
+        cardinality: evidence.cardinality,
+        facts: evidence.facts,
+      });
+    },
+    {
+      capabilities: ['alarm.dashboard.rank.aggregate'],
+      intents: [t('DashBoard.homeAgent.tool.rank.description')],
+      notFor: [t('DashBoard.homeAgent.tool.records.description')],
+      timeScoped: true,
+      analytical: DASHBOARD_RANK_CAPABILITY,
+    },
+  ),
 ]);

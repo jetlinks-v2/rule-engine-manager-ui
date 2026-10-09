@@ -6,6 +6,7 @@ type EditorAction = 'deploy' | 'save';
 type EditorTransferAction = 'import' | 'export';
 interface EditorActionResult {
   ok?: boolean;
+  code?: string;
   error?: string;
   thumbnailSvg?: string;
 }
@@ -86,7 +87,12 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
     try {
       const result = await options.bridge.executeEditorAction(action) as EditorActionResult;
       if (result?.ok === false) {
-        throw new Error(result.error || options.t('RuleEditor.index.actionFailed'));
+        // Locally rejected transport requests never reach the native editor.
+        if (result.code === 'rule_editor.bridge.unavailable') {
+          throw new Error(options.t('RuleEditor.bridge.error.notReady'));
+        }
+        // The native editor owns action feedback, including errors from older iframe resources.
+        return;
       }
       try {
         await syncRuleThumbnail(result?.thumbnailSvg);
