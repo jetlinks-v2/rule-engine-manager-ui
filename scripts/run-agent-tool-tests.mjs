@@ -159,12 +159,22 @@ const agentCatalogRuntime = (mountLifecycle = false) => ({
       buildApi.onResolve({ filter: /^@jetlinks-web\/utils$/ }, (args) => (
         args.importer === path.join(packageRoot, 'views/Instance/RuleEditor/proposalLinks.ts')
           ? { path: 'proposal-notification', namespace: 'rule-editor-bridge-test' }
+          : args.importer === path.join(packageRoot, 'views/Instance/RuleEditor/useRuleEditorActions.ts')
+            ? { path: 'action-notification', namespace: 'rule-editor-bridge-test' }
           : undefined
       ))
       buildApi.onLoad({ filter: /^proposal-notification$/, namespace: 'rule-editor-bridge-test' }, () => ({
         loader: 'js',
         contents: `export const onlyMessage = () => {
           throw new Error('Unexpected proposal notification in bridge transport test')
+        }`,
+      }))
+      buildApi.onLoad({ filter: /^action-notification$/, namespace: 'rule-editor-bridge-test' }, () => ({
+        loader: 'js',
+        contents: `export const onlyMessage = (message, type) => {
+          const fixture = globalThis.__ruleEditorActionsTest
+          if (!fixture) throw new Error('Unexpected editor action notification')
+          fixture.messages.push({ message, type })
         }`,
       }))
       buildApi.onResolve({ filter: /^@jetlinks-web-core\/layout\/components\/AiChat\/routeCapabilityLoader$/ }, () => ({
@@ -256,7 +266,12 @@ const agentCatalogRuntime = (mountLifecycle = false) => ({
       loader: 'js',
       contents: `
         const unavailable = () => { throw new Error('Node catalog test transport is unavailable') }
-        export const request = new Proxy({}, { get: () => unavailable })
+        export const request = new Proxy({}, {
+          get: (_target, method) => (...args) => {
+            const handler = globalThis.__ruleEditorActionsTest?.request
+            return handler ? handler(method, ...args) : unavailable()
+          },
+        })
       `,
     }))
     buildApi.onLoad({ filter: /^vue$/, namespace: 'rule-editor-agent-catalog' }, () => ({

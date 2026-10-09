@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
-import { createRenderer, defineComponent, markRaw, nextTick } from 'vue';
+import { computed, createRenderer, defineComponent, markRaw, nextTick } from 'vue';
 import {
   createAiClientToolRuntime,
   type AiClientToolCall,
@@ -17,12 +17,17 @@ import {
   RULE_EDITOR_RESOURCE_VERSION,
 } from '../views/Instance/RuleEditor/toolRuntimeContracts';
 import { RULE_EDITOR_ORCHESTRATE_GOAL_TOOL_ID } from '../views/Instance/RuleEditor/ruleEditorOrchestrationContracts';
+import { useRuleEditorActions } from '../views/Instance/RuleEditor/useRuleEditorActions';
 
 const origin = 'https://rule-editor.test';
 const testGlobals = globalThis as typeof globalThis & {
   __ruleEditorSharedToolsTest?: {
     load?: () => Promise<void>;
     createRuntime: () => ReturnType<typeof createAiClientToolRuntime>;
+  };
+  __ruleEditorActionsTest?: {
+    messages: Array<{ message: string; type: string }>;
+    request: (method: string, ...args: unknown[]) => Promise<unknown>;
   };
 };
 
@@ -81,6 +86,7 @@ interface BridgeRequest {
   requestId: string;
   transportRequestId?: string;
   payload: {
+    action?: 'save' | 'deploy';
     resourceVersion?: string;
     contractVersion?: string;
     toolName?: string;
@@ -286,6 +292,142 @@ const createBridgeHarness = (testContext: TestContext, options: {
     get previewCleared() { return previewCleared; },
   };
 };
+
+const createActionHarness = (
+  testContext: TestContext,
+  bridge: ReturnType<typeof useRuleEditorAgentBridge>,
+  request: (method: string, ...args: unknown[]) => Promise<unknown> = async () => ({ status: 200 }),
+) => {
+  const previousFixture = testGlobals.__ruleEditorActionsTest;
+  const messages: Array<{ message: string; type: string }> = [];
+  const updates: Record<string, unknown>[] = [];
+  testGlobals.__ruleEditorActionsTest = { messages, request };
+  let actions!: ReturnType<typeof useRuleEditorActions>;
+  const app = renderer.createApp(defineComponent({
+    setup: () => {
+      actions = useRuleEditorActions({
+        bridge,
+        bridgeStatus: computed(() => bridge.status.value),
+        bridgeActions: computed(() => ({ save: true, deploy: true, import: true, export: true })),
+        ruleId: computed(() => 'rule-1'),
+        ruleName: computed(() => 'Rule'),
+        ruleDescription: computed(() => ''),
+        getRule: () => ({ id: 'rule-1' }),
+        onRuleUpdated: (rule) => updates.push(rule),
+        t: (key) => key,
+      });
+      return () => null;
+    },
+  }));
+  app.mount({});
+  testContext.after(() => {
+    app.unmount();
+    testGlobals.__ruleEditorActionsTest = previousFixture;
+  });
+  return { actions, messages, updates };
+};
+
+for (const action of ['save', 'deploy'] as const) {
+  for (const [shape, payload] of [
+    ['legacy error object', { ok: false, error: { name: 'Error', message: 'Native validation failed' } }],
+    ['legacy error string', { ok: false, error: 'Native validation failed' }],
+    ['business result', { ok: true, result: { ok: false, error: 'Native validation failed' } }],
+  ] as const) {
+    test(`${action} keeps ${shape} failed without a second notification`, async (testContext) => {
+      const harness = createBridgeHarness(testContext, { autoRespondExecute: false });
+      const { actions, messages, updates } = createActionHarness(testContext, harness.bridge);
+      const pending = actions.handleEditorAction(action);
+      await harness.waitForRequests(1);
+      assert.equal(harness.requests[0]!.payload.action, action);
+      assert.equal(actions.editorActioning.value, action);
+      harness.emit('action-result', payload, harness.requests[0]!.requestId);
+      await pending;
+      assert.deepEqual(messages, []);
+      assert.deepEqual(updates, []);
+      assert.equal(actions.editorActionDone.value, '');
+      assert.equal(actions.editorActioning.value, '');
+    });
+  }
+}
+
+for (const failure of ['frame-missing', 'origin-unavailable', 'post-message-failed'] as const) {
+  test(`save still notifies a local ${failure} transport failure`, async (testContext) => {
+    const harness = createBridgeHarness(testContext);
+    const { actions, messages } = createActionHarness(testContext, harness.bridge);
+    if (failure === 'frame-missing') {
+      harness.bridge.iframeRef.value = undefined;
+    } else if (failure === 'origin-unavailable') {
+      harness.bridge.iframeRef.value!.src = '';
+    } else {
+      harness.bridge.iframeRef.value!.contentWindow!.postMessage = () => { throw new Error('frame detached'); };
+    }
+    await actions.handleEditorAction('save');
+    assert.deepEqual(messages, [{ message: 'RuleEditor.bridge.error.notReady', type: 'error' }]);
+    assert.equal(actions.editorActionDone.value, '');
+    assert.equal(actions.editorActioning.value, '');
+    assert.equal(harness.requests.length, 0);
+  });
+}
+
+test('save still notifies a bridge timeout and releases the button', async (testContext) => {
+  const harness = createBridgeHarness(testContext, { autoRespondExecute: false, captureRequestTimeouts: true });
+  const { actions, messages } = createActionHarness(testContext, harness.bridge);
+  const pending = actions.handleEditorAction('save');
+  await harness.waitForRequests(1);
+  harness.fireNextRequestTimeout();
+  await pending;
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0]!.type, 'error');
+  assert.equal(actions.editorActionDone.value, '');
+  assert.equal(actions.editorActioning.value, '');
+});
+
+test('deploy still notifies a detached bridge rather than hiding transport failure', async (testContext) => {
+  const harness = createBridgeHarness(testContext, { autoRespondExecute: false });
+  const { actions, messages } = createActionHarness(testContext, harness.bridge);
+  const pending = actions.handleEditorAction('deploy');
+  await harness.waitForRequests(1);
+  harness.emit('dispose', {});
+  await pending;
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0]!.type, 'error');
+  assert.equal(actions.editorActionDone.value, '');
+  assert.equal(actions.editorActioning.value, '');
+});
+
+test('successful save updates its button without an extra success notification', async (testContext) => {
+  const harness = createBridgeHarness(testContext, { autoRespondExecute: false });
+  const { actions, messages } = createActionHarness(testContext, harness.bridge);
+  const pending = actions.handleEditorAction('save');
+  await harness.waitForRequests(1);
+  harness.emit('action-result', { ok: true, result: { ok: true, action: 'save' } }, harness.requests[0]!.requestId);
+  await pending;
+  assert.deepEqual(messages, []);
+  assert.equal(actions.editorActionDone.value, 'save');
+  assert.equal(actions.editorActioning.value, '');
+});
+
+test('thumbnail synchronization keeps its own warning without turning a successful save into failure', async (testContext) => {
+  const harness = createBridgeHarness(testContext, { autoRespondExecute: false });
+  let thumbnailRequests = 0;
+  const { actions, messages } = createActionHarness(testContext, harness.bridge, async (method, url) => {
+    assert.equal(method, 'put');
+    assert.equal(url, '/rule-engine/instance/rule-1/metadata');
+    thumbnailRequests += 1;
+    throw new Error('Thumbnail synchronization failed');
+  });
+  const pending = actions.handleEditorAction('save');
+  await harness.waitForRequests(1);
+  harness.emit('action-result', {
+    ok: true,
+    result: { ok: true, action: 'save', thumbnailSvg: '<svg />' },
+  }, harness.requests[0]!.requestId);
+  await pending;
+  assert.equal(thumbnailRequests, 1);
+  assert.deepEqual(messages, [{ message: 'Thumbnail synchronization failed', type: 'warning' }]);
+  assert.equal(actions.editorActionDone.value, 'save');
+  assert.equal(actions.editorActioning.value, '');
+});
 
 test('normalization preserves the v3 orchestration phase only', () => {
   assert.deepEqual(
