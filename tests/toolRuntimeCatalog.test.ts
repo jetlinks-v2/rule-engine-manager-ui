@@ -176,6 +176,100 @@ test('node type and composition detail bind their actual result through the real
   }
 });
 
+test('bounded discovery separates fulfilled requests from non-exhaustive population evidence', async () => {
+  for (const [id, payload] of [
+    ['rule_editor_search_node_types', { nodeTypes: [{ type: 'owner' }], compositions: [], total: 20 }],
+    ['rule_editor_get_node_type_catalog', { items: [{ label: 'operation', insertText: 'operation(value)' }], nextCursor: '2', total: 3 }],
+  ] as const) {
+    const result = await toRuleEditorClientToolDefinition({ id, write: false }, async () => ({
+      ok: true, ...payload, requestSatisfied: true, exhaustive: false, displayTruncated: false, truncated: true,
+    })).execute({}, {}, {} as any);
+    assert.equal(result.success, true);
+    assert.equal(result.complete, true);
+    assert.equal(result.requestSatisfied, true);
+    assert.equal(result.exhaustive, false);
+    assert.equal(result.truncated, false, 'the canonical mirror describes display, not remaining pages');
+    assert.equal(result.completeness, 'partial');
+    assert.equal(result.evidence.supportsAbsenceClaim, false);
+    for (const binding of result.outputBindings) {
+      assert.equal(binding.requestSatisfied, true);
+      assert.equal(binding.complete, true);
+      assert.equal(binding.exhaustive, false);
+      assert.equal(binding.completeness, 'partial');
+      assert.equal(binding.displayTruncated, false);
+    }
+    assert.equal(result.total, payload.total);
+  }
+  const suffix = await toRuleEditorClientToolDefinition({ id: 'rule_editor_get_node_type_catalog', write: false }, async () => ({
+    ok: true, items: [{ label: 'last' }], cursor: 2, requestSatisfied: true, exhaustive: false, truncated: false, displayTruncated: false,
+  })).execute({}, {}, {} as any);
+  assert.equal(suffix.complete, true);
+  assert.equal(suffix.exhaustive, false, 'a last page does not prove full population coverage');
+  const unproven = await toRuleEditorClientToolDefinition({ id: 'rule_editor_get_node_type_catalog', write: false }, async () => ({
+    ok: true, items: [{ label: 'window' }], exhaustive: false,
+  })).execute({}, {}, {} as any);
+  assert.equal(unproven.complete, false, 'coverage alone does not prove that the request was fulfilled');
+  const clipped = await toRuleEditorClientToolDefinition({ id: 'rule_editor_get_node_type_catalog', write: false }, async () => ({
+    ok: true, items: [{ label: 'operation', truncated: true }], requestSatisfied: false,
+    exhaustive: false, displayTruncated: true, truncated: true,
+  })).execute({}, {}, {} as any);
+  assert.equal(clipped.complete, false);
+  assert.equal(clipped.displayTruncated, true);
+  assert.equal(clipped.outputBindings[0].exhaustive, false);
+});
+
+test('owner resource bindings cover selected bodies and directories without changing legacy paths', async () => {
+  const manualTool = { id: 'rule_editor_get_node_type_manual', write: false };
+  const full = await toRuleEditorClientToolDefinition(manualTool, async () => ({
+    ok: true, manual: { id: 'owner', content: 'Owner signature and constraints.', truncated: false },
+    manuals: [{ id: 'owner' }], requestSatisfied: true, exhaustive: true, displayTruncated: false,
+  })).execute({}, {}, {} as any);
+  assert.deepEqual(full.outputBindings.map(binding => [binding.name, binding.path]), [
+    ['node-type-manuals', '$.manuals'], ['manual-body', '$.manual'],
+  ]);
+  assert.equal(full.complete, true);
+  const old = await toRuleEditorClientToolDefinition(manualTool, async () => ({
+    ok: true, manual: { id: 'owner', content: 'Legacy selected body.', truncated: false }, manuals: [{ id: 'owner' }, { id: 'other' }],
+  })).execute({}, {}, {} as any);
+  assert.equal(old.complete, true);
+  assert.equal(old.outputBindings.find(binding => binding.name === 'manual-body')?.path, '$.manual');
+  const manualDirectory = await toRuleEditorClientToolDefinition(manualTool, async () => ({
+    ok: true, manuals: [{ id: 'owner' }], requestSatisfied: true, exhaustive: true, displayTruncated: false,
+  })).execute({}, {}, {} as any);
+  assert.deepEqual(manualDirectory.outputBindings.map(binding => binding.path), ['$.manuals']);
+  const catalogDirectory = await toRuleEditorClientToolDefinition({ id: 'rule_editor_get_node_type_catalog', write: false }, async () => ({
+    ok: true, catalogs: [{ id: 'language' }], requestSatisfied: true, exhaustive: true, displayTruncated: false,
+  })).execute({}, {}, {} as any);
+  assert.equal(catalogDirectory.outputBindings, undefined, 'a directory is not a function record-set');
+  assert.equal(catalogDirectory.complete, true);
+});
+
+test('body truncation and explicit incompleteness cannot be promoted by optimistic discovery flags', async () => {
+  for (const payload of [
+    { manual: { id: 'owner', content: 'Clipped body.', truncated: true } },
+    { manual: { id: 'owner', content: 'Clipped fields.' }, fieldsTruncated: true },
+    { manual: { id: 'owner', content: 'Incomplete response.' }, complete: false, exhaustive: false },
+  ]) {
+    const result = await toRuleEditorClientToolDefinition({ id: 'rule_editor_get_node_type_manual', write: false }, async () => ({
+      ok: true, requestSatisfied: true, exhaustive: true, displayTruncated: false, ...payload,
+    })).execute({}, {}, {} as any);
+    assert.equal(result.complete, false);
+    assert.equal(result.requestSatisfied, false);
+    assert.equal(result.exhaustive, false);
+    assert.equal(result.outputBindings[0].complete, false);
+  }
+  const legacy = await toRuleEditorClientToolDefinition({ id: 'rule_editor_get_node_type_manual', write: false }, async () => ({
+    ok: true, manual: { id: 'owner', content: 'Legacy clipped body.', truncated: true }, manuals: [{ id: 'owner' }],
+  })).execute({}, {}, {} as any);
+  assert.equal(legacy.complete, false);
+  assert.equal(legacy.truncated, true);
+  const failed = await toRuleEditorClientToolDefinition({ id: 'rule_editor_search_node_types', write: false }, async () => ({
+    ok: false, error: 'Owner unavailable', requestSatisfied: true, exhaustive: true,
+  })).execute({}, {}, {} as any);
+  assert.equal(failed.success, false);
+  assert.equal(failed.requestSatisfied, undefined);
+});
+
 test('remote search evidence binds only real result branches and never turns failures into success', async () => {
   const remote = remoteTool('rule_editor_search_node_types');
   for (const payload of [
