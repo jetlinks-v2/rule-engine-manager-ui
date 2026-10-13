@@ -141,9 +141,11 @@ test('v3 profile publishes business orchestration and the bounded native authori
   assert.match(profile.prompt, /候选只证明业务操作/);
   assert.match(profile.prompt, /configFields、contracts 足够时直接 apply/);
   assert.match(profile.prompt, /按详情中的 catalogs\[\]\.id\/sections 或 manuals\[\]\.id 定向补读/);
-  assert.match(profile.prompt, /用户自然语言只是跨语言搜索线索，不是字段 ID/);
-  assert.match(profile.prompt, /所有由规则调用方提供的运行时业务参数只需按输入契约引用/);
-  assert.match(profile.prompt, /不得拿当前规则 ID 或其它页面 ID 代替参数值去查询资源目录/);
+  assert.match(profile.prompt, /名称仅作搜索线索/);
+  assert.match(profile.prompt, /运行时参数按输入契约引用/);
+  assert.match(profile.prompt, /不拿页面 ID 替代查询/);
+  assert.match(profile.prompt, /主体、产品、时间、条件须进入实际配置/);
+  assert.match(profile.prompt, /必需输入缺失应报错，不得扩大范围/);
   assert.match(profile.prompt, /别名不能反向充当源字段证据/);
   assert.match(profile.prompt, /rule_editor_get_node_detail 只接受 inspect\/list 返回的真实画布节点 ID/);
   assert.match(profile.prompt, /结合节点类型详情已经足以生成首次计划时不要继续发现/);
@@ -157,8 +159,8 @@ test('v3 profile publishes business orchestration and the bounded native authori
   assert.match(profile.prompt, /nodeTypes\[\]\.type 是计划步骤的节点类型/);
   assert.match(profile.prompt, /必须写入 steps\[\]\.nodeType/);
   assert.match(profile.prompt, /既可使用一个真实 composition，也可使用完整的 insert-node\/connect 计划/);
-  assert.match(profile.prompt, /mutation\.status=applied，就必须说明草稿已经修改/);
-  assert.match(profile.prompt, /禁止改写成“未执行”或“未产生可验证结果”/);
+  assert.match(profile.prompt, /mutation\.status=applied 须说明草稿已修改/);
+  assert.match(profile.prompt, /未满足则报告部分完成和未决项，不说未执行/);
   assert.match(profile.prompt, /预检失败时只修复诊断明确指出的计划字段/);
   assert.match(profile.prompt, /部分写入且存在可修复缺口/);
   assert.match(profile.prompt, /目标已满足时停止工具调用/);

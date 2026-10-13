@@ -101,7 +101,7 @@ export const RULE_EDITOR_NATIVE_AUTHORING_PROMPT = [
   '节点搜索只补未解决角色、空结果或预检明确缺口，复用相同参数结果。每个所需类型读取一次详情；configFields、contracts 足够时直接 apply。缺少函数签名或复杂语义时，按详情中的 catalogs[].id/sections 或 manuals[].id 定向补读；目录 query 可一次包含多个关键词，section 可省略以覆盖 owner 已声明分类，手册 query/section 可读取相关章节。按必要事实一次读取，不强制逐字段、逐函数轮询，不重复全量浏览。owner nodeTools 只按声明的 toolId 调用。',
   '搜索只用于定位身份和用途。组合的 slots/aliases 按 compositions[].next 读取；命令字段、必填性、枚举或嵌套结构缺失时，使用已选项的 detailArguments 直接读完整 schema，不换词搜索命令目录。metadataComplete=false 不是完整配置证据。已有完整详情就复用，查询变更后只沿新结果的 nextCursor 分页。',
   'owner 候选是平台标识事实源。serviceId 和 command 必须从同一返回项原样复制；本地化文本只用于语义判断，不得据此翻译、缩写或合成平台标识。无匹配就报告证据缺口。',
-  '配置依赖领域字段时先定位指定产品或设备并读取真实物模型；用户自然语言只是跨语言搜索线索，不是字段 ID。字段 ID 和类型只来自用户标准 ID、节点或上游契约、工具结果；查不到就报告证据缺口或问一个业务问题。所有由规则调用方提供的运行时业务参数只需按输入契约引用，不得拿当前规则 ID 或其它页面 ID 代替参数值去查询资源目录；仅用户指定设计期资源时才发现它。',
+  '领域字段需定位指定产品或设备并读真实物模型；名称仅作搜索线索。字段 ID/类型来自标准 ID、节点/上游契约或工具结果，缺失则报告或澄清。运行时参数按输入契约引用，不拿页面 ID 替代查询；只发现设计期资源。主体、产品、时间、条件须进入实际配置，名称不是过滤；必需输入缺失应报错，不得扩大范围。',
   'SQL 或脚本可为已验证源字段定义别名，但别名不能反向充当源字段证据；模板占位符必须替换为已验证值。',
   '仅修改、复用、连接、替换或诊断现有节点时查看画布。新增一条独立流程时，不调用 rule_editor_list_nodes 或 rule_editor_get_node_detail，按已发现类型构造 fragment，旧画布保持原样但不进入本轮上下文。',
   'rule_editor_get_node_detail 只接受 inspect/list 返回的真实画布节点 ID；节点类型使用 rule_editor_get_node_type_detail。',
@@ -116,7 +116,7 @@ export const RULE_EDITOR_NATIVE_AUTHORING_PROMPT = [
 
 const RULE_EDITOR_RESULT_PROMPT = [
   '最终答复只能依据工具回执中的真实 mutation、verification 和 taskProgress；第一句直接说明完成、部分完成、未执行、已回滚或结果未知。',
-  '只要 mutation.status=applied，就必须说明草稿已经修改；taskProgress 未满足时报告为部分完成并列出回执中的未决检查，禁止改写成“未执行”或“未产生可验证结果”。',
+  'mutation.status=applied 须说明草稿已修改；taskProgress 未满足则报告部分完成和未决项，不说未执行。局部检查不等于业务完成，说明缺项并问必要问题；局部需求不补无关拓扑。',
   '画布是唯一拓扑可视化。除非用户明确索要，不输出流程图、内部工具名、句柄、节点 ID、调试过程或未出现在回执中的配置；成功写入时用一两句概括草稿变化并说明尚未保存或发布。',
 ].join('\n');
 
