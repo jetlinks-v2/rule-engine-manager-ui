@@ -86,7 +86,7 @@ function handlePhotoError() {
 .iot-target-option__icon { color: #1e5eff; background: #e8f0ff; font-size: 16px; }
 .iot-target-option__content { display: grid; flex: 1; gap: 4px; min-width: 0; line-height: 1.35; }
 .iot-target-option__heading { display: flex; gap: 8px; align-items: center; min-width: 0; }
-.iot-target-option__title { flex: 1; min-width: 0; overflow: hidden; color: var(--ant-color-text); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.iot-target-option__title { min-width: 0; overflow: hidden; color: var(--ant-color-text); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .iot-target-option__heading :deep(.ant-badge) { flex: none; margin-left: auto; }
 .iot-target-option__heading :deep(.ant-badge-status-text) { color: var(--ant-color-text-secondary); font-size: 12px; font-weight: 400; }
 .iot-target-option__description { display: -webkit-box; max-height: 36px; overflow: hidden; color: var(--ant-color-text-tertiary, #86909c) !important; font-size: 12px; font-weight: 400 !important; line-height: 18px; text-overflow: ellipsis; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
