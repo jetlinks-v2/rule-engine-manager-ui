@@ -36,7 +36,7 @@ test('rule editor queries after bridge readiness and releases pending or active 
 })
 
 test('rule editor appends a generic current-turn admission without copying user content', () => {
-  assert.match(source, /beforeSendChat:\s*appendRuleEditorTurnAdmission/)
+  assert.match(source, /beforeSendChat:\s*\(payload: GeneralAgentConversationChatPayload\)\s*=>\s*appendRuleEditorTurnAdmission\(payload, bridge\.context\.value\)/)
   assert.match(profileSource, /if \(!String\(payload\.content \|\| ''\)\.trim\(\)\) return/)
   assert.match(profileSource, /payload\.systemPromptAppend,[\s\S]*?RULE_EDITOR_TURN_ADMISSION_PROMPT/)
   assert.match(profileSource, /当前非空用户消息就是业务目标/)

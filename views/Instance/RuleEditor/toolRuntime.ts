@@ -633,7 +633,7 @@ export const projectCanonicalCanvasApplyResult = (
 );
 
 const DEFAULT_USER_APPLY_SUMMARY = '已把草稿写到当前画布，尚未保存或发布。';
-const PARTIAL_DRAFT_APPLY_SUMMARY = '局部草稿已按计划写入，当前草稿范围的必需校验已通过。该结果不声明完整规则拓扑，尚未保存或发布。';
+const PARTIAL_DRAFT_APPLY_SUMMARY = '局部草稿已写入，本次修改范围的配置与绑定检查已通过；不声明完整规则拓扑或整个业务需求完成，尚未保存或发布。';
 
 const summarizeIncompleteChecks = (
   taskProgress: NonNullable<RuleEditorCanvasApplyResult['taskProgress']>,
