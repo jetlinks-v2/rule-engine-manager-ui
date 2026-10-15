@@ -224,11 +224,8 @@ function close() {
 
 .trigger-picker__body {
   height: 24rem;
-  padding: var(--space-2, 8px) .875rem .75rem;
   overflow: auto;
   background: var(--jet-theme-bg-container);
-  border: 1px solid var(--jet-theme-border-secondary);
-  border-radius: 1rem;
   margin-top: 0;
 }
 

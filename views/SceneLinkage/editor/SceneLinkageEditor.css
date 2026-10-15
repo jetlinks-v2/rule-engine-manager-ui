@@ -103,7 +103,8 @@
 
 .scene-editor__add {
     height: 42px;
-    border-style: dashed
+    border-style: dashed;
+    margin-top: var(--space-4)
 }
 
 .scene-editor__trigger-card {
