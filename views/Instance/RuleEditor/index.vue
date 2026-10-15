@@ -58,6 +58,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch, type PropType } from '
 import { useI18n } from 'vue-i18n';
 import { useAIStore } from '@jetlinks-web-core/store';
 import { getBaseApi, isFromCloud } from '@jetlinks-web-core/utils';
+import type { GeneralAgentConversationChatPayload } from '@jetlinks-web-core/layout/components/AiChat/generalAgentExtensions';
 import RuleEditorHeader from './RuleEditorHeader.vue';
 import { useRuleEditorActions } from './useRuleEditorActions';
 import {
@@ -203,7 +204,7 @@ const buildAgentParameters = () => ({
   referenceProviders: composerExtensions.referenceProviders.value,
   composerAddActions: composerExtensions.composerAddActions.value,
   markdownLinkHandler: bridge.handleMarkdownLink,
-  beforeSendChat: appendRuleEditorTurnAdmission,
+  beforeSendChat: (payload: GeneralAgentConversationChatPayload) => appendRuleEditorTurnAdmission(payload, bridge.context.value),
   systemPrompt: buildSystemPrompt(),
   openingStatement: $t('RuleEditor.agent.opening'),
   promptExamples: [],

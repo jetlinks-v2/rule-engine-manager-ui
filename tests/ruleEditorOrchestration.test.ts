@@ -9,6 +9,7 @@ import {
   RULE_EDITOR_BUILTIN_TOOL_GROUPS,
   RULE_EDITOR_NATIVE_FALLBACK_TOOL_IDS,
   createRuleEditorAgentProfile,
+  appendRuleEditorTurnAdmission,
 } from '../views/Instance/RuleEditor/ruleEditorAgentProfile';
 import {
   APPLY_CANVAS_TOOL_ID,
@@ -31,6 +32,42 @@ import {
   projectRuleEditorCapabilityCatalogReport,
   type RuleEditorCapabilityCatalogItem,
 } from '../views/Instance/RuleEditor/ruleEditorOrchestrationContracts';
+import type { GeneralAgentConversationChatPayload } from '@jetlinks-web-core/layout/components/AiChat/generalAgentExtensions';
+
+test('turn admission sends current canvas facts without graph or historical state', () => {
+  const context = {
+    ruleId: 'rule-1', workspaceId: 'workspace-1', canvasRevision: 7, nodeCount: 2, linkCount: 0, dirty: false,
+    nodes: [{ script: 'large private node script' }], orchestrationCapabilities: [{ capabilityId: 'large-catalog' }],
+  };
+  const first: GeneralAgentConversationChatPayload = { content: '继续', systemPromptAppend: 'Existing guidance' };
+  appendRuleEditorTurnAdmission(first, context);
+  const snapshot = JSON.parse(first.systemPromptAppend!.split('：').at(-1)!);
+  assert.deepEqual(snapshot, {
+    ruleId: 'rule-1', workspaceId: 'workspace-1', canvasRevision: 7, nodeCount: 2, linkCount: 0, dirty: false,
+  });
+  assert.ok(first.systemPromptAppend!.startsWith('Existing guidance'));
+  assert.equal(first.systemPromptAppend!.includes('large private node script'), false);
+  assert.equal(first.systemPromptAppend!.includes('large-catalog'), false);
+
+  context.canvasRevision = 8;
+  context.nodeCount = 0;
+  const next: GeneralAgentConversationChatPayload = { content: '当前有几个节点？' };
+  appendRuleEditorTurnAdmission(next, context);
+  assert.equal(JSON.parse(next.systemPromptAppend!.split('：').at(-1)!).nodeCount, 0);
+  assert.equal(JSON.parse(next.systemPromptAppend!.split('：').at(-1)!).canvasRevision, 8);
+});
+
+test('turn admission preserves empty sends and remains idempotent without available canvas facts', () => {
+  const empty: GeneralAgentConversationChatPayload = { content: ' ', systemPromptAppend: 'Existing guidance' };
+  appendRuleEditorTurnAdmission(empty, { nodeCount: 0 });
+  assert.equal(empty.systemPromptAppend, 'Existing guidance');
+  const payload: GeneralAgentConversationChatPayload = { content: '继续' };
+  appendRuleEditorTurnAdmission(payload);
+  const appended = payload.systemPromptAppend;
+  appendRuleEditorTurnAdmission(payload);
+  assert.equal(payload.systemPromptAppend, appended);
+  assert.equal(payload.systemPromptAppend!.includes('发送时快照'), false);
+});
 
 const goal = {
   goal: {

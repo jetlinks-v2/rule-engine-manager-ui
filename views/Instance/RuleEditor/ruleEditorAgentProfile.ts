@@ -71,12 +71,22 @@ export const RULE_EDITOR_TURN_ADMISSION_PROMPT = [
 
 export const appendRuleEditorTurnAdmission = (
   payload: GeneralAgentConversationChatPayload,
+  canvasContext?: Record<string, unknown>,
 ) => {
   if (!String(payload.content || '').trim()) return;
   if (payload.systemPromptAppend?.includes(RULE_EDITOR_TURN_ADMISSION_PROMPT)) return;
   payload.systemPromptAppend = [
     payload.systemPromptAppend,
     RULE_EDITOR_TURN_ADMISSION_PROMPT,
+    // Capture only current state at send time; tool receipts own any changes made later in the turn.
+    canvasContext ? `当前画布状态（发送时快照，后续变化以本轮工具回执为准）：${JSON.stringify({
+      ruleId: canvasContext.ruleId,
+      workspaceId: canvasContext.workspaceId,
+      canvasRevision: canvasContext.canvasRevision,
+      nodeCount: canvasContext.nodeCount,
+      linkCount: canvasContext.linkCount,
+      dirty: canvasContext.dirty,
+    })}` : '',
   ].filter(Boolean).join('\n\n');
 };
 
@@ -115,7 +125,7 @@ export const RULE_EDITOR_NATIVE_AUTHORING_PROMPT = [
 ].join('\n');
 
 const RULE_EDITOR_RESULT_PROMPT = [
-  '最终答复只能依据工具回执中的真实 mutation、verification 和 taskProgress；第一句直接说明完成、部分完成、未执行、已回滚或结果未知。',
+  '画布以当前摘要和回执为准，筛选结果仅代表其范围。答复依据本轮 mutation、verification 和 taskProgress；第一句直接说明完成、部分完成、未执行、已回滚或结果未知；历史回滚不代表本轮操作。',
   'mutation.status=applied 须说明草稿已修改；taskProgress 未满足则报告部分完成和未决项，不说未执行。局部检查不等于业务完成，说明缺项并问必要问题；局部需求不补无关拓扑。',
   '画布是唯一拓扑可视化。除非用户明确索要，不输出流程图、内部工具名、句柄、节点 ID、调试过程或未出现在回执中的配置；成功写入时用一两句概括草稿变化并说明尚未保存或发布。',
 ].join('\n');

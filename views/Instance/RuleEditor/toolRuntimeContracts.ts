@@ -161,12 +161,12 @@ export const RULE_EDITOR_TYPED_REMOTE_CONTRACTS: Record<string, AiClientToolCont
     [lookupOutput('node-contract', 'rule-editor.node-contract', '$.node')],
   ),
   rule_editor_get_tool_manual: remoteContract(
-    'detail',
+    'discovery',
     'rule-editor.tool.manual.read',
     [lookupOutput('tool-manuals', 'rule-editor.tool-manuals', '$.manuals')],
   ),
   rule_editor_get_node_type_manual: remoteContract(
-    'detail',
+    'discovery',
     'rule-editor.node-type.manual.read',
     [
       lookupOutput('node-type-manuals', 'rule-editor.node-type-manuals', '$.manuals'),

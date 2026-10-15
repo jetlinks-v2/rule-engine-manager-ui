@@ -75,6 +75,18 @@ const reportFor = (
   },
 );
 
+test('manual lookup remains discovery while business detail stays executable', () => {
+  for (const id of ['rule_editor_get_tool_manual', 'rule_editor_get_node_type_manual']) {
+    const definition = toRuleEditorClientToolDefinition(remoteTool(id), async () => ({}));
+    const routing = normalizeAiClientToolRoutingMetadata(definition);
+    assert.deepEqual(routing?.stages, ['navigation', 'preparation']);
+    assert.deepEqual(routing?.dataAccessModes, ['discovery']);
+    assert.equal(definition.annotations?.readOnlyHint, true);
+  }
+  const detail = toRuleEditorClientToolDefinition(remoteTool('rule_editor_get_node_detail'), async () => ({}));
+  assert.ok(normalizeAiClientToolRoutingMetadata(detail)?.stages?.includes('execution'));
+});
+
 test('apply tool stays typed after the real core runtime projects routing into expands', () => {
   const definition = toRuleEditorClientToolDefinition(applyTool(), async () => ({}));
   const routing = normalizeAiClientToolRoutingMetadata(definition);
