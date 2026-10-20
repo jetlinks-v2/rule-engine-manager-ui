@@ -507,5 +507,55 @@
         "assetType": "scene"
       }
     ]
+  },
+  {
+    "code": "alarm-center",
+    "name": "告警中心",
+    "i18nMessages": {
+      "name": {
+        "zh_CN": "告警中心",
+        "en_US": "Alarm Center",
+        "en": "Alarm Center"
+      }
+    },
+    "owner": "iot",
+    "id": "3c7dca6ea8b5828bbcc023ce905244f7",
+    "sortIndex": 3,
+    "url": "/alarms",
+    "icon": "icon-gaojingzhongxin",
+    "permissions": [],
+    "buttons": [],
+    "children": [
+      {
+        "code": "rule-engine/DashBoard",
+        "name": "仪表盘",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "仪表盘",
+            "en_US": "Dashboard",
+            "en": "Dashboard"
+          }
+        },
+        "owner": "iot",
+        "id": "alarm-center-dashboard",
+        "url": "/alarms/dashboard",
+        "icon": "icon-yibiaopan",
+        "sortIndex": 0,
+        "meta": {
+          "componentCode": "rule-engine/DashBoard"
+        },
+        "options": {
+          "componentCode": "rule-engine/DashBoard",
+          "meta": {
+            "componentCode": "rule-engine/DashBoard"
+          }
+        },
+        "permissions": [],
+        "buttons": [],
+        "showPage": [
+          "menu"
+        ]
+      }
+    ]
   }
 ]

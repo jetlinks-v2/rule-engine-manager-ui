@@ -85,6 +85,7 @@
 </template>
 
 <script setup lang="ts" name="AlertStats">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import rank1 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/1.png'
 import rank2 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/2.png'
 import rank3 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/3.png'
