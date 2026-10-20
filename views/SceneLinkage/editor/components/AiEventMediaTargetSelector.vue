@@ -58,7 +58,7 @@
             @load-more="loadMoreChannels"
           />
         </template>
-        <a-empty v-else :description="$t('IotSceneLinkage.aiEvent.selectCameraSource')" />
+        <CloudEmpty v-else :description="$t('IotSceneLinkage.aiEvent.selectCameraSource')" />
       </section>
     </div>
   </a-modal>

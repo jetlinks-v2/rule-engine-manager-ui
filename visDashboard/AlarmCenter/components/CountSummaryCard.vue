@@ -14,8 +14,7 @@
         v-else-if="empty"
         class="count-summary-card__state count-summary-card__state--empty"
       >
-        <a-empty
-          :image="Empty.PRESENTED_IMAGE_SIMPLE"
+        <CloudEmpty
           :description="metric.emptyText"
         />
       </div>
@@ -52,7 +51,6 @@
 </template>
 
 <script setup lang="ts">
-import { Empty } from 'ant-design-vue'
 import type { PropType } from 'vue'
 import type { CountSummaryCardStyle, CountSummaryMetricViewModel } from '../shared'
 

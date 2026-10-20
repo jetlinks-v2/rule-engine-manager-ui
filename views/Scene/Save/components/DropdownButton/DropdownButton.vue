@@ -65,11 +65,11 @@
                 </a-space>
               </template>
             </a-tree>
-            <a-empty v-else style="margin-top: 24px" />
+            <CloudEmpty v-else style="margin-top: 24px" />
           </div>
         </template>
         <div class="scene-select-empty" v-else>
-          <a-empty />
+          <CloudEmpty />
         </div>
       </div>
     </template>

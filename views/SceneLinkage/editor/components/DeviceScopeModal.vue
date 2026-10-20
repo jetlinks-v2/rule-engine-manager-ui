@@ -16,15 +16,15 @@
           <a-checkbox-group v-if="fixedDeviceOptions.length" :value="fixedDeviceIds" class="device-scope-modal__device-list" @change="changeFixedDevices">
             <a-checkbox v-for="device in fixedDeviceOptions" :key="device.value" :value="device.value"><IotAlarmTargetOption :option="device" type="device" single-line :show-description="false" /></a-checkbox>
           </a-checkbox-group>
-          <a-empty v-else-if="!deviceLoading" :description="$t('IotSceneLinkage.scope.empty')" />
+          <CloudEmpty v-else-if="!deviceLoading" :description="$t('IotSceneLinkage.scope.empty')" />
           <a-pagination v-if="fixedTotal > pageSize" class="device-scope-modal__pagination" size="small" :current="pageIndex + 1" :page-size="pageSize" :total="fixedTotal" show-less-items @change="changePage" />
         </a-spin>
       </template>
       <a-tree v-else-if="visibleScopeTreeData.length" class="device-scope-modal__tree" checkable block-node :check-strictly="true" :tree-data="visibleScopeTreeData" :checked-keys="checkedKeys" :expanded-keys="expandedKeys" :loading="scopeLoading" @check="onScopeCheck" @expand="onScopeExpand">
         <template #title="node"><span class="device-scope-modal__node"><b>{{ node.title }}</b></span></template>
       </a-tree>
-      <a-empty v-else-if="draft.selector === 'all'" :description="$t('IotSceneLinkage.scope.allHint')" />
-      <a-empty v-else :description="emptyDescription" />
+      <CloudEmpty v-else-if="draft.selector === 'all'" :description="$t('IotSceneLinkage.scope.allHint')" />
+      <CloudEmpty v-else :description="emptyDescription" />
     </a-form>
     <div class="device-scope-modal__footer">
       <a-space>

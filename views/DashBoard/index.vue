@@ -70,7 +70,7 @@
                   </li>
                 </ul>
                 <div v-else class="empty-body">
-                  <a-empty :image="Empty.PRESENTED_IMAGE_SIMPLE"></a-empty>
+                  <CloudEmpty></CloudEmpty>
                 </div>
               </div>
             </div>
@@ -82,7 +82,6 @@
 </template>
 
 <script lang="ts" setup>
-import { Empty } from "ant-design-vue";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { isNoCommunity } from "@jetlinks-web-core/utils/utils";
 import Charts from "./components/Charts.vue";

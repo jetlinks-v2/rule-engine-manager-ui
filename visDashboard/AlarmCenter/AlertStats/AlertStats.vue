@@ -77,7 +77,7 @@
           v-else
           class="empty-body"
         >
-          <a-empty :image="Empty.PRESENTED_IMAGE_SIMPLE"></a-empty>
+          <CloudEmpty></CloudEmpty>
         </div>
       </div>
     </div>
@@ -94,7 +94,6 @@ import rank6 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/
 import rank7 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/7.png'
 import rank8 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/8.png'
 import rank9 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/9.png'
-import { Empty } from 'ant-design-vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components'

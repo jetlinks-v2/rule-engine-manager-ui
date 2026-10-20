@@ -53,7 +53,7 @@
         </VirtualScroll>
         <div v-if="loadingMore" class="ai-event-media-channel-grid__loading-more"><a-spin size="small" /></div>
       </div>
-      <a-empty v-else :description="$t('IotSceneLinkage.aiEvent.noCameras')" />
+      <CloudEmpty v-else :description="$t('IotSceneLinkage.aiEvent.noCameras')" />
     </a-spin>
   </div>
 </template>

@@ -65,7 +65,7 @@
                   @click="onSelect"
                 />
                 <div class="scene-select-empty" v-else>
-                  <a-empty />
+                  <CloudEmpty />
                 </div>
               </template>
               <template v-else-if="item.component === 'tree'">
@@ -98,7 +98,7 @@
 <!--                  </j-scrollbar>-->
                 </div>
                 <div class="scene-select-empty" v-else>
-                  <a-empty />
+                  <CloudEmpty />
                 </div>
               </template>
 

@@ -18,7 +18,7 @@
             <a-button type="primary" @click="emit('retry')">{{ $t('IotSceneLinkage.action.retry') }}</a-button>
           </template>
         </a-result>
-        <a-empty
+        <CloudEmpty
           v-else-if="!state.records.length"
           :description="$t('IotSceneLinkage.record.empty')"
         />
@@ -61,7 +61,7 @@
                     <a-button type="link" @click="emit('retry-detail')">{{ $t('IotSceneLinkage.action.retry') }}</a-button>
                   </template>
                 </a-result>
-                <a-empty
+                <CloudEmpty
                   v-else-if="!state.detailLoading && !state.detailRecords.length"
                   :description="$t('IotSceneLinkage.record.empty')"
                 />

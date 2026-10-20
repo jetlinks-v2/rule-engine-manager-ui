@@ -17,7 +17,7 @@
                 @click="onSelect"
             />
             <div class="scene-select-empty" v-else>
-                <a-empty />
+                <CloudEmpty />
             </div>
         </template>
         <j-value-item

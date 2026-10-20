@@ -59,7 +59,7 @@
             />
         </a-form-item>
     </a-form>
-    <a-empty v-else style="margin: 20px 0" :description="$t('Notify.VariableDefinitions.966776-0')" />
+    <CloudEmpty v-else style="margin: 20px 0" :description="$t('Notify.VariableDefinitions.966776-0')" />
 </template>
 
 <script lang="ts" setup>
