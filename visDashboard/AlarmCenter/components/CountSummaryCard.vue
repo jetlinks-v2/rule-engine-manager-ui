@@ -8,15 +8,15 @@
         v-if="error"
         class="count-summary-card__state count-summary-card__state--error"
       >
-        {{ error }}
+        <CloudEmpty :description="error" :image-style="{ height: '40px' }" />
       </div>
       <div
         v-else-if="empty"
         class="count-summary-card__state count-summary-card__state--empty"
       >
-        <a-empty
-          :image="Empty.PRESENTED_IMAGE_SIMPLE"
+        <CloudEmpty
           :description="metric.emptyText"
+          :image-style="{ height: '40px' }"
         />
       </div>
       <div
@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { Empty } from 'ant-design-vue'
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import type { PropType } from 'vue'
 import type { CountSummaryCardStyle, CountSummaryMetricViewModel } from '../shared'
 
@@ -176,7 +176,7 @@ defineProps({
   text-align: center;
 }
 
-.count-summary-card__state--empty :deep(.ant-empty) {
+.count-summary-card__state :deep(.ant-empty) {
   margin: 0;
 }
 </style>
