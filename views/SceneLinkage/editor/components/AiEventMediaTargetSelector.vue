@@ -62,36 +62,18 @@
       </section>
     </div>
   </a-modal>
-  <a-modal
-    v-model:open="previewVisible"
-    :title="$t('IotSceneLinkage.title.aiEventCameraPreview')"
-    :footer="null"
-    :width="720"
-    destroy-on-close
-    @after-close="previewUrl = ''"
-  >
-    <section class="ai-event-media-target-selector__preview">
-      <LivePlayer
-        v-if="previewUrl"
-        :key="previewUrl"
-        class="ai-event-media-target-selector__preview-player"
-        :url="previewUrl"
-        protocol="mp4"
-        live
-        autoplay
-        muted
-        :timeout="10"
-      />
-      <a-empty v-else :description="$t('IotSceneLinkage.aiEvent.previewUnavailable')" />
-    </section>
-  </a-modal>
+  <RemoteComponent
+    v-if="previewVisible"
+    remote-name="jetlinks-media-ui"
+    component-name="VideoChannelPlaybackDialog"
+    :component-props="{ open: previewVisible, target: previewTarget }"
+    :component-events="{ 'update:open': value => previewVisible = value }"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { buildPreferredMediaPath, withEdgeMediaToken } from '@jetlinks-web-core/utils'
-import LivePlayer from '@jetlinks-web-core/components/Player/index.vue'
 import AiEventMediaChannelGrid from './AiEventMediaChannelGrid.vue'
 import { type AiEventMediaChannel } from '../../../../api/scene-linkage'
 import { type SceneAiEventMediaTarget } from '../../utils'
@@ -108,7 +90,7 @@ const emit = defineEmits<{ (event: 'update:modelValue', value: SceneAiEventMedia
 const visible = ref(false)
 const selectedTargets = ref<SceneAiEventMediaTarget[]>([])
 const previewVisible = ref(false)
-const previewUrl = ref('')
+const previewTarget = ref<{ deviceId: string; channelId: string; name?: string } | null>(null)
 
 const { t } = useI18n()
 const {
@@ -175,10 +157,7 @@ function confirmSelection() {
 }
 
 function previewChannel(channel: AiEventMediaChannel) {
-  // 订阅型边端通道须通过网关代理到 edge-master，路径与视觉告警编辑器的实时预览保持一致。
-  previewUrl.value = withEdgeMediaToken(
-    buildPreferredMediaPath(channel.deviceId, `/edge/master/media/${encodeURIComponent(channel.channelId)}/live.mp4`),
-  )
+  previewTarget.value = { deviceId: channel.deviceId, channelId: channel.channelId, name: channel.name }
   previewVisible.value = true
 }
 
@@ -216,7 +195,4 @@ watch(visible, open => {
 .ai-event-media-target-selector__channels { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .ai-event-media-target-selector__channel-header { display: flex; justify-content: space-between; width: 100%; margin-bottom: 12px; }
 .ai-event-media-target-selector__channel-header :deep(.ant-input-search) { width: 10rem; }
-.ai-event-media-target-selector__preview { display: grid; height: min(32rem, calc(100dvh - 12rem)); min-height: 22rem; overflow: hidden; border-radius: var(--r-2, .5rem); background: #000; }
-.ai-event-media-target-selector__preview-player { width: 100%; height: 100%; min-height: 0; }
-.ai-event-media-target-selector__preview :deep(.ant-empty) { display: grid; place-content: center; color: rgb(255 255 255 / 72%); }
 </style>
