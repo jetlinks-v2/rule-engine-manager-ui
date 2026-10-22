@@ -74,7 +74,7 @@
 
 - `alarm.device.summary` 已支持显式时间窗口内的总量、未处理、已处理。其默认窗口为当天，历史累计必须显式查询全历史或复用不带时间条件的 count API，不能将默认结果当累计。
 - `alarm.vision.summary` 提供告警记录状态计数和告警历史触发计数，两者属于不同统计粒度。建议新仪表盘的两类告警统一使用告警记录粒度，主值、底栏、趋势与分布沿用同一粒度；复用 service/API 时核对 `total` 和 `alarmCount` 的来源，不直接互换。
-- `alarm.vision.ai-review.summary` 已提供 `filtered`、`valid`、`total` 与 `filterRate`；显式传入今日窗口。无已完成复判时比例展示 `--`，不由原始事件量减去告警量估算拦截率。
+- `alarm.vision.ai-review.summary` 已提供 `filtered`、`valid`、`total` 与 `filterRate`；显式传入今日窗口。按用户确认，顶部三张统计卡不显示双横线占位：无已完成复判时拦截率展示 `0%`，数量字段为空时展示 `0`；已有数值正常展示，请求失败仍保留失败提示与重试。仅调整 `components/AlarmMetricPanel.vue` 的显示，不改变统计接口与计算口径。验证：真实组件的 5 个 SSR 渲染用例通过，覆盖无复判、缺失比例、空数量、正常数值和局部请求失败；均无双横线占位，正常数值、失败提示及重试入口保留。Vue SFC 脚本/模板/样式、中英文 JSON 解析和差异检查通过；本次未运行完整类型检查、构建或真实页面复验。
 - `alarm.event.summary` 当前合并物联与视觉告警，并非复判前的视觉事件总量；不能仅因名称包含 event 就用于原型“今日事件”。
 - `alarm.vision.trend`、`alarm.vision.type.distribution`、`alarm.vision.channel.rank` 可作为视觉系列、告警类型与摄像头维度的复用入口；核对它们与新卡片的统计粒度后选用。
 - 原始事件趋势、物联趋势和物联两个统计维度尚无与原型完全对应的已注册 DataSource。优先由本模块 widget service 组合现有 `/ai/task/history/*`、`/dashboard/_multi` 和物联告警聚合 API；不为图表展示新建后端接口或改动既有能力 ID。

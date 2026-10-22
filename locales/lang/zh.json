@@ -2152,7 +2152,7 @@
 	"alarmDashboard.total": "总量",
 	"alarmDashboard.active": "未处理",
 	"alarmDashboard.handled": "已处理",
-	"alarmDashboard.eventScope": "今日事件统计复判前的原始视觉上报；拦截率为今日成功完成复判的拦截数占比，无复判记录时显示 --。",
+	"alarmDashboard.eventScope": "今日事件统计复判前的原始视觉上报；拦截率为今日成功完成复判的拦截数占比，无复判记录时显示 0%。",
 	"alarmDashboard.alarmScope": "主值为今日新增告警记录数；总量、未处理和已处理均按历史累计告警记录统计。",
 	"alarmDashboard.partialFailed": "部分指标加载失败",
 	"alarmDashboard.seriesFailed": "{names}加载失败",

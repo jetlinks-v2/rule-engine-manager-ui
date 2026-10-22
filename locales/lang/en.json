@@ -2151,7 +2151,7 @@
 	"alarmDashboard.total": "Total",
 	"alarmDashboard.active": "Unhandled",
 	"alarmDashboard.handled": "Handled",
-	"alarmDashboard.eventScope": "Events count original vision reports before review. Interception is the share filtered among completed reviews today; -- means no completed reviews.",
+	"alarmDashboard.eventScope": "Events count original vision reports before review. Interception is the share filtered among completed reviews today; 0% is displayed when there are no completed reviews.",
 	"alarmDashboard.alarmScope": "The main value counts alarm records created today. Total, unhandled and handled cover all historical alarm records.",
 	"alarmDashboard.partialFailed": "Some metrics could not be loaded",
 	"alarmDashboard.seriesFailed": "Could not load {names}",

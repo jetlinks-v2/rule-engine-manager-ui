@@ -11,7 +11,7 @@
       <template v-if="event">
         <a-badge color="cyan" />
         <span>{{ t('alarmDashboard.filterRate') }}</span>
-        <strong>{{ data?.filterRate == null ? '--' : data.filterRate + '%' }}</strong>
+        <strong>{{ (data?.filterRate ?? 0) + '%' }}</strong>
       </template>
       <template v-else>
         <span v-for="key in statuses" :key="key" class="alarm-metric-status">
@@ -35,7 +35,7 @@ defineEmits<{ retry: [] }>()
 const { t, locale } = useI18n()
 const statuses = ['total', 'active', 'handled'] as const
 const statusColors = { total: 'default', active: 'error', handled: 'success' } as const
-const format = (value?: number | null) => value == null ? '--' : value.toLocaleString(locale.value)
+const format = (value?: number | null) => (value ?? 0).toLocaleString(locale.value)
 </script>
 <style scoped>
 .alarm-metric { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: auto; gap: 8px; }
