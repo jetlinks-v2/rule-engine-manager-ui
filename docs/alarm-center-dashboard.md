@@ -70,6 +70,12 @@
 | 物联告警统计 | `IotStatistics` / `alarmCenterIotStatistics` | 今日按告警类型、设备类型聚合；水平条形图 |
 | 视觉告警统计 | `VisionStatistics` / `alarmCenterVisionStatistics` | 今日按告警类型、摄像头聚合；水平条形图 |
 
+### 截断名称的完整内容提示
+
+实现：AlarmStatisticsPanel 的名称列按容器实际宽度分配并限制上限；被省略的轴标签可以直接悬停查看完整名称，柱子原有的名称与数量提示继续保留。AlarmQuickStartPanel 的标题与说明统一复用共享包 Ellipsis，仅在文字实际溢出时提示。保持单行排行、原始标签、数量、筛选、跳转与统计口径，不增加说明图标或额外业务文案。AlarmStatisticsPanel 与 AlarmTrendPanel 的图表提示统一使用平台 Tooltip 色板，弹出到卡片外并允许长名称换行；自定义轴标签提示对名称执行 HTML 编码。资源中心的配套处理见 authentication-manager-ui/docs/resource-center-dashboard.md。
+
+验证：浏览器隔离预览使用实际展示 SFC、共享 Ellipsis 和 ECharts，接口边界使用替身；320/520/960px 标签列伸缩、长短中英文名称、零数量标签、短标签无空白提示框、原有柱图名称/数量及快捷入口回调通过。包含尖括号的名称按纯文字显示，图表提示挂载到 body、可换行，并与普通文字提示使用相同深色背景/白字。本模块 3 个 SFC 的脚本/模板/样式、node --test tests/alarmDashboard.test.mjs（11/11）及 git diff --check 通过。未在真实部署页面复验；按性能约束未执行完整 lint/typecheck/build，需要时在 runtime-ui 执行 pnpm exec vue-tsc --noEmit -p modules/rule-engine-manager-ui/tsconfig.json 和 pnpm -F jetlinks-web-core build -- --module-name rule-engine-manager-ui。需发布 runtime-ui 前端静态资源，无后端重启要求。
+
 ### 可复用能力与待补齐项
 
 - `alarm.device.summary` 已支持显式时间窗口内的总量、未处理、已处理。其默认窗口为当天，历史累计必须显式查询全历史或复用不带时间条件的 count API，不能将默认结果当累计。

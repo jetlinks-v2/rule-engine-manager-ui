@@ -5,14 +5,15 @@
       :disabled="action.disabled" @click="$emit('open', action.key)">
       <span class="alarm-quick-icon" :class="'alarm-quick-icon-' + action.key"><AIcon :type="action.icon" /></span>
       <span class="alarm-quick-copy">
-        <strong>{{ t('alarmDashboard.action.' + action.key) }}</strong>
-        <small :title="t('alarmDashboard.actionDescription.' + action.key)">{{ t('alarmDashboard.actionDescription.' + action.key) }}</small>
+        <strong><JEllipsis>{{ t('alarmDashboard.action.' + action.key) }}</JEllipsis></strong>
+        <small><JEllipsis>{{ t('alarmDashboard.actionDescription.' + action.key) }}</JEllipsis></small>
       </span>
       <RightOutlined class="alarm-quick-arrow" />
     </a-button>
   </div>
 </template>
 <script setup lang="ts">
+import { Ellipsis as JEllipsis } from '@jetlinks-web/components'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RightOutlined } from '@ant-design/icons-vue'
@@ -81,9 +82,6 @@ strong {
   font-weight: 500;
   line-height: 20px;
   color: #1d2129;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   transition: color .2s;
 }
 small {
@@ -91,9 +89,6 @@ small {
   font-size: 12px;
   line-height: 16px;
   margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .alarm-quick-arrow { flex: none; color: #c9cdd4; font-size: 12px; margin-left: 8px; transition: color .2s; }
 @container alarm-widget (max-width: 480px) {
