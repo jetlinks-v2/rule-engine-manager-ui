@@ -7,22 +7,20 @@
       </div>
       <AIcon :type="icon" class="alarm-metric-icon" />
     </div>
-    <a-tooltip :title="t(event ? 'alarmDashboard.eventScope' : 'alarmDashboard.alarmScope')">
-      <div class="alarm-metric-footer">
-        <template v-if="event">
-          <a-badge color="cyan" />
-          <span>{{ t('alarmDashboard.filterRate') }}</span>
-          <strong>{{ data?.filterRate == null ? '--' : data.filterRate + '%' }}</strong>
-        </template>
-        <template v-else>
-          <span v-for="key in statuses" :key="key" class="alarm-metric-status">
-            <a-badge :status="statusColors[key]" />
-            <span>{{ t('alarmDashboard.' + key) }}</span>
-            <strong>{{ format(data?.[key]) }}</strong>
-          </span>
-        </template>
-      </div>
-    </a-tooltip>
+    <div class="alarm-metric-footer">
+      <template v-if="event">
+        <a-badge color="cyan" />
+        <span>{{ t('alarmDashboard.filterRate') }}</span>
+        <strong>{{ data?.filterRate == null ? '--' : data.filterRate + '%' }}</strong>
+      </template>
+      <template v-else>
+        <span v-for="key in statuses" :key="key" class="alarm-metric-status">
+          <a-badge :status="statusColors[key]" />
+          <span>{{ t('alarmDashboard.' + key) }}</span>
+          <strong>{{ format(data?.[key]) }}</strong>
+        </span>
+      </template>
+    </div>
     <div v-if="data?.failed.length" class="alarm-metric-error" role="alert">
       <span>{{ t('alarmDashboard.partialFailed') }}</span>
       <a-button type="link" size="small" @click="$emit('retry')">{{ t('alarmDashboard.retry') }}</a-button>
