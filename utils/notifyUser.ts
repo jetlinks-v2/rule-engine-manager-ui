@@ -23,6 +23,7 @@ export function mergeNotifyUsersById<T extends NotifyUser>(previous: T[], incomi
  */
 export function canReceiveProfileBackedNotification(user: NotifyUser, channelProvider: string): boolean {
   if (!user.id) return false
+  if (channelProvider === 'inside-mail') return true
   if (channelProvider === 'notifier-email') return Boolean(user.email)
   return ['notifier-sms', 'notifier-voice'].includes(channelProvider) && Boolean(user.telephone)
 }
