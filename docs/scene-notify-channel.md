@@ -28,3 +28,5 @@
 - `vue/compiler-sfc` 对 `views/SceneLinkage/editor/index.vue` 的脚本与模板编译通过。
 - `git diff --check`：通过。
 - 模块级 `vue-tsc --noEmit` 未通过，输出为工作区已有的全量类型错误（包含 `jetlinks-web-core` 和场景编辑器既有组件）；本次新增工具文件已由定向 esbuild 测试完成类型转译验证。
+
+交付信息：实现提交 `3f74778`，Pull Request <https://github.com/jetlinks-v2/rule-engine-manager-ui/pull/133>。
