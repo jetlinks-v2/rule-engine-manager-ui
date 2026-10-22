@@ -2209,5 +2209,7 @@
 	"alarmDashboard.preview.camera.2": "卸货区摄像机",
 	"alarmDashboard.preview.camera.3": "周界东摄像机",
 	"alarmDashboard.preview.camera.4": "仓储入口摄像机",
-	"alarmDashboard.preview.camera.5": "大厅正门摄像机"
+	"alarmDashboard.preview.camera.5": "大厅正门摄像机",
+	"EmptyCreate.names.alarm_rules": "告警规则",
+	"EmptyCreate.names.rules": "规则"
 }

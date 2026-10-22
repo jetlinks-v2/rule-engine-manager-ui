@@ -1,5 +1,16 @@
 <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+      type="primary"
+      :hasPermission="`${permissionKey}:add`"
+      @click="openEditor()"
+    >
+      <template #icon><AIcon type="PlusOutlined" /></template>
+      {{ $t('IotSceneLinkage.title.add') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <full-page has-padding transparent-background>
       <section class="scene-list">
         <j-pro-table
@@ -14,6 +25,11 @@
           row-key="id"
           :scroll="{ x: 1140 }"
         >
+          <template #emptyText>
+            <CloudEmpty :search="queryTerms" :search-name="$t('Configuration.index.021440-10')">
+              <EmptyCreateButton />
+            </CloudEmpty>
+          </template>
           <template #headerLeftRender>
             <h2 class="scene-list-toolbar__title">{{ $t('IotSceneLinkage.title.list') }}</h2>
           </template>
@@ -35,14 +51,7 @@
                 <template #icon><AIcon type="ImportOutlined" /></template>
                 {{ $t('IotSceneLinkage.action.importTemplate') }}
               </j-permission-button>
-              <j-permission-button
-                type="primary"
-                :hasPermission="`${permissionKey}:add`"
-                @click="openEditor()"
-              >
-                <template #icon><AIcon type="PlusOutlined" /></template>
-                {{ $t('IotSceneLinkage.title.add') }}
-              </j-permission-button>
+              <EmptyCreateButton />
             </div>
           </template>
           <template #name="scene">
@@ -149,6 +158,8 @@
   </j-page-container>
 </template>
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -336,6 +347,8 @@ async function remove(scene: any) {
   await deleteScene(scene.id)
   reload()
 }
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style scoped>
 .scene-list {

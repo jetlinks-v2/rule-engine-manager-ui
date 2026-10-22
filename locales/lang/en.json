@@ -2208,5 +2208,7 @@
 	"alarmDashboard.preview.camera.2": "Loading bay",
 	"alarmDashboard.preview.camera.3": "East perimeter",
 	"alarmDashboard.preview.camera.4": "Warehouse entry",
-	"alarmDashboard.preview.camera.5": "Lobby entrance"
+	"alarmDashboard.preview.camera.5": "Lobby entrance",
+	"EmptyCreate.names.alarm_rules": "alarm rules",
+	"EmptyCreate.names.rules": "rules"
 }
