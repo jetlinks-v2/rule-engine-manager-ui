@@ -297,6 +297,7 @@ import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { createSceneLinkage, getProduct, getSceneDetail, queryCurrentSceneNotifyUser, queryDevices, queryProducts, querySceneNotifyChannelTemplates, querySceneNotifyChannels, querySceneNotifyUsers, querySceneSupportedActions, querySceneSupportedTriggers, updateSceneLinkage, type SceneNotifyMethod, type SceneNotifyUser, type SceneProviderInfo } from '../../../api/scene-linkage'
 import { queryDeviceBoundGroups_api, queryDeviceGroupDetailList_api, queryDeviceSpaceAreaBindings_api, queryProjectSpaceAreaSettings_api } from '../../../api/scene-resources'
 import { canReceiveProfileBackedNotification, mergeNotifyUsersById } from '../../../utils/notifyUser'
+import { requiresSceneNotifyTemplate, toSceneNotifyMethods } from '../../../utils/sceneNotify'
 import IotAlarmTargetSelect, { type IotAlarmTargetSelectOption, type IotAlarmTargetSelectQuery } from './alarm/IotAlarmTargetSelect.vue'
 import { applyMultiTriggerForm, buildRequest, defaultForm, normalizeResult, toForm, type SceneConditionForm, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTriggerKind } from '../utils'
 import { getSceneCompatibility } from '../sceneCompatibility'
@@ -431,9 +432,18 @@ function clearActionValidationIfResolved() {
   if (hasError('notify') && !form.actions.some(hasIncompleteNotifyAction)) clearValidationField('notify')
 }
 async function changeNotifyMethod(index: number, method: SceneNotifyMethod) { await refreshNotifyTemplate(index, method, true) }
-async function refreshNotifyTemplate(index: number, method: SceneNotifyMethod, changed = false) { const response: any = await querySceneNotifyChannelTemplates(method.providerId); const detail = response?.result ?? response; const item = detail?.channels?.find((channel: any) => channel.channel?.id === method.id); form.actions[index] = { ...form.actions[index], config: { ...form.actions[index].config, ...(changed ? { notifyChannelIds: [method.id] } : {}) }, options: { ...form.actions[index].options, channelName: method.name, templateContent: getTemplateContent(item?.template) } } }
+async function refreshNotifyTemplate(index: number, method: SceneNotifyMethod, changed = false) {
+  let templateContent = ''
+  if (requiresSceneNotifyTemplate(method.channelProvider)) {
+    const response: any = await querySceneNotifyChannelTemplates(method.providerId)
+    const detail = response?.result ?? response
+    const item = detail?.channels?.find((channel: any) => channel.channel?.id === method.id)
+    templateContent = getTemplateContent(item?.template)
+  }
+  form.actions[index] = { ...form.actions[index], config: { ...form.actions[index].config, ...(changed ? { notifyChannelIds: [method.id] } : {}) }, options: { ...form.actions[index].options, channelName: method.name, templateContent } }
+}
 function getTemplateContent(template: any) { const content = template?.template || {}; const getByPath = (source: any, path: string[]) => path.reduce((target, key) => target && typeof target === 'object' && !Array.isArray(target) ? target[key] : undefined, source); const asText = (value: unknown) => typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : ''; const firstText = (...values: unknown[]) => values.map(asText).find(Boolean) || ''; return firstText(getByPath(content, ['message']), getByPath(content, ['ttsmessage']), getByPath(content, ['body']), getByPath(content, ['text', 'content']), getByPath(content, ['markdown', 'text']), getByPath(content, ['link', 'text']), getByPath(content, ['text'])) }
-async function loadNotifyMethods(force = false) { if ((!force && notifyMethods.value.length) || notifyMethodsLoading.value) return; notifyMethodsLoading.value = true; try { const providers: any[] = normalizeResult(await querySceneNotifyChannels()).data; notifyMethods.value = providers.filter(provider => provider.provider === 'scene').flatMap(provider => (provider.channels || []).map((channel: any) => ({ id: channel.id, providerId: provider.id || provider.provider, name: channel.name || channel.channelProvider, channelProvider: channel.channelProvider }))).filter(method => method.id && method.providerId && method.channelProvider?.startsWith('notifier-')); } finally { notifyMethodsLoading.value = false } }
+async function loadNotifyMethods(force = false) { if ((!force && notifyMethods.value.length) || notifyMethodsLoading.value) return; notifyMethodsLoading.value = true; try { const providers: any[] = normalizeResult(await querySceneNotifyChannels()).data; notifyMethods.value = toSceneNotifyMethods(providers); } finally { notifyMethodsLoading.value = false } }
 const selectedNotifyUserIds = () => [...new Set(form.actions
   .filter(action => action.type === 'sceneNotify')
   .flatMap(action => action.config?.userIds || [])
