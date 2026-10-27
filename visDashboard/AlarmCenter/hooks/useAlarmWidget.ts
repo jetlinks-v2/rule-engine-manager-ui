@@ -5,10 +5,11 @@ import { getProjectCodeFromLocation } from '@jetlinks-web-core/utils/project-run
 import { getRequestBaseApi } from '@jetlinks-web-core/utils/request-context'
 import { createAlarmDashboardApi } from '../../../api/alarmDashboard'
 import { settingsOf } from '../dashboardConfig'
-import { emptyWidgetData, type AlarmDashboardKind, type AlarmWidgetInfo, type AlarmDimension, type AlarmTimeRange } from '../dashboard.types'
+import { emptyWidgetData, handlingSourceOf, isHandlingKind, type AlarmDashboardKind, type AlarmWidgetInfo, type AlarmDimension, type AlarmTimeRange } from '../dashboard.types'
 import { loadAlarmMetrics, loadEventMetrics } from '../services/metrics'
 import { loadTrends } from '../services/trends'
 import { loadStatistics } from '../services/statistics'
+import { loadHandlingStatistics } from '../services/handling'
 import { previewData } from '../services/preview'
 
 /** 每个实例独立管理请求/计时器，布局变化不触发重新取数；停用或范围变化立即废弃旧响应。 */
@@ -53,8 +54,9 @@ export function useAlarmWidget(kind: AlarmDashboardKind, info: Ref<AlarmWidgetIn
       const result = kind === 'TodayEvents' ? await loadEventMetrics(api, signal)
         : kind === 'IotAlarms' || kind === 'VisionAlarms'
           ? await loadAlarmMetrics(api, kind === 'IotAlarms' ? 'device' : 'aiTaskMediaTarget', signal)
-          : kind === 'AlarmTrend' ? await loadTrends(api, timeRange.value, signal)
-            : await loadStatistics(api, kind === 'IotStatistics' ? 'device' : 'aiTaskMediaTarget', dimension.value, config.value.limit, signal)
+          : isHandlingKind(kind) ? await loadHandlingStatistics(api, timeRange.value, signal, handlingSourceOf(kind))
+            : kind === 'AlarmTrend' ? await loadTrends(api, timeRange.value, signal)
+            : await loadStatistics(api, kind === 'IotStatistics' ? 'device' : 'aiTaskMediaTarget', dimension.value, signal)
       if (current === version) data.value = result
     } catch (cause) {
       if (current === version && !signal.aborted) {
@@ -72,13 +74,13 @@ export function useAlarmWidget(kind: AlarmDashboardKind, info: Ref<AlarmWidgetIn
   }
   watch(() => config.value.timeRange, value => { timeRange.value = value })
   watch(() => config.value.dimension, value => { dimension.value = value })
-  watch([timeRange, dimension, () => config.value.refreshSeconds, () => config.value.limit, isEdit, active, scope], () => {
+  watch([timeRange, dimension, () => config.value.refreshSeconds, isEdit, active, scope], () => {
     data.value = emptyWidgetData()
     void refresh()
   }, { immediate: true })
   onActivated(() => { active.value = true })
   onDeactivated(() => { active.value = false; cancel() })
   onScopeDispose(cancel)
-  return { config, timeRange, dimension, data, loading, error, refresh }
+  return { config, timeRange, dimension, data, loading, error, refresh, scope }
 }
 

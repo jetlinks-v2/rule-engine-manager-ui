@@ -5,7 +5,7 @@
       :disabled="action.disabled" @click="$emit('open', action.key)">
       <span class="alarm-quick-icon" :class="'alarm-quick-icon-' + action.key"><AIcon :type="action.icon" /></span>
       <span class="alarm-quick-copy">
-        <strong><JEllipsis>{{ t('alarmDashboard.action.' + action.key) }}</JEllipsis></strong>
+        <strong><JEllipsis>{{ t('alarmDashboard.action.' + action.key) }}</JEllipsis><span v-if="action.unconfigured" class="alarm-quick-unconfigured">{{ t('alarmDashboard.configuration.unconfigured') }}</span></strong>
         <small><JEllipsis>{{ t('alarmDashboard.actionDescription.' + action.key) }}</JEllipsis></small>
       </span>
       <RightOutlined class="alarm-quick-arrow" />
@@ -78,12 +78,14 @@ const gridStyle = computed(() => ({
 .alarm-quick-icon-channels { background: linear-gradient(135deg, #8ee4ff, #18b3ee); }
 .alarm-quick-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; justify-content: center; }
 strong {
+  display: flex; align-items: center; gap: 6px; min-width: 0;
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
   color: #1d2129;
   transition: color .2s;
 }
+.alarm-quick-unconfigured { flex: none; font-size: 12px; font-weight: 400; color: var(--ant-color-primary, #1677ff); }
 small {
   color: #86909c;
   font-size: 12px;

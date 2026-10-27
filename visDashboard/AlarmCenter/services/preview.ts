@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import type { AlarmDashboardKind, AlarmDimension, AlarmTimeRange, AlarmWidgetData } from '../dashboard.types'
+import { handlingSourceOf, isHandlingKind, type AlarmDashboardKind, type AlarmDimension, type AlarmTimeRange, type AlarmWidgetData } from '../dashboard.types'
 import { resolveRange } from './query'
 
 /** 样例仅在显式编辑预览中生成；正式接口失败不会降级为这些数字。 */
@@ -10,6 +10,14 @@ export function previewData(kind: AlarmDashboardKind, range: AlarmTimeRange, dim
     timestamp: dayjs(window.startTime).add(index, unit).valueOf(),
     count: [7, 2, 4, 1, 3, 5, 10, 24, 48, 78, 64, 58, 72, 82, 68, 64, 76, 86, 102][index % 19],
   }))
+  if (isHandlingKind(kind)) {
+    const handling = {
+      iot: { total: 186, active: 27, handled: 159, rate: 85.5, failed: false },
+      vision: { total: 1128, active: 304, handled: 824, rate: 73, failed: false },
+    }
+    const source = handlingSourceOf(kind)
+    return { handling: source ? { [source]: handling[source] } : handling, window, series: [], ranking: [] }
+  }
   return {
     metric: kind === 'TodayEvents'
       ? { today: 1280, filterRate: 86.2, failed: [] }

@@ -5,7 +5,6 @@ import { countOf, invalidResponse, resolveRange, rowsOf, textOf, timeTerms } fro
 
 /** 聚合和名称补全都只读取有权限的设备；未知产品归为单独分组，保留真实数量。 */
 async function groupByProduct(api: AlarmDashboardApi, rows: Record<string, unknown>[], signal: AbortSignal) {
-  if (rows.length >= 10000) throw invalidResponse()
   const ids = [...new Set(rows.map(row => textOf(row.deviceId)).filter(Boolean))]
   const products = new Map<string, { id: string; name: string }>()
   // 固定批次串行补全，避免告警设备较多时产生逐设备请求或并发洪峰。
@@ -29,9 +28,9 @@ async function groupByProduct(api: AlarmDashboardApi, rows: Record<string, unkno
   return [...result.values()]
 }
 
-/** 两个统计面板固定今日窗口，维度切换不影响趋势或其他组件。 */
+/** 返回今日完整排序结果，前十截取只发生在卡片，供弹窗继续浏览全部排行。 */
 export async function loadStatistics(
-  api: AlarmDashboardApi, target: AlarmTarget, dimension: AlarmDimension, limit: number, signal: AbortSignal,
+  api: AlarmDashboardApi, target: AlarmTarget, dimension: AlarmDimension, signal: AbortSignal,
 ): Promise<AlarmWidgetData> {
   const product = target === 'device' && dimension === 'deviceType'
   const camera = target === 'aiTaskMediaTarget' && dimension === 'camera'
@@ -44,6 +43,8 @@ export async function loadStatistics(
     filter: { terms: timeTerms(resolveRange('today')) },
     limit: 10000,
   }, signal))
+  // 接口命中返回上限时无法证明完整性，拒绝将被截断的聚合展示为全部排行。
+  if (rows.length >= 10000) throw invalidResponse()
   const ranking = product ? await groupByProduct(api, rows, signal) : rows.map(row => ({
     id: textOf(row.id), name: textOf(row.name) || String(i18n.global.t('alarmDashboard.unnamed')),
     count: countOf(row.count),
@@ -52,7 +53,7 @@ export async function loadStatistics(
   return {
     series: [],
     ranking: ranking.filter(row => row.count > 0)
-      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, limit),
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
   }
 }
 

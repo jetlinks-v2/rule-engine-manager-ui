@@ -1,7 +1,7 @@
 <template>
-  <CloudEmpty v-if="!items.length" :description="t('alarmDashboard.noStatistics')" />
+  <CloudEmpty v-if="!visibleItems.length" :description="t('alarmDashboard.noStatistics')" />
   <div v-else ref="chartContainer" class="alarm-ranking-scroll">
-    <div class="alarm-ranking-chart" :style="{ height: Math.max(260, items.length * 32 + 36) + 'px' }">
+    <div class="alarm-ranking-chart">
       <Echarts :option="option" :library="libraries" />
     </div>
   </div>
@@ -15,9 +15,11 @@ import { BarChart } from 'echarts/charts'
 import { format as echartsFormat } from 'echarts/core'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import Echarts from '@jetlinks-web-core/components/Echarts'
-import type { AlarmRankItem } from '../dashboard.types'
+import { alarmRankingLimit, type AlarmRankItem } from '../dashboard.types'
 const props = defineProps<{ items: AlarmRankItem[]; vision: boolean; preview: boolean }>()
-const { t } = useI18n()
+const { t, locale } = useI18n()
+// 完整结果留给查看更多弹窗；历史配置中的数量不改变卡片前十规则。
+const visibleItems = computed(() => props.items.slice(0, alarmRankingLimit))
 const { token } = theme.useToken()
 const libraries = [BarChart, GridComponent, TooltipComponent]
 const chartContainer = ref<HTMLDivElement>()
@@ -29,7 +31,7 @@ const labelWidth = computed(() => Math.round(Math.min(192, Math.max(80, (chartWi
 function formatAxisLabelTooltip(params: { value: string; isTruncated: () => boolean }) {
   return params.isTruncated() ? echartsFormat.encodeHTML(params.value) : ''
 }
-const labels = computed(() => props.items.map(item => props.preview && item.name.startsWith('preview.')
+const labels = computed(() => visibleItems.value.map(item => props.preview && item.name.startsWith('preview.')
   ? t('alarmDashboard.' + item.name) : item.name))
 const option = computed(() => ({
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, renderMode: 'html', appendTo: 'body',
@@ -37,7 +39,7 @@ const option = computed(() => ({
     textStyle: { color: token.value.colorTextLightSolid, fontSize: token.value.fontSize },
     extraCssText: 'max-width: min(360px, calc(100vw - 32px)); white-space: normal; overflow-wrap: anywhere;',
   },
-  grid: { top: 8, bottom: 24, left: 8, right: 28, containLabel: true },
+  grid: { top: 8, bottom: 24, left: 8, right: 64, containLabel: true },
   xAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { color: '#eceff3' } }, axisLabel: { color: '#86909c' } },
   yAxis: {
     type: 'category', inverse: true, data: labels.value,
@@ -48,12 +50,14 @@ const option = computed(() => ({
   series: [{
     name: t('alarmDashboard.count'), type: 'bar', barMaxWidth: 12,
     itemStyle: { color: props.vision ? '#13a8e8' : '#1677ff', borderRadius: [0, 2, 2, 0] },
-    data: props.items.map(item => item.count),
+    label: { show: true, position: 'right', color: token.value.colorText, fontSize: 12,
+      formatter: (params: { value: number }) => params.value.toLocaleString(locale.value) },
+    data: visibleItems.value.map(item => item.count),
   }],
 }))
 </script>
 <style scoped>
-.alarm-ranking-scroll { height: 100%; min-height: 0; overflow: auto; scrollbar-width: thin; }
-.alarm-ranking-chart { width: 100%; min-height: 100%; }
+.alarm-ranking-scroll { flex: 1; height: 100%; min-height: 0; overflow: hidden; }
+.alarm-ranking-chart { width: 100%; height: 100%; }
 </style>
 

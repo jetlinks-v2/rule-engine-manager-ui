@@ -1,4 +1,4 @@
-import { computed, ref, type Ref } from 'vue'
+import { computed, ref, watch, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@jetlinks-web-core/store/user'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
@@ -8,15 +8,16 @@ import { dashboardSources } from '@jetlinks-web-core/components/DashBoardCanvas/
 import { useDashboardCatalog } from '@jetlinks-web-core/components/DashBoardCanvas/discovery'
 import type { DashboardValue } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { dashboardKinds, typeOf } from '../../visDashboard/AlarmCenter/dashboard.types'
-import { alarmDashboardLayout, alarmLayoutMode } from './alarmDashboardLayout'
+import { addHandlingStatisticsToLayout, alarmDashboardLayout, alarmLayoutMode } from './alarmDashboardLayout'
 import { alarmDashboardStorageKeys } from './alarmDashboardStorage'
+import { readDashboardLayout } from '@jetlinks-web-core/components/DashBoardCanvas/utils/layoutStorage'
 
 const group = 'rule-engine-manager-ui/visDashboard/AlarmCenter'
 const thumbnails = import.meta.glob('../../visDashboard/AlarmCenter/*/thumbnail.svg', {
   eager: true, query: '?url', import: 'default',
 }) as Record<string, string>
 
-/** 只发现本页七个新入口，不加载旧组件，也不修改公共组件扫描规则。 */
+/** 只发现本页明确声明的入口，不加载旧组件，也不修改公共组件扫描规则。 */
 export function useAlarmDashboard(width: Ref<number>, preview: Ref<boolean> = ref(false)) {
   const user = useUserStore()
   const route = useRoute()
@@ -31,6 +32,16 @@ export function useAlarmDashboard(width: Ref<number>, preview: Ref<boolean> = re
   const storage = computed(() => alarmDashboardStorageKeys(scope.value, isSaaS, mode.value))
   const storageKey = computed(() => preview.value ? undefined : storage.value.key)
   const legacyStorageKeys = computed(() => preview.value ? [] : storage.value.legacyKeys)
+  // 在画布检查组件清单之前补齐新增卡，避免其默认的不匹配清理抹掉个人排版。
+  watch([storage, discovery.loading, preview], ([keys, loading, isPreview]) => {
+    if (loading || isPreview) return
+    try {
+      if (typeof localStorage === 'undefined') return
+      const saved = readDashboardLayout(localStorage, keys.key, keys.legacyKeys)
+      const upgraded = saved && addHandlingStatisticsToLayout(saved, mode.value)
+      if (upgraded) localStorage.setItem(keys.key, JSON.stringify(upgraded))
+    } catch { /* 存储不可用时继续使用默认布局，不阻断统计和处理。 */ }
+  }, { immediate: true, flush: 'sync' })
   const catalog = computed(() => ({
     ...discovery.catalog.value,
     components: Object.fromEntries(Object.entries(discovery.catalog.value.components).map(([type, definition]) => {

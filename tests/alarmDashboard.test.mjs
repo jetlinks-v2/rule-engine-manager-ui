@@ -137,7 +137,7 @@ test('device type aggregates by product using bounded batch enrichment, without 
       assert(ids.length <= 200)
       return ok(ids.map(id => ({ id, productId: 'p', productName: 'Temperature sensor' })))
     },
-  }), 'device', 'deviceType', 20, signal())
+  }), 'device', 'deviceType', signal())
   assert.equal(batches, 2)
   assert.deepEqual(result.ranking, [{ id: 'p', name: 'Temperature sensor', count: 205 }])
 })
@@ -148,8 +148,8 @@ test('camera statistics use the same record collection and today filter as metri
     assert.deepEqual(payload.groupBy.map(group => group.column), ['sourceId', 'sourceName'])
     assert.equal(payload.filter.terms[0].column, 'alarmTime')
     return ok([{ id: 'b', name: 'Camera B', count: 2 }, { id: 'a', name: 'Camera A', count: 5 }])
-  } }), 'aiTaskMediaTarget', 'camera', 1, signal())
-  assert.deepEqual(result.ranking, [{ id: 'a', name: 'Camera A', count: 5 }])
+  } }), 'aiTaskMediaTarget', 'camera', signal())
+  assert.deepEqual(result.ranking, [{ id: 'a', name: 'Camera A', count: 5 }, { id: 'b', name: 'Camera B', count: 2 }])
 })
 
 test('API preserves cancellation and explicit device asset scope for event queries', async () => {
@@ -166,10 +166,10 @@ test('API preserves cancellation and explicit device asset scope for event queri
   assert.equal(calls[3][1].filter.terms[0].value, 'aiTaskMediaTarget')
 })
 
-test('every responsive layout contains seven unique non-overlapping widgets within 24 columns', () => {
+test('every responsive layout contains nine unique non-overlapping widgets within 24 columns', () => {
   for (const mode of ['wide', 'medium', 'compact']) {
     const items = api.alarmDashboardLayout(mode)
-    assert.equal(new Set(items.map(item => item[0])).size, 7)
+    assert.equal(new Set(items.map(item => item[0])).size, 9)
     for (const [, x, y, w, h] of items) assert(x >= 0 && y >= 0 && w >= 4 && h >= 4 && x + w <= 24)
     for (const [index, a] of items.entries()) for (const b of items.slice(index + 1)) {
       assert(!(a[1] < b[1] + b[3] && b[1] < a[1] + a[3] && a[2] < b[2] + b[4] && b[2] < a[2] + a[4]))
@@ -217,7 +217,7 @@ test('preview makes no requests; switching modes and unmounting cancel stale res
   await flush()
 })
 
-test('new locale keys are symmetric and seven component export triples are present', async () => {
+test('new locale keys are symmetric and nine component export triples are present', async () => {
   const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8')
   const [zh, en] = await Promise.all(['zh', 'en'].map(async lang => JSON.parse(await read('locales/lang/' + lang + '.json'))))
   const keys = Object.keys(zh).filter(key => key.startsWith('alarmDashboard.')).sort()
@@ -228,3 +228,36 @@ test('new locale keys are symmetric and seven component export triples are prese
   }
 })
 
+
+test('two handling widgets select time independently and query only their own target', async () => {
+  const calls = []
+  globalThis.alarmDashboardFixture = {
+    user: reactive({ userInfo: { id: 'user' } }), route: reactive({ path: '/alarms/dashboard', params: {}, query: {} }), project: 'p',
+    request: async (url, data) => { calls.push({ url, data }); return ok([{ state: 'warning', count: 3 }, { state: 'normal', count: 7 }]) },
+  }
+  const states = {}
+  const app = renderer.createApp(defineComponent({
+    setup() {
+      for (const kind of ['IotHandlingStatistics', 'VisionHandlingStatistics']) {
+        states[kind] = api.useAlarmWidget(kind, ref({ componentProps: { [api.typeOf(kind)]: { refreshSeconds: 0 } } }), ref(false))
+      }
+      return () => h('div')
+    },
+  }))
+  app.mount({})
+  try {
+    await flush()
+    assert.deepEqual(calls.map(call => call.url), ['/alarm/record/device/_aggregation', '/alarm/record/aiTaskMediaTarget/_aggregation'])
+    assert.deepEqual(Object.keys(states.IotHandlingStatistics.data.value.handling), ['iot'])
+    assert.deepEqual(Object.keys(states.VisionHandlingStatistics.data.value.handling), ['vision'])
+    const vision = states.VisionHandlingStatistics.data.value
+    states.IotHandlingStatistics.timeRange.value = 'yesterday'
+    await nextTick(); await flush()
+    assert.equal(calls.length, 3)
+    assert.equal(calls[2].url, '/alarm/record/device/_aggregation')
+    assert.equal(states.VisionHandlingStatistics.timeRange.value, 'today')
+    assert.equal(states.VisionHandlingStatistics.data.value, vision)
+    const iotWindow = states.IotHandlingStatistics.data.value.window
+    assert.deepEqual(calls[2].data.filter.terms.find(term => term.column === 'alarmTime').value, [iotWindow.startTime, iotWindow.endTime])
+  } finally { app.unmount() }
+})

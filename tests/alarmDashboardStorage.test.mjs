@@ -50,7 +50,7 @@ test('new key has fixed-length scope digest and reconstructs the exact original 
   const digest = createHash('md5').update(JSON.stringify([scope, 'private'])).digest('hex')
   assert.equal(keys.key, `alarm-dashboard:v1:${digest}:wide`)
   assert.equal(keys.key.length, 56)
-  const original = `alarm-center-dashboard-v1:${encodeURIComponent(scope)}:private:wide:${[...dashboardKinds].sort().join(',')}`
+  const original = `alarm-center-dashboard-v1:${encodeURIComponent(scope)}:private:wide:${['TodayEvents','IotAlarms','VisionAlarms','QuickStart','AlarmTrend','IotStatistics','VisionStatistics'].sort().join(',')}`
   assert.deepEqual(keys.legacyKeys, [original])
   assert(keys.key.length < original.length / 3)
   const large = alarmDashboardStorageKeys(JSON.stringify(['租户'.repeat(1000), '/api/' + 'x'.repeat(1000)]), false, 'wide')

@@ -2,10 +2,10 @@
   <div class="alarm-metric">
     <div class="alarm-metric-main">
       <div class="alarm-metric-heading">
-        <span>{{ title }}</span>
+        <h3 class="alarm-metric-title">{{ title }}</h3>
         <div class="alarm-metric-value">{{ format(data?.today) }} <small>{{ t('alarmDashboard.unit') }}</small></div>
       </div>
-      <AIcon :type="icon" class="alarm-metric-icon" />
+      <slot name="hint"><AIcon :type="icon" class="alarm-metric-icon" /></slot>
     </div>
     <div class="alarm-metric-footer">
       <template v-if="event">
@@ -41,6 +41,7 @@ const format = (value?: number | null) => (value ?? 0).toLocaleString(locale.val
 .alarm-metric { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: auto; gap: 8px; }
 .alarm-metric-main { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: 1; }
 .alarm-metric-heading { color: var(--ink-3, #86909c); font-size: 14px; min-width: 0; }
+.alarm-metric-title { margin: 0; color: var(--ink-1, #1d2129); font-size: 18px; font-weight: 600; line-height: 22px; }
 .alarm-metric-value { color: var(--ink-1, #1d2129); font-size: 28px; line-height: 1.35; font-weight: 500; overflow-wrap: anywhere; }
 small { font-size: 12px; font-weight: 400; color: var(--ink-3, #86909c); }
 .alarm-metric-icon { flex: none; font-size: 28px; color: var(--ant-color-primary, #1677ff); background: var(--ant-color-primary-bg, #e6f4ff); border-radius: var(--r-3, 8px); padding: 10px; }
