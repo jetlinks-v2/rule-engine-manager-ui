@@ -233,7 +233,7 @@ test('two handling widgets select time independently and query only their own ta
   const calls = []
   globalThis.alarmDashboardFixture = {
     user: reactive({ userInfo: { id: 'user' } }), route: reactive({ path: '/alarms/dashboard', params: {}, query: {} }), project: 'p',
-    request: async (url, data) => { calls.push({ url, data }); return ok([{ state: 'warning', count: 3 }, { state: 'normal', count: 7 }]) },
+    request: async (url, data) => { calls.push({ url, data }); return ok([{ time: data.filter.terms.find(term => term.column === 'alarmTime').value[0], count: data.filter.terms.find(term => term.column === 'state').value === 'warning' ? 3 : 7 }]) },
   }
   const states = {}
   const app = renderer.createApp(defineComponent({
@@ -247,17 +247,17 @@ test('two handling widgets select time independently and query only their own ta
   app.mount({})
   try {
     await flush()
-    assert.deepEqual(calls.map(call => call.url), ['/alarm/record/device/_aggregation', '/alarm/record/aiTaskMediaTarget/_aggregation'])
+    assert.deepEqual(calls.map(call => call.url), ['/alarm/record/device/_aggregation', '/alarm/record/device/_aggregation', '/alarm/record/aiTaskMediaTarget/_aggregation', '/alarm/record/aiTaskMediaTarget/_aggregation'])
     assert.deepEqual(Object.keys(states.IotHandlingStatistics.data.value.handling), ['iot'])
     assert.deepEqual(Object.keys(states.VisionHandlingStatistics.data.value.handling), ['vision'])
     const vision = states.VisionHandlingStatistics.data.value
     states.IotHandlingStatistics.timeRange.value = 'yesterday'
     await nextTick(); await flush()
-    assert.equal(calls.length, 3)
-    assert.equal(calls[2].url, '/alarm/record/device/_aggregation')
+    assert.equal(calls.length, 6)
+    assert(calls.slice(4).every(call => call.url === '/alarm/record/device/_aggregation'))
     assert.equal(states.VisionHandlingStatistics.timeRange.value, 'today')
     assert.equal(states.VisionHandlingStatistics.data.value, vision)
     const iotWindow = states.IotHandlingStatistics.data.value.window
-    assert.deepEqual(calls[2].data.filter.terms.find(term => term.column === 'alarmTime').value, [iotWindow.startTime, iotWindow.endTime])
+    assert.deepEqual(calls[4].data.filter.terms.find(term => term.column === 'alarmTime').value, [iotWindow.startTime, iotWindow.endTime])
   } finally { app.unmount() }
 })

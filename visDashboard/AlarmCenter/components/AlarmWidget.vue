@@ -20,8 +20,7 @@
       <AlarmQuickStartPanel v-else-if="kind === 'QuickStart'" :actions="quickActions" @open="open" />
       <template v-else-if="handling">
         <AlarmConfigurationGuide v-if="hints.length" :items="hints" @open="open" @retry="refreshConfiguration" />
-        <AlarmHandlingPanel :value="data.handling" :source="handlingSource" :window="data.window" :scope-key="handlingScope" :is-edit="isEdit" :loading="loading"
-          @handled="refresh" @retry="refresh" />
+        <AlarmHandlingPanel :value="data.handling" :range="data.window" :source="handlingSource" :is-edit="isEdit" :loading="loading" @retry="refresh" />
       </template>
       <AlarmConfigurationGuide v-else-if="guideEmpty" :items="hints" mode="empty" @open="open" @retry="refreshConfiguration" />
       <template v-else>
@@ -34,7 +33,7 @@
           <div class="alarm-chart"><AlarmTrendPanel :series="data.series" :time-range="timeRange" /></div>
         </template>
         <template v-else>
-          <p class="alarm-widget-caption">{{ t('alarmDashboard.dimension.' + dimension) }} · {{ t('alarmDashboard.range.today') }}</p>
+          <p class="alarm-widget-caption" :style="{ fontSize: chartTextStyle.fontSize + 'px', fontWeight: chartTextStyle.fontWeight, color: chartTextStyle.color }">{{ t('alarmDashboard.dimension.' + dimension) }} · {{ t('alarmDashboard.range.today') }}</p>
           <AlarmStatisticsPanel :items="data.ranking" :vision="kind === 'VisionStatistics'" :preview="isEdit" />
         </template>
       </template>
@@ -47,6 +46,7 @@
 import { computed, defineAsyncComponent, onDeactivated, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAlarmWidget } from '../hooks/useAlarmWidget'
+import { useAlarmTypography } from '../hooks/useAlarmTypography'
 import { useAlarmQuickStart } from '../hooks/useAlarmQuickStart'
 import { useAlarmRuleConfiguration } from '../hooks/useAlarmRuleConfiguration'
 import { configurationHintsFor } from '../services/configuration'
@@ -62,7 +62,8 @@ const AlarmTrendPanel = defineAsyncComponent(() => import('./AlarmTrendPanel.vue
 const AlarmStatisticsPanel = defineAsyncComponent(() => import('./AlarmStatisticsPanel.vue'))
 const props = defineProps<{ kind: AlarmDashboardKind; info?: AlarmWidgetInfo; isEdit: boolean }>()
 const { t } = useI18n()
-const { config, data, loading, error, timeRange, dimension, refresh, scope } = useAlarmWidget(props.kind, toRef(props, 'info'), toRef(props, 'isEdit'))
+const chartTextStyle = useAlarmTypography()
+const { config, data, loading, error, timeRange, dimension, refresh } = useAlarmWidget(props.kind, toRef(props, 'info'), toRef(props, 'isEdit'))
 const { actions, open } = useAlarmQuickStart(toRef(props, 'isEdit'))
 const rankingOpen = ref(false)
 // 弹窗始终对应打开时的维度，离开页面后不保留浮层。
@@ -79,10 +80,8 @@ const quickActions = computed(() => actions.value.map(action => ({
   unconfigured: action.key === 'iotRules' ? ruleConfiguration.value.iot === 'missing'
     : action.key === 'visionRules' && ruleConfiguration.value.vision === 'missing',
 })))
-// 轮询保留已挂载处理组件；显式筛选 / 身份变化才使其 scope 失效。
 const handling = computed(() => isHandlingKind(props.kind))
 const handlingSource = computed(() => handlingSourceOf(props.kind))
-const handlingScope = computed(() => JSON.stringify([scope.value, timeRange.value, props.isEdit]))
 const metric = computed(() => isMetricKind(props.kind))
 const statistics = computed(() => ['IotStatistics', 'VisionStatistics'].includes(props.kind))
 const showMoreRanking = computed(() => statistics.value && !error.value && data.value.ranking.length > alarmRankingLimit)
@@ -103,7 +102,7 @@ const failedSeries = computed(() => data.value.series.filter(item => item.failed
 .alarm-widget-metric { padding: 10px 16px; }
 header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; flex: none; }
 .alarm-widget-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-h3 { margin: 0; font-size: 18px; font-weight: 600; line-height: 22px; }
+h3 { margin: 0; font-size: 16px; font-weight: 500; line-height: 24px; }
 .alarm-widget-switch.ant-segmented {
   max-width: 100%; overflow-x: auto; padding: 3px; font-size: 12px;
   background: #f5f6f8; color: var(--ink-2, #4e5969);
@@ -123,7 +122,7 @@ h3 { margin: 0; font-size: 18px; font-weight: 600; line-height: 22px; }
 .alarm-widget-content { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
 .alarm-widget-quick { display: block; }
 .alarm-widget-state { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; flex: 1; min-height: 0; overflow: auto; }
-.alarm-widget-caption { color: var(--ink-3, #86909c); font-size: 12px; margin: 0 0 4px; flex: none; }
+.alarm-widget-caption { margin: 0 0 4px; line-height: 20px; flex: none; }
 .alarm-chart { flex: 1; min-height: 0; }
 .alarm-widget-warning { color: var(--ant-color-error, #ff4d4f); font-size: 12px; flex: none; }
 </style>

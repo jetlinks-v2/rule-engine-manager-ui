@@ -15,12 +15,14 @@ import { BarChart } from 'echarts/charts'
 import { format as echartsFormat } from 'echarts/core'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import Echarts from '@jetlinks-web-core/components/Echarts'
+import { useAlarmTypography } from '../hooks/useAlarmTypography'
 import { alarmRankingLimit, type AlarmRankItem } from '../dashboard.types'
 const props = defineProps<{ items: AlarmRankItem[]; vision: boolean; preview: boolean }>()
 const { t, locale } = useI18n()
 // 完整结果留给查看更多弹窗；历史配置中的数量不改变卡片前十规则。
 const visibleItems = computed(() => props.items.slice(0, alarmRankingLimit))
 const { token } = theme.useToken()
+const chartTextStyle = useAlarmTypography()
 const libraries = [BarChart, GridComponent, TooltipComponent]
 const chartContainer = ref<HTMLDivElement>()
 const { width: chartWidth } = useElementSize(chartContainer)
@@ -34,23 +36,24 @@ function formatAxisLabelTooltip(params: { value: string; isTruncated: () => bool
 const labels = computed(() => visibleItems.value.map(item => props.preview && item.name.startsWith('preview.')
   ? t('alarmDashboard.' + item.name) : item.name))
 const option = computed(() => ({
+  textStyle: chartTextStyle.value,
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, renderMode: 'html', appendTo: 'body',
     backgroundColor: token.value.colorBgSpotlight, borderWidth: 0, borderRadius: token.value.borderRadius,
-    textStyle: { color: token.value.colorTextLightSolid, fontSize: token.value.fontSize },
+    textStyle: { fontFamily: chartTextStyle.value.fontFamily, fontWeight: 400, color: token.value.colorTextLightSolid, fontSize: token.value.fontSize },
     extraCssText: 'max-width: min(360px, calc(100vw - 32px)); white-space: normal; overflow-wrap: anywhere;',
   },
   grid: { top: 8, bottom: 24, left: 8, right: 64, containLabel: true },
-  xAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { color: '#eceff3' } }, axisLabel: { color: '#86909c' } },
+  xAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { color: '#eceff3' } }, axisLabel: chartTextStyle.value },
   yAxis: {
     type: 'category', inverse: true, data: labels.value,
     tooltip: { show: true, formatter: formatAxisLabelTooltip },
     axisLine: { show: false }, axisTick: { show: false },
-    axisLabel: { color: '#4e5969', width: labelWidth.value, overflow: 'truncate' },
+    axisLabel: { ...chartTextStyle.value, width: labelWidth.value, overflow: 'truncate' },
   },
   series: [{
     name: t('alarmDashboard.count'), type: 'bar', barMaxWidth: 12,
     itemStyle: { color: props.vision ? '#13a8e8' : '#1677ff', borderRadius: [0, 2, 2, 0] },
-    label: { show: true, position: 'right', color: token.value.colorText, fontSize: 12,
+    label: { ...chartTextStyle.value, show: true, position: 'right', color: token.value.colorText,
       formatter: (params: { value: number }) => params.value.toLocaleString(locale.value) },
     data: visibleItems.value.map(item => item.count),
   }],

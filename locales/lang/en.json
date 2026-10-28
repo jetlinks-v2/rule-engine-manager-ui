@@ -2226,16 +2226,14 @@
 	"alarmDashboard.preview.camera.5": "Lobby entrance",
 	"EmptyCreate.names.alarm_rules": "alarm rules",
 	"EmptyCreate.names.rules": "rules",
-	"alarmDashboard.IotHandlingStatistics": "IoT Alarm Handling",
-	"alarmDashboard.VisionHandlingStatistics": "Vision Alarm Handling",
+	"alarmDashboard.IotHandlingStatistics": "IoT Alarm Handling Status",
+	"alarmDashboard.VisionHandlingStatistics": "Vision Alarm Handling Status",
   "alarmDashboard.HandlingStatistics": "Alarm Handling",
   "alarmDashboard.handling.total": "Total alarms",
   "alarmDashboard.handling.active": "Unhandled",
   "alarmDashboard.handling.handled": "Handled",
   "alarmDashboard.handling.rate": "Handling rate",
-  "alarmDashboard.handling.viewPending": "View unhandled alarms",
   "alarmDashboard.handling.noAlarms": "No alarms",
   "alarmDashboard.handling.noData": "No data",
-  "alarmDashboard.handling.unavailable": "Alarm handling is currently unavailable",
   "alarmDashboard.handling.unit": "Unit: alarms"
 }

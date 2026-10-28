@@ -2227,16 +2227,14 @@
 	"alarmDashboard.preview.camera.5": "大厅正门摄像机",
 	"EmptyCreate.names.alarm_rules": "告警规则",
 	"EmptyCreate.names.rules": "规则",
-	"alarmDashboard.IotHandlingStatistics": "物联告警处理",
-	"alarmDashboard.VisionHandlingStatistics": "视觉告警处理",
+	"alarmDashboard.IotHandlingStatistics": "物联告警处理情况",
+	"alarmDashboard.VisionHandlingStatistics": "视觉告警处理情况",
   "alarmDashboard.HandlingStatistics": "告警处理情况",
   "alarmDashboard.handling.total": "告警总量",
   "alarmDashboard.handling.active": "未处理",
   "alarmDashboard.handling.handled": "已处理",
   "alarmDashboard.handling.rate": "处理率",
-  "alarmDashboard.handling.viewPending": "查看待处理记录",
   "alarmDashboard.handling.noAlarms": "暂无告警",
   "alarmDashboard.handling.noData": "暂无数据",
-  "alarmDashboard.handling.unavailable": "告警处理暂不可用",
   "alarmDashboard.handling.unit": "单位：条"
 }

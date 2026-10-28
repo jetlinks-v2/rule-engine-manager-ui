@@ -50,7 +50,7 @@ function separateLayout(mode: AlarmLayoutMode, h: number): readonly AlarmLayoutI
 }
 
 export function alarmDashboardLayout(mode: AlarmLayoutMode): readonly AlarmLayoutItem[] {
-  return separateLayout(mode, mode === 'wide' ? 6 : 9)
+  return separateLayout(mode, 9)
 }
 
 function toStored(items: readonly AlarmLayoutItem[]): DashboardStoredLayoutItem[] {
@@ -74,9 +74,9 @@ function matchesLayout(saved: DashboardStoredLayoutItem[], expected: DashboardSt
 /** 旧默认升级九卡；个人布局仅拆原处理区，其他卡片坐标和尺寸不变。 */
 export function addHandlingStatisticsToLayout(saved: DashboardStoredLayoutItem[], mode: AlarmLayoutMode): DashboardStoredLayoutItem[] | undefined {
   const current = toStored(alarmDashboardLayout(mode))
-  // 只收紧上一版完整默认九卡；手动位置或尺寸有改动时保持原样。
-  const previousSeparate = toStored(separateLayout(mode, mode === 'wide' ? 8 : 9))
-  if (!matchesLayout(saved, current) && matchesLayout(saved, previousSeparate)) return current
+  // 仅加高历史完整默认九卡（桌面 6 / 8 行）；手动位置或尺寸有改动时保持原样。
+  const previousHeights = mode === 'wide' ? [6, 8] : [9]
+  if (!matchesLayout(saved, current) && previousHeights.some(height => matchesLayout(saved, toStored(separateLayout(mode, height))))) return current
   if (hasIds(saved, current)) return
   const legacy = toStored(legacyAlarmDashboardLayout(mode))
   const combined = toStored(combinedLayout(mode, mode === 'wide' ? 8 : mode === 'medium' ? 9 : 18))

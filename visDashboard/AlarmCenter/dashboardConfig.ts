@@ -31,7 +31,7 @@ export function createWidgetConfig(kind: AlarmDashboardKind): DashboardWidgetDef
     type: typeOf(kind),
     componentProps: {
       style: { width: '100%', height: '100%' },
-      gridItem: { x: 0, y: 0, w: kind === 'HandlingStatistics' ? 24 : metric ? 8 : 12, h: metric ? 4 : singleHandling ? 6 : isHandlingKind(kind) ? 8 : 10, minW: 4, minH: metric ? 4 : singleHandling ? 6 : 7 },
+      gridItem: { x: 0, y: 0, w: kind === 'HandlingStatistics' ? 24 : metric ? 8 : 12, h: metric ? 4 : singleHandling ? 9 : isHandlingKind(kind) ? 8 : 10, minW: 4, minH: metric ? 4 : singleHandling ? 9 : 7 },
       [typeOf(kind)]: { ...defaultSettings },
     },
   }

@@ -21,10 +21,10 @@ const stubs={
   'vue-i18n':'export const useI18n=()=>({t:(key,args)=>{let text=globalThis.alarmRankingFixture.messages[key]||key;for(const [name,value] of Object.entries(args||{}))text=text.replace("{"+name+"}",value);return text},locale:{value:"zh-CN"}})',
   '@jetlinks-web/components':'import {h} from "vue";export const Ellipsis=(_,ctx)=>h("span",ctx.slots.default?.())',
   '@ant-design/icons-vue':'export const RightOutlined=()=>null',
-  'ant-design-vue':'import {ref} from "vue";export const theme={useToken:()=>({token:ref({colorBgSpotlight:"black",colorTextLightSolid:"white",colorText:"black",borderRadius:6,fontSize:12})})}',
+  'ant-design-vue':'import {ref} from "vue";export const theme={useToken:()=>({token:ref({fontFamily:"Arial",colorTextDescription:"#86909c",colorBgSpotlight:"black",colorTextLightSolid:"white",colorText:"black",borderRadius:6,fontSize:12})})}',
   '@vueuse/core':'import {ref} from "vue";export const useElementSize=()=>({width:ref(600)})',
   'echarts/charts':'export const BarChart={}',
-  'echarts/components':'export const GridComponent={},TooltipComponent={}',
+  'echarts/components':'export const GridComponent={},LegendComponent={},TitleComponent={},TooltipComponent={}',
   'echarts/core':'export const format={encodeHTML:value=>value}',
   '@jetlinks-web-core/components/Echarts':'import {h} from "vue";export default {props:["option","library"],setup(props){return ()=>h("div",{"data-chart":props.option})}}',
 }

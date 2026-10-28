@@ -10,6 +10,7 @@ const result = await build({
   stdin: { resolveDir: root, loader: 'ts', contents: `
     export * from './api/alarmDashboard';
     export * from './visDashboard/AlarmCenter/services/handling';
+    export * from './visDashboard/AlarmCenter/services/preview';
     export * from './views/DashBoard/alarmDashboardLayout';
     export * from '../authentication-manager-ui/visDashboard/Base/Operations/alarmService';
     export * from '../authentication-manager-ui/visDashboard/Base/Operations/useQuickAlarms';
@@ -33,40 +34,122 @@ const signal = () => new AbortController().signal
 const aggregateApi = aggregateAlarms => ({ aggregateAlarms })
 const flush = async () => { await Promise.resolve(); await nextTick(); await Promise.resolve(); await nextTick() }
 
-test('handling aggregates each source with the same time window and explicit state groups', async () => {
+test('handling aggregates current states by occurrence time and aligns daily buckets for each source', async t => {
+  t.mock.method(Date, 'now', () => new Date(2026, 9, 28, 17, 42).getTime())
   const calls = []
   const value = await api.loadHandlingStatistics(aggregateApi(async (target, query) => {
     calls.push({ target, query })
-    return ok(target === 'device'
-      ? [{ state: 'warning', count: 27 }, { state: { value: 'normal', text: '已处理' }, count: 159 }]
-      : [{ state: 'warning', count: 304 }, { state: 'normal', count: 824 }])
+    const [start, end] = query.filter.terms.find(term => term.column === 'alarmTime').value
+    const active = query.filter.terms.find(term => term.column === 'state').value === 'warning'
+    const counts = target === 'device' ? active ? [18, 9] : [100, 59] : active ? [204, 100] : [524, 300]
+    return ok({ data: [
+      { value: { time: end, count: String(counts[1]) } },
+      { time: start, count: counts[0] - 1 }, { time: start, count: 1 },
+    ] })
   }), '7d', signal())
-  assert.equal(calls.length, 2)
-  assert.deepEqual(calls.map(c => c.target), ['device', 'aiTaskMediaTarget'])
-  assert.deepEqual(calls[0].query.groupBy, [{ column: 'state', alias: 'state' }])
-  assert.deepEqual(calls[0].query.filter, calls[1].query.filter)
-  assert.deepEqual(calls[0].query.filter.terms[0].value, [value.window.startTime, value.window.endTime])
+  assert.equal(calls.length, 4)
+  assert.deepEqual(calls.map(c => c.target), ['device', 'device', 'aiTaskMediaTarget', 'aiTaskMediaTarget'])
+  for (const { query } of calls) {
+    assert.equal(query.groupBy, undefined)
+    assert.deepEqual(query.columns, [{ column: 'id', alias: 'count', aggregation: 'COUNT' }])
+    assert.deepEqual(query.filter.terms[0], { column: 'alarmTime', termType: 'btw', value: [value.window.startTime, value.window.endTime] })
+    assert.equal(query.filter.terms[1].termType, 'eq')
+    assert.deepEqual(query.groupByTime, {
+      column: 'alarmTime', alias: 'time', interval: '1d', format: 'yyyy-MM-dd',
+      from: '2026-10-22 00:00:00', to: '2026-10-28 17:42:00',
+    })
+  }
+  assert.deepEqual(calls.map(c => c.query.filter.terms[1].value), ['warning', 'normal', 'warning', 'normal'])
   assert.equal(value.handling.iot.total, 186)
   assert.equal(value.handling.iot.rate, 85.5)
   assert.equal(value.handling.vision.total, 1128)
   assert.equal(value.handling.vision.rate, 73)
-})
-
-test('successful empty and zero counts preserve zero but do not invent a handling rate', async () => {
-  for (const rows of [[], [{ state: 'warning', count: 0 }, { state: 'normal', count: '0' }]]) {
-    const { handling } = await api.loadHandlingStatistics(aggregateApi(async () => ok(rows)), 'today', signal())
-    for (const source of ['iot', 'vision']) assert.deepEqual(handling[source], { total: 0, active: 0, handled: 0, rate: null, failed: false })
+  assert.equal(value.handling.iot.points.length, 7)
+  assert.deepEqual(value.handling.iot.points[0], { timestamp: new Date(2026, 9, 22).getTime(), active: 18, handled: 100 })
+  assert.deepEqual(value.handling.iot.points[6], { timestamp: new Date(2026, 9, 28).getTime(), active: 9, handled: 59 })
+  assert(value.handling.iot.points.slice(1, 6).every(point => point.active === 0 && point.handled === 0))
+  for (const stats of Object.values(value.handling)) {
+    assert.equal(stats.points.reduce((sum, point) => sum + point.active + point.handled, 0), stats.total)
   }
 })
 
-test('one failed, malformed or unsupported state cannot turn into zero or hide the other source', async () => {
-  for (const invalid of [{ success: false, status: 403 }, ok([{ state: 'other', count: 1 }]), ok([{ state: 'warning', count: -1 }]), ok({})]) {
-    const { handling } = await api.loadHandlingStatistics(aggregateApi(async target => target === 'device' ? ok([{ state: 'normal', count: 4 }]) : invalid), 'today', signal())
+test('successful empty and zero aggregations retain the full zero-valued time axis', async () => {
+  for (const empty of [true, false]) {
+    const { handling, window } = await api.loadHandlingStatistics(aggregateApi(async (_, query) =>
+      ok(empty ? [] : [{ time: query.filter.terms[0].value[0], count: '0' }]),
+    ), 'today', signal())
+    for (const stats of Object.values(handling)) {
+      const { points, ...summary } = stats
+      assert.deepEqual(summary, { total: 0, active: 0, handled: 0, rate: null, failed: false })
+      assert.equal(points[0].timestamp, window.startTime)
+      assert(points.at(-1).timestamp <= window.endTime)
+      assert(points.length >= 1 && points.length <= 24)
+      assert(points.every(point => point.active === 0 && point.handled === 0))
+    }
+  }
+})
+
+test('one failed state or malformed time bucket cannot become zero or hide the other source', async () => {
+  for (const invalid of [
+    { success: false, status: 403 }, ok([{ count: 1 }]),
+    ok([{ time: 'invalid', count: 1 }]), ok([{ time: 0, count: 1 }]),
+    ok([{ time: Date.now(), count: -1 }]), ok({}),
+    ok(Array.from({ length: 1000 }, () => ({ time: Date.now(), count: 1 }))),
+  ]) {
+    const { handling } = await api.loadHandlingStatistics(aggregateApi(async (target, query) => {
+      const state = query.filter.terms[1].value
+      if (target === 'aiTaskMediaTarget' && state === 'normal') return invalid
+      return ok([{ time: query.filter.terms[0].value[0], count: state === 'normal' ? 4 : 0 }])
+    }), 'today', signal())
     assert.equal(handling.iot.handled, 4)
     assert.equal(handling.iot.rate, 100)
-    assert.equal(handling.vision.failed, true)
-    assert.equal(handling.vision.active, null)
-    assert.equal(handling.vision.rate, null)
+    assert.deepEqual(handling.vision, { total: null, active: null, handled: null, rate: null, points: [], failed: true })
+  }
+})
+
+test('hourly handling merges duplicate buckets and fills gaps through the last hour', async t => {
+  t.mock.method(Date, 'now', () => new Date(2026, 9, 28, 17, 42).getTime())
+  const { handling, window } = await api.loadHandlingStatistics(aggregateApi(async (_, query) => {
+    assert.equal(query.groupByTime.interval, '1h')
+    assert.equal(query.groupByTime.format, 'yyyy-MM-dd HH:mm')
+    assert.equal(query.groupByTime.from, '2026-10-27 00:00:00')
+    assert.equal(query.groupByTime.to, '2026-10-27 23:59:59')
+    return ok(query.filter.terms[1].value === 'warning'
+      ? [{ time: '2026-10-27 23:00', count: 5 }, { time: '2026-10-27 03:00', count: 2 }, { time: '2026-10-27 03:10', count: '3' }]
+      : [{ timestamp: new Date(2026, 9, 27, 3).getTime(), alarmCount: 7 }])
+  }), 'yesterday', signal(), 'iot')
+  const stats = handling.iot
+  assert.equal(stats.points.length, 24)
+  assert.deepEqual(stats.points[3], { timestamp: new Date(2026, 9, 27, 3).getTime(), active: 5, handled: 7 })
+  assert.deepEqual(stats.points[23], { timestamp: new Date(2026, 9, 27, 23).getTime(), active: 5, handled: 0 })
+  assert.deepEqual(stats.points[0], { timestamp: window.startTime, active: 0, handled: 0 })
+  assert.equal(stats.total, 17)
+})
+
+test('daily handling windows cross year boundaries and stop at the current day', async t => {
+  const now = new Date(2026, 0, 1, 10, 15).getTime()
+  t.mock.method(Date, 'now', () => now)
+  for (const days of [3, 7, 30]) {
+    const { handling, window } = await api.loadHandlingStatistics(aggregateApi(async (_, query) =>
+      ok([{ time: query.filter.terms[0].value[0], count: 1 }]),
+    ), days + 'd', signal(), 'vision')
+    const { points } = handling.vision
+    assert.equal(points.length, days)
+    assert.equal(points[0].timestamp, new Date(2026, 0, 2 - days).getTime())
+    assert.equal(points.at(-1).timestamp, new Date(2026, 0, 1).getTime())
+    assert.equal(window.endTime, now)
+    assert.equal(handling.vision.total, 2)
+  }
+})
+
+test('handling preview includes a complete time axis and its totals equal the displayed buckets', () => {
+  for (const range of ['today', 'yesterday', '3d', '7d', '30d']) {
+    const { handling } = api.previewData('HandlingStatistics', range, 'type')
+    for (const stats of Object.values(handling)) {
+      assert.equal(stats.points.length, range === 'today' ? 19 : range === 'yesterday' ? 24 : parseInt(range, 10))
+      assert.equal(stats.points.reduce((sum, point) => sum + point.active, 0), stats.active)
+      assert.equal(stats.points.reduce((sum, point) => sum + point.handled, 0), stats.handled)
+    }
   }
 })
 
@@ -83,9 +166,9 @@ test('aggregate API retains type scope and cancellation for handling statistics'
   const io = api.createAlarmDashboardApi({ post: async (...args) => { calls.push(args); return ok([]) } })
   const abort = signal()
   await api.loadHandlingStatistics(io, 'today', abort)
-  assert.deepEqual(calls.map(c => c[0]), ['/alarm/record/device/_aggregation', '/alarm/record/aiTaskMediaTarget/_aggregation'])
+  assert.deepEqual(calls.map(c => c[0]), ['/alarm/record/device/_aggregation', '/alarm/record/device/_aggregation', '/alarm/record/aiTaskMediaTarget/_aggregation', '/alarm/record/aiTaskMediaTarget/_aggregation'])
   assert(calls.every(c => c[2].signal === abort && c[1].filter.terms[0].column === 'targetType'))
-  assert.deepEqual(calls.map(c => c[1].filter.terms[0].value), ['device', 'aiTaskMediaTarget'])
+  assert.deepEqual(calls.map(c => c[1].filter.terms[0].value), ['device', 'device', 'aiTaskMediaTarget', 'aiTaskMediaTarget'])
 })
 
 test('old default layouts upgrade to the nine-card layout in all width modes without mutation', () => {
@@ -224,12 +307,18 @@ for (const source of ['iot', 'vision']) {
     const calls = []
     const value = await api.loadHandlingStatistics(aggregateApi(async (target, query) => {
       calls.push({ target, query })
-      return ok([{ state: 'warning', count: 2 }, { state: 'normal', count: 8 }])
+      return ok([{ time: query.filter.terms[0].value[0], count: query.filter.terms[1].value === 'warning' ? 2 : 8 }])
     }), 'yesterday', signal(), source)
-    assert.equal(calls.length, 1)
+    assert.equal(calls.length, 2)
     assert.equal(calls[0].target, source === 'iot' ? 'device' : 'aiTaskMediaTarget')
     assert.deepEqual(Object.keys(value.handling), [source])
-    assert.deepEqual(value.handling[source], { total: 10, active: 2, handled: 8, rate: 80, failed: false })
+    const { points, ...summary } = value.handling[source]
+    assert.deepEqual(summary, { total: 10, active: 2, handled: 8, rate: 80, failed: false })
+    assert.equal(points.length, 24)
+    assert.deepEqual(points[0], { timestamp: value.window.startTime, active: 2, handled: 8 })
+    assert(points.slice(1).every(point => point.active === 0 && point.handled === 0))
+    assert(calls.every(call => call.target === calls[0].target))
+    assert.deepEqual(calls.map(call => call.query.filter.terms[1].value), ['warning', 'normal'])
     assert.deepEqual(calls[0].query.filter.terms[0].value, [value.window.startTime, value.window.endTime])
     assert.equal(new Date(value.window.endTime).getHours(), 23)
   })
@@ -285,22 +374,25 @@ test('an undersized manual combined card moves only the two replacement cards be
   assert.equal(next[8].y, next[7].y + next[7].h)
 })
 
-test('only the complete prior nine-card desktop default is compacted; personal layouts are retained', () => {
+test('only complete historical nine-card desktop defaults grow for the ring chart; personal layouts are retained', () => {
   const legacy = api.legacyAlarmDashboardLayout('wide')
-  const previous = stored([...legacy.slice(0, 5),
-    ['IotHandlingStatistics', 0, 14, 12, 8], ['VisionHandlingStatistics', 12, 14, 12, 8],
-    ...legacy.slice(5).map(([kind, x, y, w, h]) => [kind, x, y + 8, w, h])])
-  const before = JSON.stringify(previous)
-  const next = api.addHandlingStatisticsToLayout(previous, 'wide')
-  assert.deepEqual(next, stored(api.alarmDashboardLayout('wide')))
-  assert.equal(next.find(item => item.i === 'alarmCenterIotHandlingStatistics').h, 6)
-  assert.equal(next.find(item => item.i === 'alarmCenterVisionStatistics').y, 20)
-  assert.equal(JSON.stringify(previous), before)
-  const moved = previous.map(item => ({ ...item }))
-  moved[0].y = 90
-  assert.equal(api.addHandlingStatisticsToLayout(moved, 'wide'), undefined)
-  const resized = previous.map(item => ({ ...item }))
-  resized[5].h = 9
-  assert.equal(api.addHandlingStatisticsToLayout(resized, 'wide'), undefined)
-  assert.equal(api.addHandlingStatisticsToLayout(next, 'wide'), undefined)
+  for (const height of [6, 8]) {
+    const previous = stored([...legacy.slice(0, 5),
+      ['IotHandlingStatistics', 0, 14, 12, height], ['VisionHandlingStatistics', 12, 14, 12, height],
+      ...legacy.slice(5).map(([kind, x, y, w, h]) => [kind, x, y + height, w, h])])
+    const before = JSON.stringify(previous)
+    const next = api.addHandlingStatisticsToLayout(previous, 'wide')
+    assert.deepEqual(next, stored(api.alarmDashboardLayout('wide')))
+    assert.equal(next.find(item => item.i === 'alarmCenterIotHandlingStatistics').h, 9)
+    assert.equal(next.find(item => item.i === 'alarmCenterVisionHandlingStatistics').h, 9)
+    assert.equal(next.find(item => item.i === 'alarmCenterVisionStatistics').y, 23)
+    assert.equal(JSON.stringify(previous), before)
+    const moved = previous.map(item => ({ ...item }))
+    moved[0].y = 90
+    assert.equal(api.addHandlingStatisticsToLayout(moved, 'wide'), undefined)
+    const resized = previous.map(item => ({ ...item }))
+    resized[5].h = height + 1
+    assert.equal(api.addHandlingStatisticsToLayout(resized, 'wide'), undefined)
+    assert.equal(api.addHandlingStatisticsToLayout(next, 'wide'), undefined)
+  }
 })

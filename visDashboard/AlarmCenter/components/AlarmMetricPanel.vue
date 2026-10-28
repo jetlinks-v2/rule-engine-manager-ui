@@ -41,13 +41,13 @@ const format = (value?: number | null) => (value ?? 0).toLocaleString(locale.val
 .alarm-metric { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: auto; gap: 8px; }
 .alarm-metric-main { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: 1; }
 .alarm-metric-heading { color: var(--ink-3, #86909c); font-size: 14px; min-width: 0; }
-.alarm-metric-title { margin: 0; color: var(--ink-1, #1d2129); font-size: 18px; font-weight: 600; line-height: 22px; }
-.alarm-metric-value { color: var(--ink-1, #1d2129); font-size: 28px; line-height: 1.35; font-weight: 500; overflow-wrap: anywhere; }
-small { font-size: 12px; font-weight: 400; color: var(--ink-3, #86909c); }
+.alarm-metric-title { margin: 0; color: #86909c; font-size: 14px; font-weight: 400; line-height: 20px; }
+.alarm-metric-value { color: var(--ink-1, #1d2129); font-size: 24px; line-height: 28px; font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+small { font-size: 14px; font-weight: 400; line-height: 20px; color: #86909c; }
 .alarm-metric-icon { flex: none; font-size: 28px; color: var(--ant-color-primary, #1677ff); background: var(--ant-color-primary-bg, #e6f4ff); border-radius: var(--r-3, 8px); padding: 10px; }
-.alarm-metric-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-top: 8px; border-top: 1px solid var(--jet-theme-border-color-1, #eceff3); font-size: 12px; }
+.alarm-metric-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-top: 8px; border-top: 1px solid var(--jet-theme-border-color-1, #eceff3); font-size: 12px; line-height: 18px; color: #86909c; }
 .alarm-metric-status { display: inline-flex; align-items: center; gap: 5px; }
-strong { font-weight: 500; }
+strong { color: var(--ink-1, #1d2129); font-weight: 500; font-variant-numeric: tabular-nums; }
 .alarm-metric-error { font-size: 12px; color: var(--ant-color-error, #ff4d4f); }
 </style>
 

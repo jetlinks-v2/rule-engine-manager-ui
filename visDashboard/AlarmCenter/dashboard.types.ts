@@ -47,11 +47,13 @@ export interface AlarmTrendSeries {
   failed?: boolean
 }
 export interface AlarmRankItem { id: string; name: string; count: number }
+export interface AlarmHandlingPoint { timestamp: number; active: number; handled: number }
 export interface AlarmHandlingStats {
   total: number | null
   active: number | null
   handled: number | null
   rate: number | null
+  points: AlarmHandlingPoint[]
   failed: boolean
 }
 export type AlarmHandlingData = Partial<Record<AlarmHandlingSource, AlarmHandlingStats>>
