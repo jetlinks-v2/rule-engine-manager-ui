@@ -6,7 +6,9 @@
       "name": {
         "zh_CN": "规则引擎",
         "en_US": "Rule Engine",
-        "en": "Rule Engine"
+        "en": "Rule Engine",
+        "ja": "ルールエンジン",
+        "ja_JP": "ルールエンジン"
       }
     },
     "owner": "iot",
@@ -24,7 +26,9 @@
           "name": {
             "zh_CN": "规则编排",
             "en_US": "Flow",
-            "en": "Flow"
+            "en": "Flow",
+            "ja": "ルールオーケストレーション",
+            "ja_JP": "ルールオーケストレーション"
           }
         },
         "owner": "iot",
@@ -43,7 +47,9 @@
             "i18nMessages": {
               "zh_CN": "查看",
               "en_US": "View",
-              "en": "View"
+              "en": "View",
+              "ja": "表示",
+              "ja_JP": "表示"
             },
             "permissions": [
               {
@@ -84,7 +90,9 @@
             "i18nMessages": {
               "zh_CN": "启/禁用",
               "en_US": "Enable/Disable",
-              "en": "Enable/Disable"
+              "en": "Enable/Disable",
+              "ja": "有効化/無効化",
+              "ja_JP": "有効化/無効化"
             },
             "permissions": [
               {
@@ -129,7 +137,9 @@
             "i18nMessages": {
               "zh_CN": "删除",
               "en_US": "Delete",
-              "en": "Delete"
+              "en": "Delete",
+              "ja": "削除",
+              "ja_JP": "削除"
             },
             "permissions": [
               {
@@ -171,7 +181,9 @@
             "i18nMessages": {
               "zh_CN": "编辑",
               "en_US": "Edit",
-              "en": "Edit"
+              "en": "Edit",
+              "ja": "編集",
+              "ja_JP": "編集"
             },
             "permissions": [
               {
@@ -214,7 +226,9 @@
             "i18nMessages": {
               "zh_CN": "新增",
               "en_US": "Add",
-              "en": "Add"
+              "en": "Add",
+              "ja": "追加",
+              "ja_JP": "追加"
             },
             "permissions": [
               {
@@ -266,7 +280,9 @@
           "name": {
             "zh_CN": "场景联动",
             "en_US": "Scene",
-            "en": "Scene"
+            "en": "Scene",
+            "ja": "シーン連動",
+            "ja_JP": "シーン連動"
           }
         },
         "owner": "iot",
@@ -285,7 +301,9 @@
             "i18nMessages": {
               "zh_CN": "删除",
               "en_US": "Delete",
-              "en": "Delete"
+              "en": "Delete",
+              "ja": "削除",
+              "ja_JP": "削除"
             },
             "permissions": [
               {
@@ -303,7 +321,9 @@
             "i18nMessages": {
               "zh_CN": "手动触发",
               "en_US": "Manual Trigger",
-              "en": "Manual Trigger"
+              "en": "Manual Trigger",
+              "ja": "手動トリガー",
+              "ja_JP": "手動トリガー"
             },
             "permissions": [
               {
@@ -322,7 +342,9 @@
             "i18nMessages": {
               "zh_CN": "查看",
               "en_US": "View",
-              "en": "View"
+              "en": "View",
+              "ja": "表示",
+              "ja_JP": "表示"
             },
             "permissions": [
               {
@@ -375,7 +397,9 @@
             "i18nMessages": {
               "zh_CN": "启用/禁用",
               "en_US": "Enable/Disable",
-              "en": "Enable/Disable"
+              "en": "Enable/Disable",
+              "ja": "有効化/無効化",
+              "ja_JP": "有効化/無効化"
             },
             "permissions": [
               {
@@ -394,7 +418,9 @@
             "i18nMessages": {
               "zh_CN": "新增",
               "en_US": "Add",
-              "en": "Add"
+              "en": "Add",
+              "ja": "追加",
+              "ja_JP": "追加"
             },
             "permissions": [
               {
@@ -449,7 +475,9 @@
             "i18nMessages": {
               "zh_CN": "编辑",
               "en_US": "Edit",
-              "en": "Edit"
+              "en": "Edit",
+              "ja": "編集",
+              "ja_JP": "編集"
             },
             "permissions": [
               {
@@ -515,7 +543,9 @@
       "name": {
         "zh_CN": "告警中心",
         "en_US": "Alarm Center",
-        "en": "Alarm Center"
+        "en": "Alarm Center",
+        "ja": "アラームセンター",
+        "ja_JP": "アラームセンター"
       }
     },
     "owner": "iot",
@@ -533,7 +563,9 @@
           "name": {
             "zh_CN": "仪表盘",
             "en_US": "Dashboard",
-            "en": "Dashboard"
+            "en": "Dashboard",
+            "ja": "ダッシュボード",
+            "ja_JP": "ダッシュボード"
           }
         },
         "owner": "iot",
