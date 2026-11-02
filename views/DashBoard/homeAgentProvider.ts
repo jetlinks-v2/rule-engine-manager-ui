@@ -19,7 +19,8 @@ export const ALARM_DASHBOARD_MENU_CODE = 'rule-engine/DashBoard';
 export const ALARM_DASHBOARD_PATH = '/iot/Alarm/dashboard';
 
 const isAlarmDashboardRoute = (context: HomeAgentCapabilityContext) => (
-  context.currentRoute.path === ALARM_DASHBOARD_PATH
+  (!!context.currentRoute.path && context.currentRoute.path === context.findMenu(ALARM_DASHBOARD_MENU_CODE)?.path)
+  || context.currentRoute.path === ALARM_DASHBOARD_PATH
   || context.currentRoute.name === ALARM_DASHBOARD_MENU_CODE
   || context.currentRoute.name === 'AlarmDashboard'
   || context.currentView === ALARM_DASHBOARD_MENU_CODE
@@ -89,11 +90,13 @@ const getWorkflowGuides = (): HomeAgentWorkflowGuide[] => [
 
 const createAlarmDashboardCapabilities = (context: HomeAgentCapabilityContext) => {
   const currentRoute = isAlarmDashboardRoute(context);
+  const menu = context.findMenu(ALARM_DASHBOARD_MENU_CODE) || context.findMenu(ALARM_DASHBOARD_PATH);
+  if (!menu) return [];
   const base = {
     category: 'alarm-dashboard',
-    menuCode: ALARM_DASHBOARD_MENU_CODE,
-    routeName: ALARM_DASHBOARD_MENU_CODE,
-    path: ALARM_DASHBOARD_PATH,
+    menuCode: menu.code,
+    routeName: menu.routeName || menu.code,
+    path: menu.path,
     metadata: { currentRoute },
   };
 

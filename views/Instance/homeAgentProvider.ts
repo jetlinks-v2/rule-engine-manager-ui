@@ -5,6 +5,7 @@ import {
   type HomeAgentCapabilityContext,
   type HomeAgentCapabilityProvider,
   type HomeAgentWorkflowGuide,
+  type HomeAgentMenuEntry,
 } from '@jetlinks-web-core/layout/components/AiChat/homeAgentCapabilities';
 import {
   clientToolOutput,
@@ -90,7 +91,8 @@ const normalizeList = (value: unknown): string[] => {
 };
 
 const isRuleInstanceRoute = (context: HomeAgentCapabilityContext) => (
-  context.currentRoute.path === RULE_INSTANCE_PATH
+  (!!context.currentRoute.path && context.currentRoute.path === context.findMenu(RULE_INSTANCE_MENU_CODE)?.path)
+  || context.currentRoute.path === RULE_INSTANCE_PATH
   || context.currentRoute.name === RULE_INSTANCE_MENU_CODE
   || context.currentView === RULE_INSTANCE_MENU_CODE
 );
@@ -235,10 +237,10 @@ const resolveCreatedRule = (response: any, draft: Record<string, any>) => {
   return rule;
 };
 
-const buildRuleEditorLink = (ruleId: string) => {
+const buildRuleEditorLink = (ruleId: string, menu: HomeAgentMenuEntry) => {
   const params = new URLSearchParams({
-    route: RULE_INSTANCE_MENU_CODE,
-    menu: RULE_INSTANCE_MENU_CODE,
+    route: menu.routeName || menu.code,
+    menu: menu.code,
     query: JSON.stringify({ editorId: ruleId }),
   });
   return `#${params.toString()}`;
@@ -248,7 +250,8 @@ const createDraftAndHandoff = async (
   args: Record<string, any> = {},
   context: HomeAgentCapabilityContext,
 ) => {
-  if (!isRuleInstanceAvailable(context)) {
+  const menu = context.findMenu(RULE_INSTANCE_MENU_CODE) || context.findMenu(RULE_INSTANCE_PATH);
+  if (!menu) {
     return toCreateDraftFailure(
       'rule_engine.create_draft.no_permission',
       i18n.global.t('Instance.homeAgent.tool.create.noPermission'),
@@ -273,23 +276,22 @@ const createDraftAndHandoff = async (
       subjectType: RULE_EDITOR_SUBJECT_TYPE,
       subjectId: ruleId,
       subjectName: ruleName,
-      routeName: RULE_INSTANCE_MENU_CODE,
-      menuCode: RULE_INSTANCE_MENU_CODE,
+      routeName: menu.routeName || menu.code,
+      menuCode: menu.code,
       prompt: userGoal || i18n.global.t('Instance.homeAgent.ruleDraft.continuePrompt', [ruleName]),
       label: i18n.global.t('Instance.homeAgent.ruleDraft.handoffLabel', [ruleName]),
       source: 'rule-instance-home',
       context: createHandoffContext(args, context, rule, userGoal),
     });
-    context.navigateToMenu(RULE_INSTANCE_MENU_CODE, { query })
-      || context.navigateToMenu(RULE_INSTANCE_PATH, { query });
+    context.navigateToMenu(menu.code, { query });
 
     const navigation = {
-      menuCode: RULE_INSTANCE_MENU_CODE,
-      routeName: RULE_INSTANCE_MENU_CODE,
-      path: RULE_INSTANCE_PATH,
+      menuCode: menu.code,
+      routeName: menu.routeName || menu.code,
+      path: menu.path,
       query,
-      link: buildRuleEditorLink(ruleId),
-      markdownLink: `[${ruleName}](${buildRuleEditorLink(ruleId)})`,
+      link: buildRuleEditorLink(ruleId, menu),
+      markdownLink: `[${ruleName}](${buildRuleEditorLink(ruleId, menu)})`,
     };
 
     return {
@@ -316,9 +318,9 @@ const createDraftAndHandoff = async (
       continuation: createHomeAgentContinuationReceipt({
         targetName: i18n.global.t('Instance.homeAgent.continuation.targetName'),
         targetClientId: RULE_EDITOR_CLIENT_ID,
-        targetMenuCode: RULE_INSTANCE_MENU_CODE,
-        routeName: RULE_INSTANCE_MENU_CODE,
-        path: RULE_INSTANCE_PATH,
+        targetMenuCode: menu.code,
+        routeName: menu.routeName || menu.code,
+        path: menu.path,
         subjectType: RULE_EDITOR_SUBJECT_TYPE,
         subjectId: ruleId,
         subjectName: ruleName,
@@ -430,32 +432,36 @@ export const createRuleInstanceTools = () => defineClientTools<HomeAgentCapabili
     : tool
 ));
 
-const createRuleInstanceCapabilities = (context: HomeAgentCapabilityContext) => [{
-  id: 'rule-engine-instance:create-draft',
-  name: i18n.global.t('Instance.homeAgent.capability.createDraft.name'),
-  description: i18n.global.t('Instance.homeAgent.capability.createDraft.description'),
-  kind: 'tool' as const,
-  category: 'rule-engine-instance',
-  menuCode: RULE_INSTANCE_MENU_CODE,
-  routeName: RULE_INSTANCE_MENU_CODE,
-  path: RULE_INSTANCE_PATH,
-  order: 20,
-  keywords: ['rule', 'rule engine', 'orchestration', 'kafka', 'scene', '规则', '规则引擎', '规则编排', '转发'],
-  metadata: {
-    currentRoute: isRuleInstanceRoute(context),
-    promptExamples: getPromptExamples(),
-    continuation: {
-      targetName: i18n.global.t('Instance.homeAgent.continuation.targetName'),
-      targetClientId: RULE_EDITOR_CLIENT_ID,
-      targetMenuCode: RULE_INSTANCE_MENU_CODE,
-      toolId: CREATE_RULE_DRAFT_TOOL,
-      promptPolicy: i18n.global.t('Instance.homeAgent.continuation.promptPolicy'),
-      blockingFacts: [
-        i18n.global.t('Instance.homeAgent.continuation.blockingFact.name'),
-      ],
+const createRuleInstanceCapabilities = (context: HomeAgentCapabilityContext) => {
+  const menu = context.findMenu(RULE_INSTANCE_MENU_CODE) || context.findMenu(RULE_INSTANCE_PATH);
+  if (!menu) return [];
+  return [{
+    id: 'rule-engine-instance:create-draft',
+    name: i18n.global.t('Instance.homeAgent.capability.createDraft.name'),
+    description: i18n.global.t('Instance.homeAgent.capability.createDraft.description'),
+    kind: 'tool' as const,
+    category: 'rule-engine-instance',
+    menuCode: menu.code,
+    routeName: menu.routeName || menu.code,
+    path: menu.path,
+    order: 20,
+    keywords: ['rule', 'rule engine', 'orchestration', 'kafka', 'scene', '规则', '规则引擎', '规则编排', '转发'],
+    metadata: {
+      currentRoute: isRuleInstanceRoute(context),
+      promptExamples: getPromptExamples(),
+      continuation: {
+        targetName: i18n.global.t('Instance.homeAgent.continuation.targetName'),
+        targetClientId: RULE_EDITOR_CLIENT_ID,
+        targetMenuCode: menu.code,
+        toolId: CREATE_RULE_DRAFT_TOOL,
+        promptPolicy: i18n.global.t('Instance.homeAgent.continuation.promptPolicy'),
+        blockingFacts: [
+          i18n.global.t('Instance.homeAgent.continuation.blockingFact.name'),
+        ],
+      },
     },
-  },
-}];
+  }];
+};
 
 export const ruleInstanceHomeAgentProvider: HomeAgentCapabilityProvider = {
   id: 'rule-engine-instance',
