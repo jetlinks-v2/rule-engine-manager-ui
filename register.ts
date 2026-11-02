@@ -15,16 +15,31 @@ const homeAgentProviderKeyMap: Record<string, string> = {
     './views/Instance/homeAgentProvider.ts': 'rule-engine/Instance'
 }
 
+const homeAgentProviderPaths: Record<string, string[]> = {
+    'rule-engine/DashBoard': ['/alarms/dashboard', '/iot/Alarm/dashboard'],
+    'rule-engine/Instance': ['/rule-engine/Instance', '/iot/rule-engine/Instance'],
+}
+
 const toHomeAgentProviderKey = (path: string) => (
     homeAgentProviderKeyMap[path] || path.replace('./views/', '').replace('/homeAgentProvider.ts', '')
 )
 
 const homeAgentProviderModules = import.meta.glob('./views/**/homeAgentProvider.ts') as Record<string, HomeAgentProviderLoader>
 const homeAgentProviders = Object.fromEntries(
-    Object.entries(homeAgentProviderModules).map(([path, loader]) => [
-        toHomeAgentProviderKey(path),
-        loader
-    ])
+    Object.entries(homeAgentProviderModules).map(([path, loader]) => {
+        const key = toHomeAgentProviderKey(path)
+        return [key, {
+            loader,
+            activation: {
+                version: 'general-agent-provider-activation/v1',
+                scopes: [
+                    { kind: 'menuCode', values: [key] },
+                    { kind: 'routeName', values: key === 'rule-engine/DashBoard' ? [key, 'AlarmDashboard'] : [key] },
+                    { kind: 'path', values: homeAgentProviderPaths[key] },
+                ],
+            },
+        } satisfies AgentCapabilityProviderResource]
+    })
 )
 
 export default {
