@@ -1,6 +1,17 @@
 <template>
 	<j-page-container>
 		<a-spin v-if="loadingScene" class="scene-editor__loading" />
+		<DetailedSceneEditor
+			v-else-if="editorMode === 'detail'"
+			:rule="canonicalDraft"
+			:supported-triggers="supportedTriggers"
+			:trigger-providers="triggerProviders"
+			:saving="saving"
+			:save-permission="savePermission"
+			@cancel="menuStore.jumpPage(sceneRouteKey)"
+			@save="saveDetailed"
+			@switch-mode="switchFromDetailed"
+		/>
 		<main v-else class="scene-editor">
 			<PageHeader
 				show-back
@@ -21,6 +32,13 @@
 					</div>
 				</template>
 			</PageHeader>
+			<section class="scene-editor__mode">
+				<span>{{ $t('IotSceneLinkage.editor.mode') }}</span>
+				<a-radio-group :value="editorMode" button-style="solid" @change="switchFromQuick">
+					<a-radio-button value="quick">{{ $t('IotSceneLinkage.editor.quickMode') }}</a-radio-button>
+					<a-radio-button value="detail">{{ $t('IotSceneLinkage.editor.detailMode') }}</a-radio-button>
+				</a-radio-group>
+			</section>
 			<header class="scene-editor__header">
 				<div class="scene-editor__field scene-editor__name-field">
 						{{ $t('IotSceneLinkage.form.sceneName') }}
@@ -293,13 +311,17 @@
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { Modal } from 'ant-design-vue'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { createSceneLinkage, getProduct, getSceneDetail, queryCurrentSceneNotifyUser, queryDevices, queryProducts, querySceneNotifyChannelTemplates, querySceneNotifyChannels, querySceneNotifyUsers, querySceneSupportedActions, querySceneSupportedTriggers, updateSceneLinkage, type SceneNotifyMethod, type SceneNotifyUser, type SceneProviderInfo } from '../../../api/scene-linkage'
 import { queryDeviceBoundGroups_api, queryDeviceGroupDetailList_api, queryDeviceSpaceAreaBindings_api, queryProjectSpaceAreaSettings_api } from '../../../api/scene-resources'
 import { canReceiveProfileBackedNotification, mergeNotifyUsersById } from '../../../utils/notifyUser'
 import IotAlarmTargetSelect, { type IotAlarmTargetSelectOption, type IotAlarmTargetSelectQuery } from './alarm/IotAlarmTargetSelect.vue'
-import { applyMultiTriggerForm, buildRequest, defaultForm, normalizeResult, toForm, type SceneConditionForm, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTriggerKind } from '../utils'
+import { applyMultiTriggerForm, buildRequest, defaultForm, MULTI_TRIGGER_PROVIDERS, normalizeResult, toForm, type SceneConditionForm, type SceneEditorMode, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTriggerKind } from '../utils'
+import DetailedSceneEditor from './detail/DetailedSceneEditor.vue'
+import { mergeDetailedDraft, mergeQuickDraft, prepareQuickRuleForDetailedEditing, resolveInitialEditorMode, type SceneRuleRecord } from './editorMode'
 import { getSceneCompatibility } from '../sceneCompatibility'
+import { hasUnsupportedLegacyAlarmAction } from '../sceneRule'
 import ActionPickerModal from './components/ActionPickerModal.vue'
 import ConditionPickerModal from './components/ConditionPickerModal.vue'
 import DeviceActionRow from './components/DeviceActionRow.vue'
@@ -327,7 +349,7 @@ const notifyUsersTotal = ref(0)
 const sceneRoutePermissionKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, ''))
 const savePermission = computed(() => `${sceneRoutePermissionKey.value}:${route.params.id ? 'update' : 'add'}`)
 // 新编辑路由按当前菜单分别使用 SaaS 的 add/update 与私有化菜单的 add/update 动作权限。
-const route = useRoute(); const { t } = useI18n(); const permissionKey = useScenePermission(); const menuStore = useMenuStore(); const sceneRouteKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, '')); const form = reactive<SceneLinkageForm>(defaultForm()); const selectedProductOption = ref<IotAlarmTargetSelectOption>(); const devices = ref<any[]>([]); const properties = ref<any[]>([]); const events = ref<any[]>([]); const scopeOptions = ref<any[]>([]); const scopeTreeData = ref<any[]>([]); const scopeExpandedKeys = ref<string[]>([]); const scopeLoading = ref(false); const scopeNodeMap = new Map<string, any>(); const saving = ref(false); const triggerPickerVisible = ref(false); const actionPickerVisible = ref(false); const scopeVisible = ref(false); const conditionVisible = ref(false); const advancedExpanded = ref(false); const notifyMethods = ref<SceneNotifyMethod[]>([]); const notifyUsers = ref<SceneNotifyUser[]>([]); const notifyMethodsLoading = ref(false); const notifyUsersLoading = ref(false); const supportedTriggers = ref<string[]>([]); const supportedActions = ref<string[]>([]); const validation = reactive({ field: '', message: '' }); const loadingScene = ref(Boolean(route.params.id))
+const route = useRoute(); const { t } = useI18n(); const permissionKey = useScenePermission(); const menuStore = useMenuStore(); const sceneRouteKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, '')); const form = reactive<SceneLinkageForm>(defaultForm()); const selectedProductOption = ref<IotAlarmTargetSelectOption>(); const devices = ref<any[]>([]); const properties = ref<any[]>([]); const events = ref<any[]>([]); const scopeOptions = ref<any[]>([]); const scopeTreeData = ref<any[]>([]); const scopeExpandedKeys = ref<string[]>([]); const scopeLoading = ref(false); const scopeNodeMap = new Map<string, any>(); const saving = ref(false); const triggerPickerVisible = ref(false); const actionPickerVisible = ref(false); const scopeVisible = ref(false); const conditionVisible = ref(false); const advancedExpanded = ref(false); const notifyMethods = ref<SceneNotifyMethod[]>([]); const notifyUsers = ref<SceneNotifyUser[]>([]); const notifyMethodsLoading = ref(false); const notifyUsersLoading = ref(false); const supportedTriggers = ref<string[]>([]); const triggerProviders = ref<SceneProviderInfo[]>([]); const supportedActions = ref<string[]>([]); const validation = reactive({ field: '', message: '' }); const loadingScene = ref(Boolean(route.params.id)); const editorMode = ref<SceneEditorMode>('quick'); const originalSnapshot = ref<SceneRuleRecord>({}); const quickProjectionBase = ref<SceneRuleRecord>({}); const canonicalDraft = ref<SceneRuleRecord>({}); const hasDetailedSession = ref(false); const quickResetFromDetailed = ref(false)
 const { activeMultiTriggerIndex, addingMultiTrigger, isMulti, showMultiTriggerControl, multiTriggerDisabledReason, canAddMultiTrigger, addMultiTrigger: beginMultiTrigger, cancelTriggerPicker: resetMultiTriggerPicker, removeMultiTrigger, selectMultiTrigger, selectTrigger: selectMultiTriggerKind } = useMultiSceneTrigger(form, supportedTriggers, () => Boolean(route.params.id), () => { selectedProductOption.value = undefined; void loadMetadata(true) })
 const hasTrigger = computed(() => Boolean(form.triggerKind)); const hasRuleContent = computed(() => hasTrigger.value || form.additionalConditions.length > 0 || form.actions.length > 0); const isEditing = computed(() => Boolean(route.params.id)); const isDevice = computed(() => ['property', 'event', 'online', 'offline', 'state'].includes(form.triggerKind)); const repeatTime = computed({ get: () => form.repeatTime, set: (value: string) => form.repeatTime = value }); const units = computed(() => ['seconds', 'minutes', 'hours'].map(value => ({ value, label: t(`IotSceneLinkage.unit.${value}`) }))); const weekOptions = computed(() => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, index) => ({ value: index + 1, label: t(`IotSceneLinkage.weekday.${day}`) }))); const monthDayOptions = computed(() => Array.from({ length: 31 }, (_, index) => ({ value: index + 1, label: t('IotSceneLinkage.monthDay', { day: index + 1 }) }))); const propertyOptions = computed(() => toThingModelOptions(properties.value, 'property')); const eventOptions = computed(() => toThingModelOptions(events.value, 'event')); const selectedProperty = computed(() => propertyOptions.value.find(item => item.value === form.propertyId)); const termOptions = computed(() => getTermTypes(selectedProperty.value?.valueType).map(value => ({ value, label: t(`IotSceneLinkage.term.${value}`) }))); const triggerText = computed(() => hasTrigger.value ? t(`IotSceneLinkage.trigger.${form.triggerKind}`) : t('IotSceneLinkage.rule.noTrigger')); const actionText = computed(() => form.actions.length ? form.actions.map(action => t(`IotSceneLinkage.action.${action.type}`)).join('、') : t('IotSceneLinkage.rule.noAction')); const scopeText = computed(() => formatDeviceScopeText(t, toTriggerScopeValue(form), { emptyText: t('IotSceneLinkage.placeholder.device') })); const scopeTitle = computed(() => formatDeviceScopeTitle(t, toTriggerScopeValue(form), { emptyText: t('IotSceneLinkage.placeholder.device') })); const triggerIcon = computed(() => ({ manual: { background: '#F2F3F5', color: '#4E5969', path: 'M9 1.5 3 9h4l-1 5.5L12 7H8l1-5.5Z' }, repeat: { background: '#E8F0FF', color: '#1E5EFF', path: 'M8 14.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13ZM8 4.5V8l2.5 1.5' }, date: { background: '#E6F5EE', color: '#0E8A5F', path: 'M2.5 3.5h11v10h-11ZM2.5 6.5h11M5.5 1.5v3M10.5 1.5v3' }, interval: { background: '#EFEBFF', color: '#6C4FE0', path: 'M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 1.5v3h-3' }, property: { background: '#E6F5EE', color: '#0E8A5F', path: 'M2 12l3.5-3.5 2.5 2.5L14 5M14 5h-3.5M14 5v3.5' }, event: { background: '#FFECF0', color: '#D02F5A', path: 'M1.5 8h3L6 4l3 8 1.5-4h4' }, online: { background: '#E6F5EE', color: '#0E8A5F', type: 'LoginOutlined' }, offline: { background: '#F2F3F5', color: '#4E5969', type: 'LogoutOutlined' }, state: { background: '#EFEBFF', color: '#6C4FE0', type: 'SyncOutlined' }, alarm: { background: '#FFF1F0', color: '#FF4D4F', type: 'AlertOutlined' } }[form.triggerKind] || { background: '#F2F3F5', color: '#4E5969', type: 'ThunderboltOutlined' })); const hasError = (field: string) => validation.field === field; const errorMessage = (field: string) => hasError(field) ? t(validation.message) : ''
 const triggerForms = computed(() => isMulti.value ? form.multiTriggers || [] : [form])
@@ -361,13 +383,13 @@ const visibleScopeTreeData = computed(() => { const decorate = (nodes: any[]): a
 const scopeDialogTitle = computed(() => `${t('IotSceneLinkage.title.selectDevices')} · ${form.productName || selectedProductOption.value?.label || ''}`)
 // SaaS 的细分类型映射到后端 Provider，后端返回结果是可选项的唯一依据。
 const triggerOptions = computed(() => [{ value: 'manual', icon: 'ThunderboltOutlined', provider: 'manual' }, { value: 'repeat', icon: 'ClockCircleOutlined', provider: 'timer' }, { value: 'date', icon: 'CalendarOutlined', provider: 'timer' }, { value: 'interval', icon: 'SyncOutlined', provider: 'timer' }, { value: 'property', icon: 'RiseOutlined', provider: 'device' }, { value: 'event', icon: 'NotificationOutlined', provider: 'device' }, { value: 'online', icon: 'LoginOutlined', provider: 'device' }, { value: 'offline', icon: 'LogoutOutlined', provider: 'device' }, { value: 'state', icon: 'SyncOutlined', provider: 'device' }, { value: 'alarm', icon: 'AlertOutlined', provider: 'alarm' }, { value: 'ai-event', icon: 'RadarChartOutlined', provider: 'ai-event' }].filter(item => supportedTriggers.value.includes(item.provider)).map(item => ({ ...item, label: t(`IotSceneLinkage.trigger.${item.value}`), description: t(`IotSceneLinkage.triggerDesc.${item.value}`) })))
-const availableTriggerOptions = computed(() => triggerOptions.value.map(item => addingMultiTrigger.value && item.provider === 'manual'
-  ? { ...item, disabled: true, disabledReason: 'IotSceneLinkage.message.conditionCannotAddMore' }
-  : item))
+const availableTriggerOptions = computed(() => addingMultiTrigger.value
+  ? triggerOptions.value.filter(item => MULTI_TRIGGER_PROVIDERS.includes(item.provider as typeof MULTI_TRIGGER_PROVIDERS[number]))
+  : triggerOptions.value)
 const isActionSupported = (provider: string) => supportedActions.value.includes(provider)
 const actionIcon = (type: string) => type === 'delay' ? 'ClockCircleOutlined' : 'ControlOutlined'
 async function requestProducts(query: IotAlarmTargetSelectQuery) { const terms = query.keyword ? [{ column: 'name', termType: 'like', value: `%${query.keyword}%`, type: 'or' }, { column: 'id', termType: 'like', value: `%${query.keyword}%`, type: 'or' }] : []; const page = normalizeResult(await queryProducts({ pageIndex: query.pageIndex, pageSize: query.pageSize, sorts: [{ name: 'createTime', order: 'desc' }], terms })); return { data: page.data.map((item: any) => ({ label: item.name, value: item.id, data: item })), total: page.total } }
-async function loadSceneProviders() { const [triggers, actions] = await Promise.all([querySceneSupportedTriggers(), querySceneSupportedActions()]); supportedTriggers.value = normalizeResult(triggers).data.map((item: SceneProviderInfo) => item.provider); supportedActions.value = normalizeResult(actions).data.map((item: SceneProviderInfo) => item.provider) }
+async function loadSceneProviders() { const [triggers, actions] = await Promise.all([querySceneSupportedTriggers(), querySceneSupportedActions()]); triggerProviders.value = normalizeResult(triggers).data; supportedTriggers.value = triggerProviders.value.map(item => item.provider); supportedActions.value = normalizeResult(actions).data.map((item: SceneProviderInfo) => item.provider) }
 async function loadDevices() { if (!form.productId) return; devices.value = normalizeResult(await queryDevices({ terms: [{ column: 'productId', value: form.productId }] })).data.map((item: any) => ({ label: item.name, value: item.id })) }
 const scopeCheckedKeys = computed(() => { const checked = new Set<string>(); scopeNodeMap.forEach((node, key) => { if (form.dynamicScope) { if (node.scopeType === form.dynamicScopeType && form.groupIds.includes(node.scopeId)) checked.add(key); if (node.deviceId && node.parentKey && form.groupIds.some(id => node.parentKey === `${form.dynamicScopeType}:${id}`)) checked.add(key); return }; if (node.deviceId && form.deviceIds.includes(node.deviceId)) { checked.add(key); if (node.parentKey) checked.add(node.parentKey) } }); return [...checked] })
 async function loadScopeTree() { if (!form.productId || scopeLoading.value) return; scopeLoading.value = true; try { const rows = normalizeResult(await queryDevices({ terms: [{ column: 'productId', value: form.productId }] })).data; const ids = rows.map((item: any) => String(item.id)).filter(Boolean); const [areas, groups, areaBindings, groupByDevice] = await Promise.all([queryProjectSpaceAreaSettings_api(''), queryDeviceGroupDetailList_api(), queryDeviceSpaceAreaBindings_api(ids), queryDeviceBoundGroups_api(ids)]); const treeMap = new Map<string, any>(); const areaNodes = areas.areas.map(area => { const node = { key: `space:${area.id}`, title: area.name, scopeType: 'space', scopeId: area.id, disabled: !form.dynamicScope, children: [] as any[] }; treeMap.set(node.key, node); return node }); const areaRoots: any[] = []; areaNodes.forEach(node => { const parentId = areas.areas.find(area => area.id === node.scopeId)?.parentId; const parent = parentId ? treeMap.get(`space:${parentId}`) : undefined; if (parent) parent.children.push(node); else areaRoots.push(node) }); const groupNodes = groups.map(group => ({ key: `device-group:${group.id}`, title: group.name, scopeType: 'device-group', scopeId: group.id, disabled: !form.dynamicScope, children: [] as any[] })); const groupMap = new Map(groupNodes.map(node => [node.scopeId, node])); const areaMap = new Map(areaNodes.map(node => [node.scopeId, node])); const appendDevice = (parent: any, device: any) => { const key = `device:${parent.key}:${device.id}`; parent.children.push({ key, title: device.name || device.id, deviceId: String(device.id), deviceState: device.state === 'online' || device.online === true ? 'online' : 'offline', disabled: form.dynamicScope }); scopeNodeMap.set(key, { key, deviceId: String(device.id), parentKey: parent.key }) }; rows.forEach((device: any) => { const matchedAreas = areaBindings.filter(item => item.deviceId === String(device.id)); const matchedGroups = groupByDevice[String(device.id)] || []; matchedAreas.forEach(item => areaMap.get(item.areaId) && appendDevice(areaMap.get(item.areaId), device)); matchedGroups.forEach(item => groupMap.get(item.id) && appendDevice(groupMap.get(item.id), device)) }); [...areaNodes, ...groupNodes].forEach(node => scopeNodeMap.set(node.key, node)); scopeTreeData.value = [{ key: 'root:space', title: t('IotSceneLinkage.editor.areas'), disabled: true, children: areaRoots }, { key: 'root:group', title: t('IotSceneLinkage.editor.groups'), disabled: true, children: groupNodes }].filter(node => node.children.length); scopeExpandedKeys.value = [...treeMap.keys(), ...groupMap.keys()] } finally { scopeLoading.value = false } }
@@ -553,14 +575,109 @@ async function validate() {
 /** 已有场景保存前重新读取后端数据，避免列表打开后被其他管理员改成不支持结构仍被覆盖。 */
 async function ensureSceneCompatible(id: string) {
   const response = await getSceneDetail(id)
-  const compatibility = getSceneCompatibility(response?.result || response)
+  const scene = response?.result || response
+  if (hasUnsupportedLegacyAlarmAction(scene)) {
+    onlyMessage(t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning')
+    return false
+  }
+  const compatibility = getSceneCompatibility(scene)
   if (compatibility.supported) return true
   onlyMessage(t(compatibility.reason || 'IotSceneLinkage.message.unsupportedRule'), 'warning')
   return false
 }
 
+const getEditorModeValue = (value: unknown): SceneEditorMode | undefined => {
+  const selected = typeof value === 'string' ? value : (value as any)?.target?.value
+  return selected === 'quick' || selected === 'detail' ? selected : undefined
+}
+
+/**
+ * 快速编辑草稿首次进入详细模式时，生成完整规则草稿；后续切回详细模式恢复会话草稿，
+ * 不能以快速表单覆盖用户尚未保存的详细配置。
+ */
+async function switchFromQuick(value: unknown) {
+  const mode = getEditorModeValue(value)
+  if (mode !== 'detail' || saving.value) return
+  if (!hasDetailedSession.value) {
+    // 快速模式尚未选择触发条件时，不能调用其请求构建器；该构建器会按历史兼容逻辑落为定时触发。
+    const quickRule = hasTrigger.value
+      ? buildRequest({ ...form, editorMode: 'detail' }, await resolveSceneConditionColumns(form))
+      : {
+          name: form.name,
+          description: form.description,
+          trigger: {},
+          branches: [],
+          options: {},
+        }
+    const detailedRule = mergeDetailedDraft(originalSnapshot.value, quickRule)
+    // 无过滤条件的快速规则进入详细模式时，统一为原版“执行：开 + 待填写条件”的编辑态。
+    canonicalDraft.value = hasTrigger.value
+      ? prepareQuickRuleForDetailedEditing(detailedRule)
+      : detailedRule
+    hasDetailedSession.value = true
+  }
+  editorMode.value = 'detail'
+}
+
+function switchFromDetailed(mode: SceneEditorMode, detailedDraft: SceneRuleRecord) {
+  if (mode !== 'quick' || saving.value) return
+  Modal.confirm({
+    title: t('IotSceneLinkage.confirm.resetQuickTitle'),
+    content: t('IotSceneLinkage.confirm.resetQuickContent'),
+    okText: t('IotSceneLinkage.action.confirm'),
+    cancelText: t('IotSceneLinkage.action.cancel'),
+    onOk: () => {
+      const next = defaultForm()
+      next.id = detailedDraft.id || form.id
+      next.name = detailedDraft.name || form.name
+      next.description = detailedDraft.description || form.description
+      next.triggerKind = '' as SceneTriggerKind
+      next.editorMode = 'quick'
+      Object.assign(form, next)
+      // 重新填写快速模式时不能再与原详细树合并，否则已确认清空的配置会被带回。
+      quickProjectionBase.value = {
+        id: next.id,
+        name: next.name,
+        description: next.description,
+        options: { editorMode: 'quick' },
+      }
+      canonicalDraft.value = quickProjectionBase.value
+      hasDetailedSession.value = false
+      quickResetFromDetailed.value = true
+      editorMode.value = 'quick'
+    },
+  })
+}
+
+/** 快速和详细模式最终都只提交统一规则树。 */
+async function persistCanonicalDraft(scene: SceneRuleRecord) {
+  if (form.id) {
+    await updateSceneLinkage(form.id, scene)
+    return
+  }
+  await createSceneLinkage(scene)
+}
+
+async function saveDetailed(scene: SceneRuleRecord) {
+  if (hasUnsupportedLegacyAlarmAction(scene)) {
+    onlyMessage(t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning')
+    return
+  }
+  saving.value = true
+  try {
+    const request = mergeDetailedDraft(originalSnapshot.value, scene)
+    request.id = form.id || request.id
+    canonicalDraft.value = request
+    await persistCanonicalDraft(request)
+    onlyMessage(t('IotSceneLinkage.message.saved', { name: request.name }), 'success')
+    menuStore.jumpPage(sceneRouteKey.value)
+  } finally {
+    saving.value = false
+  }
+}
+
 async function save() {
-  if (form.id && !await ensureSceneCompatible(form.id)) return
+  if (form.id && !quickResetFromDetailed.value && !await ensureSceneCompatible(form.id)) return
   if (form.additionalConditions.some(condition => condition.type === 'alarmState' && !hasValidAlarmStateCondition(condition.alarm))) {
     validation.field = 'condition'
     validation.message = 'IotSceneLinkage.message.alarmTriggerRequired'
@@ -580,8 +697,9 @@ async function save() {
       onlyMessage(t(validation.message), 'warning')
       return
     }
-    const scene = buildRequest(form, conditionColumns)
-    form.id ? await updateSceneLinkage(form.id, scene) : await createSceneLinkage(scene)
+    const scene = mergeQuickDraft(quickProjectionBase.value, buildRequest(form, conditionColumns))
+    canonicalDraft.value = scene
+    await persistCanonicalDraft(scene)
     onlyMessage(t('IotSceneLinkage.message.saved', { name: form.name }), 'success')
     menuStore.jumpPage(sceneRouteKey.value)
   } finally {
@@ -598,10 +716,21 @@ async function init() {
   const id = String(route.params.id || '')
   if (!id) {
     form.triggerKind = '' as SceneTriggerKind
+    // 新建始终从当前低门槛快速模式开始；仅没有 editorMode 的历史数据按部署类型选择入口。
+    editorMode.value = 'quick'
+    canonicalDraft.value = { name: form.name, description: form.description, options: {} }
+    quickProjectionBase.value = {}
+    hasDetailedSession.value = editorMode.value === 'detail'
+    loadingScene.value = false
     return
   }
   const data: any = await getSceneDetail(id)
   const scene = data.result || data
+  originalSnapshot.value = scene
+  quickProjectionBase.value = scene
+  editorMode.value = resolveInitialEditorMode(scene)
+  canonicalDraft.value = scene
+  hasDetailedSession.value = editorMode.value === 'detail'
   Object.assign(form, toForm(scene))
   advancedExpanded.value = form.debounceEnabled
   if (form.productId) {

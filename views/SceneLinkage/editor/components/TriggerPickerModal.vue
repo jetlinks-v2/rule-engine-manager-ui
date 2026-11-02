@@ -9,8 +9,8 @@
   >
     <template #title>
       <div class="trigger-picker__title">
-        <span>{{ $t('IotSceneLinkage.title.triggerPicker') }}</span>
-        <small>{{ $t('IotSceneLinkage.editor.triggerPickerHint') }}</small>
+        <span>{{ title || $t('IotSceneLinkage.title.triggerPicker') }}</span>
+        <small>{{ hint || $t('IotSceneLinkage.editor.triggerPickerHint') }}</small>
       </div>
     </template>
     <div :class="['trigger-picker__body', { 'trigger-picker__body--expanded': selectedProvider }]">
@@ -64,13 +64,21 @@ export type TriggerPickerOption = {
   icon: string
   label: string
   description: string
+  /** Provider 分组标题由后端返回时，覆盖快速模式的本地分组文案。 */
+  providerLabel?: string
+  providerDescription?: string
   disabled?: boolean
   disabledReason?: string
 }
 
+type TriggerPickerMode = 'quick' | 'provider'
+
 const props = defineProps<{
   open: boolean
   options: TriggerPickerOption[]
+  mode?: TriggerPickerMode
+  title?: string
+  hint?: string
 }>()
 
 const emit = defineEmits<{
@@ -83,16 +91,20 @@ const selectedProvider = ref('')
 const providerIcons: Record<string, string> = {
   device: 'ApiOutlined',
   timer: 'ClockCircleOutlined',
+  collector: 'DatabaseOutlined',
   alarm: 'AlertOutlined',
   'ai-event': 'RadarChartOutlined',
   manual: 'ThunderboltOutlined',
+  multi: 'ClusterOutlined',
 }
 const providerIconStyles: Record<string, Record<string, string>> = {
   device: { color: '#1e72f0' },
   timer: { color: '#1e72f0' },
+  collector: { color: '#1e72f0' },
   alarm: { color: '#1e72f0' },
   'ai-event': { color: '#1e72f0' },
   manual: { color: '#1e72f0' },
+  multi: { color: '#1e72f0' },
 }
 
 const triggerIconStyles: Record<string, Record<string, string>> = {
@@ -108,19 +120,42 @@ const triggerIconStyles: Record<string, Record<string, string>> = {
     alarm: providerIconStyles.alarm,
     'ai-event': { color: '#6c4fe0', background: '#efebff' },
 }
-const providerOrder = ['device', 'timer', 'alarm', 'ai-event', 'manual']
-const categories = computed(() => providerOrder
-  .map(provider => ({
-    provider,
-    icon: providerIcons[provider],
-    label: t(`IotSceneLinkage.triggerType.${provider}`),
-    description: t(`IotSceneLinkage.triggerTypeDesc.${provider}`),
-    canExpand: ['device', 'timer'].includes(provider),
-    items: props.options.filter(item => item.provider === provider),
-    disabled: props.options.filter(item => item.provider === provider).every(item => item.disabled),
-    disabledReason: props.options.filter(item => item.provider === provider).find(item => item.disabled)?.disabledReason || '',
-  }))
-  .filter(category => category.items.length))
+const providerOrder = ['device', 'timer', 'collector', 'alarm', 'ai-event', 'manual', 'multi']
+const categories = computed(() => {
+  if (props.mode === 'provider') {
+    return props.options.map(item => ({
+      provider: item.provider,
+      icon: item.icon,
+      label: item.label,
+      description: item.description,
+      canExpand: false,
+      items: [item],
+      disabled: Boolean(item.disabled),
+      disabledReason: item.disabledReason || '',
+    }))
+  }
+
+  const providers = [
+    ...providerOrder.filter(provider => props.options.some(item => item.provider === provider)),
+    ...props.options
+      .map(item => item.provider)
+      .filter(provider => !providerOrder.includes(provider)),
+  ]
+  return [...new Set(providers)].map(provider => {
+    const items = props.options.filter(item => item.provider === provider)
+    const providerInfo = items[0]
+    return {
+      provider,
+      icon: providerIcons[provider] || 'ThunderboltOutlined',
+      label: providerInfo?.providerLabel || t(`IotSceneLinkage.triggerType.${provider}`),
+      description: providerInfo?.providerDescription || t(`IotSceneLinkage.triggerTypeDesc.${provider}`),
+      canExpand: items.length > 1,
+      items,
+      disabled: items.every(item => item.disabled),
+      disabledReason: items.find(item => item.disabled)?.disabledReason || '',
+    }
+  })
+})
 function select(value: string) {
   if (props.options.find(item => item.value === value)?.disabled) return
   emit('select', value)

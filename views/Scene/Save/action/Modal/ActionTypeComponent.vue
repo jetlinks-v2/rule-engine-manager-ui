@@ -26,6 +26,12 @@
       @cancel="onCancel"
       @save="onPropsOk"
     />
+    <SceneNotify
+      v-else-if="actionType === 'sceneNotify'"
+      :value="data?.configuration"
+      @cancel="onCancel"
+      @save="onPropsOk"
+    />
     <Delay
       v-else-if="actionType === 'delay'"
       :value="data?.delay"
@@ -51,6 +57,7 @@ import Notify from "../Notify/index.vue";
 import Device from "../Device/index.vue";
 import Collector from "../Collector/index.vue";
 import DeviceData from '../DeviceData/index.vue'
+import SceneNotify from '../SceneNotify/index.vue'
 import { randomNumber } from "@jetlinks-web/utils";
 
 const props = defineProps({
@@ -90,7 +97,7 @@ const onCancel = () => {
 
 const onPropsOk = (data: any, options: any) => {
 
-  const key = props.actionType === 'device-data' ? 'configuration' : props.actionType
+  const key = ['device-data', 'sceneNotify'].includes(props.actionType) ? 'configuration' : props.actionType
 
   const _data = {
     type: props.actionType,

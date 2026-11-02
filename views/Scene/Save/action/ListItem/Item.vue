@@ -21,13 +21,14 @@
                 {{ options?.name }}
               </template>
               <template v-else>
-                <component :is="ComponentsMap[data.executor]" :data="data" :options="options" @visibleChange="(e) => triggerVisible = e"  />
+              <component :is="ComponentsMap[data.executor]" :data="data" :options="options" :read-only="isReadOnly" @visibleChange="changeTriggerVisible"  />
               </template>
             </div>
             <a-button v-else @click="onAdd">{{ $t('ListItem.Item.637563-17') }}</a-button>
           </div>
           <div class="item-number">{{ name + 1 }}</div>
           <ConfirmModal
+            v-if="!isReadOnly"
             :title="$t('ListItem.Item.637563-18')"
             :onConfirm="onDelete"
             className="actions-item-delete"
@@ -37,7 +38,7 @@
         </CheckItem>
       </div>
     </a-form-item>
-    <template v-if="!isLast && type === 'serial'">
+    <template v-if="!isReadOnly && !isLast && type === 'serial'">
       <div
         :class="[
           'actions-item-filter-warp',
@@ -111,7 +112,7 @@
 </template>
 
 <script lang="ts" setup name="ActionItem">
-import { PropType } from "vue";
+import { type Ref, PropType } from "vue";
 import { ActionsType, ParallelType } from "../../../typings";
 import EditModal from "../Modal/index.vue";
 import ActionTypeComponent from "../Modal/ActionTypeComponent.vue";
@@ -125,6 +126,7 @@ import { EventEmitter, EventEmitterKeys, EventSubscribeKeys } from "../../util";
 import CheckItem from "./CheckItem.vue";
 import { useI18n } from 'vue-i18n'
 import ComponentsMap from './detail'
+import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -165,6 +167,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["delete", "update"]);
+const readOnlyActionProviders = inject<Ref<string[]>>('readonly-action-providers', ref([]));
+const isReadOnly = computed(() => readOnlyActionProviders.value.includes(props.data?.executor || ''));
 const checkItemRef = ref();
 const visible = ref<boolean>(false);
 const triggerVisible = ref<boolean>(false);
@@ -263,12 +267,32 @@ const addFilterParams = () => {
 };
 
 const onAdd = () => {
+  if (isReadOnly.value) {
+    onlyMessage($t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning');
+    return;
+  }
   visible.value = true;
 };
 
 const onType = (_type: string) => {
-
+  if (isReadOnly.value) {
+    onlyMessage($t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning');
+    return;
+  }
+  if (_type === 'notify') {
+    onlyMessage($t('IotSceneLinkage.message.legacyNotifyReadonly'), 'warning')
+    return
+  }
   actionType.value = _type;
+};
+
+/** 历史告警动作可查看摘要，但不能打开原版的告警绑定维护弹窗。 */
+const changeTriggerVisible = (visible: boolean) => {
+  if (isReadOnly.value) {
+    onlyMessage($t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning');
+    return;
+  }
+  triggerVisible.value = visible;
 };
 
 /**

@@ -309,7 +309,7 @@ function getInitialScopeView(): 'space' | 'device-group' | 'custom' | 'all' {
 }
 
 function getDynamicCheckedKeys(): string[] {
-  // 区域和设备分组保存用户显式勾选的维度节点，不做父子级联展开。
+  // 所属空间和所属分组保存用户显式勾选的维度节点，不做父子级联展开。
   return draft.selectorValues.map(item => `${draft.selector}:${item.value}`)
 }
 

@@ -8,7 +8,11 @@ defineProps({
   },
   options: {
     type: Object,
-  }
+  },
+  readOnly: {
+    type: Boolean,
+    default: false,
+  },
 })
 const emit = defineEmits(['visibleChange'])
 const {t: $t} = useI18n();
@@ -22,6 +26,7 @@ const onVisibleChange = () => {
     {{ data?.alarm?.mode === 'trigger' ? $t('ListItem.Item.637563-0') :$t('ListItem.Item.637563-2') }}
   </span>
   <a-button
+    v-if="!readOnly"
     style="padding: 0"
     type="link"
     @click.stop="onVisibleChange"

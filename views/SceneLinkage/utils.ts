@@ -1,6 +1,15 @@
 import { randomNumber } from '@jetlinks-web/utils'
+import type { SceneEditorMode } from './editor/editorMode'
+
+export type { SceneEditorMode } from './editor/editorMode'
 
 export type SceneTriggerKind = 'manual' | 'repeat' | 'date' | 'interval' | 'property' | 'event' | 'online' | 'offline' | 'state' | 'alarm' | 'ai-event'
+
+/**
+ * 多触发器由后端 MultiTrigger 固定校验这三类 Provider。快速、详细模式共用该边界，
+ * 避免界面允许选择后在保存时才被后端拒绝。
+ */
+export const MULTI_TRIGGER_PROVIDERS = ['device', 'timer', 'alarm'] as const
 
 export const AI_EVENT_RESULT_COLUMNS = ['hitResults', 'maxTargetScore', 'targetCount', 'results', 'numberResults'] as const
 
@@ -81,6 +90,7 @@ export type SceneConditionForm =
 
 export interface SceneLinkageForm {
   id?: string
+  editorMode?: SceneEditorMode
   branchId?: number
   name: string
   description?: string
@@ -155,6 +165,7 @@ export interface SceneConditionColumns {
 }
 
 export const defaultForm = (): SceneLinkageForm => ({
+  editorMode: 'quick',
   name: '',
   summary: '',
   summaryTitle: '',
@@ -424,6 +435,7 @@ export const toForm = (detail: any): SceneLinkageForm => {
   const form = {
     ...defaultForm(),
     id: scene.id,
+    editorMode: scene.options?.editorMode === 'detail' ? 'detail' : 'quick',
     branchId: scene.branches?.[0]?.branchId,
     name: scene.name,
     description: scene.description,
@@ -811,6 +823,7 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
     name: form.name,
     description: form.description,
     options: {
+      editorMode: form.editorMode || 'quick',
       summary: form.summary,
       summaryTitle: form.summaryTitle || form.summary,
       trigger: buildTriggerOptions(),

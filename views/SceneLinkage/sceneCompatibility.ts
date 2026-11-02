@@ -1,4 +1,5 @@
 import { AI_EVENT_RESULT_COLUMNS } from './utils'
+export { hasUnsupportedLegacyAlarmAction } from './sceneRule'
 
 export interface SceneCompatibilityResult {
   supported: boolean
