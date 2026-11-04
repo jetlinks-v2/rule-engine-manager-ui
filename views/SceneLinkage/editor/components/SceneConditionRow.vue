@@ -13,6 +13,7 @@
       :width="1180"
       :product-id="condition.productId"
       :model-value="{ selector: condition.selector, selectorValues: condition.selectorValues, options: condition.options, productId: condition.productId, productName: condition.options?.productName }"
+      :validate="validateDeviceCondition"
       @cancel="cancelDeviceEditor"
       @select-device="selectDevice"
       @save="saveScope"
@@ -50,6 +51,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { getProduct } from '../../../../api/scene-linkage'
 import type { SceneConditionForm } from '../../utils'
 import type { IotAlarmTargetSelectOption } from '../alarm/IotAlarmTargetSelect.vue'
@@ -158,6 +160,15 @@ function updateProperty(value: unknown) {
 }
 function updateTermType(value: unknown) { if (props.condition.type === 'deviceProperty' && typeof value === 'string') update({ ...props.condition, termType: value }) }
 function updateValue(value: unknown) { if (props.condition.type === 'deviceProperty') update({ ...props.condition, value: value as string | number | boolean }) }
+/** A device has already been selected here; require the remaining property condition before committing it. */
+function validateDeviceCondition() {
+  if (props.condition.type !== 'deviceProperty') return true
+  if (!props.condition.propertyId || props.condition.value === undefined || props.condition.value === '') {
+    onlyMessage(t('IotSceneLinkage.message.conditionValueRequired'), 'warning')
+    return false
+  }
+  return true
+}
 function saveScope(scope: DeviceScope) {
   if (props.condition.type !== 'deviceProperty') return
   update({ ...props.condition, ...scope, productId: scope.productId || props.condition.productId, options: { ...props.condition.options, ...scope.options, productName: scope.productName || props.condition.options?.productName, name: scope.selectorValues.map(item => item.name || item.value).join('、') } })

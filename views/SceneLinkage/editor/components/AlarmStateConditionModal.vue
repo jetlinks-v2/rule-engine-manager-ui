@@ -25,10 +25,13 @@
               :class="['alarm-condition-modal__rule', { 'alarm-condition-modal__rule--selected': rule.id === selectedRuleId }]"
               @click="selectRule(rule)"
             >
-              <span class="alarm-condition-modal__rule-name">{{ rule.name }}</span>
+              <span class="alarm-condition-modal__rule-head"><span class="alarm-condition-modal__rule-name">{{ rule.name }}</span><a-tag v-if="rule.level" :color="alarmLevelColor(rule.level)">{{ alarmLevelText(rule.level) }}</a-tag></span>
               <span v-for="line in rule.lines" :key="line" class="alarm-condition-modal__rule-line">{{ line }}</span>
             </button>
-            <a-empty v-if="!loading && !filteredRules.length" :description="$t('IotSceneLinkage.alarmCondition.empty')" />
+            <a-result v-if="!loading && loadError" status="error" :title="$t('IotSceneLinkage.alarmCondition.loadFailed')">
+              <template #extra><a-button type="link" @click="resetAndLoad">{{ $t('IotSceneLinkage.action.retry') }}</a-button></template>
+            </a-result>
+            <a-empty v-else-if="!loading && !filteredRules.length" :description="$t('IotSceneLinkage.alarmCondition.empty')" />
           </div>
         </a-spin>
       </aside>
@@ -38,6 +41,7 @@
           <header class="alarm-condition-modal__detail-header">
             <span class="alarm-condition-modal__detail-icon"><AIcon :type="sourceKind === 'visual-ai' ? 'EyeOutlined' : 'AlertOutlined'" /></span>
             <div><strong>{{ selectedRule.name }}</strong><small>{{ sourceLabel }}</small></div>
+            <a-tag v-if="selectedRule.level" :color="alarmLevelColor(selectedRule.level)">{{ alarmLevelText(selectedRule.level) }}</a-tag>
             <a-tooltip :title="$t('IotSceneLinkage.alarmCondition.detailHelp')"><AIcon type="QuestionCircleOutlined" /></a-tooltip>
           </header>
 
@@ -48,15 +52,15 @@
           </dl>
 
           <section class="alarm-condition-modal__state">
-            <strong>{{ $t('IotSceneLinkage.alarmCondition.currentState') }}</strong>
+            <strong>{{ stateTitle }}</strong>
             <div class="alarm-condition-modal__state-options">
               <button
                 v-for="state in states"
                 :key="state.value"
-                :class="['alarm-condition-modal__state-option', { 'alarm-condition-modal__state-option--selected': draft.state === state.value }]"
+                :class="['alarm-condition-modal__state-option', { 'alarm-condition-modal__state-option--selected': isStateSelected(state.value) }]"
                 @click="changeState(state.value)"
               >
-                <AIcon :type="state.icon" /><b>{{ state.label }}</b><AIcon type="QuestionCircleOutlined" />
+                <AIcon :type="state.icon" /><b>{{ state.label }}</b><a-tooltip :title="state.description"><AIcon type="QuestionCircleOutlined" /></a-tooltip>
               </button>
             </div>
           </section>
@@ -65,13 +69,13 @@
       </section>
 
       <div class="alarm-condition-modal__preview">
-        <b>{{ $t('IotSceneLinkage.alarmCondition.previewLabel') }}</b>
+        <b>{{ previewLabel }}</b>
         <span>{{ previewText }}</span>
       </div>
     </div>
     <footer class="alarm-condition-modal__footer">
       <a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
-      <a-button type="primary" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button>
+      <a-button type="primary" :disabled="!selectedRule" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button>
     </footer>
   </a-modal>
 </template>
@@ -95,6 +99,7 @@ type SourceKind = 'iot-device' | 'visual-ai'
 type AlarmRule = {
   id: string
   name: string
+  level?: number
   lines: string[]
   details: Array<{ label: string; value: string }>
   value: SceneAlarmTriggerConfig
@@ -103,6 +108,7 @@ type AlarmRule = {
 const props = defineProps({
   open: Boolean,
   sourceKind: { type: String as PropType<SourceKind>, required: true },
+  mode: { type: String as PropType<'trigger' | 'condition'>, default: 'condition' },
   modelValue: { type: Object as PropType<SceneAlarmTriggerConfig>, required: true },
 })
 const emit = defineEmits<{
@@ -113,6 +119,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const loading = ref(false)
+const loadError = ref(false)
 const keyword = ref('')
 const rules = ref<AlarmRule[]>([])
 const selectedRuleId = ref<string>()
@@ -138,14 +145,29 @@ const filteredRules = computed(() => {
 })
 const selectedRule = computed(() => rules.value.find(rule => rule.id === selectedRuleId.value))
 const states = computed(() => [
-  { value: 'warning' as const, label: t('IotSceneLinkage.alarmState.warning'), icon: 'AlertOutlined' },
-  { value: 'normal' as const, label: t('IotSceneLinkage.alarmCondition.normalState'), icon: 'SafetyCertificateOutlined' },
+  ...(props.mode === 'trigger'
+    ? [
+        { value: 'trigger', label: t('IotSceneLinkage.alarmMode.trigger'), description: t('IotSceneLinkage.alarmMode.triggerHint'), icon: 'AlertOutlined' },
+        { value: 'relieve', label: t('IotSceneLinkage.alarmMode.relieve'), description: t('IotSceneLinkage.alarmMode.relieveHint'), icon: 'SafetyCertificateOutlined' },
+      ]
+    : [
+        { value: 'warning', label: t('IotSceneLinkage.alarmState.warning'), description: t('IotSceneLinkage.alarmCondition.detailHelp'), icon: 'AlertOutlined' },
+        { value: 'normal', label: t('IotSceneLinkage.alarmCondition.normalState'), description: t('IotSceneLinkage.alarmCondition.detailHelp'), icon: 'SafetyCertificateOutlined' },
+      ]),
 ])
+const stateTitle = computed(() => props.mode === 'trigger'
+  ? t('IotSceneLinkage.alarmCondition.triggerWhen')
+  : t('IotSceneLinkage.alarmCondition.currentState'))
+const previewLabel = computed(() => t(props.mode === 'trigger'
+  ? 'IotSceneLinkage.alarmCondition.triggerRule'
+  : 'IotSceneLinkage.alarmCondition.previewLabel'))
 const previewText = computed(() => {
   const name = selectedRule.value?.name || draft.value.options?.alarmConfigName || t('IotSceneLinkage.alarmCondition.selectRule')
-  const state = draft.value.state === 'normal'
-    ? t('IotSceneLinkage.alarmCondition.normalState')
-    : t('IotSceneLinkage.alarmState.warning')
+  const state = props.mode === 'trigger'
+    ? t(`IotSceneLinkage.alarmMode.${draft.value.modes[0] || 'trigger'}`)
+    : draft.value.state === 'normal'
+      ? t('IotSceneLinkage.alarmCondition.normalState')
+      : t('IotSceneLinkage.alarmState.warning')
   return t('IotSceneLinkage.alarmCondition.previewText', { name, state })
 })
 
@@ -157,6 +179,7 @@ async function resetAndLoad() {
   draft.value = clone(props.modelValue)
   selectedRuleId.value = draft.value.alarmConfigId
   rules.value = []
+  loadError.value = false
   loading.value = true
   try {
     rules.value = props.sourceKind === 'visual-ai'
@@ -167,6 +190,9 @@ async function resetAndLoad() {
     const selected = selectedFromList || selectedRuleFromDraft() || rules.value[0]
     if (selected && !selectedFromList && draft.value.alarmConfigId) rules.value.unshift(selected)
     if (selected) selectRule(selected)
+  } catch {
+    // Keep a request failure distinct from a successful empty response, so users know to retry rather than recreate a rule.
+    loadError.value = true
   } finally {
     loading.value = false
   }
@@ -253,6 +279,7 @@ async function loadIotAlarmRules(): Promise<AlarmRule[]> {
     return [{
       id,
       name,
+      level: Number(processor?.configuration?.alarmLevel) || undefined,
       lines: [
         t('IotSceneLinkage.alarmCondition.productLine', { value: productName }),
         t('IotSceneLinkage.alarmCondition.deviceLine', { value: deviceName }),
@@ -275,15 +302,38 @@ async function loadIotAlarmRules(): Promise<AlarmRule[]> {
   })
 }
 
+function alarmLevelText(level: number) {
+  const keys = ['emergency', 'urgent', 'severity', 'ordinary', 'warn']
+  return t(`DeviceAlarm.level.${keys[level - 1] || 'ordinary'}`)
+}
+
+function alarmLevelColor(level: number) {
+  if (level <= 2) return 'error'
+  if (level === 3) return 'warning'
+  if (level === 4) return 'processing'
+  return 'default'
+}
+
 /** 视觉告警使用既有聚合任务列表；不把原型中的演示字段映射为新的后台字段。 */
 async function loadVisualAlarmRules(): Promise<AlarmRule[]> {
-  const [scenePage, taskPage] = await Promise.all([
-    queryAiAlarmSceneTree({ pageIndex: 0, pageSize: 200, terms: [], sorts: [{ name: 'createTime', order: 'desc' }] }),
-    queryAiAggregateTasks({ pageIndex: 0, pageSize: 200, terms: [], sorts: [{ name: 'createTime', order: 'desc' }] }),
-  ])
+  const scenePage = await queryAiAlarmSceneTree({
+    pageIndex: 0,
+    pageSize: 200,
+    terms: [],
+    sorts: [{ name: 'createTime', order: 'desc' }],
+  })
   const scenes = normalizeResult<AiSceneTreeOption>(scenePage)
   const sceneNames = Object.fromEntries(scenes.data.map(scene => [scene.id, scene.name || scene.id]))
-  const tasks = normalizeResult<AiAggregateTaskOption>(taskPage)
+  // 聚合任务接口按场景查询才会返回告警任务；无筛选全量查询会漏掉当前用户可见的视觉告警配置。
+  const taskPages = await Promise.all(scenes.data.map(scene => queryAiAggregateTasks({
+    pageIndex: 0,
+    pageSize: 200,
+    terms: [{ column: 'sceneId', termType: 'eq', value: scene.id }],
+    sorts: [{ name: 'createTime', order: 'desc' }],
+  })))
+  const tasks = {
+    data: taskPages.flatMap(page => normalizeResult<AiAggregateTaskOption>(page).data),
+  }
   return tasks.data.flatMap(task => {
     const target = task.taskTargets?.[0]
     const sceneName = sceneNames[task.sceneId] || task.sceneId
@@ -336,8 +386,17 @@ function selectRule(rule: AlarmRule) {
     : { ...rule.value, state: current.state || 'warning' }
 }
 
-function changeState(state: 'warning' | 'normal') {
-  draft.value = { ...draft.value, state }
+function isStateSelected(value: string) {
+  return props.mode === 'trigger'
+    ? draft.value.modes.includes(value as 'trigger' | 'relieve')
+    : draft.value.state === value
+}
+
+/** Trigger and condition use one selection shell but persist different existing alarm fields. */
+function changeState(value: string) {
+  draft.value = props.mode === 'trigger'
+    ? { ...draft.value, modes: [value as 'trigger' | 'relieve'] }
+    : { ...draft.value, state: value as 'warning' | 'normal' }
 }
 
 function save() {
@@ -345,7 +404,8 @@ function save() {
   emit('save')
 }
 
-watch(() => props.open, open => { if (open) void resetAndLoad() })
+// 新增附加条件时组件与打开状态会在同一渲染周期创建；立即执行才能避免首次弹窗不发查询。
+watch(() => props.open, open => { if (open) void resetAndLoad() }, { immediate: true })
 </script>
 
 <style scoped>
@@ -354,7 +414,7 @@ watch(() => props.open, open => { if (open) void resetAndLoad() })
 .alarm-condition-modal__rules-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }.alarm-condition-modal__rules-title span { color: var(--ant-color-text-tertiary); font-size: 12px; }
 .alarm-condition-modal__rule-list { display: grid; gap: 8px; max-height: 410px; margin-top: 12px; overflow: auto; padding-right: 4px; }
 .alarm-condition-modal__rule { display: grid; gap: 5px; padding: 12px; text-align: left; cursor: pointer; background: var(--ant-color-bg-container); border: 1px solid transparent; border-radius: 8px; }.alarm-condition-modal__rule:hover { background: #f7faff; border-color: #b7d2ff; }.alarm-condition-modal__rule--selected { background: #f4f8ff; border-color: var(--ant-color-primary); }
-.alarm-condition-modal__rule-name { color: var(--ant-color-text); font-size: 14px; font-weight: 600; }.alarm-condition-modal__rule-line { color: var(--ant-color-text-secondary); font-size: 12px; line-height: 18px; }
+.alarm-condition-modal__rule-head { display: flex; gap: 8px; align-items: center; min-width: 0; }.alarm-condition-modal__rule-name { flex: 1; min-width: 0; overflow: hidden; color: var(--ant-color-text); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }.alarm-condition-modal__rule-line { color: var(--ant-color-text-secondary); font-size: 12px; line-height: 18px; }
 .alarm-condition-modal__detail { display: flex; flex-direction: column; min-width: 0; padding: 24px 20px; }.alarm-condition-modal__detail > :last-child { margin-block: auto; }
 .alarm-condition-modal__detail-header { display: flex; gap: 12px; align-items: center; }.alarm-condition-modal__detail-header > div { display: grid; flex: 1; gap: 2px; min-width: 0; }.alarm-condition-modal__detail-header small { color: var(--ant-color-text-tertiary); }.alarm-condition-modal__detail-header > .anticon { color: var(--ant-color-text-tertiary); }
 .alarm-condition-modal__detail-icon { display: grid; place-items: center; width: 36px; height: 36px; color: var(--ant-color-primary); background: #eef5ff; border-radius: 8px; }

@@ -40,6 +40,7 @@ const iconType = computed(() => {
 })
 const description = computed(() => {
   if (!props.option.value) return ''
+  if (props.option.description) return props.option.description
   if (props.option.kind === 'function') {
     const parameters = t('IotSceneLinkage.thingModel.functionParameters', {
       input: props.option.inputCount || 0,

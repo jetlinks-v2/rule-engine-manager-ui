@@ -10,6 +10,7 @@
     :width="1180"
     :product-id="config.productId"
     :model-value="{ selector: config.selector, selectorValues: config.selectorValues, options: config.options, productId: config.productId, productName: config.options.productName }"
+    :validate="validateAction"
     @cancel="cancelEditor"
     @select-device="selectDevice"
     @save="saveEditor"
@@ -20,8 +21,27 @@
           <template v-if="hasSelection">
             <a-form-item :label="operationName">
               <a-space direction="vertical" class="device-action-row__operation-fields">
-                <a-select :value="operationType" :options="operationTypeOptions" @change="changeOperationType" />
-                <ThingModelSelect :model-value="operationValue" :options="operationOptions" :placeholder="operationPlaceholder" @change="changeOperation" />
+                <a-select
+                  class="device-action-row__operation-select"
+                  popup-class-name="scene-editor__thing-model-dropdown"
+                  :dropdown-match-select-width="false"
+                  :value="operationType"
+                  :options="operationTypeOptions"
+                  @change="changeOperationType"
+                >
+                  <template #option="option">
+                    <div class="device-action-row__operation-option">
+                      <span :class="['device-action-row__operation-icon', `device-action-row__operation-icon--${optionValue(option).value}`]">
+                        <AIcon :type="optionValue(option).icon" />
+                      </span>
+                      <span class="device-action-row__operation-option-content">
+                        <b>{{ optionValue(option).label }}</b>
+                        <small>{{ optionValue(option).description }}</small>
+                      </span>
+                    </div>
+                  </template>
+                </a-select>
+                <ThingModelSelect class="device-action-row__operation-select" :model-value="operationValue" :options="operationOptions" :placeholder="operationPlaceholder" @change="changeOperation" />
               </a-space>
             </a-form-item>
             <a-form-item v-if="config.message.messageType === 'WRITE_PROPERTY'" :label="$t('IotSceneLinkage.form.propertyValue')">
@@ -43,6 +63,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { getProduct } from '../../../../api/scene-linkage'
 import type { IotAlarmTargetSelectOption } from '../alarm/IotAlarmTargetSelect.vue'
 import type { SceneActionForm } from '../../utils'
@@ -80,11 +101,23 @@ const writeValue = computed({
 })
 const operationType = computed(() => ['READ_PROPERTY', 'WRITE_PROPERTY', 'INVOKE_FUNCTION'].includes(config.value.message.messageType) ? config.value.message.messageType : 'READ_PROPERTY')
 const operationTypeOptions = computed(() => [
-  { value: 'READ_PROPERTY', label: t('IotSceneLinkage.action.readProperty') },
-  { value: 'WRITE_PROPERTY', label: t('IotSceneLinkage.action.writeProperty') },
-  { value: 'INVOKE_FUNCTION', label: t('IotSceneLinkage.action.executeFunction') },
+  { value: 'READ_PROPERTY', icon: 'ReadOutlined', label: t('IotSceneLinkage.action.readProperty'), description: t('IotSceneLinkage.actionDescription.readProperty') },
+  { value: 'WRITE_PROPERTY', icon: 'EditOutlined', label: t('IotSceneLinkage.action.writeProperty'), description: t('IotSceneLinkage.actionDescription.writeProperty') },
+  { value: 'INVOKE_FUNCTION', icon: 'ApiOutlined', label: t('IotSceneLinkage.action.executeFunction'), description: t('IotSceneLinkage.actionDescription.executeFunction') },
 ])
-const operationOptions = computed(() => operationType.value === 'WRITE_PROPERTY' ? writableProperties.value : operationType.value === 'INVOKE_FUNCTION' ? functions.value : readableProperties.value)
+const operationOptions = computed(() => {
+  const description = operationType.value === 'WRITE_PROPERTY'
+    ? t('IotSceneLinkage.actionDescription.writeProperty')
+    : operationType.value === 'INVOKE_FUNCTION'
+      ? t('IotSceneLinkage.actionDescription.executeFunction')
+      : t('IotSceneLinkage.actionDescription.readProperty')
+  const options = operationType.value === 'WRITE_PROPERTY'
+    ? writableProperties.value
+    : operationType.value === 'INVOKE_FUNCTION'
+      ? functions.value
+      : readableProperties.value
+  return options.map(option => ({ ...option, description }))
+})
 const operationPlaceholder = computed(() => operationType.value === 'INVOKE_FUNCTION'
   ? t('IotSceneLinkage.placeholder.function')
   : t('IotSceneLinkage.placeholder.property'))
@@ -167,12 +200,34 @@ function changeOperation(value: string) {
   restoreFunctionInputs([])
 }
 
+const optionValue = (option: any) => option?.data?.value ? option.data : option
+
 function restoreFunctionInputs(inputs: Array<{ name?: string; value?: unknown }> = []) {
   Object.keys(inputValues).forEach(key => delete inputValues[key])
   inputs.forEach(input => { if (input.name) inputValues[input.name] = input.value })
 }
 
 function syncInputs() { config.value.message.inputs = functionInputs.value.map(input => ({ name: input.id, value: inputValues[input.id] })); updateConfig() }
+
+/** The shared device shell only knows the selected device; this component owns command and parameter completeness. */
+function validateAction() {
+  if (!operationValue.value) {
+    onlyMessage(t('IotSceneLinkage.message.deviceActionRequired'), 'warning')
+    return false
+  }
+  if (operationType.value === 'WRITE_PROPERTY' && (writeValue.value === undefined || writeValue.value === '')) {
+    onlyMessage(t('IotSceneLinkage.message.deviceActionValueRequired'), 'warning')
+    return false
+  }
+  const missingInputs = functionInputs.value
+    .filter(input => input.expands?.required && (inputValues[input.id] === undefined || inputValues[input.id] === ''))
+    .map(input => input.name || input.id)
+  if (missingInputs.length) {
+    onlyMessage(t('IotSceneLinkage.message.deviceFunctionInputRequired', { names: missingInputs.join('、') }), 'warning')
+    return false
+  }
+  return true
+}
 
 function saveEditor(scope: DeviceScope) {
   if (!editingAction.value) return
@@ -201,7 +256,15 @@ watch(() => props.autoOpen, value => {
 .device-action-row__summary { display: flex; gap: 8px; align-items: center; min-width: 0; }
 .device-action-row__summary span { overflow: hidden; color: var(--ant-color-text-secondary); text-overflow: ellipsis; white-space: nowrap; }
 .device-action-row__config { min-height: 100%; }
-.device-action-row__operation-fields { width: 100%; }
-.device-action-row__operation-fields :deep(.ant-select), .device-action-row__operation-fields :deep(.thing-model-select) { width: 100%; }
+.device-action-row__operation-fields { width: 100%; align-items: flex-start; }
+.device-action-row__operation-select { width: var(--scene-linkage-resource-select-width, 18rem); }
+.device-action-row__operation-option { display: flex; gap: var(--space-2, 8px); align-items: center; min-width: 0; padding: var(--space-1, 4px) 0; }
+.device-action-row__operation-icon { display: grid; flex: none; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-jet-sm, 8px); }
+.device-action-row__operation-icon--READ_PROPERTY { color: #0e8a5f; background: #e6f5ee; }
+.device-action-row__operation-icon--WRITE_PROPERTY { color: #d46b08; background: #fff7e8; }
+.device-action-row__operation-icon--INVOKE_FUNCTION { color: #6c4fe0; background: #efebff; }
+.device-action-row__operation-option-content { display: grid; gap: 3px; min-width: 0; }
+.device-action-row__operation-option-content b { color: var(--ant-color-text); font-size: 13px; font-weight: 600; }
+.device-action-row__operation-option-content small { color: var(--ant-color-text-tertiary); font-size: 12px; line-height: 18px; }
 .device-action-row__config-empty { margin: 16px 0 0; color: var(--ant-color-text-secondary); }
 </style>

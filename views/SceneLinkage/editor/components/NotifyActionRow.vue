@@ -43,7 +43,7 @@
       </span>
       <span v-if="templateContent" class="notify-action-row__template">
         <template v-for="(segment, segmentIndex) in templateSegments" :key="segmentIndex">
-          <span v-if="segment.variable" class="notify-action-row__variable">{{ segment.text }}</span>
+          <span v-if="segment.variable" class="notify-action-row__variable" :title="segment.token">{{ segment.text }}</span>
           <span v-else>{{ segment.text }}</span>
         </template>
       </span>
@@ -55,6 +55,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { SceneNotifyMethod, SceneNotifyUser } from '../../../../api/scene-linkage'
 import type { SceneActionForm } from '../../utils'
 
@@ -78,6 +79,7 @@ const emit = defineEmits<{
   'method-change': [method: SceneNotifyMethod]
   change: [action: SceneActionForm]
 }>()
+const { t } = useI18n()
 
 const methodValue = computed(() => props.action.config?.notifyChannelIds?.[0])
 const recipientIds = computed(() => props.action.config?.userIds || [])
@@ -97,13 +99,19 @@ const templateContent = computed(() => String(
   || '',
 ))
 const templateSegments = computed(() => {
-  const segments: Array<{ text: string; variable: boolean }> = []
+  const variableNames = new Map(
+    (Array.isArray(props.action.options?.templateVariables) ? props.action.options.templateVariables : [])
+      .map((variable: any) => [String(variable?.id || ''), String(variable?.name || variable?.i18nName || '').trim()] as const)
+      .filter(([id, name]) => Boolean(id && name)),
+  )
+  const segments: Array<{ text: string; variable: boolean; token?: string }> = []
   const pattern = /\$\{[^}]+}/g
   let offset = 0
   let matched: RegExpExecArray | null
   while ((matched = pattern.exec(templateContent.value))) {
     if (matched.index > offset) segments.push({ text: templateContent.value.slice(offset, matched.index), variable: false })
-    segments.push({ text: matched[0], variable: true })
+    const variableId = matched[0].slice(2, -1).trim()
+    segments.push({ text: variableNames.get(variableId) || t('IotSceneLinkage.notify.unnamedVariable'), token: matched[0], variable: true })
     offset = matched.index + matched[0].length
   }
   if (offset < templateContent.value.length || !segments.length) segments.push({ text: templateContent.value.slice(offset), variable: false })
@@ -117,7 +125,9 @@ const summaryText = computed(() => {
   const recipients = recipientIds.value
     .map(id => props.users.find(user => user.id === id)?.name || id)
     .filter(Boolean)
-  return [method, recipients.join('、')].filter(Boolean).join(' · ')
+  return method && recipients.length
+    ? t('IotSceneLinkage.summary.notify', { method, recipients: recipients.join('、') })
+    : ''
 })
 
 onMounted(() => {

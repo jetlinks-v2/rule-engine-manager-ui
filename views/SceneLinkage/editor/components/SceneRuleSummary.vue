@@ -118,9 +118,9 @@ const eventName = (productId: string | undefined, id: string | undefined) => pro
 const functionName = (productId: string | undefined, id: string | undefined) => products.value[productId || '']?.metadata?.functions?.find((item: any) => item.id === id)?.name || id || ''
 const alarmName = (alarm: any) => alarm.options?.alarmConfigName || alarmNames.value[alarm.alarmConfigId || ''] || alarm.alarmConfigId || ''
 const timeRangeLabel = (range: SceneTimeRange) => {
-  if (range.start === '08:00' && range.end === '20:00') return t('IotSceneLinkage.effectivePeriod.daytime')
-  if (range.start === '09:00' && range.end === '18:00') return t('IotSceneLinkage.timeTemplate.workday')
-  if (range.start === '20:00' && range.end === '08:00') return t('IotSceneLinkage.timeTemplate.evening')
+  if (range.start === '08:00' && range.end === '20:00') return `${t('IotSceneLinkage.effectivePeriod.daytime')} ${range.start}–${range.end}`
+  if (range.start === '09:00' && range.end === '18:00') return `${t('IotSceneLinkage.timeTemplate.workday')} ${range.start}–${range.end}`
+  if (range.start === '20:00' && range.end === '08:00') return `${t('IotSceneLinkage.timeTemplate.evening')} ${range.start}–${range.end}`
   return `${t('IotSceneLinkage.timeTemplate.custom')} ${range.start}–${range.end}`
 }
 type SummaryPart = { text: string; title?: string; field?: boolean }
@@ -140,6 +140,14 @@ const aiEventConditionText = (condition: SceneMultiTriggerForm['aiEvent']['condi
   const name = t(`IotSceneLinkage.aiEvent.condition.${condition.column}`)
   if (condition.termType === 'isnull') return `${name} ${t('IotSceneLinkage.term.isnull')}`
   return `${name} ${t(`IotSceneLinkage.term.${condition.termType || 'eq'}`)} ${condition.value ?? ''}`
+}
+/** 快速视觉规则以时间窗口和次数呈现，避免在规则预览中暴露内部结果字段。 */
+const aiEventRecognitionRuleText = (rule: SceneMultiTriggerForm['aiEvent']['recognitionRule']) => {
+  if (!rule) return ''
+  const time = formatSceneDuration(t, rule.time)
+  return rule.type === 'hits'
+    ? t('IotSceneLinkage.aiEvent.rule.hitsPreview', { time, count: rule.threshold })
+    : t('IotSceneLinkage.aiEvent.rule.missedPreview', { time })
 }
 const triggerSummaryTextFor = (form: SceneMultiTriggerForm, full = false) => {
   if (form.triggerKind === 'property') return `${triggerTargetName(form, full)}${t('IotSceneLinkage.summary.deviceThingModelConnector')}${propertyLabel(form.productId, form.propertyId)} ${t(`IotSceneLinkage.term.${form.termType}`)} ${form.termValue ?? ''}`
@@ -169,7 +177,8 @@ const triggerSummaryTextFor = (form: SceneMultiTriggerForm, full = false) => {
         ? t('IotSceneLinkage.aiEvent.cameraCount', { count: mediaTargets.length })
         : t('IotSceneLinkage.aiEvent.allCameras'),
     })
-    const condition = aiEventConditionText(form.aiEvent.condition)
+    const condition = aiEventRecognitionRuleText(form.aiEvent.recognitionRule)
+      || aiEventConditionText(form.aiEvent.condition)
     return condition
       ? t('IotSceneLinkage.summary.aiEventWithCondition', { event: scope, condition })
       : scope
@@ -216,7 +225,7 @@ const triggerSummaryPartsFor = (form: SceneMultiTriggerForm): SummaryPart[] => {
     const mediaTargets = form.aiEvent.mediaTargets || []
     const cameraScope = mediaTargets.length ? t('IotSceneLinkage.aiEvent.cameraCount', { count: mediaTargets.length }) : t('IotSceneLinkage.aiEvent.allCameras')
     return validSummaryParts([
-      summaryField(form.aiEvent.sceneName || form.aiEvent.sceneId), summaryField(form.aiEvent.taskTargetName || form.aiEvent.taskTarget), summaryPlainText(t('IotSceneLinkage.aiEvent.phrase.at')), summaryField(cameraScope), summaryPlainText(t('IotSceneLinkage.aiEvent.phrase.resultProduced')), summaryField(aiEventConditionText(form.aiEvent.condition)),
+      summaryField(form.aiEvent.sceneName || form.aiEvent.sceneId), summaryField(form.aiEvent.taskTargetName || form.aiEvent.taskTarget), summaryPlainText(t('IotSceneLinkage.aiEvent.phrase.at')), summaryField(cameraScope), summaryPlainText(t('IotSceneLinkage.aiEvent.phrase.resultProduced')), summaryField(aiEventRecognitionRuleText(form.aiEvent.recognitionRule) || aiEventConditionText(form.aiEvent.condition)),
     ])
   }
   if (form.triggerKind === 'alarm') {

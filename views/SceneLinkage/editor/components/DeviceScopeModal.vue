@@ -60,7 +60,14 @@ export type DeviceScope = {
 type DeviceOption = { id: string; name: string; productId: string; productName: string; spaceName?: string; online: boolean; statusText: string }
 type SpaceNode = { key: string; title: string; children?: SpaceNode[] }
 const UNBOUND_SPACE_KEY = '__scene-unbound-space__'
-const props = defineProps({ open: { type: Boolean, default: false }, title: { type: String, default: '' }, width: { type: Number, default: 1180 }, productId: { type: String, default: '' }, modelValue: { type: Object as PropType<DeviceScope>, required: true } })
+const props = defineProps({
+  open: { type: Boolean, default: false },
+  title: { type: String, default: '' },
+  width: { type: Number, default: 1180 },
+  productId: { type: String, default: '' },
+  modelValue: { type: Object as PropType<DeviceScope>, required: true },
+  validate: { type: Function as PropType<(device: DeviceOption) => boolean | Promise<boolean>>, default: undefined },
+})
 const emit = defineEmits<{ (event: 'cancel'): void; (event: 'save', value: DeviceScope): void; (event: 'select-device', value: DeviceOption): void }>()
 const { t } = useI18n()
 const pageSize = 20
@@ -158,8 +165,10 @@ async function requestProducts(query: IotAlarmTargetSelectQuery) {
   const result = response?.result ?? response; const data = result?.data || result?.records || []
   return { data: data.map((item: any) => ({ label: item.name || item.id, value: String(item.id), data: item })), total: Number(result?.total ?? result?.totalElements ?? data.length) }
 }
-function save() {
+/** The shell owns device selection only; the right-side business editor validates its own fields before commit. */
+async function save() {
   if (!selectedDevice.value) return
+  if (props.validate && !(await props.validate(selectedDevice.value))) return
   emit('save', { selector: 'fixed', selectorValues: [{ value: selectedDevice.value.id, name: selectedDevice.value.name }], options: { view: 'space', names: [selectedDevice.value.name] }, productId: selectedDevice.value.productId, productName: selectedDevice.value.productName })
 }
 </script>

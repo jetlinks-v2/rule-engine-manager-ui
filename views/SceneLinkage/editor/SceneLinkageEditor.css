@@ -70,6 +70,14 @@
     margin-top: var(--space-1, 4px);
 }
 
+.scene-editor__debounce-conflict {
+    margin-top: var(--space-2, 8px);
+}
+
+.scene-editor__field-warning {
+    color: var(--ant-color-error) !important;
+}
+
 .scene-editor__frequency-input {
     display: flex;
     gap: var(--space-2, 8px);
@@ -760,6 +768,14 @@
     min-height: 100%;
 }
 
+.scene-editor__device-trigger-type {
+    width: 14rem;
+}
+
+.scene-editor__device-trigger-type :deep(.ant-select-selector) {
+    min-height: 2.5rem !important;
+}
+
 .scene-editor__device-trigger-fields {
     width: 100%;
 }
@@ -786,3 +802,47 @@
 .scene-editor__trigger-editor > :deep(.ai-event-trigger-row) {
     width: 100%;
 }
+
+.scene-editor__timer-preview {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-3, 12px);
+    align-items: center;
+    width: 100%;
+    padding: var(--space-3, 12px);
+    color: var(--ant-color-text-secondary);
+    background: var(--ant-color-bg-container);
+    border: 1px dashed var(--ant-color-primary-border);
+    border-radius: var(--radius-jet-sm, 6px);
+    font-size: .8125rem;
+}
+
+.scene-editor__timer-preview strong {
+    overflow: hidden;
+    color: var(--ant-color-primary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scene-editor__timer-modal-title { display: grid; gap: 4px; }
+.scene-editor__timer-modal-title small { color: var(--ant-color-text-secondary); font-size: .75rem; font-weight: 400; }
+.scene-editor__timer-methods, .scene-editor__timer-fields { display: grid; gap: var(--space-3, 12px); width: 100%; }
+.scene-editor__timer-methods > label, .scene-editor__timer-fields > label { color: var(--ant-color-text); font-size: .875rem; font-weight: 600; }
+.scene-editor__timer-method-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3, 12px); }
+.scene-editor__timer-method { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: var(--space-2, 8px); align-items: center; min-height: 6.25rem; padding: var(--space-3, 12px); text-align: left; background: var(--ant-color-bg-container); border: 1px solid var(--jet-theme-border-secondary); border-radius: var(--radius-jet-sm, 8px); cursor: pointer; }
+.scene-editor__timer-method > span { display: grid; grid-row: span 2; place-items: center; width: 28px; height: 28px; color: var(--ant-color-primary); background: var(--ant-color-primary-bg); border-radius: 6px; }
+.scene-editor__timer-method b { overflow: hidden; font-size: .8125rem; text-overflow: ellipsis; white-space: nowrap; }
+.scene-editor__timer-method small { grid-column: 2; color: var(--ant-color-text-secondary); font-size: .75rem; line-height: 1.25rem; }
+.scene-editor__timer-method.is-selected { background: var(--ant-color-primary-bg); border-color: var(--ant-color-primary); }
+.scene-editor__timer-method-check { position: absolute; top: 8px; right: 8px; color: var(--ant-color-primary); }
+.scene-editor__timer-fields { padding: var(--space-4, 16px); background: var(--ant-color-fill-quaternary); border: 1px solid var(--jet-theme-border-secondary); border-radius: var(--radius-jet-sm, 8px); }
+.scene-editor__timer-fields > small { color: var(--ant-color-text-secondary); font-size: .75rem; }
+.scene-editor__timer-interval-input { display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); align-items: center; }
+.scene-editor__timer-interval-input :deep(.ant-input-number) { width: 8rem; }
+.scene-editor__timer-interval-input :deep(.ant-select) { width: 7rem; }
+.scene-editor__device-trigger-option { display: flex; gap: var(--space-2, 8px); align-items: center; padding: 2px 0; }
+.scene-editor__device-trigger-option > span { display: grid; flex: none; place-items: center; width: 28px; height: 28px; color: var(--ant-color-primary); background: var(--ant-color-primary-bg); border-radius: 6px; }
+.scene-editor__device-trigger-option > div { display: grid; gap: 2px; min-width: 0; }
+.scene-editor__device-trigger-option b { font-size: .8125rem; font-weight: 600; }
+.scene-editor__device-trigger-option small { overflow: hidden; color: var(--ant-color-text-secondary); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 640px) { .scene-editor__timer-method-list { grid-template-columns: 1fr; } }

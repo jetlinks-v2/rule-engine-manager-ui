@@ -1,11 +1,9 @@
 <template>
   <div class="effective-period-select">
     <a-select :value="selectedPeriod" :options="options" @change="changePeriod" />
-    <div v-if="selectedPeriod === 'custom'" class="effective-period-select__custom">
-      <a-time-picker v-model:value="customStart" format="HH:mm" value-format="HH:mm" />
-      <span>{{ $t('IotSceneLinkage.effectivePeriod.to') }}</span>
-      <a-time-picker v-model:value="customEnd" format="HH:mm" value-format="HH:mm" />
-    </div>
+    <a-modal v-model:open="customVisible" :title="$t('IotSceneLinkage.effectivePeriod.custom')" :mask-closable="false" @ok="saveCustomRange">
+      <a-form layout="vertical"><a-form-item :label="$t('IotSceneLinkage.condition.timeRange')"><a-time-range-picker v-model:value="customRange" format="HH:mm" value-format="HH:mm" /></a-form-item></a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -15,17 +13,13 @@ import { useI18n } from 'vue-i18n'
 import type { SceneTimeRange } from '../../utils'
 
 type EffectivePeriod = 'all' | 'daytime' | 'night' | 'custom'
-
-const props = defineProps({
-  modelValue: { type: Array as PropType<SceneTimeRange[]>, required: true },
-})
+const props = defineProps({ modelValue: { type: Array as PropType<SceneTimeRange[]>, required: true } })
 const emit = defineEmits<{ (event: 'update:modelValue', value: SceneTimeRange[]): void }>()
-
 const { t } = useI18n()
+const customVisible = ref(false)
+const customRange = ref<string[]>(['09:00', '18:00'])
 const periodRanges: Record<Exclude<EffectivePeriod, 'custom'>, SceneTimeRange[]> = {
-  all: [],
-  daytime: [{ start: '08:00', end: '20:00' }],
-  night: [{ start: '20:00', end: '08:00' }],
+  all: [], daytime: [{ start: '08:00', end: '20:00' }], night: [{ start: '20:00', end: '08:00' }],
 }
 const options = computed(() => [
   { value: 'all', label: t('IotSceneLinkage.effectivePeriod.all') },
@@ -33,55 +27,35 @@ const options = computed(() => [
   { value: 'night', label: t('IotSceneLinkage.effectivePeriod.night') },
   { value: 'custom', label: t('IotSceneLinkage.effectivePeriod.custom') },
 ])
-
-// 自定义时段需要先切换本地展示状态，再同步父级范围；不能只依赖异步的 v-model 回传。
 const selectedPeriod = ref<EffectivePeriod>(findPeriod(props.modelValue))
+
+/** 自定义时段单独以弹层编辑，避免下拉选中后配置控件被侧栏裁切或忽略。 */
 function changePeriod(value: unknown) {
   if (value !== 'all' && value !== 'daytime' && value !== 'night' && value !== 'custom') return
-  selectedPeriod.value = value
   if (value === 'custom') {
     const range = props.modelValue[0] || { start: '09:00', end: '18:00' }
-    emit('update:modelValue', [{ ...range }])
+    customRange.value = [range.start, range.end]
+    customVisible.value = true
     return
   }
+  selectedPeriod.value = value
   emit('update:modelValue', periodRanges[value].map(range => ({ ...range })))
 }
-
-const customStart = computed({
-  get: () => props.modelValue[0]?.start || '09:00',
-  set: start => updateCustomRange(start, customEnd.value),
-})
-const customEnd = computed({
-  get: () => props.modelValue[0]?.end || '18:00',
-  set: end => updateCustomRange(customStart.value, end),
-})
-
-/** A quick effective period is one daily range; additional time conditions remain independently configurable. */
-function updateCustomRange(start: string, end: string) {
-  emit('update:modelValue', [{ start, end }])
+function saveCustomRange() {
+  if (customRange.value.length !== 2 || !customRange.value.every(Boolean) || customRange.value[0] === customRange.value[1]) return
+  selectedPeriod.value = 'custom'
+  emit('update:modelValue', [{ start: customRange.value[0], end: customRange.value[1] }])
+  customVisible.value = false
 }
-
-/**
- * 预设无法匹配时回显为自定义，每日范围的起止时间可直接在快速配置中维护。
- */
 function findPeriod(ranges: SceneTimeRange[]): EffectivePeriod {
-  const matchedPeriod = (Object.keys(periodRanges) as Array<Exclude<EffectivePeriod, 'custom'>>)
-    .find(period => hasSameRanges(ranges, periodRanges[period]))
-  return matchedPeriod || 'custom'
+  return (Object.keys(periodRanges) as Array<Exclude<EffectivePeriod, 'custom'>>)
+    .find(period => hasSameRanges(ranges, periodRanges[period])) || 'custom'
 }
-
-function hasSameRanges(left: SceneTimeRange[], right: SceneTimeRange[]): boolean {
-  return left.length === right.length
-    && left.every((range, index) => range.start === right[index]?.start && range.end === right[index]?.end)
-}
-
-watch(() => props.modelValue, ranges => {
-  selectedPeriod.value = findPeriod(ranges)
-}, { deep: true })
+function hasSameRanges(left: SceneTimeRange[], right: SceneTimeRange[]) { return left.length === right.length && left.every((range, index) => range.start === right[index]?.start && range.end === right[index]?.end) }
+watch(() => props.modelValue, ranges => { selectedPeriod.value = findPeriod(ranges) }, { deep: true })
 </script>
 
 <style scoped>
-.effective-period-select { display: grid; gap: var(--space-2, 8px); width: 100%; }
-.effective-period-select__custom { display: flex; gap: var(--space-2, 8px); align-items: center; }
-.effective-period-select__custom :deep(.ant-picker) { min-width: 0; flex: 1; }
+.effective-period-select { width: 100%; }
+.effective-period-select :deep(.ant-select) { width: 100%; }
 </style>

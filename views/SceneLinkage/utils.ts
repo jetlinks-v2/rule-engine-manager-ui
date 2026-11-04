@@ -24,9 +24,15 @@ export const AI_EVENT_RESULT_COLUMNS = ['hitResults', 'maxTargetScore', 'targetC
 
 export type AiEventResultColumn = typeof AI_EVENT_RESULT_COLUMNS[number]
 
+export type SceneAiEventRecognitionRule =
+  | { type: 'hits'; time: number; threshold: number }
+  | { type: 'missed'; time: number }
+
 export interface SceneAiEventMediaTarget {
   deviceId: string
   channelId: string
+  /** 媒体通道实体主键，仅供编辑器反查已部署的视觉算法，不写入运行时触发器配置。 */
+  entityId?: string
   /** 编辑器回填信息，不会写入触发器范围配置。 */
   name?: string
   unavailable?: boolean
@@ -44,6 +50,8 @@ export interface SceneAiEventTriggerConfig {
     termType?: string
     value?: string | number | boolean
   }
+  /** 快速配置的视觉识别规则；运行时映射为命中条件与分支级 ShakeLimit。 */
+  recognitionRule?: SceneAiEventRecognitionRule
 }
 
 export interface SceneAlarmTriggerConfig {
@@ -246,7 +254,23 @@ const aiEventConditionFromTerms = (terms: Record<string, any>[]) => {
     : undefined
 }
 
-const toAiEventMediaTargets = (configuration: Record<string, any>, mediaNames: string[] = []): SceneAiEventMediaTarget[] =>
+const aiEventRecognitionRuleFrom = (shakeLimit: any, terms: Record<string, any>[]): SceneAiEventRecognitionRule | undefined => {
+  if (!shakeLimit?.enabled || !Number(shakeLimit.time)) return undefined
+  const hitResult = terms.find(term => term?.column === 'hitResults' && term?.termType === 'eq')
+  if (hitResult?.value === 1) {
+    return { type: 'hits', time: Number(shakeLimit.time), threshold: Math.max(1, Number(shakeLimit.threshold) || 1) }
+  }
+  if (hitResult?.value === 0 && shakeLimit.continuous) {
+    return { type: 'missed', time: Number(shakeLimit.time) }
+  }
+  return undefined
+}
+
+const toAiEventMediaTargets = (
+  configuration: Record<string, any>,
+  mediaNames: string[] = [],
+  mediaEntityIds: string[] = [],
+): SceneAiEventMediaTarget[] =>
   Array.isArray(configuration?.mediaTargets)
     ? configuration.mediaTargets
       .filter((target: any) => target?.deviceId && target?.channelId)
@@ -254,6 +278,7 @@ const toAiEventMediaTargets = (configuration: Record<string, any>, mediaNames: s
         deviceId: target.deviceId,
         channelId: target.channelId,
         name: mediaNames[index],
+        entityId: mediaEntityIds[index],
       }))
     : []
 
@@ -395,6 +420,9 @@ export const toForm = (detail: any): SceneLinkageForm => {
     || findEventTriggerTerm(scene.terms || [])
   const deviceStateTriggerTerm = findDeviceStateTriggerTerm((scene.branches || []).flatMap((branch: any) => branch.when || []))
   const aiEventTerms = (scene.branches || []).flatMap((branch: any) => branch.when || [])
+  const aiEventRecognitionRule = trigger.type === 'ai-event'
+    ? aiEventRecognitionRuleFrom(branchShakeLimit, aiEventTerms)
+    : undefined
   const selectorValues = Array.isArray(device.selectorValues) ? device.selectorValues : []
   const deviceConditionActions = sourceActions
     .filter((action: any) => action.executor === 'device-data' && action.configuration?.properties?.length && action.terms?.length)
@@ -461,8 +489,8 @@ export const toForm = (detail: any): SceneLinkageForm => {
     summary: scene.options?.summary || '',
     summaryTitle: scene.options?.summaryTitle || scene.options?.summary || '',
     // 无限制的防抖不会生成 shakeLimit；只有左侧快捷时段才能使面板回显为开启，右侧独立时间条件不受影响。
-    debounceEnabled: device.operation?.operator === 'state' ? false : Boolean(shakeLimit.enabled) || savedEffectivePeriodConditions.length > 0,
-    debounceLimitEnabled: Boolean(shakeLimit.enabled),
+    debounceEnabled: device.operation?.operator === 'state' ? false : (!aiEventRecognitionRule && Boolean(shakeLimit.enabled)) || savedEffectivePeriodConditions.length > 0,
+    debounceLimitEnabled: !aiEventRecognitionRule && Boolean(shakeLimit.enabled),
     debounceMode: shakeLimit.continuous ? 'continuous' : 'interval',
     debounceTime: Number(shakeLimit.time || 60),
     productId: device.productId,
@@ -500,8 +528,10 @@ export const toForm = (detail: any): SceneLinkageForm => {
       mediaTargets: toAiEventMediaTargets(
         trigger.configuration || {},
         scene.options?.trigger?.aiEvent?.mediaNames || [],
+        scene.options?.trigger?.aiEvent?.mediaEntityIds || [],
       ),
       condition: trigger.type === 'ai-event' ? aiEventConditionFromTerms(aiEventTerms) : undefined,
+      recognitionRule: aiEventRecognitionRule,
     },
     additionalConditions: [...(savedTimeConditions.length ? savedTimeConditions : timeRanges.length ? [{ type: 'timeRange' as const, ranges: timeRanges }] : []), ...orderedActionConditions],
     actions: sourceActions.filter((action: any) => !conditionActionSet.has(action)).flatMap((action: any) => {
@@ -569,6 +599,7 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
         sceneName: form.aiEvent.sceneName,
         taskTargetName: form.aiEvent.taskTargetName,
         mediaNames: form.aiEvent.mediaTargets?.map(target => target.name || `${target.deviceId}/${target.channelId}`),
+        mediaEntityIds: form.aiEvent.mediaTargets?.map(target => target.entityId),
       } : undefined,
     }
   }
@@ -639,6 +670,28 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
         rolling: false,
       }
     : undefined
+  const aiEventRecognitionRule = form.triggerKind === 'ai-event' ? form.aiEvent.recognitionRule : undefined
+  const aiEventShakeLimit = aiEventRecognitionRule
+    ? aiEventRecognitionRule.type === 'hits'
+      ? {
+          enabled: true,
+          time: aiEventRecognitionRule.time,
+          threshold: aiEventRecognitionRule.threshold,
+          continuous: false,
+          alarmFirst: true,
+          outputFirst: false,
+          rolling: false,
+        }
+      : {
+          enabled: true,
+          time: aiEventRecognitionRule.time,
+          threshold: 1,
+          continuous: true,
+          alarmFirst: false,
+          outputFirst: false,
+          rolling: true,
+        }
+    : undefined
   const triggerTerms = form.triggerKind === 'property' && form.propertyId && form.termValue !== undefined && form.termValue !== ''
     ? [{ column: `properties.${form.propertyId}.current`, termType: form.termType, value: form.termValue }]
     : []
@@ -648,12 +701,16 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
   const stateTriggerTerms = form.triggerKind === 'state' && form.deviceState !== 'any'
     ? [{ column: 'deviceState', termType: 'eq', value: form.deviceState === 'online' ? '1' : '0' }]
     : []
-  const aiEventTriggerTerms = form.triggerKind === 'ai-event' && form.aiEvent.condition
-    ? [{
-        column: form.aiEvent.condition.column,
-        termType: form.aiEvent.condition.termType || 'eq',
-        value: form.aiEvent.condition.value,
-      }]
+  const aiEventTriggerTerms = form.triggerKind === 'ai-event'
+    ? aiEventRecognitionRule
+      ? [{ column: 'hitResults', termType: 'eq', value: aiEventRecognitionRule.type === 'hits' ? 1 : 0 }]
+      : form.aiEvent.condition
+        ? [{
+            column: form.aiEvent.condition.column,
+            termType: form.aiEvent.condition.termType || 'eq',
+            value: form.aiEvent.condition.value,
+          }]
+        : []
     : []
   // 视觉 AI 告警与通用告警共享配置契约；算法范围以分支条件收窄，不持久化为 Trigger 配置字段。
   const visualAiAlarmTriggerTerms = form.triggerKind === 'alarm'
@@ -820,7 +877,7 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
     branchId,
     branchName: '条件 1',
     executeAnyway: true,
-    shakeLimit: debounceShakeLimit || (form.triggerKind === 'state' && form.deviceStateTriggerMode === 'sustained' ? {
+    shakeLimit: aiEventShakeLimit || debounceShakeLimit || (form.triggerKind === 'state' && form.deviceStateTriggerMode === 'sustained' ? {
       enabled: true,
       time: form.deviceStateSustainedTime,
       threshold: 1,

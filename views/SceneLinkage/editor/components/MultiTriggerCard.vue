@@ -3,9 +3,10 @@
     <header><span :class="['multi-trigger-card__icon', `multi-trigger-card__icon--${trigger.triggerKind}`]"><AIcon :type="icon" /></span><strong>{{ $t(`IotSceneLinkage.trigger.${trigger.triggerKind}`) }}</strong><small>{{ $t('IotSceneLinkage.editor.conditionNumber', { index: index + 1 }) }}</small><span class="multi-trigger-card__actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button v-if="removable" type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></span></header>
     <div class="multi-trigger-card__description">{{ summary }}</div>
 
-    <DeviceScopeModal v-if="isDevice" :open="deviceEditorVisible" :title="$t(`IotSceneLinkage.trigger.${trigger.triggerKind}`)" :width="1180" :product-id="trigger.productId" :model-value="scope" @cancel="cancelEditor" @select-device="selectDevice" @save="saveScope">
+    <DeviceScopeModal v-if="isDevice" :open="deviceEditorVisible" :title="$t(`IotSceneLinkage.trigger.${trigger.triggerKind}`)" :width="1180" :product-id="trigger.productId" :model-value="scope" :validate="validateDeviceTrigger" @cancel="cancelEditor" @select-device="selectDevice" @save="saveScope">
       <template #configuration="{ hasSelection }">
         <a-form v-if="hasSelection" layout="vertical" class="multi-trigger-card__config">
+          <a-form-item :label="$t('IotSceneLinkage.form.triggerType')"><a-select :value="trigger.triggerKind" :options="deviceTriggerKinds" popup-class-name="scene-editor__resource-dropdown" @change="changeDeviceTriggerKind"><template #option="option"><div class="scene-editor__device-trigger-option"><span><AIcon :type="optionValue(option).icon" /></span><div><b>{{ optionValue(option).label }}</b><small>{{ optionValue(option).description }}</small></div></div></template></a-select></a-form-item>
           <a-form-item v-if="trigger.triggerKind === 'property'" :label="$t('IotSceneLinkage.condition.current')"><a-space direction="vertical" class="multi-trigger-card__config-fields"><ThingModelSelect v-model="trigger.propertyId" :options="propertyOptions" :placeholder="$t('IotSceneLinkage.placeholder.property')" @change="changeProperty" /><a-select v-model:value="trigger.termType" :options="termOptions" /><ThingModelValueInput v-model="trigger.termValue" :value-type="selectedProperty?.valueType" :unit="selectedProperty?.unit" /></a-space></a-form-item>
           <a-form-item v-else-if="trigger.triggerKind === 'event'" :label="$t('IotSceneLinkage.form.event')"><a-space direction="vertical" class="multi-trigger-card__config-fields"><ThingModelSelect v-model="trigger.eventId" :options="eventOptions" :placeholder="$t('IotSceneLinkage.placeholder.event')" @change="changeEvent" /><template v-if="trigger.eventId"><ThingModelSelect v-model="trigger.eventOutputId" :options="eventOutputOptions" :placeholder="$t('IotSceneLinkage.placeholder.eventOutput')" @change="changeEventOutput" /><a-select v-model:value="trigger.eventTermType" :options="eventTermOptions" /><ThingModelValueInput v-model="trigger.eventTermValue" :value-type="selectedEventOutput?.valueType" :placeholder="$t('IotSceneLinkage.placeholder.eventOutputValue')" /></template></a-space></a-form-item>
           <a-form-item v-else-if="trigger.triggerKind === 'state'" :label="$t('IotSceneLinkage.stateCondition.label')"><DeviceStateTriggerRow v-model:state="trigger.deviceState" v-model:mode="trigger.deviceStateTriggerMode" v-model:sustained-time="trigger.deviceStateSustainedTime" :removable="false" /></a-form-item>
@@ -13,13 +14,20 @@
       </template>
       <template #preview><span>{{ summary }}</span></template>
     </DeviceScopeModal>
+    <AlarmStateConditionModal
+      v-else-if="trigger.triggerKind === 'alarm'"
+      :open="triggerEditorVisible"
+      :source-kind="trigger.alarm.sourceKind === 'visual-ai' ? 'visual-ai' : 'iot-device'"
+      mode="trigger"
+      :model-value="trigger.alarm"
+      @update:model-value="trigger.alarm = $event"
+      @cancel="cancelEditor"
+      @save="saveEditor"
+    />
     <a-modal v-else :open="triggerEditorVisible" :title="$t(`IotSceneLinkage.trigger.${trigger.triggerKind}`)" :mask-closable="false" @cancel="cancelEditor" @ok="saveEditor">
       <div class="multi-trigger-card__editor">
-        <AlarmTriggerSourceRow v-if="trigger.triggerKind === 'alarm'" v-model="trigger.alarm" />
-        <AiEventTriggerRow v-else-if="trigger.triggerKind === 'ai-event'" v-model="trigger.aiEvent" />
-        <template v-else-if="trigger.triggerKind === 'repeat'"><a-radio-group v-model:value="trigger.repeatMode"><a-radio-button value="daily">{{ $t('IotSceneLinkage.repeat.daily') }}</a-radio-button><a-radio-button value="weekdays">{{ $t('IotSceneLinkage.repeat.weekdays') }}</a-radio-button><a-radio-button value="weekends">{{ $t('IotSceneLinkage.repeat.weekends') }}</a-radio-button><a-radio-button value="custom">{{ $t('IotSceneLinkage.repeat.custom') }}</a-radio-button></a-radio-group><a-time-picker v-model:value="trigger.repeatTime" format="HH:mm" value-format="HH:mm" /><div v-if="trigger.repeatMode === 'custom'" class="multi-trigger-card__repeat-options"><a-radio-group v-model:value="trigger.repeatCustomMode" @change="resetRepeatSelections"><a-radio-button value="weekly">{{ $t('IotSceneLinkage.repeat.weekly') }}</a-radio-button><a-radio-button value="monthly">{{ $t('IotSceneLinkage.repeat.monthly') }}</a-radio-button></a-radio-group><a-checkbox-group v-if="trigger.repeatCustomMode === 'weekly'" v-model:value="trigger.repeatWeekdays" :options="weekOptions" /><a-checkbox-group v-else v-model:value="trigger.repeatMonthDays" :options="monthDayOptions" /></div></template>
-        <template v-else-if="trigger.triggerKind === 'date'"><a-date-picker v-model:value="trigger.dateTime" show-time value-format="YYYY-MM-DD HH:mm:ss" /><span>{{ $t('IotSceneLinkage.editor.dateExecutionHint') }}</span></template>
-        <template v-else-if="trigger.triggerKind === 'interval'"><span>{{ $t('IotSceneLinkage.editor.every') }}</span><a-input-number v-model:value="trigger.interval" :min="1" /><a-select v-model:value="trigger.intervalUnit" :options="units" /><span>{{ $t('IotSceneLinkage.editor.triggerOnce') }}</span></template>
+        <AiEventTriggerRow v-if="trigger.triggerKind === 'ai-event'" v-model="trigger.aiEvent" />
+        <template v-else-if="isTimer"><a-radio-group :value="trigger.triggerKind" @change="changeTimerTriggerKind"><a-radio-button value="repeat">{{ $t('IotSceneLinkage.timer.fixed') }}</a-radio-button><a-radio-button value="interval">{{ $t('IotSceneLinkage.timer.interval') }}</a-radio-button><a-radio-button value="date">{{ $t('IotSceneLinkage.timer.once') }}</a-radio-button></a-radio-group><template v-if="trigger.triggerKind === 'repeat'"><a-radio-group v-model:value="trigger.repeatMode"><a-radio-button value="daily">{{ $t('IotSceneLinkage.repeat.daily') }}</a-radio-button><a-radio-button value="weekdays">{{ $t('IotSceneLinkage.repeat.weekdays') }}</a-radio-button><a-radio-button value="weekends">{{ $t('IotSceneLinkage.repeat.weekends') }}</a-radio-button><a-radio-button value="custom">{{ $t('IotSceneLinkage.repeat.custom') }}</a-radio-button></a-radio-group><a-time-picker v-model:value="trigger.repeatTime" format="HH:mm" value-format="HH:mm" /><div v-if="trigger.repeatMode === 'custom'" class="multi-trigger-card__repeat-options"><a-radio-group v-model:value="trigger.repeatCustomMode" @change="resetRepeatSelections"><a-radio-button value="weekly">{{ $t('IotSceneLinkage.repeat.weekly') }}</a-radio-button><a-radio-button value="monthly">{{ $t('IotSceneLinkage.repeat.monthly') }}</a-radio-button></a-radio-group><a-checkbox-group v-if="trigger.repeatCustomMode === 'weekly'" v-model:value="trigger.repeatWeekdays" :options="weekOptions" /><a-checkbox-group v-else v-model:value="trigger.repeatMonthDays" :options="monthDayOptions" /></div></template><template v-else-if="trigger.triggerKind === 'date'"><a-date-picker v-model:value="trigger.dateTime" show-time value-format="YYYY-MM-DD HH:mm:ss" /><span>{{ $t('IotSceneLinkage.editor.dateExecutionHint') }}</span></template><template v-else><span>{{ $t('IotSceneLinkage.editor.every') }}</span><a-input-number v-model:value="trigger.interval" :min="1" /><a-select v-model:value="trigger.intervalUnit" :options="units" /><span>{{ $t('IotSceneLinkage.editor.triggerOnce') }}</span></template></template>
       </div>
     </a-modal>
   </article>
@@ -28,9 +36,10 @@
 <script setup lang="ts">
 import { computed, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { getProduct } from '../../../../api/scene-linkage'
 import type { SceneMultiTriggerForm } from '../../utils'
-import AlarmTriggerSourceRow from './AlarmTriggerSourceRow.vue'
+import AlarmStateConditionModal from './AlarmStateConditionModal.vue'
 import AiEventTriggerRow from './AiEventTriggerRow.vue'
 import DeviceScopeModal, { type DeviceScope } from './DeviceScopeModal.vue'
 import DeviceStateTriggerRow from './DeviceStateTriggerRow.vue'
@@ -45,6 +54,8 @@ const { t } = useI18n()
 const deviceEditorVisible = ref(false); const triggerEditorVisible = ref(false); const originalTrigger = ref<SceneMultiTriggerForm>(); const createdByPicker = ref(false); const properties = ref<any[]>([]); const events = ref<any[]>([])
 const trigger = computed(() => props.trigger)
 const isDevice = computed(() => ['property', 'event', 'online', 'offline', 'state'].includes(trigger.value.triggerKind))
+const isTimer = computed(() => ['repeat', 'interval', 'date'].includes(trigger.value.triggerKind))
+const deviceTriggerKinds = computed(() => [['property', 'RiseOutlined'], ['event', 'NotificationOutlined'], ['online', 'LoginOutlined'], ['offline', 'LogoutOutlined'], ['state', 'SyncOutlined']].map(([value, icon]) => ({ value, icon, label: t(`IotSceneLinkage.trigger.${value}`), description: t(`IotSceneLinkage.triggerDesc.${value}`) })))
 const icon = computed(() => ({ manual: 'ThunderboltOutlined', repeat: 'ClockCircleOutlined', date: 'CalendarOutlined', interval: 'SyncOutlined', property: 'RiseOutlined', event: 'NotificationOutlined', online: 'LoginOutlined', offline: 'LogoutOutlined', state: 'SyncOutlined', alarm: 'AlertOutlined', 'ai-event': 'RadarChartOutlined' }[trigger.value.triggerKind] || 'ThunderboltOutlined'))
 const units = computed(() => ['seconds', 'minutes', 'hours'].map(value => ({ value, label: t(`IotSceneLinkage.unit.${value}`) })))
 const weekOptions = computed(() => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, index) => ({ value: index + 1, label: t(`IotSceneLinkage.weekday.${day}`) })))
@@ -58,6 +69,20 @@ function cancelEditor() { if (createdByPicker.value) emit('cancel-new'); else if
 function saveEditor() { originalTrigger.value = undefined; createdByPicker.value = false; deviceEditorVisible.value = false; triggerEditorVisible.value = false }
 /** Selecting another device changes the product boundary, so old metadata selections cannot remain. */
 function selectDevice(device: { productId: string; productName: string }) { if (trigger.value.productId !== device.productId) Object.assign(trigger.value, { productId: device.productId, productName: device.productName, allDevices: false, dynamicScope: false, groupIds: [], deviceIds: [], propertyId: undefined, propertyName: undefined, eventId: undefined, eventName: undefined, eventOutputId: undefined, eventOutputName: undefined, termValue: undefined, eventTermValue: undefined }); void loadMetadata(device.productId) }
+function changeDeviceTriggerKind(value: unknown) { if (!['property', 'event', 'online', 'offline', 'state'].includes(String(value))) return; if (trigger.value.triggerKind === value) return; Object.assign(trigger.value, { triggerKind: value as SceneMultiTriggerForm['triggerKind'], propertyId: undefined, propertyName: undefined, termValue: undefined, eventId: undefined, eventName: undefined, eventOutputId: undefined, eventOutputName: undefined, eventTermValue: undefined }) }
+function optionValue(option: any) { return option?.data?.value ? option.data : option }
+function changeTimerTriggerKind(event: { target?: { value?: unknown } }) { const value = event.target?.value; if (value === 'repeat' || value === 'interval' || value === 'date') trigger.value.triggerKind = value }
+function validateDeviceTrigger() {
+  if (trigger.value.triggerKind === 'property' && (!trigger.value.propertyId || trigger.value.termValue === undefined || trigger.value.termValue === '')) {
+    onlyMessage(t('IotSceneLinkage.message.propertyRequired'), 'warning')
+    return false
+  }
+  if (trigger.value.triggerKind === 'event' && !trigger.value.eventId) {
+    onlyMessage(t('IotSceneLinkage.message.eventRequired'), 'warning')
+    return false
+  }
+  return true
+}
 function saveScope(value: DeviceScope) { Object.assign(trigger.value, { productId: value.productId || trigger.value.productId, productName: value.productName || trigger.value.productName, allDevices: false, dynamicScope: false, scopeOptions: { ...value.options, names: value.selectorValues.map(item => item.name || item.value) }, groupIds: [], deviceIds: value.selectorValues.map(item => item.value) }); saveEditor() }
 function changeProperty(value?: string) { const option = propertyOptions.value.find(item => item.value === value); trigger.value.propertyName = option?.label; trigger.value.termValue = undefined }
 function changeEvent(value?: string) { const option = eventOptions.value.find(item => item.value === value); Object.assign(trigger.value, { eventName: option?.label, eventOutputId: undefined, eventOutputName: undefined, eventTermValue: undefined }) }

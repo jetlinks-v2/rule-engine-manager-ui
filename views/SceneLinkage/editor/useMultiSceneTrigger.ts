@@ -5,6 +5,7 @@ export const useMultiSceneTrigger = (
   form: SceneLinkageForm,
   supportedTriggers: Ref<string[]>,
   onActiveTriggerChange: () => void,
+  isEditing: () => boolean,
 ) => {
   const activeMultiTriggerIndex = ref(0)
   const addingMultiTrigger = ref(false)
