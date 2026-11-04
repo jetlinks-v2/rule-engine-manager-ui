@@ -139,7 +139,7 @@ const deviceRef = ref()
 const multiTriggerRef = ref<{ validate: () => string | undefined }>()
 const saasTriggerRef = ref<{ validate: () => string | undefined }>()
 const actionOptions = ref<SceneProviderInfo[]>([])
-const readOnlyActionProviders = ref(['alarm', 'alarm-record-query', 'notify'])
+const readOnlyActionProviders = ref(['alarm', 'notify'])
 const triggerPickerVisible = ref(false)
 const { data, load, getDraft } = useDetailedSceneDraft()
 const nameRules = [{ required: true, message: t('IotSceneLinkage.message.nameRequired') }]
@@ -222,8 +222,8 @@ function selectTriggerFromPicker(triggerType: string) {
 async function loadActionOptions() {
   const response = await querySceneSupportedActions()
   actionOptions.value = normalizeResult<SceneProviderInfo>(response).data
-    // 旧 notify 和场景告警动作仅用于历史数据只读兼容，不能再由详细配置新建或编辑。
-    .filter(item => !['notify', 'alarm', 'trigger', 'relieve', 'alarm-record-query'].includes(item.provider))
+    // 旧 notify 与场景告警动作仅用于历史数据只读兼容；告警记录查询仍是详细模式的普通动作。
+    .filter(item => !['notify', 'alarm', 'trigger', 'relieve'].includes(item.provider))
     .map(item => ({
       ...item,
       value: item.provider,

@@ -1,8 +1,122 @@
 .scene-editor {
+    /* 一级边框界定规则预览和规则组，二级边框只承载组内具体规则卡。 */
+    --scene-editor-section-border: var(--jet-theme-border);
+    --scene-editor-subtle-border: var(--jet-theme-border-color-1);
     width: 100%;
+    min-height: 46rem;
     display: flex;
     flex-direction: column;
     gap: var(--space-4, 16px);
+}
+
+.scene-editor__workspace {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
+    overflow: hidden;
+    background: var(--jet-theme-bg-container);
+    border: 1px solid var(--scene-editor-subtle-border);
+    border-radius: 8px;
+}
+
+.scene-editor__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 16px);
+    padding: var(--space-5, 20px);
+    background: var(--ant-color-fill-quaternary);
+    border-right: 1px solid var(--scene-editor-subtle-border);
+}
+
+.scene-editor__sidebar-section,
+.scene-editor__sidebar-field {
+    display: grid;
+    gap: var(--space-2, 8px);
+}
+
+.scene-editor__sidebar-label {
+    color: var(--ant-color-text);
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.scene-editor__sidebar-field > label {
+    color: #4e5969;
+    font-size: .8125rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+}
+
+.scene-editor__sidebar-field > small {
+    color: #86909c;
+    font-size: .75rem;
+    line-height: 1.125rem;
+}
+
+.scene-editor__sidebar-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+}
+
+.scene-editor__debounce-panel {
+    padding-top: var(--space-4, 16px);
+    border-top: 1px solid var(--scene-editor-subtle-border);
+}
+
+/* 字段间略大于字段内部间距，帮助区分“标签—控件—说明”的完整配置单元。 */
+.scene-editor__debounce-panel > .scene-editor__sidebar-field + .scene-editor__sidebar-field {
+    margin-top: var(--space-1, 4px);
+}
+
+.scene-editor__frequency-input {
+    display: flex;
+    gap: var(--space-2, 8px);
+    align-items: center;
+}
+
+.scene-editor__frequency-input :deep(.ant-input-number) {
+    width: 7rem;
+}
+
+.scene-editor__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 16px);
+    min-width: 0;
+    padding: var(--space-5, 20px);
+}
+
+.scene-editor__footer {
+    display: flex;
+    gap: var(--space-2, 8px);
+    justify-content: flex-end;
+    margin-top: auto;
+    padding: var(--space-3, 12px) 0;
+}
+
+.scene-editor__debounce-help {
+    margin-left: var(--space-1, 4px);
+    color: var(--ant-color-primary);
+    cursor: help;
+}
+
+.scene-editor__rule-preview {
+    padding: var(--space-3, 12px) var(--space-4, 16px);
+    background: var(--ant-color-fill-quaternary);
+    border: 1px solid var(--scene-editor-section-border);
+    border-radius: 8px;
+}
+
+.scene-editor__rule-preview-title {
+    display: flex;
+    gap: var(--space-2, 8px);
+    align-items: center;
+    margin-bottom: var(--space-2, 8px);
+    color: var(--ant-color-text-secondary);
+    font-size: .875rem;
+    font-weight: 600;
 }
 
 .scene-editor__header {
@@ -44,7 +158,7 @@
     gap: 12px;
     align-items: center;
     background: var(--ant-color-bg-container);
-    border: 1px solid var(--ant-color-border-secondary);
+    border: 1px solid var(--scene-editor-section-border);
     border-radius: 8px
 }
 
@@ -60,7 +174,7 @@
     box-sizing: border-box;
     padding: var(--space-4, 16px) var(--space-5, 20px);
     background: color-mix(in srgb, var(--jet-theme-bg-container) 70%, transparent);
-    border: 1px solid var(--ant-color-border-secondary);
+    border: 1px solid var(--scene-editor-section-border);
     border-radius: 8px
 }
 
@@ -80,6 +194,39 @@
     font-weight: 400;
     color: #86909c !important
 }
+
+/* 快速配置主区按“规则组—规则卡”呈现，完整参数仍在配置弹窗中维护。 */
+.scene-editor__rule-group {
+    padding: 0;
+    overflow: hidden;
+    background: var(--ant-color-bg-container);
+}
+
+.scene-editor__rule-group-header {
+    display: flex;
+    gap: var(--space-3, 12px);
+    align-items: flex-start;
+    padding: var(--space-4, 16px) var(--space-5, 20px);
+    background: var(--ant-color-fill-quaternary);
+    border-bottom: 1px solid var(--scene-editor-subtle-border);
+}
+
+.scene-editor__rule-group-header > div { min-width: 0; }
+.scene-editor__rule-group-header h3 { margin: 0; font-size: 16px; }
+.scene-editor__rule-group-header p { margin: 4px 0 0; color: var(--ant-color-text-secondary); font-size: 12px; line-height: 20px; }
+.scene-editor__rule-group-icon { display: grid; flex: none; place-items: center; width: 28px; height: 28px; color: #1677ff; background: #e8f3ff; border-radius: 6px; }
+.scene-editor__rule-group--condition .scene-editor__rule-group-icon { color: #d48806; background: #fff7e6; }
+.scene-editor__rule-group--action .scene-editor__rule-group-icon { color: #0e8a5f; background: #e6f5ee; }
+.scene-editor__rule-group-body { display: grid; gap: var(--space-3, 12px); padding: var(--space-4, 16px) var(--space-5, 20px); }
+.scene-editor__rule-group-body > .scene-editor__add { width: 100%; margin-top: 0; }
+
+.scene-editor__rule-card { overflow: hidden; border: 1px solid var(--scene-editor-subtle-border); border-radius: 8px; background: var(--ant-color-bg-container); }
+.scene-editor__rule-card > header { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 48px; padding: 0 var(--space-4, 16px); background: var(--ant-color-fill-quaternary); }
+.scene-editor__rule-card > header small { color: var(--ant-color-text-tertiary); }
+.scene-editor__rule-card-description { padding: var(--space-4, 16px); color: var(--ant-color-text); overflow-wrap: anywhere; }
+.scene-editor__rule-card-actions { display: inline-flex; gap: 2px; margin-left: auto; }
+.scene-editor__rule-card--trigger { border-color: #f5dfc7; }.scene-editor__rule-card--trigger > header { background: color-mix(in srgb, #fff7e6 58%, var(--ant-color-bg-container)); }
+.scene-editor__rule-card--action > header { background: color-mix(in srgb, #eef4ff 55%, var(--ant-color-bg-container)); }
 
 .scene-editor__marker {
     display: inline-block;
@@ -202,6 +349,20 @@
     border-radius: 6px
 }
 
+.scene-editor__action-row--readonly {
+    color: var(--ant-color-text-secondary);
+    background: var(--ant-color-warning-bg, #fffbe6);
+}
+
+.scene-editor__action-readonly {
+    display: grid;
+    gap: 2px;
+}
+
+.scene-editor__action-readonly > span {
+    font-size: .75rem;
+}
+
 .scene-editor__custom-repeat {
     display: flex;
     align-items: flex-start;
@@ -280,30 +441,8 @@
     color: var(--color-jet-text-secondary)
 }
 
-.scene-editor__extra-condition-add {
-    align-self: flex-start;
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: var(--space-1, 4px);
-    box-sizing: border-box;
-    width: fit-content;
-    max-width: 100%;
-    padding-inline: var(--space-4, 16px);
-    margin-top: var(--space-2, 8px);
-    color: var(--color-jet-text-secondary);
-    line-height: 22px;
-}
-
-.scene-editor__extra-condition-add .anticon {
-    display: inline-flex;
-    align-items: center;
-}
-
-.scene-editor__extra-condition-add:hover,
-.scene-editor__extra-condition-add:focus {
-    color: var(--jet-theme-primary);
-}
+/* 附加条件与触发条件、执行动作共用同一虚线添加按钮，不保留单独的视觉覆盖。 */
+.scene-editor__extra-condition-add { margin-top: 0; }
 
 .scene-editor__picker-icon {
     display: grid;
@@ -330,6 +469,19 @@
 }
 
 @media (max-width: 640px) {
+    .scene-editor {
+        min-height: auto;
+    }
+
+    .scene-editor__workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .scene-editor__sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--scene-editor-subtle-border);
+    }
+
     .scene-editor__custom-repeat {
         align-items: stretch;
         flex-direction: column
@@ -589,4 +741,48 @@
     align-items: center;
     gap: var(--space-3, 12px);
     padding-top: var(--space-2, 8px);
+}
+
+.scene-editor__device-trigger-summary {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ant-color-text-secondary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scene-editor__trigger-edit {
+    margin-left: auto;
+}
+
+.scene-editor__device-trigger-config {
+    min-height: 100%;
+}
+
+.scene-editor__device-trigger-fields {
+    width: 100%;
+}
+
+.scene-editor__device-trigger-fields :deep(.ant-select),
+.scene-editor__device-trigger-fields :deep(.thing-model-select) {
+    width: 100%;
+}
+
+.scene-editor__device-trigger-empty {
+    margin: var(--space-4, 16px) 0 0;
+    color: var(--ant-color-text-secondary);
+}
+
+.scene-editor__trigger-editor {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3, 12px);
+    align-items: center;
+    min-height: 8rem;
+}
+
+.scene-editor__trigger-editor > :deep(.alarm-trigger-source-row),
+.scene-editor__trigger-editor > :deep(.ai-event-trigger-row) {
+    width: 100%;
 }

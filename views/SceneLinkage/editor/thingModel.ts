@@ -67,7 +67,7 @@ export const toThingModelOptions = (items: any[] = [], kind: ThingModelKind = 'p
 
 export const getTermTypes = (valueType?: ThingModelValueType) => {
   const type = getValueTypeName(valueType)
-  if (numberTypes.has(type) || isDateValueType(valueType)) return ['gt', 'gte', 'eq', 'lte', 'lt']
+  if (numberTypes.has(type) || isDateValueType(valueType)) return ['gt', 'gte', 'eq', 'neq', 'lte', 'lt']
   if (type === 'string') return ['eq', 'neq', 'like', 'nlike']
   return ['eq', 'neq']
 }

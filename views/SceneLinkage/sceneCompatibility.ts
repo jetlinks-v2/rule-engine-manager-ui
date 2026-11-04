@@ -48,12 +48,24 @@ const isSupportedTerm = (term: SceneRecord) => {
     || isTimeTerm(term)
 }
 
+/**
+ * Quick configuration now has one explicit device target per device trigger, condition, or action.
+ * Historical range and multi-device selectors remain displayable, but cannot be saved through this editor.
+ */
+const hasSingleFixedDeviceSelector = (selector: unknown, selectorValues: unknown) => {
+  const values = Array.isArray(selectorValues) ? selectorValues.filter(isRecord) : []
+  return selector === 'fixed' && values.length === 1 && Boolean(values[0].value)
+}
+
 function validateTrigger(trigger: SceneRecord): SceneCompatibilityResult {
   const type = String(trigger.type || '')
   if (!SUPPORTED_TRIGGERS.has(type)) return unsupported('IotSceneLinkage.message.unsupportedTrigger')
 
   if (type === 'device' && !SUPPORTED_DEVICE_OPERATORS.has(String(trigger.device?.operation?.operator || ''))) {
     return unsupported('IotSceneLinkage.message.unsupportedTrigger')
+  }
+  if (type === 'device' && !hasSingleFixedDeviceSelector(trigger.device?.selector, trigger.device?.selectorValues)) {
+    return unsupported('IotSceneLinkage.message.legacyConfigurationUnsupported')
   }
 
   if (type === 'multi') {
@@ -77,8 +89,9 @@ function validateActions(branch: SceneRecord): SceneCompatibilityResult {
   }
   const invalidConditionAction = actions.some(action => {
     const terms = asArray(action.terms)
-    if (action.executor === 'device-data') return terms.length !== 1 || !isRecord(action.configuration) || !Array.isArray(action.configuration.properties) || action.configuration.properties.length !== 1 || Boolean(terms[0].terms?.length)
+    if (action.executor === 'device-data') return terms.length !== 1 || !isRecord(action.configuration) || !hasSingleFixedDeviceSelector(action.configuration.selector?.selector, action.configuration.selector?.selectorValues) || !Array.isArray(action.configuration.properties) || action.configuration.properties.length !== 1 || Boolean(terms[0].terms?.length)
     if (action.executor === 'alarm-record-query') return terms.length !== 1 || Boolean(terms[0].terms?.length)
+    if (action.executor === 'device') return !isRecord(action.device) || !hasSingleFixedDeviceSelector(action.device.selector, action.device.selectorValues)
     return terms.some(term => !isTimeTerm(term))
   })
   if (invalidConditionAction) {

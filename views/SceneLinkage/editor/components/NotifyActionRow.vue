@@ -1,36 +1,39 @@
 <template>
-  <div :class="['notify-action-row', { 'notify-action-row--invalid': invalid }]">
-    <div class="notify-action-row__main">
-      <span class="notify-action-row__index">{{ index + 1 }}</span>
-      <span class="notify-action-row__icon"><AIcon type="NotificationOutlined" /></span>
-      <strong>{{ $t('IotSceneLinkage.action.sendNotify') }}</strong>
-      <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.send') }}</span>
-      <a-select
-        class="notify-action-row__method"
-        popup-class-name="scene-editor__compact-dropdown"
-        :dropdown-match-select-width="false"
-        :value="methodValue"
-        :loading="methodsLoading"
-        :placeholder="$t('IotSceneLinkage.placeholder.notifyMethod')"
-        :options="methodOptions"
-        @change="changeMethod"
-      />
-      <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.to') }}</span>
-      <a-select
-        class="notify-action-row__users"
-        popup-class-name="scene-editor__resource-dropdown"
-        :dropdown-match-select-width="false"
-        mode="multiple"
-        :value="recipientIds"
-        :loading="usersLoading"
-        :placeholder="$t('IotSceneLinkage.placeholder.notifyUsers')"
-        :options="userOptions"
-        @dropdownVisibleChange="loadUsers"
-        @popupScroll="handleUserPopupScroll"
-        @change="changeRecipients"
-      />
-    </div>
-    <div class="notify-action-row__content">
+  <article :class="['notify-action-row', { 'notify-action-row--invalid': invalid }]">
+    <header><span class="notify-action-row__icon"><AIcon type="NotificationOutlined" /></span><strong>{{ $t('IotSceneLinkage.action.sendNotify') }}</strong><small>{{ index + 1 }}</small><span class="notify-action-row__actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button class="notify-action-row__remove" type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></span></header>
+    <div class="notify-action-row__description">{{ summaryText }}</div>
+  </article>
+
+  <a-modal :open="editorVisible" :title="$t('IotSceneLinkage.action.sendNotify')" :mask-closable="false" @cancel="cancelEditor" @ok="saveEditor">
+    <div class="notify-action-row__editor">
+      <div class="notify-action-row__main">
+        <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.send') }}</span>
+        <a-select
+          class="notify-action-row__method"
+          popup-class-name="scene-editor__compact-dropdown"
+          :dropdown-match-select-width="false"
+          :value="methodValue"
+          :loading="methodsLoading"
+          :placeholder="$t('IotSceneLinkage.placeholder.notifyMethod')"
+          :options="methodOptions"
+          @change="changeMethod"
+        />
+        <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.to') }}</span>
+        <a-select
+          class="notify-action-row__users"
+          popup-class-name="scene-editor__resource-dropdown"
+          :dropdown-match-select-width="false"
+          mode="multiple"
+          :value="recipientIds"
+          :loading="usersLoading"
+          :placeholder="$t('IotSceneLinkage.placeholder.notifyUsers')"
+          :options="userOptions"
+          @dropdownVisibleChange="loadUsers"
+          @popupScroll="handleUserPopupScroll"
+          @change="changeRecipients"
+        />
+      </div>
+      <div class="notify-action-row__content">
       <span class="notify-action-row__content-label">
         {{ $t('IotSceneLinkage.form.notifyContent') }}
         <a-tooltip :title="$t('IotSceneLinkage.hint.notifyContentTemplate')">
@@ -45,13 +48,13 @@
         </template>
       </span>
       <span v-else class="notify-action-row__template">{{ $t('IotSceneLinkage.action.notifyTemplate') }}</span>
-      <a-button class="notify-action-row__remove" type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button>
+      </div>
     </div>
-  </div>
+  </a-modal>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type { SceneNotifyMethod, SceneNotifyUser } from '../../../../api/scene-linkage'
 import type { SceneActionForm } from '../../utils'
 
@@ -63,10 +66,13 @@ const props = defineProps<{
   methodsLoading?: boolean
   usersLoading?: boolean
   invalid?: boolean
+  autoOpen?: boolean
 }>()
 
 const emit = defineEmits<{
   remove: []
+  opened: []
+  'cancel-new': []
   'load-users': [reset?: boolean]
   'load-more-users': []
   'method-change': [method: SceneNotifyMethod]
@@ -103,10 +109,39 @@ const templateSegments = computed(() => {
   if (offset < templateContent.value.length || !segments.length) segments.push({ text: templateContent.value.slice(offset), variable: false })
   return segments
 })
+const editorVisible = ref(false)
+const originalAction = ref<SceneActionForm>()
+const createdByPicker = ref(false)
+const summaryText = computed(() => {
+  const method = props.methods.find(item => item.id === methodValue.value)?.name || props.action.options?.channelName
+  const recipients = recipientIds.value
+    .map(id => props.users.find(user => user.id === id)?.name || id)
+    .filter(Boolean)
+  return [method, recipients.join('、')].filter(Boolean).join(' · ')
+})
 
 onMounted(() => {
   if (recipientIds.value.length) emit('load-users', true)
 })
+
+/** Notification configuration is committed by the dialog, so closing it restores the action snapshot. */
+function openEditor() {
+  originalAction.value = JSON.parse(JSON.stringify(props.action)) as SceneActionForm
+  editorVisible.value = true
+  emit('load-users', true)
+}
+function cancelEditor() {
+  if (createdByPicker.value) emit('cancel-new')
+  else if (originalAction.value) emit('change', originalAction.value)
+  originalAction.value = undefined
+  createdByPicker.value = false
+  editorVisible.value = false
+}
+function saveEditor() {
+  originalAction.value = undefined
+  createdByPicker.value = false
+  editorVisible.value = false
+}
 
 const loadUsers = (open: boolean) => {
   if (open) emit('load-users', true)
@@ -130,11 +165,21 @@ const changeRecipients = (userIds: string[]) => {
     config: { ...props.action.config, userIds },
   })
 }
+
+watch(() => props.autoOpen, value => {
+  if (!value || editorVisible.value) return
+  createdByPicker.value = true
+  openEditor()
+  emit('opened')
+}, { immediate: true })
 </script>
 
 <style scoped>
-.notify-action-row { overflow-x: auto; padding: var(--space-4, 16px); margin-bottom: var(--space-3, 12px); border: 1px solid var(--jet-theme-border-secondary); border-radius: var(--radius-jet-sm, 10px); }
+.notify-action-row { overflow: hidden; margin-bottom: var(--space-3, 12px); border: 1px solid var(--jet-theme-border-secondary); border-radius: var(--radius-jet-sm, 10px); }.notify-action-row > header { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 48px; padding: 0 var(--space-4, 16px); background: var(--ant-color-fill-quaternary); }.notify-action-row > header small { color: var(--ant-color-text-tertiary); }.notify-action-row__actions { display: inline-flex; gap: 2px; margin-left: auto; }.notify-action-row__description { padding: var(--space-4, 16px); overflow-wrap: anywhere; }
 .notify-action-row--invalid { border-color: var(--ant-color-error); }
+.notify-action-row__summary { display: grid; grid-template-columns: 22px 28px max-content minmax(0, 1fr) auto auto; gap: var(--space-3, 12px); align-items: center; min-width: 0; }
+.notify-action-row__summary-text { min-width: 0; overflow: hidden; color: var(--ant-color-text-secondary); text-overflow: ellipsis; white-space: nowrap; }
+.notify-action-row__editor { display: grid; gap: var(--space-4, 16px); }
 .notify-action-row__main { display: flex; flex-wrap: nowrap; align-items: center; min-width: max-content; gap: var(--space-3, 12px); min-height: 32px; }
 .notify-action-row__index { display: grid; place-items: center; flex: none; width: 22px; height: 22px; color: var(--ant-color-primary); background: #eef4ff; border-radius: 50%; font-size: 12px; font-weight: 600; }
 .notify-action-row__icon { display: grid; place-items: center; width: 28px; height: 28px; color: #d46b08; background: #fff7e8; border-radius: 6px; }
@@ -149,7 +194,7 @@ const changeRecipients = (userIds: string[]) => {
 	width: var(--scene-linkage-resource-select-width, 18rem);
 	min-width: var(--scene-linkage-resource-select-width, 18rem);
 }
-.notify-action-row__content { display: flex; gap: var(--space-2, 8px); align-items: flex-start; width: 100%; max-width: 100%; box-sizing: border-box; padding: var(--space-3, 12px) 0 0 calc(22px + 28px + 3.5rem + 20px); line-height: 24px; }
+.notify-action-row__content { display: flex; gap: var(--space-2, 8px); align-items: flex-start; width: 100%; max-width: 100%; box-sizing: border-box; padding-top: var(--space-3, 12px); line-height: 24px; }
 .notify-action-row__content-label { display: inline-flex; flex: none; gap: var(--space-1, 4px); align-items: center; }
 .notify-action-row__remove { flex: none; margin-left: auto; }
 .notify-action-row__help { color: var(--ant-color-text-tertiary); cursor: help; }

@@ -1,342 +1,173 @@
 <template>
-  <a-modal :open="open" :title="title" :width="680" :footer="null" :mask-closable="false" @cancel="$emit('cancel')">
-    <a-form layout="vertical">
-      <a-input-search v-if="scopeView === 'custom'" v-model:value="keyword" class="device-scope-modal__search" :placeholder="$t('IotSceneLinkage.placeholder.searchDevice')" :loading="deviceLoading" @search="searchDevices" />
-      <div class="device-scope-modal__toolbar">
-        <a-button-group class="device-scope-modal__tabs">
-          <a-button :type="scopeView === 'space' ? 'primary' : 'default'" @click="selectScopeView('space')">{{ $t('IotSceneLinkage.editor.areas') }}</a-button>
-          <a-button :type="scopeView === 'device-group' ? 'primary' : 'default'" @click="selectScopeView('device-group')">{{ $t('IotSceneLinkage.editor.groups') }}</a-button>
-          <a-button :type="scopeView === 'custom' ? 'primary' : 'default'" @click="selectScopeView('custom')">{{ $t('IotSceneLinkage.editor.customDevices') }}</a-button>
-          <a-button :type="scopeView === 'all' ? 'primary' : 'default'" @click="selectScopeView('all')">{{ $t('IotSceneLinkage.editor.allDevices') }}</a-button>
-        </a-button-group>
-      </div>
-      <p v-if="scopeDescription" class="device-scope-modal__description">{{ scopeDescription }}</p>
-      <template v-if="searched">
-        <a-spin :spinning="deviceLoading">
-          <a-checkbox-group v-if="fixedDeviceOptions.length" :value="fixedDeviceIds" class="device-scope-modal__device-list" @change="changeFixedDevices">
-            <a-checkbox v-for="device in fixedDeviceOptions" :key="device.value" :value="device.value"><IotAlarmTargetOption :option="device" type="device" single-line :show-description="false" /></a-checkbox>
-          </a-checkbox-group>
+  <a-modal :open="open" :title="modalTitle" :width="width" :footer="null" :mask-closable="false" wrap-class-name="device-scope-modal" @cancel="$emit('cancel')">
+    <div class="device-scope-modal__layout">
+      <aside class="device-scope-modal__navigation">
+        <a-button :type="selectedSpaceId ? 'text' : 'primary'" block @click="selectAllDevices"><AIcon type="AppstoreOutlined" />{{ $t('IotSceneLinkage.editor.allDevices') }}</a-button>
+        <a-button :type="selectedSpaceId === UNBOUND_SPACE_KEY ? 'primary' : 'text'" block @click="selectUnboundDevices"><AIcon type="DisconnectOutlined" />{{ $t('IotSceneLinkage.scope.unboundSpace') }}</a-button>
+        <div class="device-scope-modal__space-title"><AIcon type="EnvironmentOutlined" />{{ $t('IotSceneLinkage.editor.areas') }}</div>
+        <a-tree class="device-scope-modal__tree" block-node :tree-data="spaceTreeData" :selected-keys="selectedSpaceId && selectedSpaceId !== UNBOUND_SPACE_KEY ? [selectedSpaceId] : []" :expanded-keys="expandedKeys" :loading="scopeLoading" @select="selectSpace" @expand="onSpaceExpand">
+          <template #title="node"><span class="device-scope-modal__node">{{ node.title }}</span></template>
+        </a-tree>
+      </aside>
+
+      <section class="device-scope-modal__content">
+        <div class="device-scope-modal__filters">
+          <a-input-search v-model:value="keyword" :placeholder="$t('IotSceneLinkage.placeholder.searchDevice')" :loading="deviceLoading" @search="searchDevices" />
+          <IotAlarmTargetSelect v-model="productFilter" class="device-scope-modal__product-filter" :request="requestProducts" :placeholder="$t('IotSceneLinkage.placeholder.product')" @change="changeProductFilter" />
+        </div>
+        <div class="device-scope-modal__device-list-head">
+          <span>{{ $t('IotSceneLinkage.form.device') }}</span><span>{{ $t('IotSceneLinkage.form.product') }}</span><span>{{ $t('IotSceneLinkage.device.status') }}</span>
+        </div>
+        <a-spin :spinning="deviceLoading" class="device-scope-modal__device-loading">
+          <div v-if="deviceOptions.length" class="device-scope-modal__device-list">
+            <button v-for="device in deviceOptions" :key="device.id" type="button" :class="['device-scope-modal__device-row', { 'is-selected': draft.deviceId === device.id }]" @click="selectDevice(device)">
+              <span :title="device.name">{{ device.name }}</span><span :title="device.productName">{{ device.productName }}</span><span :class="['device-scope-modal__status', device.online ? 'is-online' : 'is-offline']"><i class="device-scope-modal__status-dot" />{{ device.statusText }}</span>
+            </button>
+          </div>
           <CloudEmpty v-else-if="!deviceLoading" :description="$t('IotSceneLinkage.scope.empty')" />
-          <a-pagination v-if="fixedTotal > pageSize" class="device-scope-modal__pagination" size="small" :current="pageIndex + 1" :page-size="pageSize" :total="fixedTotal" show-less-items @change="changePage" />
         </a-spin>
-      </template>
-      <a-tree v-else-if="visibleScopeTreeData.length" class="device-scope-modal__tree" checkable block-node :check-strictly="true" :tree-data="visibleScopeTreeData" :checked-keys="checkedKeys" :expanded-keys="expandedKeys" :loading="scopeLoading" @check="onScopeCheck" @expand="onScopeExpand">
-        <template #title="node"><span class="device-scope-modal__node"><b>{{ node.title }}</b></span></template>
-      </a-tree>
-      <CloudEmpty v-else-if="draft.selector === 'all'" :description="$t('IotSceneLinkage.scope.allHint')" />
-      <CloudEmpty v-else :description="emptyDescription" />
-    </a-form>
-    <div class="device-scope-modal__footer">
-      <a-space>
-        <span>{{ selectedText }}</span>
-        <a-button type="link" :disabled="!canSelectCurrentView" @click="selectAll">{{ $t('IotSceneLinkage.action.selectAll') }}</a-button>
-        <a-button type="link" :disabled="!draft.selectorValues.length" @click="clearSelection">{{ $t('IotSceneLinkage.action.clear') }}</a-button>
-      </a-space>
-      <a-space><a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button><a-button type="primary" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button></a-space>
+        <a-pagination v-if="total > pageSize" class="device-scope-modal__pagination" size="small" :current="pageIndex + 1" :page-size="pageSize" :total="total" show-less-items @change="changePage" />
+      </section>
+
+      <aside class="device-scope-modal__selection">
+        <template v-if="selectedDevice">
+          <div class="device-scope-modal__selected-device"><strong>{{ selectedDevice.name }}</strong><span>{{ selectedDevice.spaceName || $t('IotSceneLinkage.scope.unboundSpace') }} · {{ selectedDevice.productName }}</span></div>
+          <slot name="configuration" :selected-device="selectedDevice" :has-selection="true" />
+          <div class="device-scope-modal__preview"><slot name="preview" :selected-device="selectedDevice" /></div>
+        </template>
+        <CloudEmpty v-else :description="$t('IotSceneLinkage.scope.selectDeviceHint')" />
+      </aside>
     </div>
+    <div class="device-scope-modal__footer"><a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button><a-button type="primary" :disabled="!selectedDevice" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button></div>
   </a-modal>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getProduct, queryDevicesPage } from '../../../../api/scene-linkage'
-import { queryDeviceGroupDetailList_api, queryProjectSpaceAreaSettings_api } from '../../../../api/scene-resources'
-import IotAlarmTargetOption from '../alarm/IotAlarmTargetOption.vue'
+import { queryDevicesPage, queryProducts } from '../../../../api/scene-linkage'
+import { queryProjectSpaceAreaSettings_api } from '../../../../api/scene-resources'
+import IotAlarmTargetSelect, { type IotAlarmTargetSelectOption, type IotAlarmTargetSelectQuery } from '../alarm/IotAlarmTargetSelect.vue'
 
 export type DeviceScope = {
   selector: 'fixed' | 'space' | 'device-group' | 'all'
   selectorValues: Array<{ value: string; name?: string }>
-  options?: { view?: 'space' | 'device-group' | 'custom' | 'all' }
+  options?: { view?: 'space' | 'device-group' | 'custom' | 'all'; names?: string[] }
+  productId?: string
+  productName?: string
 }
 
-const props = defineProps({
-  open: { type: Boolean, default: false },
-  productId: { type: String, default: '' },
-  modelValue: { type: Object as PropType<DeviceScope>, required: true },
-})
-const emit = defineEmits<{
-  (event: 'cancel'): void
-  (event: 'save', value: DeviceScope): void
-}>()
-
+type DeviceOption = { id: string; name: string; productId: string; productName: string; spaceName?: string; online: boolean; statusText: string }
+type SpaceNode = { key: string; title: string; children?: SpaceNode[] }
+const UNBOUND_SPACE_KEY = '__scene-unbound-space__'
+const props = defineProps({ open: { type: Boolean, default: false }, title: { type: String, default: '' }, width: { type: Number, default: 1180 }, productId: { type: String, default: '' }, modelValue: { type: Object as PropType<DeviceScope>, required: true } })
+const emit = defineEmits<{ (event: 'cancel'): void; (event: 'save', value: DeviceScope): void; (event: 'select-device', value: DeviceOption): void }>()
 const { t } = useI18n()
 const pageSize = 20
-const productName = ref('')
 const keyword = ref('')
+const productFilter = ref<string>()
 const pageIndex = ref(0)
-const searched = ref(false)
+const total = ref(0)
 const deviceLoading = ref(false)
 const scopeLoading = ref(false)
-const fixedTotal = ref(0)
-const fixedDeviceOptions = ref<Array<{ label: string; value: string; data: Record<string, any> }>>([])
-const scopeView = ref<'space' | 'device-group' | 'custom' | 'all'>()
+const selectedSpaceId = ref('')
 const expandedKeys = ref<string[]>([])
-const scopeTreeData = ref<any[]>([])
-const scopeNodeMap = new Map<string, any>()
-let deviceSearchTimer: ReturnType<typeof setTimeout> | undefined
-let deviceSearchRequestSeq = 0
-const draft = reactive<DeviceScope>({ selector: 'fixed', selectorValues: [] })
-const dynamicScope = computed(() => ['space', 'device-group'].includes(draft.selector))
-const title = computed(() => t('IotSceneLinkage.title.selectDevicesWithProduct', { productName: productName.value || props.productId || '-' }))
-const visibleScopeTreeData = computed(() => ['space', 'device-group'].includes(scopeView.value || '') ? scopeTreeData.value.find(item => item.key === `root:${scopeView.value === 'space' ? 'space' : 'group'}`)?.children || [] : [])
-const checkedKeys = computed(() => dynamicScope.value ? { checked: getDynamicCheckedKeys(), halfChecked: getDynamicHalfCheckedKeys() } : [])
-const fixedDeviceIds = computed(() => draft.selectorValues.map(item => item.value))
-const canSelectCurrentView = computed(() => searched.value ? fixedDeviceOptions.value.length > 0 : false)
-const scopeDescription = computed(() => {
-  if (scopeView.value === 'space') return t('IotSceneLinkage.scope.areaGroupHint')
-  if (scopeView.value === 'device-group') return t('IotSceneLinkage.scope.deviceGroupHint')
-  if (scopeView.value === 'custom') return t('IotSceneLinkage.scope.customDevicesHint')
-  return ''
-})
-const selectedText = computed(() => {
-  if (draft.selector === 'all') return t('IotSceneLinkage.scope.selectedAll')
-  if (draft.selector === 'space') return t('IotSceneLinkage.scope.selectedAreaGroups', { count: draft.selectorValues.length })
-  if (draft.selector === 'device-group') return t('IotSceneLinkage.scope.selectedDeviceGroups', { count: draft.selectorValues.length })
-  return t('IotSceneLinkage.scope.selectedDevices', { count: draft.selectorValues.length })
-})
-const emptyDescription = computed(() => {
-  if (scopeView.value === 'space') return t('IotSceneLinkage.scope.emptyAreaGroups')
-  if (scopeView.value === 'device-group') return t('IotSceneLinkage.scope.emptyDeviceGroups')
-  return t('IotSceneLinkage.scope.searchHint')
-})
+const spaceTreeData = ref<SpaceNode[]>([])
+const spaceDescendants = new Map<string, string[]>()
+const allSpaceIds = ref<string[]>([])
+const deviceOptions = ref<DeviceOption[]>([])
+const selectedDevice = ref<DeviceOption>()
+const draft = reactive({ deviceId: '', deviceName: '', productId: '', productName: '' })
+let requestSequence = 0
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+const modalTitle = computed(() => props.title || t('IotSceneLinkage.title.selectDevices'))
 
 watch(() => props.open, async open => {
-  if (!open) {
-    clearDeviceSearchTimer()
-    return
-  }
-  draft.selector = props.modelValue.selector
-  draft.selectorValues = props.modelValue.selectorValues.map(item => ({ value: String(item.value), name: item.name }))
-  scopeView.value = getInitialScopeView()
-  keyword.value = ''
-  searched.value = false
-  fixedDeviceOptions.value = []
-  await Promise.all([loadProductName(), loadScopeTree()])
-  if (scopeView.value === 'space' || scopeView.value === 'device-group') {
-    expandScopeTree(scopeView.value)
-  } else if (scopeView.value === 'custom') {
-    await searchDevices()
-  }
-})
+  if (!open) { clearSearchTimer(); return }
+  keyword.value = ''; pageIndex.value = 0; selectedSpaceId.value = ''
+  productFilter.value = props.modelValue.productId || props.productId || undefined
+  Object.assign(draft, { deviceId: props.modelValue.selector === 'fixed' ? String(props.modelValue.selectorValues[0]?.value || '') : '', deviceName: props.modelValue.selectorValues[0]?.name || '', productId: props.modelValue.productId || props.productId || '', productName: props.modelValue.productName || '' })
+  selectedDevice.value = undefined
+  await loadSpaceTree()
+  await loadDevices()
+}, { immediate: true })
 
 watch(keyword, () => {
-  if (!props.open || scopeView.value !== 'custom' || !searched.value) return
-  debounceSearchDevices()
+  if (!props.open) return
+  clearSearchTimer()
+  searchTimer = setTimeout(() => { searchTimer = undefined; void searchDevices() }, 300)
 })
 
-async function loadProductName() {
-  if (!props.productId) return
-  const response: any = await getProduct(props.productId)
-  const product = response?.result ?? response
-  productName.value = product?.name || props.productId
-}
-
-async function selectScopeView(type: 'space' | 'device-group' | 'custom' | 'all') {
-  scopeView.value = type
-  if (type === 'all') {
-    draft.selector = 'all'
-    draft.selectorValues = []
-    searched.value = false
-    return
-  }
-  if (type === 'custom') {
-    draft.selector = 'fixed'
-    draft.selectorValues = []
-    await searchDevices()
-    return
-  }
-  searched.value = false
-  fixedDeviceOptions.value = []
-  fixedTotal.value = 0
-  if (draft.selector !== type) {
-    draft.selector = type
-    draft.selectorValues = []
-  }
-  if (!scopeTreeData.value.length) await loadScopeTree()
-  expandScopeTree(type)
-}
-
-function onScopeCheck(keys: any, event?: any) {
-  if (scopeView.value !== 'space' && scopeView.value !== 'device-group') return
-  if (draft.selector !== scopeView.value) {
-    draft.selector = scopeView.value
-    draft.selectorValues = []
-  }
-  const checked = Array.isArray(keys) ? keys : keys.checked || []
-  draft.selectorValues = checked
-    .map((key: string) => scopeNodeMap.get(key))
-    .filter((node: any) => node?.scopeType === draft.selector)
-    .map((node: any) => ({ value: node.scopeId, name: node.title }))
-}
-
-function onScopeExpand(keys: string[]) {
-  expandedKeys.value = keys
-}
-
-function expandScopeTree(type: 'space' | 'device-group') {
-  const nodes = getScopeNodes(scopeTreeData.value.find(item => item.key === `root:${type === 'space' ? 'space' : 'group'}`)?.children || [])
-    .filter(node => node.scopeType === type)
-  expandedKeys.value = nodes.map(node => node.key)
-}
-
-function changeFixedDevices(values: Array<string | number>) {
-  const currentPageIds = new Set(fixedDeviceOptions.value.map(item => item.value))
-  const retainedIds = fixedDeviceIds.value.filter(id => !currentPageIds.has(id))
-  const selectedIds = values.map(value => String(value))
-  draft.selectorValues = [...new Set([...retainedIds, ...selectedIds])].map(value => ({ value, name: fixedDeviceOptions.value.find(item => item.value === value)?.label || draft.selectorValues.find(item => item.value === value)?.name }))
-}
-
-function selectAll() {
-  if (!searched.value) {
-    return
-  }
-  const values = new Set([...fixedDeviceIds.value, ...fixedDeviceOptions.value.map(item => item.value)])
-  draft.selectorValues = [...values].map(value => ({ value, name: fixedDeviceOptions.value.find(item => item.value === value)?.label || draft.selectorValues.find(item => item.value === value)?.name }))
-}
-
-function clearSelection() {
-  if (draft.selector === 'all') {
-    draft.selector = 'fixed'
-    scopeView.value = 'custom'
-  }
-  draft.selectorValues = []
-}
-
-async function searchDevices() {
-  clearDeviceSearchTimer()
-  pageIndex.value = 0
-  scopeView.value = 'custom'
-  searched.value = true
-  if (draft.selector !== 'fixed') {
-    draft.selector = 'fixed'
-    draft.selectorValues = []
-  }
-  await loadDevices()
-}
-
-async function changePage(page: number) {
-  pageIndex.value = page - 1
-  await loadDevices()
-}
-
+/** 搜索条件变化时以序号隔离旧响应，避免快速切换空间后列表回跳。 */
 async function loadDevices() {
-  if (!props.productId) return
+  const sequence = ++requestSequence
   deviceLoading.value = true
-  const requestSeq = ++deviceSearchRequestSeq
   try {
-    const searchKeyword = keyword.value.trim()
-    const response: any = await queryDevicesPage({
-      pageIndex: pageIndex.value,
-      pageSize,
-      terms: [
-        { column: 'productId', termType: 'eq', value: props.productId },
-        ...(searchKeyword ? [{
-          terms: [
-            { column: 'name', termType: 'like', value: `%${searchKeyword}%` },
-            { column: 'id', termType: 'like', value: `%${searchKeyword}%`, type: 'or' },
-          ],
-        }] : []),
-      ],
-    })
-    if (requestSeq !== deviceSearchRequestSeq) return
+    const terms: any[] = []
+    if (productFilter.value) terms.push({ column: 'productId', termType: 'eq', value: productFilter.value })
+    const spaceIds = selectedSpaceId.value && selectedSpaceId.value !== UNBOUND_SPACE_KEY ? spaceDescendants.get(selectedSpaceId.value) || [selectedSpaceId.value] : []
+    if (selectedSpaceId.value === UNBOUND_SPACE_KEY && allSpaceIds.value.length) terms.push({ column: 'id', termType: 'space-bind$not$device', value: allSpaceIds.value })
+    else if (spaceIds.length) terms.push({ column: 'id', termType: 'space-bind$device', value: spaceIds })
+    const searchText = keyword.value.trim()
+    if (searchText) terms.push({ terms: [{ column: 'name', termType: 'like', value: `%${searchText}%` }, { column: 'id', termType: 'like', value: `%${searchText}%`, type: 'or' }] })
+    const response: any = await queryDevicesPage({ pageIndex: pageIndex.value, pageSize, sorts: [{ name: 'createTime', order: 'desc' }], terms })
+    if (sequence !== requestSequence) return
     const result = response?.result ?? response
     const rows = result?.data || result?.records || []
-    fixedTotal.value = Number(result?.total ?? result?.totalElements ?? rows.length)
-    fixedDeviceOptions.value = rows.map((device: any) => ({
-      label: device.name || device.id,
-      value: String(device.id),
-      data: device,
-    }))
-    searched.value = true
-  } finally {
-    if (requestSeq === deviceSearchRequestSeq) {
-      deviceLoading.value = false
-    }
-  }
+    total.value = Number(result?.total ?? result?.totalElements ?? rows.length)
+    deviceOptions.value = rows.map(toDeviceOption)
+    const selected = deviceOptions.value.find(item => item.id === draft.deviceId)
+    if (selected) selectedDevice.value = selected
+  } finally { if (sequence === requestSequence) deviceLoading.value = false }
 }
 
-function debounceSearchDevices() {
-  clearDeviceSearchTimer()
-  deviceSearchTimer = setTimeout(() => {
-    deviceSearchTimer = undefined
-    void searchDevices()
-  }, 300)
+function toDeviceOption(device: any): DeviceOption {
+  const status = device.state?.text || device.state?.value || device.state || device.status?.text || device.status || ''
+  const online = ['online', 'enabled', '正常', '在线'].includes(String(status).toLowerCase()) || device.online === true
+  return { id: String(device.id), name: device.name || device.id, productId: String(device.productId || device.product?.id || ''), productName: device.productName || device.product?.name || device.productId || '-', spaceName: device.area || device.spaceName || device.others?.spaceName, online, statusText: status || (online ? t('IotSceneLinkage.deviceState.online') : t('IotSceneLinkage.deviceState.offline')) }
 }
+function selectDevice(device: DeviceOption) { selectedDevice.value = device; Object.assign(draft, { deviceId: device.id, deviceName: device.name, productId: device.productId, productName: device.productName }); emit('select-device', device) }
 
-function clearDeviceSearchTimer() {
-  if (!deviceSearchTimer) return
-  clearTimeout(deviceSearchTimer)
-  deviceSearchTimer = undefined
-}
-
-async function loadScopeTree() {
+async function loadSpaceTree() {
   scopeLoading.value = true
   try {
-    const [areas, groups] = await Promise.all([queryProjectSpaceAreaSettings_api(''), queryDeviceGroupDetailList_api()])
-    scopeNodeMap.clear()
-    const areaNodes = (areas?.areas || []).map((area: any) => {
-      const node = { key: `space:${area.id}`, title: area.name, scopeType: 'space', scopeId: String(area.id), isLeaf: false, children: [] as any[] }
-      scopeNodeMap.set(node.key, node)
-      return node
-    })
-    const treeMap = new Map(areaNodes.map((node: any) => [node.key, node]))
-    const areaRoots: any[] = []
-    areaNodes.forEach((node: any) => {
-      const area = (areas?.areas || []).find((item: any) => String(item.id) === node.scopeId)
-      const parent = area?.parentId ? treeMap.get(`space:${area.parentId}`) : undefined
-      if (parent) parent.children.push(node); else areaRoots.push(node)
-    })
-    const groupNodes = groups.map((group: any) => {
-      const node = { key: `device-group:${group.id}`, title: group.name, scopeType: 'device-group', scopeId: String(group.id), isLeaf: true, children: [] as any[] }
-      scopeNodeMap.set(node.key, node)
-      return node
-    })
-    scopeTreeData.value = [{ key: 'root:space', children: areaRoots }, { key: 'root:group', children: groupNodes }].filter(item => item.children.length)
-    expandedKeys.value = []
-  } finally {
-    scopeLoading.value = false
-  }
+    const response: any = await queryProjectSpaceAreaSettings_api('')
+    const areas = response?.areas || response?.result?.areas || []
+    const nodes = new Map<string, SpaceNode>(); const parentIds = new Map<string, string>()
+    areas.forEach((area: any) => { const id = String(area.id); nodes.set(id, { key: id, title: area.name || id, children: [] }); parentIds.set(id, String(area.parentId || '')) })
+    const roots: SpaceNode[] = []
+    nodes.forEach((node, id) => { const parent = nodes.get(parentIds.get(id) || ''); if (parent) (parent.children ||= []).push(node); else roots.push(node) })
+    allSpaceIds.value = [...nodes.keys()]; spaceDescendants.clear()
+    const collect = (node: SpaceNode): string[] => { const ids = [node.key, ...(node.children || []).flatMap(collect)]; spaceDescendants.set(node.key, ids); return ids }
+    roots.forEach(collect); spaceTreeData.value = roots; expandedKeys.value = roots.map(item => item.key)
+  } finally { scopeLoading.value = false }
 }
 
+function selectAllDevices() { selectedSpaceId.value = ''; void searchDevices() }
+function selectUnboundDevices() { selectedSpaceId.value = UNBOUND_SPACE_KEY; void searchDevices() }
+function selectSpace(keys: Array<string | number>) { selectedSpaceId.value = String(keys[0] || ''); void searchDevices() }
+function onSpaceExpand(keys: Array<string | number>) { expandedKeys.value = keys.map(String) }
+function changeProductFilter(_value?: string, option?: IotAlarmTargetSelectOption) { productFilter.value = option?.value; void searchDevices() }
+function searchDevices() { clearSearchTimer(); pageIndex.value = 0; return loadDevices() }
+function changePage(page: number) { pageIndex.value = page - 1; return loadDevices() }
+function clearSearchTimer() { if (searchTimer) clearTimeout(searchTimer); searchTimer = undefined }
+
+async function requestProducts(query: IotAlarmTargetSelectQuery) {
+  const value = query.keyword.trim(); const terms = value ? [{ column: 'name', termType: 'like', value: `%${value}%`, type: 'or' }, { column: 'id', termType: 'like', value: `%${value}%`, type: 'or' }] : []
+  const response: any = await queryProducts({ pageIndex: query.pageIndex, pageSize: query.pageSize, sorts: [{ name: 'createTime', order: 'desc' }], terms })
+  const result = response?.result ?? response; const data = result?.data || result?.records || []
+  return { data: data.map((item: any) => ({ label: item.name || item.id, value: String(item.id), data: item })), total: Number(result?.total ?? result?.totalElements ?? data.length) }
+}
 function save() {
-  emit('save', { selector: draft.selector, selectorValues: draft.selectorValues.map(item => ({ value: String(item.value), name: item.name })), options: { view: scopeView.value || 'space' } })
-}
-
-function getInitialScopeView(): 'space' | 'device-group' | 'custom' | 'all' {
-  if (props.modelValue.selector === 'space' || props.modelValue.selector === 'device-group' || props.modelValue.selector === 'all') return props.modelValue.selector
-  return props.modelValue.selectorValues.length ? 'custom' : 'space'
-}
-
-function getDynamicCheckedKeys(): string[] {
-  // 所属空间和所属分组保存用户显式勾选的维度节点，不做父子级联展开。
-  return draft.selectorValues.map(item => `${draft.selector}:${item.value}`)
-}
-
-function getDynamicHalfCheckedKeys(): string[] {
-  return []
-}
-
-function getScopeNodes(nodes: any[]): any[] {
-  return nodes.flatMap(node => [node, ...getScopeNodes(node.children || [])])
+  if (!selectedDevice.value) return
+  emit('save', { selector: 'fixed', selectorValues: [{ value: selectedDevice.value.id, name: selectedDevice.value.name }], options: { view: 'space', names: [selectedDevice.value.name] }, productId: selectedDevice.value.productId, productName: selectedDevice.value.productName })
 }
 </script>
 
 <style scoped>
-.device-scope-modal__mode { display: inline-flex; gap: 8px; align-items: center; }
-.device-scope-modal__toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.device-scope-modal__tabs { display: inline-flex; }
-.device-scope-modal__tabs :deep(.ant-btn) { min-width: 112px; }
-.device-scope-modal__description { margin: -2px 0 12px; color: var(--ant-color-text-secondary); font-size: 12px; line-height: 20px; }
-.device-scope-modal__search { display: block; width: 100%; margin-bottom: 12px; }
-.device-scope-modal__device-list { display: grid; max-height: 360px; overflow: auto; padding: 4px 12px; border: 1px solid var(--ant-color-border-secondary); border-radius: 6px; background: var(--ant-color-bg-container); }
-.device-scope-modal__device-list :deep(.ant-checkbox-wrapper) { display: flex; gap: 10px; align-items: center; min-height: 48px; margin-inline-start: 0; border-bottom: 1px solid var(--ant-color-border-secondary); }
-.device-scope-modal__device-list :deep(.ant-checkbox-wrapper:last-child) { border-bottom: 0; }
-.device-scope-modal__device-list :deep(.ant-checkbox + span) { flex: 1; min-width: 0; }
-.device-scope-modal__pagination { display: flex; justify-content: flex-end; margin-top: 12px; }
-.device-scope-modal__tree { max-height: 480px; overflow: auto; padding: 8px; border: 1px solid var(--ant-color-border-secondary); border-radius: 6px; }
-.device-scope-modal__node { display: flex; gap: 12px; align-items: center; min-width: 0; }
-.device-scope-modal__tree :deep(.ant-tree-title) { display: block; min-width: 0; width: 100%; }
-.device-scope-modal__tree :deep(.ant-tree-node-content-wrapper) { flex: 1; min-width: 0; }
-.device-scope-modal__footer { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; }
+.device-scope-modal__layout { display: grid; grid-template-columns: 13rem minmax(25rem, 1fr) 18rem; min-height: 34rem; border: 1px solid var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 8px); }
+.device-scope-modal__navigation, .device-scope-modal__selection { display: flex; flex-direction: column; gap: var(--space-2, 8px); padding: var(--space-3, 12px); background: var(--ant-color-fill-quaternary); }.device-scope-modal__navigation { border-right: 1px solid var(--ant-color-border-secondary); }.device-scope-modal__selection { border-left: 1px solid var(--ant-color-border-secondary); }
+.device-scope-modal__navigation :deep(.ant-btn) { display: flex; gap: var(--space-2, 8px); align-items: center; justify-content: flex-start; }.device-scope-modal__space-title { display: flex; gap: var(--space-2, 8px); align-items: center; padding: 8px; color: var(--ant-color-text-secondary); font-size: 12px; font-weight: 600; }.device-scope-modal__tree { flex: 1; min-height: 0; overflow: auto; }.device-scope-modal__node { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.device-scope-modal__content { display: flex; flex-direction: column; min-width: 0; padding: var(--space-4, 16px); }.device-scope-modal__filters { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: var(--space-3, 12px); margin-bottom: 12px; }.device-scope-modal__device-list-head, .device-scope-modal__device-row { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 5rem; gap: 12px; align-items: center; }.device-scope-modal__device-list-head { padding: 0 12px 8px; color: var(--ant-color-text-secondary); font-size: 12px; }.device-scope-modal__device-loading { min-height: 0; flex: 1; }.device-scope-modal__device-list { overflow: auto; border: 1px solid var(--ant-color-border-secondary); border-radius: 6px; }.device-scope-modal__device-row { width: 100%; min-height: 50px; padding: 0 12px; color: var(--ant-color-text); text-align: left; background: var(--ant-color-bg-container); border: 0; border-bottom: 1px solid var(--ant-color-border-secondary); cursor: pointer; }.device-scope-modal__device-row:last-child { border-bottom: 0; }.device-scope-modal__device-row:hover, .device-scope-modal__device-row.is-selected { background: var(--ant-color-primary-bg); }.device-scope-modal__device-row.is-selected { box-shadow: inset 0 0 0 1px var(--ant-color-primary); }.device-scope-modal__device-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.device-scope-modal__status { display: inline-flex; align-items: center; font-size: .75rem; }.device-scope-modal__status-dot { width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: currentColor; }.device-scope-modal__status.is-online { color: var(--ant-color-success); }.device-scope-modal__status.is-offline { color: var(--ant-color-text-tertiary); }.device-scope-modal__pagination { display: flex; justify-content: flex-end; margin-top: 12px; }.device-scope-modal__selected-device { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--ant-color-border-secondary); }.device-scope-modal__selected-device span { color: var(--ant-color-text-secondary); font-size: 12px; }.device-scope-modal__preview { margin-top: auto; padding-top: 12px; color: var(--ant-color-text-secondary); border-top: 1px solid var(--ant-color-border-secondary); font-size: 12px; line-height: 20px; }.device-scope-modal__footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 16px; }
+@media (max-width: 900px) { .device-scope-modal__layout { grid-template-columns: 11rem minmax(0, 1fr); }.device-scope-modal__selection { grid-column: 1 / -1; min-height: 12rem; border-top: 1px solid var(--ant-color-border-secondary); border-left: 0; }.device-scope-modal__filters { grid-template-columns: 1fr; } }
 </style>
