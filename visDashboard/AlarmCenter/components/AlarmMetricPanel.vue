@@ -40,7 +40,7 @@ const format = (value?: number | null) => (value ?? 0).toLocaleString(locale.val
 <style scoped>
 .alarm-metric { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: auto; gap: 8px; }
 .alarm-metric-main { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: 1; }
-.alarm-metric-heading { color: var(--ink-3, #86909c); font-size: 14px; min-width: 0; }
+.alarm-metric-heading { align-self: flex-start; color: var(--ink-3, #86909c); font-size: 14px; min-width: 0; }
 .alarm-metric-title { margin: 0; color: #86909c; font-size: 14px; font-weight: 400; line-height: 20px; }
 .alarm-metric-value { color: var(--ink-1, #1d2129); font-size: 24px; line-height: 28px; font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 small { font-size: 14px; font-weight: 400; line-height: 20px; color: #86909c; }
