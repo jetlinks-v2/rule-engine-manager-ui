@@ -50,7 +50,8 @@ export function useAlarmDashboard(width: Ref<number>, preview: Ref<boolean> = re
     })),
   }))
   const dashboard = computed<DashboardValue>(() => ({
-    canvas: { backgroundColor: 'transparent', gridLayout: { colNum: 24, rowHeight: 16, marginHorizontal: 18, marginVertical: 18 } },
+    // 保留原有 34px 网格步长，让已保存的卡片位置和高度不随间距调整明显变化。
+    canvas: { backgroundColor: 'transparent', gridLayout: { colNum: 24, rowHeight: 18, marginHorizontal: 16, marginVertical: 16 } },
     components: alarmDashboardLayout(mode.value).flatMap(([kind, x, y, w, h]) => {
       const type = typeOf(kind)
       const definition = catalog.value.components[type]
