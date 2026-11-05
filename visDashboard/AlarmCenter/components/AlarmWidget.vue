@@ -104,20 +104,18 @@ header { box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: ce
 .alarm-widget-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 h3 { min-width: 0; margin: 5px 0; font-size: 16px; font-weight: 500; line-height: 24px; overflow-wrap: anywhere; }
 .alarm-widget-switch.ant-segmented {
-  max-width: 100%; overflow-x: auto; padding: 3px; font-size: 12px;
-  background: #f5f6f8; color: var(--ink-2, #4e5969);
-  border: 1px solid var(--jet-theme-border-color-1, #eceff3); border-radius: 6px;
+  max-width: 100%; overflow-x: auto; padding: 3px; border-radius: 9px;
+  background: #f3f4f6; color: #4e5969;
 }
+.alarm-widget-switch :deep(.ant-segmented-group) { gap: 2px; }
 .alarm-widget-switch :deep(.ant-segmented-item),
-.alarm-widget-switch :deep(.ant-segmented-thumb) { border-radius: 4px; }
-.alarm-widget-switch :deep(.ant-segmented-item-label) { min-height: 26px; padding: 2px 10px; line-height: 22px; }
-.alarm-widget-switch :deep(.ant-segmented-item-selected),
-.alarm-widget-switch :deep(.ant-segmented-thumb) {
-  background: var(--ant-color-bg-container, #fff); color: var(--ant-color-primary, #1677ff);
-  box-shadow: 0 1px 3px #1d212914;
+.alarm-widget-switch :deep(.ant-segmented-thumb) { border-radius: 6px; }
+.alarm-widget-switch :deep(.ant-segmented-item-label) { min-height: 22px; padding: 4px 10px; line-height: 14px; font-size: 12px; }
+.alarm-widget-switch :deep(.ant-segmented-item-selected) {
+  background: #fff; color: #1677ff; box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
 }
 .alarm-widget-switch :deep(.ant-segmented-item:has(input:focus-visible)) {
-  outline: 2px solid var(--ant-color-primary, #1677ff); outline-offset: -1px;
+  outline: 2px solid #1677ff; outline-offset: -1px;
 }
 .alarm-widget-content { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
 .alarm-widget:not(.alarm-widget-metric) .alarm-widget-content { padding: 16px; }
