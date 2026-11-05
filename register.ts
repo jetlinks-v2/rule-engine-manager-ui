@@ -4,6 +4,7 @@ import type { DataCapabilityProviderManifest } from '@jetlinks-web-core/data-cap
 import type { AgentCapabilityProviderResource } from '@jetlinks-web-core/layout/components/AiChat/routeCapabilityLoader'
 import { queryAlarmLevelOptions, normalizeAlarmLevelValue } from './api/alarmLevel'
 import { ALARM_ANALYSIS_EXTENSION_KEY } from './agentCapabilities/alarmAnalysis/constants'
+import objectPresentations from './objectPresentations'
 import {
     RULE_EDITOR_FLOWCHART_EXTENSION_KEY,
     RULE_EDITOR_FLOWCHART_MENU_ANCHORS,
@@ -45,6 +46,7 @@ const homeAgentProviders = Object.fromEntries(
 
 export default {
     moduleId: 'rule-engine-manager-ui',
+    objectPresentations,
     components: {
         ruleInstance: defineAsyncComponent(() => import('./views/Instance/index.vue')),
         // 私有化运行时从该注册表加载场景菜单，不能只依赖 index.ts 的动态路由映射。
