@@ -293,7 +293,7 @@ views/DashBoard/
 
 ### 标题栏切换项样式
 
-参照资源中心网关状态指标的分段切换样式，统一告警趋势与两个统计卡片：浅灰背景、白色选中块、蓝色选中文字、6px 外圆角、4px 选中块圆角和 26px 标签最小高度。落点为 `visDashboard/AlarmCenter/components/AlarmWidget.vue`，保留现有选项与切换行为。定向 SFC 脚本/模板/样式检查与 `git diff --check` 通过；当前 `localhost:9200/#/alarms/dashboard` 三处样式目视核对及昨日/设备类型/摄像头切换通过，已恢复默认选中项。本次不运行全量构建，无后端重启要求。
+告警趋势、两类处理情况和两个统计卡片共用 `visDashboard/AlarmCenter/components/AlarmWidget.vue` 的分段切换样式，与资源中心的浅灰背景、白色选中块、蓝色选中文字、9px 外圆角、6px 选中块圆角及选项间距保持一致；继续沿用现有选项和切换行为。
 
 ### 实际代码与口径
 
