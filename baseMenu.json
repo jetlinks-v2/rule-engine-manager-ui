@@ -293,7 +293,26 @@
         "showPage": [
           "rule-scene"
         ],
-        "permissions": [],
+        "permissions": [
+          {
+            "permission": "device-group",
+            "actions": [
+              "query"
+            ]
+          },
+          {
+            "permission": "space-management",
+            "actions": [
+              "query"
+            ]
+          },
+          {
+            "permission": "space-data-bind",
+            "actions": [
+              "query"
+            ]
+          }
+        ],
         "buttons": [
           {
             "id": "delete",
@@ -532,7 +551,15 @@
           "value": "support"
         },
         "supportDataAccess": true,
-        "assetType": "scene"
+        "assetType": "scene",
+        "assetTypes": [
+          "scene",
+          "product",
+          "device",
+          "deviceGroup",
+          "space",
+          "user"
+        ]
       }
     ]
   },
