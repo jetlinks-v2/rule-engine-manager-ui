@@ -14,6 +14,10 @@
           class="pro-table__no-padding"
       >
 	      <template #headerLeftRender>
+          <a-tag v-if="recordScope.length" color="processing">
+            {{ $t('ObjectPresentation.alarmScope', {name: route.query.targetName || route.query.targetId}) }}
+            <span v-if="route.query.state === 'warning'"> · {{ $t('ObjectPresentation.activeAlarms') }}</span>
+          </a-tag>
 		      <ConditionFilter
 			      :columns="newColumns"
 			      :target="`alarm-log-${props.type}`"
@@ -159,6 +163,8 @@ import {useAlarmLevel} from "@rule-engine-manager-ui/hook";
 import {logImages} from "@rule-engine-manager-ui/assets";
 import LevelIcon from '@rule-engine-manager-ui/components/AlarmLevelIcon/index.vue'
 import {useI18n} from "vue-i18n";
+import { useRoute } from 'vue-router';
+import { alarmRecordScope } from '../../../../api/alarmRecordScope';
 import {useAlarmConfigType} from "@rule-engine-manager-ui/hook/useAlarmConfigType";
 import {getTreeData_api} from "@rule-engine-manager-ui/api/others";
 import {useAlarmAgentEntry} from "../useAlarmAgentEntry";
@@ -397,11 +403,16 @@ const newColumns = computed(() => {
       : [otherColumns, ...columns.value];
 });
 
+const route = useRoute();
+const recordScope = computed(() => alarmRecordScope(route.query));
+watch(recordScope, () => tableRef.value?.reload());
 let params: any = ref({
   sorts: [{name: "lastAlarmTime", order: "desc"}],
   terms: [],
 });
 const handleSearch = async (params: any) => {
+  // Keep the visible object scope when users add their own search conditions.
+  params = { ...params, terms: [...(params.terms || []), ...recordScope.value] };
   const resp: any =
       props.type !== "all"
           ? await queryAlarmRecordByType(props.type, params)
