@@ -4,9 +4,9 @@
       <span class="alarm-handling-card__icon" :class="vision ? 'is-vision' : 'is-iot'"><AIcon :type="vision ? 'WarningOutlined' : 'AlertOutlined'" /></span>
       <span class="alarm-handling-card__title">{{ title }}</span>
     </div>
-    <a-alert v-if="data.failed" class="alarm-handling-card__error" type="error" show-icon :message="t('alarmDashboard.loadError')">
-      <template #action><a-button type="link" size="small" @click.stop="$emit('retry')">{{ t('alarmDashboard.retry') }}</a-button></template>
-    </a-alert>
+    <div v-if="data.failed" class="alarm-handling-card__chart alarm-handling-card__empty" role="alert">
+      <CloudEmpty :description="t('alarmDashboard.loadError')" :image-style="{ height: '48px' }" />
+    </div>
     <div v-else class="alarm-handling-card__chart" role="img" :aria-label="summary">
       <Echarts :option="option" :library="libraries" />
     </div>
@@ -24,7 +24,6 @@ import { useAlarmTypography } from '../hooks/useAlarmTypography'
 import type { AlarmHandlingStats, AlarmQueryRange } from '../dashboard.types'
 
 const props = defineProps<{ title: string; data: AlarmHandlingStats; range?: AlarmQueryRange; vision?: boolean; standalone?: boolean }>()
-defineEmits<{ retry: [] }>()
 const { t, locale } = useI18n()
 const { token } = theme.useToken()
 const chartTextStyle = useAlarmTypography()
@@ -99,6 +98,7 @@ const option = computed(() => ({
 .alarm-handling-card__icon.is-vision { color: #13a8e8; background: #eaf8fe; }
 .alarm-handling-card__title { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 .alarm-handling-card__chart { width: 100%; flex: 1; min-height: 176px; min-width: 0; }
+.alarm-handling-card__empty { display: flex; align-items: center; justify-content: center; }
 @container alarm-handling-card (max-width: 420px) {
   .alarm-handling-card__chart { min-height: 152px; }
 }

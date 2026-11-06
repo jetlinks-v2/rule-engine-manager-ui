@@ -1,9 +1,9 @@
 <template>
-  <div class="alarm-handling-panel" :class="{ 'is-single': source }">
+  <div class="alarm-handling-panel" :class="{ 'is-single': source || visionEnabled === false }">
     <a-spin :spinning="loading && !isEdit">
       <div class="alarm-handling-panel__grid">
         <div v-for="source in sources" :key="source.key" class="alarm-handling-panel__source">
-          <AlarmHandlingCard :title="source.title" :data="source.data" :range="range" :standalone="Boolean(props.source)" :vision="source.key === 'vision'" @retry="$emit('retry')" />
+          <AlarmHandlingCard :title="source.title" :data="source.data" :range="range" :standalone="Boolean(props.source)" :vision="source.key === 'vision'" />
         </div>
       </div>
     </a-spin>
@@ -14,14 +14,13 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { AlarmHandlingData, AlarmHandlingSource, AlarmQueryRange } from '../dashboard.types'
 import AlarmHandlingCard from './AlarmHandlingCard.vue'
-const props = defineProps<{ value?: AlarmHandlingData; range?: AlarmQueryRange; source?: AlarmHandlingSource; isEdit: boolean; loading: boolean }>()
-defineEmits<{ retry: [] }>()
+const props = defineProps<{ value?: AlarmHandlingData; range?: AlarmQueryRange; source?: AlarmHandlingSource; visionEnabled?: boolean; isEdit: boolean; loading: boolean }>()
 const { t } = useI18n()
 const unavailable = { total: null, active: null, handled: null, rate: null, points: [], failed: true }
 const sources = computed(() => [
   { key: 'iot', title: t('alarmDashboard.source.iot'), data: props.value?.iot ?? unavailable },
   { key: 'vision', title: t('alarmDashboard.source.vision'), data: props.value?.vision ?? unavailable },
-].filter(source => !props.source || source.key === props.source))
+].filter(source => (source.key !== 'vision' || props.visionEnabled !== false) && (!props.source || source.key === props.source)))
 </script>
 <style scoped>
 .alarm-handling-panel { container: alarm-handling / inline-size; display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }

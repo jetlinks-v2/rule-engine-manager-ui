@@ -14,7 +14,8 @@ const stubs={
   '@jetlinks-web/core':'export const request={post:(...args)=>globalThis.alarmRankingFixture.request(...args)}',
   '@jetlinks-web-core/locales':'export default {global:{t:key=>key}}',
   '@jetlinks-web-core/store/user':'export const useUserStore=()=>globalThis.alarmRankingFixture.user',
-  '@jetlinks-web-core/store/menu':'export const useMenuStore=()=>({getMenu:()=>true,jumpPage:()=>{}})',
+  '@jetlinks-web-core/store/menu':'export const useMenuStore=()=>({initialized:true,loading:false,menuResultCache:[{code:"machine-vision/VisualAlarm"}],getMenu:()=>true,jumpPage:()=>{}})',
+  '@jetlinks-web-core/utils/module-registry':'export const moduleRegistry={hasModule:()=>true,getResourceItem:()=>undefined,onChange:()=>()=>{}}',
   '@jetlinks-web-core/utils/project-runtime':'export const getProjectCodeFromLocation=()=>"project"',
   '@jetlinks-web-core/utils/request-context':'export const getRequestBaseApi=()=>"/api"',
   'vue-router':'export const useRoute=()=>globalThis.alarmRankingFixture.route',
@@ -36,6 +37,7 @@ const output=await build({
     export {default as AlarmWidget} from './visDashboard/AlarmCenter/components/AlarmWidget.vue';
     export {default as AlarmStatisticsPanel} from './visDashboard/AlarmCenter/components/AlarmStatisticsPanel.vue';
     export {default as AlarmRankingDialog} from './visDashboard/AlarmCenter/components/AlarmRankingDialog.vue';
+    export {default as AlarmHandlingCard} from './visDashboard/AlarmCenter/components/AlarmHandlingCard.vue';
   `},
   bundle:true,write:false,format:'cjs',platform:'node',external:['vue','dayjs'],
   plugins:[{name:'alarm-ranking-boundaries',setup(builder){
@@ -90,7 +92,8 @@ function mount(t,render){
   app.component('a-input-search',{props:['value','placeholder'],emits:['update:value'],setup(props,ctx){return ()=>h('input',{'data-rank-search':true,value:props.value,placeholder:props.placeholder,onInput:event=>ctx.emit('update:value',event.target.value)})}})
   app.component('a-table',{props:['dataSource','columns','pagination','loading'],setup(props,ctx){return ()=>h('div',{'data-table':props.dataSource,'data-columns':props.columns,'data-pagination':props.pagination,'data-loading':props.loading},props.dataSource.length?undefined:ctx.slots.emptyText?.())}})
   for(const name of ['a-badge','a-spin','AIcon'])app.component(name,()=>null)
-  app.component('CloudEmpty',{props:['description'],setup(props){return ()=>h('div',props.description)}})
+  app.component('CloudEmpty',{props:['description','imageStyle'],setup(props){return ()=>h('div',{'data-empty':true,'data-image-style':props.imageStyle},props.description)}})
+  app.component('a-card',{setup(_,ctx){return ()=>h('div',ctx.slots.default?.())}})
   const container=node('root');app.mount(container);t.after(()=>app.unmount())
   return {app,container}
 }
@@ -280,4 +283,31 @@ test('localized preview names remain searchable in full after truncation in the 
   const rows=find(container,el=>el.props['data-table'])[0].props['data-table']
   assert.equal(rows.length,1)
   assert.equal(rows[0].name,'超长摄像头名称 Camera North Entrance')
+})
+
+
+test('ranking error shows CloudEmpty without retry, search, or table',async t=>{
+  fixture()
+  const {container}=mount(t,()=>h(api.AlarmRankingDialog,{open:true,title:'Ranking',items:[],dimension:'type',preview:false,loading:false,error:true}))
+  await flush()
+  const empty=find(container,el=>el.props['data-empty'])
+  assert.equal(empty.length,1)
+  assert.equal(textOf(empty[0]),messages['alarmDashboard.loadError'])
+  assert.equal(empty[0].props['data-image-style'].height,'48px')
+  assert.equal(find(container,el=>el.props['data-rank-search']||el.props['data-table']).length,0)
+  assert.equal(find(container,el=>el.type==='button'&&textOf(el)===messages['alarmDashboard.retry']).length,0)
+})
+
+test('handling failure shows CloudEmpty while another successful source keeps its chart',async t=>{
+  fixture()
+  const failed={total:null,active:null,handled:null,rate:null,points:[],failed:true}
+  const success={total:0,active:0,handled:0,rate:null,points:[],failed:false}
+  const {container}=mount(t,()=>h('div',[h(api.AlarmHandlingCard,{title:'IOT',data:failed}),h(api.AlarmHandlingCard,{title:'Vision',data:success})]))
+  await flush()
+  const empty=find(container,el=>el.props['data-empty'])
+  assert.equal(empty.length,1)
+  assert.equal(textOf(empty[0]),messages['alarmDashboard.loadError'])
+  assert.equal(empty[0].props['data-image-style'].height,'48px')
+  assert.equal(find(container,el=>el.props['data-chart']).length,1)
+  assert.equal(find(container,el=>el.type==='button'&&textOf(el)===messages['alarmDashboard.retry']).length,0)
 })

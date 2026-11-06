@@ -15,7 +15,7 @@ interface ConfigurationEntry {
 // 仅共享仍挂载的同作用域消费者；最后一个消费者离开即销毁，不持久化业务配置结果。
 const scopes = new Map<string, ConfigurationEntry>()
 
-function createEntry(): ConfigurationEntry {
+function createEntry(visionEnabled: boolean): ConfigurationEntry {
   const state = shallowRef(pendingConfiguration())
   const api = createAlarmDashboardApi()
   let controller: AbortController | undefined
@@ -30,7 +30,7 @@ function createEntry(): ConfigurationEntry {
     controller = new AbortController()
     const signal = controller.signal
     state.value = pendingConfiguration()
-    pending = Promise.all(ruleSources.map(async source => {
+    pending = Promise.all(ruleSources.filter(source => source !== 'vision' || visionEnabled).map(async source => {
       const status = await loadRuleConfiguration(api, source, signal)
       if (!signal.aborted) state.value = { ...state.value, [source]: status }
     })).then(() => undefined).catch(() => {
@@ -51,14 +51,14 @@ function createEntry(): ConfigurationEntry {
 }
 
 /** 按账号、项目和接口隔离配置检测；编辑预览零请求，离开 / 返回页面时重新检测。 */
-export function useAlarmRuleConfiguration(preview: Ref<boolean>) {
+export function useAlarmRuleConfiguration(preview: Ref<boolean>, visionEnabled: Readonly<Ref<boolean>> = ref(true)) {
   const user = useUserStore()
   const route = useRoute()
   const active = ref(true)
   const entry = shallowRef<ConfigurationEntry>()
   const scope = computed(() => JSON.stringify([
     user.userInfo.id, route.params.projectId, route.query.projectId, route.path,
-    getProjectCodeFromLocation(), getRequestBaseApi(),
+    getProjectCodeFromLocation(), getRequestBaseApi(), visionEnabled.value,
   ]))
   let release: (() => void) | undefined
   const stop = watch([scope, preview, active], ([key, editing, enabled]) => {
@@ -66,7 +66,7 @@ export function useAlarmRuleConfiguration(preview: Ref<boolean>) {
     release = undefined
     entry.value = undefined
     if (editing || !enabled) return
-    const current = scopes.get(key) || createEntry()
+    const current = scopes.get(key) || createEntry(visionEnabled.value)
     scopes.set(key, current)
     current.consumers += 1
     entry.value = current

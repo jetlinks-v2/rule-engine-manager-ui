@@ -4,7 +4,7 @@ import type { AlarmHandlingData, AlarmHandlingPoint, AlarmHandlingSource, AlarmH
 import { invalidResponse, resolveRange, rowsOf, timeTerms, toTrendPoints } from './query'
 
 /** 按告警发生时间分桶，展示这些告警当前的处理状态；不是按处理时间统计操作次数。 */
-export async function loadHandlingStatistics(api: AlarmDashboardApi, timeRange: AlarmTimeRange, signal: AbortSignal, source?: AlarmHandlingSource): Promise<AlarmWidgetData> {
+export async function loadHandlingStatistics(api: AlarmDashboardApi, timeRange: AlarmTimeRange, signal: AbortSignal, source?: AlarmHandlingSource, visionEnabled = true): Promise<AlarmWidgetData> {
   const range = resolveRange(timeRange)
   const unit = range.interval === '1h' ? 'hour' : 'day'
   const load = async (target: AlarmTarget): Promise<AlarmHandlingStats> => {
@@ -44,7 +44,7 @@ export async function loadHandlingStatistics(api: AlarmDashboardApi, timeRange: 
       return { total: null, active: null, handled: null, rate: null, points: [], failed: true }
     }
   }
-  const sources: AlarmHandlingSource[] = source ? [source] : ['iot', 'vision']
+  const sources = (source ? [source] : ['iot', 'vision'] as AlarmHandlingSource[]).filter(key => key !== 'vision' || visionEnabled)
   const handling: AlarmHandlingData = Object.fromEntries(await Promise.all(sources.map(async key =>
     [key, await load(key === 'iot' ? 'device' : 'aiTaskMediaTarget')])))
   return { handling, window: range, series: [], ranking: [] }

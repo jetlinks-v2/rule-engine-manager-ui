@@ -7,7 +7,8 @@ import { getRequestBaseApi } from '@jetlinks-web-core/utils/request-context'
 import { dashboardSources } from '@jetlinks-web-core/components/DashBoardCanvas/dashboard-sources'
 import { useDashboardCatalog } from '@jetlinks-web-core/components/DashBoardCanvas/discovery'
 import type { DashboardValue } from '@jetlinks-web-core/components/DashBoardCanvas'
-import { dashboardKinds, typeOf } from '../../visDashboard/AlarmCenter/dashboard.types'
+import { dashboardKinds, isAlarmKindAvailable, typeOf } from '../../visDashboard/AlarmCenter/dashboard.types'
+import { useAlarmCapabilities } from '../../visDashboard/AlarmCenter/hooks/useAlarmCapabilities'
 import { addHandlingStatisticsToLayout, alarmDashboardLayout, alarmLayoutMode } from './alarmDashboardLayout'
 import { alarmDashboardStorageKeys } from './alarmDashboardStorage'
 import { readDashboardLayout } from '@jetlinks-web-core/components/DashBoardCanvas/utils/layoutStorage'
@@ -21,20 +22,22 @@ const thumbnails = import.meta.glob('../../visDashboard/AlarmCenter/*/thumbnail.
 export function useAlarmDashboard(width: Ref<number>, preview: Ref<boolean> = ref(false)) {
   const user = useUserStore()
   const route = useRoute()
-  const discovery = useDashboardCatalog(dashboardSources, {
+  const capabilities = useAlarmCapabilities(preview)
+  const availableKinds = computed(() => dashboardKinds.filter(kind => isAlarmKindAvailable(kind, capabilities.value)))
+  const discovery = useDashboardCatalog(dashboardSources, computed(() => ({
     modules: ['rule-engine-manager-ui'], directories: ['visDashboard'], groups: [group],
-    entries: dashboardKinds.map(kind => `${group}/${kind}`),
-  })
+    entries: availableKinds.value.map(kind => `${group}/${kind}`),
+  })))
   const mode = computed(() => alarmLayoutMode(width.value))
   const scope = computed(() => JSON.stringify([
     user.userInfo.id || '', route.params.projectId || '', route.query.projectId || '', getProjectCodeFromLocation(), getRequestBaseApi(),
   ]))
-  const storage = computed(() => alarmDashboardStorageKeys(scope.value, isSaaS, mode.value))
+  const storage = computed(() => alarmDashboardStorageKeys(scope.value, isSaaS, mode.value, capabilities.value))
   const storageKey = computed(() => preview.value ? undefined : storage.value.key)
   const legacyStorageKeys = computed(() => preview.value ? [] : storage.value.legacyKeys)
   // 在画布检查组件清单之前补齐新增卡，避免其默认的不匹配清理抹掉个人排版。
   watch([storage, discovery.loading, preview], ([keys, loading, isPreview]) => {
-    if (loading || isPreview) return
+    if (loading || isPreview || !capabilities.value.ready || !capabilities.value.events || !capabilities.value.vision) return
     try {
       if (typeof localStorage === 'undefined') return
       const saved = readDashboardLayout(localStorage, keys.key, keys.legacyKeys)
@@ -52,7 +55,7 @@ export function useAlarmDashboard(width: Ref<number>, preview: Ref<boolean> = re
   const dashboard = computed<DashboardValue>(() => ({
     // 保留原有 34px 网格步长，让已保存的卡片位置和高度不随间距调整明显变化。
     canvas: { backgroundColor: 'transparent', gridLayout: { colNum: 24, rowHeight: 18, marginHorizontal: 16, marginVertical: 16 } },
-    components: alarmDashboardLayout(mode.value).flatMap(([kind, x, y, w, h]) => {
+    components: alarmDashboardLayout(mode.value, capabilities.value).flatMap(([kind, x, y, w, h]) => {
       const type = typeOf(kind)
       const definition = catalog.value.components[type]
       if (!definition) return []
@@ -65,6 +68,7 @@ export function useAlarmDashboard(width: Ref<number>, preview: Ref<boolean> = re
       }]
     }),
   }))
-  return { ...discovery, catalog, dashboard, storageKey, legacyStorageKeys }
+  return { ...discovery, catalog, dashboard, storageKey, legacyStorageKeys,
+    loading: computed(() => !capabilities.value.ready || discovery.loading.value) }
 }
 

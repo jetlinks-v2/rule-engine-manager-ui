@@ -2157,7 +2157,7 @@
   "alarmDashboard.partialFailed": "一部の指標の読み込みに失敗しました",
   "alarmDashboard.seriesFailed": "{names}の読み込みに失敗しました",
   "alarmDashboard.retry": "再試行",
-  "alarmDashboard.loadError": "アラートデータの読み込みに失敗しました。再試行してください。",
+  "alarmDashboard.loadError": "アラートデータの読み込みに失敗しました。",
   "alarmDashboard.catalogError": "警告ダッシュボードコンポーネントの読み込みに失敗しました",
   "alarmDashboard.invalidResponse": "アラート統計が無効なデータを返しました",
   "alarmDashboard.noTrend": "現在の時間帯にはイベントやアラートの記録がありません。",
