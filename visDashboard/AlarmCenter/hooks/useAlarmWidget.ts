@@ -5,7 +5,8 @@ import { getProjectCodeFromLocation } from '@jetlinks-web-core/utils/project-run
 import { getRequestBaseApi } from '@jetlinks-web-core/utils/request-context'
 import { createAlarmDashboardApi } from '../../../api/alarmDashboard'
 import { settingsOf } from '../dashboardConfig'
-import { emptyWidgetData, handlingSourceOf, isHandlingKind, type AlarmDashboardKind, type AlarmWidgetInfo, type AlarmDimension, type AlarmTimeRange } from '../dashboard.types'
+import { emptyWidgetData, handlingSourceOf, isAlarmKindAvailable, isHandlingKind, type AlarmDashboardKind, type AlarmWidgetInfo, type AlarmDimension, type AlarmTimeRange, type AlarmSource } from '../dashboard.types'
+import { useAlarmCapabilities } from './useAlarmCapabilities'
 import { loadAlarmMetrics, loadEventMetrics } from '../services/metrics'
 import { loadTrends } from '../services/trends'
 import { loadStatistics } from '../services/statistics'
@@ -21,6 +22,8 @@ export function useAlarmWidget(kind: AlarmDashboardKind, info: Ref<AlarmWidgetIn
   const loading = ref(false)
   const error = ref(false)
   const active = ref(true)
+  const capabilities = useAlarmCapabilities(isEdit)
+  const available = computed(() => isAlarmKindAvailable(kind, capabilities.value))
   const user = useUserStore()
   const route = useRoute()
   const api = createAlarmDashboardApi()
@@ -41,7 +44,7 @@ export function useAlarmWidget(kind: AlarmDashboardKind, info: Ref<AlarmWidgetIn
     cancel()
     const current = version
     error.value = false
-    if (!active.value || kind === 'QuickStart') { loading.value = false; return }
+    if (!active.value || !available.value || kind === 'QuickStart') { loading.value = false; return }
     if (isEdit.value) {
       data.value = previewData(kind, timeRange.value, dimension.value)
       loading.value = false
@@ -54,8 +57,9 @@ export function useAlarmWidget(kind: AlarmDashboardKind, info: Ref<AlarmWidgetIn
       const result = kind === 'TodayEvents' ? await loadEventMetrics(api, signal)
         : kind === 'IotAlarms' || kind === 'VisionAlarms'
           ? await loadAlarmMetrics(api, kind === 'IotAlarms' ? 'device' : 'aiTaskMediaTarget', signal)
-          : isHandlingKind(kind) ? await loadHandlingStatistics(api, timeRange.value, signal, handlingSourceOf(kind))
-            : kind === 'AlarmTrend' ? await loadTrends(api, timeRange.value, signal)
+          : isHandlingKind(kind) ? await loadHandlingStatistics(api, timeRange.value, signal, handlingSourceOf(kind), capabilities.value.vision)
+            : kind === 'AlarmTrend' ? await loadTrends(api, timeRange.value, signal,
+              (['events', 'iot', 'vision'] as AlarmSource[]).filter(source => source === 'iot' || capabilities.value[source]))
             : await loadStatistics(api, kind === 'IotStatistics' ? 'device' : 'aiTaskMediaTarget', dimension.value, signal)
       if (current === version) data.value = result
     } catch (cause) {
@@ -74,13 +78,14 @@ export function useAlarmWidget(kind: AlarmDashboardKind, info: Ref<AlarmWidgetIn
   }
   watch(() => config.value.timeRange, value => { timeRange.value = value })
   watch(() => config.value.dimension, value => { dimension.value = value })
-  watch([timeRange, dimension, () => config.value.refreshSeconds, isEdit, active, scope], () => {
+  watch([timeRange, dimension, () => config.value.refreshSeconds, isEdit, active, scope,
+    () => capabilities.value.ready, () => capabilities.value.events, () => capabilities.value.vision], () => {
     data.value = emptyWidgetData()
     void refresh()
   }, { immediate: true })
   onActivated(() => { active.value = true })
   onDeactivated(() => { active.value = false; cancel() })
   onScopeDispose(cancel)
-  return { config, timeRange, dimension, data, loading, error, refresh, scope }
+  return { config, timeRange, dimension, data, loading, error, refresh, scope, capabilities, available }
 }
 

@@ -3,8 +3,9 @@ import type { AlarmDashboardApi } from '../../../api/alarmDashboard'
 import type { AlarmSource, AlarmTarget, AlarmTimeRange, AlarmWidgetData } from '../dashboard.types'
 import { rawEventTerms, resolveRange, rowsOf, timeTerms, toTrendPoints } from './query'
 
-/** 三条曲线保持同一窗口和粒度，告警按记录计数，不混入重复触发次数。 */
-export async function loadTrends(api: AlarmDashboardApi, timeRange: AlarmTimeRange, signal: AbortSignal): Promise<AlarmWidgetData> {
+/** 可用来源共用窗口和粒度；告警按记录计数，不混入重复触发次数。 */
+export async function loadTrends(api: AlarmDashboardApi, timeRange: AlarmTimeRange, signal: AbortSignal,
+  sources: readonly AlarmSource[] = ['events', 'iot', 'vision']): Promise<AlarmWidgetData> {
   const range = resolveRange(timeRange)
   const format = range.interval === '1h' ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd'
   const alarm = (target: AlarmTarget) => api.aggregateAlarms(target, {
@@ -25,7 +26,7 @@ export async function loadTrends(api: AlarmDashboardApi, timeRange: AlarmTimeRan
     ['iot', () => alarm('device')],
     ['vision', () => alarm('aiTaskMediaTarget')],
   ]
-  const series = await Promise.all(loaders.map(async ([source, load]) => {
+  const series = await Promise.all(loaders.filter(([source]) => sources.includes(source)).map(async ([source, load]) => {
     try { return { source, points: toTrendPoints(rowsOf(await load()), range) } }
     catch (error) {
       if (signal.aborted) throw error
