@@ -2,6 +2,7 @@ import {useRulePermissionContext, useScenePermissionContext} from '@rule-engine-
 import {EventEmitter, DeviceEmitterKey, ACTION_DATA} from '@rule-engine-manager-ui/views/Scene/Save/util';
 import dataCapabilityProviders from './dataCapabilities'
 import type { AgentCapabilityProviderResource } from '@jetlinks-web-core/layout/components/AiChat/routeCapabilityLoader'
+import { queryAlarmLevelOptions, normalizeAlarmLevelValue } from './api/alarmLevel'
 import { ALARM_ANALYSIS_EXTENSION_KEY } from './agentCapabilities/alarmAnalysis/constants'
 import {
     RULE_EDITOR_FLOWCHART_EXTENSION_KEY,
@@ -65,7 +66,9 @@ export default {
     },
     stores: {},
     utils: {
-        EventEmitter, DeviceEmitterKey, ACTION_DATA
+        EventEmitter, DeviceEmitterKey, ACTION_DATA,
+        // 概览通过公开注册能力读取动态等级，不静态依赖规则模块的安装路径。
+        queryAlarmLevelOptions, normalizeAlarmLevelValue
     },
     homeAgentProviders,
     dataCapabilityProviders,
