@@ -1,4 +1,6 @@
 {
+	"ObjectPresentation.allAlarmRules": "All alarm rules; select rules to focus on",
+	"ObjectPresentation.rulesUnavailable": "Alarm rules are unavailable",
 	"Save.index.551009-0": "Confirm",
 	"Save.index.551009-1": "Cancel",
 	"DeviceAccess.index.551011-12": "Please Select",

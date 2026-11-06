@@ -34,6 +34,17 @@ export default {
   },
   deviceAlarm: {
     typeId: 'device',
+    queries: {
+      alarmSummary: {
+        nodeField: 'alarmCount',
+        icon: 'AlertOutlined',
+        parameters: defineAsyncComponent(() => import('./views/Alarm/Log/components/ObjectAlarmFocus.vue')),
+        format: (value) => ({
+          text: value == null ? '—' : String(value),
+          tone: Number(value) > 0 ? 'error' : 'neutral'
+        })
+      }
+    },
     lineage: true,
     fields: [
       {

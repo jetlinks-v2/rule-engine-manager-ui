@@ -1,4 +1,6 @@
 {
+	"ObjectPresentation.allAlarmRules": "全部告警规则；可选择关注的规则",
+	"ObjectPresentation.rulesUnavailable": "暂时无法读取告警规则",
 	"Save.index.551009-0": "确定",
 	"Save.index.551009-1": "取消",
 	"DeviceAccess.index.551011-12": "请选择",
