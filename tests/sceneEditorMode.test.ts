@@ -4,8 +4,9 @@ import {
   mergeDetailedDraft,
   mergeEditorMode,
   mergeQuickDraft,
-  prepareQuickRuleForDetailedEditing,
+  createClearedDetailedDraft,
   resolveInitialEditorMode,
+  resolveLockedTriggerProviders,
 } from '../views/SceneLinkage/editor/editorMode'
 import { hasUnsupportedLegacyAlarmAction } from '../views/SceneLinkage/sceneRule'
 import {
@@ -43,21 +44,26 @@ test('legacy scene alarm actions prevent a save until the rule is reconfigured',
   }), false)
 })
 
-test('quick rules without filters enter detailed mode with an editable empty condition', () => {
-  const rule = new Proxy({
-    options: { existingOption: true, when: [{ branchName: '默认分支' }] },
-    branches: [{ branchId: 'branch-1', branchName: '默认分支', when: [], then: [{ parallel: false, actions: [] }] }],
-  }, {})
+test('switching to detailed mode starts from a cleared rule tree', () => {
+  const result = createClearedDetailedDraft({ id: 'scene-1', name: '夜间联动', description: '说明' })
 
-  const result = prepareQuickRuleForDetailedEditing(rule)
+  assert.deepEqual(result, {
+    id: 'scene-1',
+    name: '夜间联动',
+    description: '说明',
+    triggerType: '',
+    trigger: {},
+    branches: [],
+    options: { editorMode: 'detail', when: [], summary: '', summaryTitle: '' },
+  })
+})
 
-  assert.equal(result.options.existingOption, true)
-  assert.equal(result.branches[0].executeAnyway, true)
-  assert.equal(result.branches[0].when.length, 1)
-  assert.equal(result.branches[0].when[0].terms.length, 1)
-  assert.equal(result.options.when[0].terms.length, 1)
-  assert.equal(result.options.when[0].executeAnyway, true)
-  assert.equal(rule.branches[0].when.length, 0)
+test('editing keeps the persisted trigger provider while supporting multi leaves', () => {
+  assert.deepEqual(resolveLockedTriggerProviders({ triggerType: 'device', trigger: { type: 'device' } }), ['device'])
+  assert.deepEqual(resolveLockedTriggerProviders({
+    triggerType: 'multi',
+    trigger: { type: 'multi', multi: { triggers: [{ trigger: { type: 'device' } }, { trigger: { type: 'timer' } }] } },
+  }), ['device', 'timer'])
 })
 
 test('detailed saves remove only UI fields while retaining unknown node metadata', () => {

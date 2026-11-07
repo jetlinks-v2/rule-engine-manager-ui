@@ -23,6 +23,7 @@
               type="serial"
               :branchesName="name"
               :parallel="false"
+              :show-action-controls="showActionControls"
               :actions="serialArray.length ? serialArray[0].actions : []"
               @add="(_item) => onAdd(_item, false)"
               @delete="(_key) => onDelete(_key, false)"
@@ -43,6 +44,7 @@
               type="parallel"
               :branchesName="name"
               :parallel="true"
+              :show-action-controls="showActionControls"
               :actions="parallelArray.length ? parallelArray[0].actions : []"
               @add="(_item) => onAdd(_item, true)"
               @delete="(_key) => onDelete(_key, true)"
@@ -89,6 +91,16 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  /** 新建详细模式分支时默认展开串行动作，不改变串并行数据。 */
+  autoExpandSerial: {
+    type: Boolean,
+    default: false,
+  },
+  /** 详细模式显示与快速配置一致的显式编辑、删除操作。 */
+  showActionControls: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["update", "add"]);
@@ -97,6 +109,12 @@ const activeKeys = ref<string[]>(["1"]);
 const parallelArray = ref<BranchesThen[]>([]);
 const serialArray = ref<BranchesThen[]>([]);
 const lock = ref<boolean>(false);
+
+watch(() => props.autoExpandSerial, (shouldExpand) => {
+  if (shouldExpand && !activeKeys.value.includes('1')) {
+    activeKeys.value = [...activeKeys.value, '1'];
+  }
+}, { immediate: true });
 
 watch(
   () => props.thenOptions,
@@ -229,7 +247,8 @@ const onAdd = (actionItem: any, _parallel: boolean) => {
     gap: 16px;
     align-items: center;
     margin-bottom: 16px;
-    font-weight: 800;
+    color: var(--ant-color-text);
+    font-weight: 600;
     font-size: 14px;
     line-height: 32px;
   }
@@ -238,11 +257,34 @@ const onAdd = (actionItem: any, _parallel: boolean) => {
     .actions-list {
       width: 100%;
     }
+
+    :deep(.ant-collapse) {
+      background: transparent;
+      border-color: var(--ant-color-border-secondary);
+      border-radius: var(--radius-jet-sm, 8px);
+    }
+
+    :deep(.ant-collapse-header) {
+      align-items: center;
+      min-height: 48px;
+      color: var(--ant-color-text);
+      font-weight: 600;
+      background: var(--ant-color-fill-quaternary);
+    }
+
+    :deep(.ant-collapse-content) {
+      border-color: var(--ant-color-border-secondary);
+    }
+
+    :deep(.ant-collapse-content-box) {
+      padding: var(--space-4, 16px);
+    }
   }
 
   .panel-tip {
     padding-left: 8px;
-    color: rgba(#000, 0.45);
+    color: var(--ant-color-text-tertiary);
+    font-weight: 400;
   }
 }
 </style>

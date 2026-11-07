@@ -19,6 +19,7 @@
           v-for="item in actions"
           :key="item.value"
           class="action-picker__item"
+          :disabled="item.disabled"
           @click="select(item.value)"
         >
           <span class="action-picker__icon"><AIcon :type="item.icon" /></span>
@@ -31,24 +32,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-type ActionType = 'delay' | 'device' | 'sceneNotify'
+type ActionType = string
+export type ActionPickerItem = {
+  value: string
+  provider?: string
+  icon: string
+  label: string
+  description?: string
+  disabled?: boolean
+}
 
-const props = defineProps<{
-  open: boolean
-  supportedActions: string[]
-}>()
+const props = defineProps({
+  open: { type: Boolean, default: false },
+  supportedActions: { type: Array as PropType<string[]>, default: () => [] },
+  // 详细模式可传入后端支持的完整动作集合；快速模式继续使用固定的三项快捷动作。
+  actions: { type: Array as PropType<ActionPickerItem[]>, default: () => [] },
+})
 const emit = defineEmits<{
   cancel: []
   selectDelay: []
   selectDevice: []
   selectNotify: []
+  select: [type: string]
 }>()
 
 const { t } = useI18n()
-const actions = computed(() => [
+const defaultActions = computed<ActionPickerItem[]>(() => [
   {
     value: 'delay' as const,
     provider: 'delay',
@@ -70,9 +82,13 @@ const actions = computed(() => [
     label: t('IotSceneLinkage.action.notify'),
     description: t('IotSceneLinkage.actionDesc.notify'),
   },
-].filter(item => props.supportedActions.includes(item.provider)))
+].filter(item => props.supportedActions.includes(item.provider || item.value)))
+const actions = computed(() => props.actions.length ? props.actions : defaultActions.value)
 
 function select(type: ActionType) {
+  const item = actions.value.find(action => action.value === type)
+  if (item?.disabled) return
+  emit('select', type)
   if (type === 'delay') emit('selectDelay')
   else if (type === 'device') emit('selectDevice')
   else emit('selectNotify')
@@ -163,6 +179,8 @@ function select(type: ActionType) {
 .action-picker__item:hover .action-picker__arrow {
 	color: #1e72f0;
 }
+
+.action-picker__item:disabled { cursor: not-allowed; opacity: .45; }
 
 .action-picker__content {
 	display: grid;

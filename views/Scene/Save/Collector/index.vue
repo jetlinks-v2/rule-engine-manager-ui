@@ -4,10 +4,10 @@
         :rules='rules'
         :name='["trigger", "collector"]'
         v-if="formData.triggerType==='collector'"
-        :label="$t('Device.index.372524-0')"
+        :label="showTitle ? $t('Device.index.372524-0') : undefined"
     >
       <AddButton
-          style='width: 100%'
+          :style="{ width: '100%' }"
           @click='visible = true'
       >
         <Title :options='formData.options.trigger'/>
@@ -15,7 +15,7 @@
       <AddModel v-if='visible && formData.triggerType==="collector"' @cancel='visible = false' @save='save'
                 :value='formData.trigger.collector' :options='formData.options.trigger'/>
     </a-form-item>
-    <Terms ref="termsRef"/>
+    <Terms v-if="showTerms" ref="termsRef"/>
   </div>
 </template>
 
@@ -29,12 +29,28 @@ import Terms from "../components/Terms";
 import {useSceneStore} from "@rule-engine-manager-ui/store/scene";
 import {storeToRefs} from "pinia";
 import { useI18n } from 'vue-i18n'
+import type { Ref } from 'vue'
 
 const sceneStore = useSceneStore()
-const { data: formData } = storeToRefs(sceneStore)
+// 采集器是后续扩展的触发器，原版 Store 类型未包含它；本组件仍沿用原有规则树字段。
+const { data: storeData } = storeToRefs(sceneStore)
+const formData = storeData as unknown as Ref<Record<string, any>>
 const { t: $t } = useI18n()
 const visible = ref(false)
 const termsRef = ref()
+
+defineProps({
+  /** 详细模式使用同一棵 Terms 树，但由页面的执行动作区统一承载。 */
+  showTerms: {
+    type: Boolean,
+    default: true,
+  },
+  /** 详细模式已经提供页面级触发规则标题，不重复展示原版采集器标题。 */
+  showTitle: {
+    type: Boolean,
+    default: true,
+  },
+})
 
 const rules = [{
   validator(_: any, v: any) {
@@ -63,7 +79,9 @@ const save = (collector: TriggerCollector, options: Record<string, any>) => {
 }
 
 defineExpose({
-  changePaneIndex: (index: number) => termsRef.value?.changePaneIndex(index)
+  changePaneIndex: (index: number) => termsRef.value?.changePaneIndex(index),
+  /** 详细模式选择采集器触发后直接打开原有配置弹窗。 */
+  openConfig: () => { visible.value = true },
 })
 
 </script>

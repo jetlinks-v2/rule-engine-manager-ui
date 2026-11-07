@@ -6,6 +6,7 @@ export const useMultiSceneTrigger = (
   supportedTriggers: Ref<string[]>,
   onActiveTriggerChange: () => void,
   isEditing: () => boolean,
+  clearTrigger: () => void,
 ) => {
   const activeMultiTriggerIndex = ref(0)
   const addingMultiTrigger = ref(false)
@@ -51,7 +52,12 @@ export const useMultiSceneTrigger = (
   const removeMultiTrigger = (index: number) => {
     syncActiveMultiTrigger()
     const triggers = form.multiTriggers || []
-    if (triggers.length <= 1) return
+    if (triggers.length <= 1) {
+      // 编辑态也允许删除最后一条触发规则；重新选择时由页面层 Provider 锁限制类型。
+      clearTrigger()
+      activeMultiTriggerIndex.value = 0
+      return
+    }
     const remaining = triggers.filter((_, triggerIndex) => triggerIndex !== index)
     if (remaining.length === 1) {
       applyMultiTriggerForm(form, remaining[0])

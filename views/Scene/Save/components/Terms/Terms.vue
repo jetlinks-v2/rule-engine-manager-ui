@@ -1,6 +1,6 @@
 <template>
     <div class="actions-terms">
-        <TitleComponent :data="$t('Terms.Terms.9093429-0')" style="font-size: 14px">
+        <TitleComponent v-if="showTitle" :data="$t('Terms.Terms.9093429-0')" style="font-size: 14px">
         </TitleComponent>
         <!--    <template v-if='open'>-->
         <div>
@@ -21,19 +21,9 @@
                             :showClose="group.length > 1"
                             @close="() => addGroup(b.id, 'close')"
                         >
-                            {{ b.branchName || $t('Terms.Terms.9093429-1', [i + 1]) }}
+                            {{ branchTabLabel(b, i) }}
                         </TermsTabPane>
                     </template>
-                    <div class="filterConditionSwitch">
-                        <span>{{ $t('Terms.Terms.9093429-2') }}</span>
-                        <a-switch
-                            v-model:checked="b.openFilter"
-                            @change="(e) => change(e, b, i)"
-                            :checkedChildren="$t('Terms.Terms.9093429-3')"
-                            :unCheckedChildren="$t('Terms.Terms.9093429-4')"
-                            style="margin-left: 4px"
-                        />
-                    </div>
                     <template v-for="(item, index) in data.branches">
                         <template
                             v-if="index >= b.start && index < b.start + b.len"
@@ -47,12 +37,18 @@
                                 :groupIndex="i + 1"
                                 :key="item.key"
                                 :showGroupDelete="group.length !== 1"
+                                :filter-enabled="b.openFilter"
+                                :show-filter-toggle="showFilterToggle"
+                                :show-action-controls="showActionControls"
+                                :detail-card-layout="detailCardLayout"
+                                :auto-expand-serial="autoExpandBranchId === item.key"
                                 @delete="branchesDelete(index)"
                                 @deleteAll="branchesDeleteAll"
                                 @add="branchesAdd"
+                                @update-filter="(value) => { b.openFilter = value; change(value, b, i) }"
                             />
                             <div
-                                class="actions-terms-warp"
+                                :class="['actions-terms-warp', 'actions-terms-warp--otherwise', { 'actions-terms-warp--detail': detailCardLayout }]"
                                 v-if="b.len === 1 || (index === (b.start + b.len - 1) && group.length >= 1 && item.when.length > 0)"
                                 :style="{
                                     marginTop:
@@ -60,20 +56,23 @@
                                 }"
                                 :key="index"
                             >
-                                <div
-                                    class="actions-terms-title"
-                                    style="padding: 0; margin-bottom: 24px"
-                                >
+                                <template v-if="detailCardLayout">
+                                    <div class="detailed-scene-branch-card__header">
+                                        <span class="detailed-scene-branch-card__icon detailed-scene-branch-card__icon--otherwise"><AIcon type="ApartmentOutlined" /></span>
+                                        <div>
+                                            <strong>{{ $t('IotSceneLinkage.detail.otherwiseTitle') }}</strong>
+                                            <small>{{ $t('IotSceneLinkage.detail.otherwiseDescription') }}</small>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div v-else class="actions-terms-title">
                                     {{ $t('Terms.Terms.9093429-5') }}
                                 </div>
                                 <div class="actions-terms-options no-when">
-                                    <AIcon
-                                        type="PlusOutlined"
-                                        class="when-add-button"
-                                        @click="
-                                            () => addBranches(b.start + b.len)
-                                        "
-                                    />
+                                    <a-button v-if="detailCardLayout" type="text" class="detailed-scene-branch-card__add-condition" @click="() => addBranches(b.start + b.len)">
+                                        <AIcon type="PlusOutlined" />{{ $t('Terms.Branches.9093534-4') }}
+                                    </a-button>
+                                    <AIcon v-else type="PlusOutlined" class="when-add-button" @click="() => addBranches(b.start + b.len)" />
                                 </div>
                             </div>
                         </template>
@@ -127,6 +126,28 @@ import { useI18n } from 'vue-i18n';
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
+const props = defineProps({
+    /** 详细模式沿用原规则树，但使用快速配置的显式动作操作入口。 */
+    showActionControls: {
+        type: Boolean,
+        default: false,
+    },
+    /** 详细模式已有页面级“执行动作”分区标题，因此不重复渲染原版树的内部标题。 */
+    showTitle: {
+        type: Boolean,
+        default: true,
+    },
+    /** 详细模式通过条件节点直接管理分支，不展示会清空条件组的旧版总开关。 */
+    showFilterToggle: {
+        type: Boolean,
+        default: true,
+    },
+    /** 详细模式仅替换规则树的视觉层级，不改变原版分支和动作的数据逻辑。 */
+    detailCardLayout: {
+        type: Boolean,
+        default: false,
+    },
+})
 const columnOptions = ref<any>([]);
 const columnOptionsMap = ref<any>(new Map());
 const group = ref<Array<{ id: string; len: number }>>([]);
@@ -134,6 +155,16 @@ const activeKey = ref('');
 const editConditionVisible = ref(false);
 const conditionName = ref<any>();
 const forceRenderStatus = ref(false)
+const autoExpandBranchId = ref<number | string>()
+
+/** 详细模式把原版默认“条件”名称仅在展示层改为“分支”，不回写历史规则。 */
+function branchTabLabel(branch: { branchName?: string }, index: number) {
+    const defaultConditionName = $t('Terms.Terms.9093429-8')
+    if (props.detailCardLayout && (!branch.branchName || branch.branchName === defaultConditionName)) {
+        return $t('IotSceneLinkage.detail.branchName', { index: index + 1 })
+    }
+    return branch.branchName || $t('Terms.Terms.9093429-1', [index + 1])
+}
 
 provide(ContextKey, columnOptions);
 provide(ColumnOptionsMapKey, columnOptionsMap);
@@ -212,6 +243,7 @@ const queryColumn = (dataModel: FormModelType) => {
     });
 };
 
+/** 新增否则分支沿用原版空过滤状态；用户主动点击入口后才创建条件。 */
 const addBranches = (len: number) => {
     const key = randomNumber();
     const branchesItem = {
@@ -234,6 +266,7 @@ const addBranches = (len: number) => {
         terms: [],
         key,
     });
+    autoExpandBranchId.value = key
 };
 
 const branchesDelete = (index: any) => {
@@ -504,7 +537,9 @@ watch(() => data.value.branches, () => {
           branchId: item.branchId,
           // branchName: item.branchName || whenItem?.branchName || `条件 ${_branchesIndex + 1}`,
           branchName:
-            item.branchName || whenItem?.branchName || $t('Terms.Terms.9093429-8'),
+            item.branchName || whenItem?.branchName || (props.detailCardLayout
+              ? $t('IotSceneLinkage.detail.branchName', { index: _branchesIndex + 1 })
+              : $t('Terms.Terms.9093429-8')),
           groupIndex: _branchesIndex,
           openFilter: !!item.when.length,
         };
@@ -592,13 +627,5 @@ defineExpose({
         }
     }
 }
-.filterConditionSwitch {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    margin-bottom: 16px;
-    font-weight: 800;
-    font-size: 14px;
-    line-height: 32px;
-}
+
 </style>

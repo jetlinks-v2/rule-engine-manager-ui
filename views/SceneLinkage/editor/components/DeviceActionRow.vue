@@ -249,7 +249,7 @@ watch(() => props.autoOpen, value => {
 </script>
 
 <style scoped>
-.device-action-row { overflow: hidden; margin-bottom: 10px; border: 1px solid var(--jet-theme-border-secondary); border-radius: 8px; background: var(--ant-color-bg-container); }.device-action-row > header { display: flex; gap: 10px; align-items: center; min-height: 48px; padding: 0 16px; background: var(--ant-color-fill-quaternary); }.device-action-row > header small { color: var(--ant-color-text-tertiary); }.device-action-row__actions { display: inline-flex; gap: 2px; margin-left: auto; }.device-action-row__description { padding: 14px 16px; overflow-wrap: anywhere; }
+.device-action-row { overflow: hidden; margin-bottom: 10px; border: 1px solid var(--jet-theme-border-secondary); border-radius: 8px; background: var(--ant-color-bg-container); }.device-action-row > header { display: flex; gap: 10px; align-items: center; min-height: 48px; padding: 0 16px; background: #fafbfc; }.device-action-row > header small { color: var(--ant-color-text-tertiary); }.device-action-row__actions { display: inline-flex; gap: 2px; margin-left: auto; }.device-action-row__description { padding: 14px 16px; overflow-wrap: anywhere; }
 .device-action-row__index, .device-action-row__icon { display: grid; flex: none; place-items: center; width: 28px; height: 28px; border-radius: 6px; }
 .device-action-row__index { width: 22px; height: 22px; color: var(--ant-color-primary); background: var(--ant-color-fill-secondary); border-radius: 50%; font-size: 12px; font-weight: 600; }
 .device-action-row__icon { color: #1e5eff; background: #e8f0ff; }

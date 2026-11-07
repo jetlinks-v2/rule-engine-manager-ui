@@ -53,7 +53,7 @@ import { computed, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { getProduct } from '../../../../api/scene-linkage'
-import type { SceneConditionForm } from '../../utils'
+import { formatSceneTimeRange, type SceneConditionForm } from '../../utils'
 import type { IotAlarmTargetSelectOption } from '../alarm/IotAlarmTargetSelect.vue'
 import AlarmStateConditionModal from './AlarmStateConditionModal.vue'
 import DeviceScopeModal, { type DeviceScope } from './DeviceScopeModal.vue'
@@ -90,7 +90,7 @@ const deviceConditionSummary = computed(() => {
 })
 const conditionSummary = computed(() => {
   if (props.condition.type === 'deviceProperty') return deviceConditionSummary.value
-  if (props.condition.type === 'timeRange') return props.condition.ranges.map(range => `${range.start}–${range.end}`).join('、')
+  if (props.condition.type === 'timeRange') return props.condition.ranges.map(range => formatSceneTimeRange(t, range)).join('、')
   const alarm = props.condition.alarm
   return [alarm.options?.alarmConfigName, alarm.state === 'normal' ? t('IotSceneLinkage.alarmState.normal') : t('IotSceneLinkage.alarmState.warning')].filter(Boolean).join(' · ')
 })
@@ -193,7 +193,7 @@ watch(() => props.autoOpen, value => {
 
 <style scoped>
 .scene-condition-row-wrapper { margin-bottom: var(--space-3, 12px); }
-.scene-condition-row { overflow: hidden; width: 100%; border: 1px solid #eceff3; border-radius: var(--radius-jet-sm, 10px); background: var(--jet-theme-bg-container); }.scene-condition-row > header { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 48px; padding: 0 var(--space-4, 16px); background: var(--ant-color-fill-quaternary); }.scene-condition-row > header small { color: var(--ant-color-text-tertiary); }.scene-condition-row__actions { display: inline-flex; gap: 2px; margin-left: auto; }.scene-condition-row__description { padding: var(--space-4, 16px); overflow-wrap: anywhere; }
+.scene-condition-row { overflow: hidden; width: 100%; border: 1px solid #eceff3; border-radius: var(--radius-jet-sm, 10px); background: var(--jet-theme-bg-container); }.scene-condition-row > header { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 48px; padding: 0 var(--space-4, 16px); background: #fafbfc; }.scene-condition-row > header small { color: var(--ant-color-text-tertiary); }.scene-condition-row__actions { display: inline-flex; gap: 2px; margin-left: auto; }.scene-condition-row__description { padding: var(--space-4, 16px); overflow-wrap: anywhere; }
 .scene-condition-row--invalid { border-color: var(--ant-color-error); box-shadow: 0 0 0 2px rgba(245, 34, 45, .08); }
 .scene-condition-row__error { margin: 6px 0 0; color: #f5222d; font-size: 12px; line-height: 18px; }
 .scene-condition-row__index, .scene-condition-row__icon { display: grid; flex: none; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-jet-sm, 10px); }

@@ -1,10 +1,28 @@
 <template>
   <div :class='WarpClass'>
-    <div class='actions-terms-title'>
+    <template v-if='detailCardLayout'>
+      <div class='detailed-scene-branch-card__header'>
+        <span :class="['detailed-scene-branch-card__icon', { 'detailed-scene-branch-card__icon--otherwise': !isFirst }]">
+          <AIcon :type="isFirst ? 'FilterOutlined' : 'ApartmentOutlined'" />
+        </span>
+        <div>
+          <strong>{{ $t(isFirst ? 'IotSceneLinkage.detail.conditionTitle' : 'IotSceneLinkage.detail.otherwiseTitle') }}</strong>
+          <small>{{ $t(isFirst ? 'IotSceneLinkage.detail.conditionDescription' : 'IotSceneLinkage.detail.otherwiseDescription') }}</small>
+        </div>
+      </div>
+    </template>
+    <div v-else class='actions-terms-title'>
       {{ isFirst ? $t('Terms.Branches.9093534-0') : $t('Terms.Branches.9093534-1') }}
+      <a-switch
+        v-if='isFirst && showFilterToggle'
+        :checked='filterEnabled'
+        :checkedChildren="$t('Terms.Terms.9093429-3')"
+        :unCheckedChildren="$t('Terms.Terms.9093429-4')"
+        @change="(value) => emit('update-filter', value)"
+      />
     </div>
     <div :class='optionsClass'>
-        <ConfirmModal :title="$t('Terms.Branches.9093534-2')" v-if='!isFirst' :onConfirm="onDelete" className="terms-params-delete danger show">
+        <ConfirmModal :title="$t('Terms.Branches.9093534-2')" v-if='!isFirst' :onConfirm="onDelete" className="terms-params-delete danger show detailed-scene-branch-delete">
           <AIcon type='DeleteOutlined' />
         </ConfirmModal>
       <div
@@ -12,13 +30,13 @@
         @mouseover='mouseover'
         @mouseout='mouseout'
       >
-        <ConfirmModal :title="$t('Terms.Branches.9093534-3')" :show='showDelete && whenData.length' :onConfirm="onDeleteAll" className="terms-params-delete">
+        <ConfirmModal :title="$t('Terms.Branches.9093534-3')" :show='showDelete && whenData.length' :onConfirm="onDeleteAll" className="terms-params-delete detailed-scene-filter-delete">
           <AIcon type='CloseOutlined' />
         </ConfirmModal>
         <div class='actions-terms-list-content'>
           <template v-if='showWhen'>
             <j-scrollbar>
-              <div style="display: flex; padding-top: 10px;overflow: auto">
+              <div class="actions-terms-list-content__items">
                 <WhenItem
                   v-for='(item, index) in whenData'
                   :key='item.key'
@@ -34,7 +52,7 @@
               </div>
             </j-scrollbar>
           </template>
-          <div v-else style="display: flex; padding-top: 10px;">
+          <div v-else class="actions-terms-list-content__items">
             <span class='when-add' @click='addWhen' :style='{ padding: isFirst ? "16px 0" : 0 }'>
               <AIcon type='PlusCircleOutlined' style='padding: 4px' />
               {{ $t('Terms.Branches.9093534-4') }}
@@ -43,13 +61,31 @@
         </div>
       </div>
       <div class='actions-branches'>
-        <a-form-item
-          :name='["branches", name, "then"]'
-          :rules='rules'
-        >
+        <section v-if='detailCardLayout' class='detailed-scene-action-card'>
+          <div class='detailed-scene-action-card__header'>
+            <span class='detailed-scene-action-card__icon'><AIcon type='PlayCircleOutlined' /></span>
+            <div>
+              <strong>{{ $t('IotSceneLinkage.detail.executeActionTitle') }}</strong>
+              <small>{{ $t('IotSceneLinkage.detail.executeActionDescription') }}</small>
+            </div>
+          </div>
+          <a-form-item :name='["branches", name, "then"]' :rules='rules'>
+            <Action
+              :name='name'
+              :openShakeLimit="true"
+              :auto-expand-serial="autoExpandSerial"
+              :show-action-controls="showActionControls"
+              :thenOptions='FormModel.branches[name]?.then'
+              :groupIndex="groupIndex"
+            />
+          </a-form-item>
+        </section>
+        <a-form-item v-else :name='["branches", name, "then"]' :rules='rules'>
           <Action
             :name='name'
             :openShakeLimit="true"
+            :auto-expand-serial="autoExpandSerial"
+            :show-action-controls="showActionControls"
             :thenOptions='FormModel.branches[name]?.then'
             :groupIndex="groupIndex"
           />
@@ -110,10 +146,33 @@ const props = defineProps({
   showGroupDelete: {
     type: Boolean,
     default: false
+  },
+  filterEnabled: {
+    type: Boolean,
+    default: false
+  },
+  showFilterToggle: {
+    type: Boolean,
+    default: true,
+  },
+  /** 仅详细模式显示显式动作操作，避免影响原版编辑器。 */
+  showActionControls: {
+    type: Boolean,
+    default: false
+  },
+  /** 详细模式仅切换为卡片式视觉承载，原版规则树及其操作仍由当前组件维护。 */
+  detailCardLayout: {
+    type: Boolean,
+    default: false,
+  },
+  /** 由详细模式新建分支触发，仅控制首屏折叠面板的展示状态。 */
+  autoExpandSerial: {
+    type: Boolean,
+    default: false,
   }
 })
 
-const emit = defineEmits(['deleteGroup', 'delete'])
+const emit = defineEmits(['deleteGroup', 'delete', 'update-filter'])
 
 provide(ACTION_DATA, {
   branchIndex: props.name
@@ -134,7 +193,8 @@ const WarpClass = computed(() => {
   return {
     'actions-terms-warp': true,
     'first-children': props.isFirst,
-    'terms-items': (FormModel.value.branches?.length || 0) > 0
+    'terms-items': (FormModel.value.branches?.length || 0) > 0,
+    'actions-terms-warp--detail': props.detailCardLayout,
   }
 })
 
@@ -224,9 +284,76 @@ const deleteGroup = () => {
 </script>
 
 <style scoped lang='less'>
+.actions-terms-list {
+  min-height: 52px;
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  background: var(--ant-color-fill-quaternary);
+  border: 1px dashed var(--ant-color-border);
+  border-radius: var(--radius-jet-sm, 8px);
+}
+
+.actions-branches {
+  padding-top: var(--space-3, 12px);
+}
+
 .when-add {
   font-size: 14px;
-  color: #2F54EB;
+  color: var(--ant-color-primary);
   cursor: pointer;
+}
+
+.detailed-scene-branch-card__header,
+.detailed-scene-action-card__header {
+  display: flex;
+  gap: var(--space-3, 12px);
+  align-items: flex-start;
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  background: #fafbfc;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.detailed-scene-action-card {
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--radius-jet-sm, 6px);
+}
+
+.detailed-scene-branch-card__icon,
+.detailed-scene-action-card__icon {
+  display: grid;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  color: var(--ant-color-primary);
+  background: var(--ant-color-primary-bg);
+  border-radius: var(--radius-jet-sm, 6px);
+}
+
+.detailed-scene-branch-card__icon--otherwise {
+  color: var(--ant-color-primary);
+  background: var(--ant-color-primary-bg);
+}
+
+.detailed-scene-branch-card__header > div,
+.detailed-scene-action-card__header > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.detailed-scene-branch-card__header strong,
+.detailed-scene-action-card__header strong {
+  color: var(--ant-color-text);
+  font-size: .875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.detailed-scene-branch-card__header small,
+.detailed-scene-action-card__header small {
+  color: var(--ant-color-text-tertiary);
+  font-size: .75rem;
+  line-height: 1.125rem;
 }
 </style>

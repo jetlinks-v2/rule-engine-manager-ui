@@ -6,6 +6,8 @@
 			:rule="canonicalDraft"
 			:supported-triggers="supportedTriggers"
 			:trigger-providers="triggerProviders"
+			:locked-trigger-providers="lockedTriggerProviders"
+			:locked-trigger-root="lockedTriggerRoot"
 			:saving="saving"
 			:save-permission="savePermission"
 			@cancel="menuStore.jumpPage(sceneRouteKey)"
@@ -15,7 +17,9 @@
 		<main v-else class="scene-editor">
 			<PageHeader
 				show-back
-					:title="route.params.id ? $t('IotSceneLinkage.title.editRule') : $t('IotSceneLinkage.title.addRule')"
+					class="scene-editor__page-header"
+					:title="$t('IotSceneLinkage.action.backToSceneList')"
+					@back="menuStore.jumpPage(sceneRouteKey)"
 			>
 				<template #actions>
 					<div class="scene-editor__header-actions">
@@ -28,12 +32,16 @@
 			</PageHeader>
 			<div class="scene-editor__workspace">
 				<aside class="scene-editor__sidebar">
-					<section class="scene-editor__sidebar-section">
-						<label class="scene-editor__sidebar-label">{{ $t('IotSceneLinkage.form.sceneName') }}</label>
+					<section class="scene-editor__sidebar-section scene-editor__scene-meta">
+						<label class="scene-editor__sidebar-label"><span class="scene-editor__required">*</span>{{ $t('IotSceneLinkage.form.sceneName') }}</label>
 						<a-input v-model:value="form.name"
 						         :class="['scene-editor__name', { 'scene-editor__invalid': hasError('name') }]"
 						         :placeholder="$t('IotSceneLinkage.placeholder.editorName')"/>
 						<span v-if="hasError('name')" class="scene-editor__name-error">{{ errorMessage('name') }}</span>
+						<div class="scene-editor__scene-meta-description">
+							<label class="scene-editor__sidebar-label">{{ $t('IotSceneLinkage.form.description') }}</label>
+							<a-textarea v-model:value="form.description" :auto-size="{ minRows: 2, maxRows: 3 }" :placeholder="$t('IotSceneLinkage.placeholder.description')"/>
+						</div>
 					</section>
 					<section v-if="isMulti || form.triggerKind !== 'state'" class="scene-editor__sidebar-section scene-editor__debounce-panel">
 						<div class="scene-editor__sidebar-title">
@@ -61,16 +69,15 @@
 					</section>
 				</aside>
 				<div class="scene-editor__content">
-					<section class="scene-editor__rule-preview">
-						<div class="scene-editor__rule-preview-title"><AIcon type="EyeOutlined" />{{ $t('IotSceneLinkage.title.rulePreview') }}</div>
+					<RulePreviewCard>
 						<SceneRuleSummary :form="form" :users="notifyUsers" @change="form.summary = $event" @title-change="form.summaryTitle = $event"/>
-					</section>
+					</RulePreviewCard>
 			<section :class="['scene-editor__section scene-editor__rule-group scene-editor__rule-group--trigger', { 'scene-editor__multi-trigger': isMulti }]">
 				<header class="scene-editor__rule-group-header"><span class="scene-editor__rule-group-icon"><AIcon type="ThunderboltOutlined"/></span><div><h3>{{ $t('IotSceneLinkage.editor.triggerSectionTitle') }}</h3><p>{{ $t('IotSceneLinkage.editor.triggerGroupDescription') }}</p></div></header>
 				<div class="scene-editor__rule-group-body">
-					<template v-if="isMulti"><MultiTriggerCard v-for="(item, index) in form.multiTriggers" :key="item.clientId" :trigger="item" :index="index" :removable="form.multiTriggers.length > 1" :auto-open="pendingMultiTriggerClientId === item.clientId" @opened="pendingMultiTriggerClientId = undefined" @cancel-new="removeMultiTrigger(index)" @remove="removeMultiTrigger(index)"/></template>
+					<template v-if="isMulti"><MultiTriggerCard v-for="(item, index) in form.multiTriggers" :key="item.clientId" :trigger="item" :index="index" :removable="isEditing || form.multiTriggers.length > 1" :auto-open="pendingMultiTriggerClientId === item.clientId" @opened="pendingMultiTriggerClientId = undefined" @cancel-new="removeMultiTrigger(index)" @remove="removeMultiTrigger(index)"/></template>
 					<article v-else-if="hasTrigger" :class="['scene-editor__rule-card scene-editor__rule-card--trigger', { 'scene-editor__invalid': hasError('trigger') }]">
-						<header><span class="scene-editor__trigger-icon" :style="{ color: form.triggerKind === 'ai-event' ? '#1E5EFF' : triggerIcon.color, background: form.triggerKind === 'ai-event' ? '#E8F0FF' : triggerIcon.background }"><svg v-if="triggerIcon.path" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path :d="triggerIcon.path"/></svg><AIcon v-else :type="form.triggerKind === 'ai-event' ? 'RadarChartOutlined' : triggerIcon.type"/></span><strong>{{ triggerText }}</strong><small>{{ $t('IotSceneLinkage.editor.conditionNumber', { index: 1 }) }}</small><span class="scene-editor__rule-card-actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button v-if="isDevice || form.triggerKind !== 'manual'" type="text" @click="isDevice ? openScope() : openTriggerEditor()"><AIcon type="EditOutlined"/></a-button></a-tooltip><a-button v-if="!isEditing && form.triggerKind !== 'state' && !(form.triggerKind === 'repeat' && form.repeatMode === 'custom')" type="text" danger @click="clearTrigger"><AIcon type="DeleteOutlined"/></a-button></span></header>
+						<header><span class="scene-editor__trigger-icon" :style="{ color: form.triggerKind === 'ai-event' ? '#1E5EFF' : triggerIcon.color, background: form.triggerKind === 'ai-event' ? '#E8F0FF' : triggerIcon.background }"><svg v-if="triggerIcon.path" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path :d="triggerIcon.path"/></svg><AIcon v-else :type="form.triggerKind === 'ai-event' ? 'RadarChartOutlined' : triggerIcon.type"/></span><strong>{{ triggerText }}</strong><small>{{ $t('IotSceneLinkage.editor.conditionNumber', { index: 1 }) }}</small><span class="scene-editor__rule-card-actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button v-if="isDevice || form.triggerKind !== 'manual'" type="text" @click="isDevice ? openScope() : openTriggerEditor()"><AIcon type="EditOutlined"/></a-button></a-tooltip><a-button type="text" danger @click="clearTrigger"><AIcon type="DeleteOutlined"/></a-button></span></header>
 						<div class="scene-editor__rule-card-description">{{ isDevice ? deviceTriggerSummary : triggerConfigurationSummary }}</div>
 					</article>
 					<a-tooltip v-if="showMultiTriggerControl" :title="multiTriggerDisabledReason ? $t(multiTriggerDisabledReason) : undefined"><span class="scene-editor__multi-trigger-add"><a-button block class="scene-editor__add" :disabled="!canAddMultiTrigger" @click="addMultiTrigger"><AIcon type="PlusOutlined"/>{{ $t('IotSceneLinkage.editor.addAnotherTrigger') }}</a-button></span></a-tooltip>
@@ -134,6 +141,9 @@
 			</section>
 				</div>
 			</div>
+		</main>
+		<!-- 内容面板使用 backdrop-filter，会改变 fixed 子元素的定位参照；操作栏挂到 body 才能始终相对视口固定。 -->
+		<Teleport to="body">
 			<footer class="scene-editor__footer">
 				<a-button @click="menuStore.jumpPage(sceneRouteKey)">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
 				<j-permission-button type="primary" :hasPermission="savePermission" :loading="saving" @click="save">{{
@@ -141,7 +151,7 @@
 					}}
 				</j-permission-button>
 			</footer>
-		</main>
+		</Teleport>
 		<TriggerPickerModal :open="triggerPickerVisible" :options="availableTriggerOptions" @cancel="cancelTriggerPicker"
 		                    @select="selectTriggerFromPicker"/>
 		<ActionPickerModal
@@ -276,9 +286,9 @@ import { createSceneLinkage, getProduct, getSceneDetail, queryCurrentSceneNotify
 import { canReceiveProfileBackedNotification, mergeNotifyUsersById } from '../../../utils/notifyUser'
 import { applyMultiTriggerForm, buildRequest, defaultForm, formatSceneDuration, MULTI_TRIGGER_PROVIDERS, normalizeResult, toForm, type SceneConditionForm, type SceneEditorMode, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTimeRange, type SceneTriggerKind } from '../utils'
 import DetailedSceneEditor from './detail/DetailedSceneEditor.vue'
-import { mergeDetailedDraft, mergeQuickDraft, prepareQuickRuleForDetailedEditing, resolveInitialEditorMode, type SceneRuleRecord } from './editorMode'
+import { createClearedDetailedDraft, mergeDetailedDraft, mergeQuickDraft, resolveInitialEditorMode, resolveLockedTriggerProviders, type SceneRuleRecord } from './editorMode'
 import { getSceneCompatibility } from '../sceneCompatibility'
-import { hasUnsupportedLegacyAlarmAction } from '../sceneRule'
+import { hasUnsupportedLegacyAction, hasUnsupportedLegacyAlarmAction } from '../sceneRule'
 import ActionPickerModal from './components/ActionPickerModal.vue'
 import ConditionPickerModal from './components/ConditionPickerModal.vue'
 import DeviceActionRow from './components/DeviceActionRow.vue'
@@ -289,6 +299,7 @@ import SceneConditionRow from './components/SceneConditionRow.vue'
 import AlarmStateConditionModal from './components/AlarmStateConditionModal.vue'
 import AiEventTriggerRow from './components/AiEventTriggerRow.vue'
 import NotifyActionRow from './components/NotifyActionRow.vue'
+import RulePreviewCard from './components/RulePreviewCard.vue'
 import SceneRuleSummary from './components/SceneRuleSummary.vue'
 import EffectivePeriodSelect from './components/EffectivePeriodSelect.vue'
 import ThingModelSelect from './components/ThingModelSelect.vue'
@@ -307,7 +318,14 @@ const notifyUsersTotal = ref(0)
 const sceneRoutePermissionKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, ''))
 const savePermission = computed(() => `${sceneRoutePermissionKey.value}:${route.params.id ? 'update' : 'add'}`)
 // 新编辑路由按当前菜单分别使用 SaaS 的 add/update 与私有化菜单的 add/update 动作权限。
-const route = useRoute(); const { t } = useI18n(); const permissionKey = useScenePermission(); const menuStore = useMenuStore(); const sceneRouteKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, '')); const form = reactive<SceneLinkageForm>(defaultForm()); const properties = ref<any[]>([]); const events = ref<any[]>([]); const saving = ref(false); const triggerPickerVisible = ref(false); const actionPickerVisible = ref(false); const scopeVisible = ref(false); const conditionVisible = ref(false); const delayEditorVisible = ref(false); const delayEditingIndex = ref<number>(); const delayCreating = ref(false); const delayDraft = reactive({ time: 1, unit: 'seconds' }); const autoOpenActionIndex = ref<number>(); const autoOpenConditionIndex = ref<number>(); const notifyMethods = ref<SceneNotifyMethod[]>([]); const notifyUsers = ref<SceneNotifyUser[]>([]); const notifyMethodsLoading = ref(false); const notifyUsersLoading = ref(false); const supportedTriggers = ref<string[]>([]); const triggerProviders = ref<SceneProviderInfo[]>([]); const supportedActions = ref<string[]>([]); const validation = reactive({ field: '', message: '' }); const loadingScene = ref(Boolean(route.params.id)); const editorMode = ref<SceneEditorMode>('quick'); const originalSnapshot = ref<SceneRuleRecord>({}); const quickProjectionBase = ref<SceneRuleRecord>({}); const canonicalDraft = ref<SceneRuleRecord>({}); const hasDetailedSession = ref(false); const quickResetFromDetailed = ref(false); const legacyAlarmActionReadOnly = ref(false)
+const route = useRoute(); const { t } = useI18n(); const permissionKey = useScenePermission(); const menuStore = useMenuStore(); const sceneRouteKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, '')); const form = reactive<SceneLinkageForm>(defaultForm()); const properties = ref<any[]>([]); const events = ref<any[]>([]); const saving = ref(false); const triggerPickerVisible = ref(false); const actionPickerVisible = ref(false); const scopeVisible = ref(false); const conditionVisible = ref(false); const delayEditorVisible = ref(false); const delayEditingIndex = ref<number>(); const delayCreating = ref(false); const delayDraft = reactive({ time: 1, unit: 'seconds' }); const autoOpenActionIndex = ref<number>(); const autoOpenConditionIndex = ref<number>(); const notifyMethods = ref<SceneNotifyMethod[]>([]); const notifyUsers = ref<SceneNotifyUser[]>([]); const notifyMethodsLoading = ref(false); const notifyUsersLoading = ref(false); const supportedTriggers = ref<string[]>([]); const triggerProviders = ref<SceneProviderInfo[]>([]); const supportedActions = ref<string[]>([]); const validation = reactive({ field: '', message: '' }); const loadingScene = ref(Boolean(route.params.id)); const editorMode = ref<SceneEditorMode>('quick'); const originalSnapshot = ref<SceneRuleRecord>({}); const quickProjectionBase = ref<SceneRuleRecord>({}); const canonicalDraft = ref<SceneRuleRecord>({}); const quickResetFromDetailed = ref(false); const legacyAlarmActionReadOnly = ref(false)
+// 编辑态允许重配触发器的具体条件，但 Provider 必须保持为首次保存时的类型。
+const lockedTriggerProviders = computed(() => route.params.id
+  ? resolveLockedTriggerProviders(originalSnapshot.value)
+  : [])
+const lockedTriggerRoot = computed(() => route.params.id
+  ? String(originalSnapshot.value.triggerType || originalSnapshot.value.trigger?.type || '')
+  : '')
 // 左侧快捷时段使用独立标记，避免覆盖用户从右侧添加的时间额外条件。
 const timeRangeCondition = computed<SceneTimeRange[]>({
   get: () => form.additionalConditions.find((condition): condition is Extract<SceneConditionForm, { type: 'timeRange' }> => condition.type === 'timeRange' && condition.source === 'effective-period')?.ranges || [],
@@ -377,7 +395,7 @@ const effectivePeriodHint = computed(() => {
   if (range.start === '20:00' && range.end === '08:00') return t('IotSceneLinkage.debounce.effectivePeriodNightHint')
   return t('IotSceneLinkage.debounce.effectivePeriodCustomHint', range)
 })
-const { activeMultiTriggerIndex, addingMultiTrigger, isMulti, showMultiTriggerControl, multiTriggerDisabledReason, canAddMultiTrigger, addMultiTrigger: beginMultiTrigger, cancelTriggerPicker: resetMultiTriggerPicker, removeMultiTrigger, selectMultiTrigger, selectTrigger: selectMultiTriggerKind } = useMultiSceneTrigger(form, supportedTriggers, () => { void loadMetadata(true) }, () => Boolean(route.params.id))
+const { activeMultiTriggerIndex, addingMultiTrigger, isMulti, showMultiTriggerControl, multiTriggerDisabledReason, canAddMultiTrigger, addMultiTrigger: beginMultiTrigger, cancelTriggerPicker: resetMultiTriggerPicker, removeMultiTrigger, selectMultiTrigger, selectTrigger: selectMultiTriggerKind } = useMultiSceneTrigger(form, supportedTriggers, () => { void loadMetadata(true) }, () => Boolean(route.params.id), clearTrigger)
 const hasTrigger = computed(() => Boolean(form.triggerKind)); const isEditing = computed(() => Boolean(route.params.id)); const isDevice = computed(() => ['property', 'event', 'online', 'offline', 'state'].includes(form.triggerKind)); const repeatTime = computed({ get: () => form.repeatTime, set: (value: string) => form.repeatTime = value }); const units = computed(() => ['seconds', 'minutes', 'hours'].map(value => ({ value, label: t(`IotSceneLinkage.unit.${value}`) }))); const weekOptions = computed(() => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, index) => ({ value: index + 1, label: t(`IotSceneLinkage.weekday.${day}`) }))); const monthDayOptions = computed(() => Array.from({ length: 31 }, (_, index) => ({ value: index + 1, label: t('IotSceneLinkage.monthDay', { day: index + 1 }) }))); const propertyOptions = computed(() => toThingModelOptions(properties.value, 'property')); const eventOptions = computed(() => toThingModelOptions(events.value, 'event')); const selectedProperty = computed(() => propertyOptions.value.find(item => item.value === form.propertyId)); const termOptions = computed(() => getTermTypes(selectedProperty.value?.valueType).map(value => ({ value, label: t(`IotSceneLinkage.term.${value}`) }))); const triggerText = computed(() => hasTrigger.value ? t(`IotSceneLinkage.trigger.${form.triggerKind}`) : t('IotSceneLinkage.rule.noTrigger')); const actionText = computed(() => form.actions.length ? form.actions.map(action => t(`IotSceneLinkage.action.${action.type}`)).join('、') : t('IotSceneLinkage.rule.noAction')); const scopeText = computed(() => formatDeviceScopeText(t, toTriggerScopeValue(form), { emptyText: t('IotSceneLinkage.placeholder.device') })); const scopeTitle = computed(() => formatDeviceScopeTitle(t, toTriggerScopeValue(form), { emptyText: t('IotSceneLinkage.placeholder.device') })); const triggerIcon = computed(() => ({ manual: { background: '#F2F3F5', color: '#4E5969', path: 'M9 1.5 3 9h4l-1 5.5L12 7H8l1-5.5Z' }, repeat: { background: '#E8F0FF', color: '#1E5EFF', path: 'M8 14.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13ZM8 4.5V8l2.5 1.5' }, date: { background: '#E6F5EE', color: '#0E8A5F', path: 'M2.5 3.5h11v10h-11ZM2.5 6.5h11M5.5 1.5v3M10.5 1.5v3' }, interval: { background: '#EFEBFF', color: '#6C4FE0', path: 'M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 1.5v3h-3' }, property: { background: '#E6F5EE', color: '#0E8A5F', path: 'M2 12l3.5-3.5 2.5 2.5L14 5M14 5h-3.5M14 5v3.5' }, event: { background: '#FFECF0', color: '#D02F5A', path: 'M1.5 8h3L6 4l3 8 1.5-4h4' }, online: { background: '#E6F5EE', color: '#0E8A5F', type: 'LoginOutlined' }, offline: { background: '#F2F3F5', color: '#4E5969', type: 'LogoutOutlined' }, state: { background: '#EFEBFF', color: '#6C4FE0', type: 'SyncOutlined' }, alarm: { background: '#FFF1F0', color: '#FF4D4F', type: 'AlertOutlined' } }[form.triggerKind] || { background: '#F2F3F5', color: '#4E5969', type: 'ThunderboltOutlined' })); const hasError = (field: string) => validation.field === field; const errorMessage = (field: string) => hasError(field) ? t(validation.message) : ''
 const isTimerTrigger = computed(() => ['repeat', 'interval', 'date'].includes(form.triggerKind))
 const timerMethodOptions = computed(() => [
@@ -494,11 +512,17 @@ const triggerOptions = computed(() => [
     description: t(`IotSceneLinkage.triggerDesc.${kind}`),
     categoryLabel: t(category.label),
     categoryDescription: t(category.description),
+    // 编辑态仍展示全部触发器入口，避免用户误以为能力消失；不兼容 Provider 仅禁止选择。
+    disabled: Boolean(lockedTriggerProviders.value.length && !lockedTriggerProviders.value.includes(item.provider)),
+    disabledReason: 'IotSceneLinkage.message.triggerProviderLocked',
   }
 }))
-const availableTriggerOptions = computed(() => addingMultiTrigger.value
-  ? triggerOptions.value.filter(item => MULTI_TRIGGER_PROVIDERS.includes(item.provider as typeof MULTI_TRIGGER_PROVIDERS[number]))
-  : triggerOptions.value)
+const availableTriggerOptions = computed(() => {
+  const options = addingMultiTrigger.value
+    ? triggerOptions.value.filter(item => MULTI_TRIGGER_PROVIDERS.includes(item.provider as typeof MULTI_TRIGGER_PROVIDERS[number]))
+    : triggerOptions.value
+  return options
+})
 const isActionSupported = (provider: string) => supportedActions.value.includes(provider)
 const actionIcon = (type: string) => type === 'delay' ? 'ClockCircleOutlined' : 'ControlOutlined'
 async function loadSceneProviders() { const [triggers, actions] = await Promise.all([querySceneSupportedTriggers(), querySceneSupportedActions()]); triggerProviders.value = normalizeResult(triggers).data; supportedTriggers.value = triggerProviders.value.map(item => item.provider); supportedActions.value = normalizeResult(actions).data.map((item: SceneProviderInfo) => item.provider) }
@@ -602,6 +626,9 @@ function applyAlarmSource(target: { alarm: SceneLinkageForm['alarm'] }, sourceKi
   }
 }
 function selectTrigger(value: QuickTriggerPickerKind) {
+  const option = triggerOptions.value.find(item => item.value === value)
+  // 选择器已过滤；此处仍校验，避免组件回调或旧弹窗状态绕过编辑态的触发类型锁。
+  if (lockedTriggerProviders.value.length && (!option || !lockedTriggerProviders.value.includes(option.provider))) return
   const sourceKind = value === 'visual-alarm' ? 'visual-ai' : value === 'iot-alarm' ? 'iot-device' : undefined
   const kind = (sourceKind ? 'alarm' : value) as SceneTriggerKind
   const isAddingMultiTrigger = addingMultiTrigger.value
@@ -642,7 +669,7 @@ function confirmAiEventTrigger(value: SceneLinkageForm['aiEvent']) {
   form.aiEvent = value
   saveTriggerEditor()
 }
-function clearTrigger() { if (isMulti.value) return; form.triggerKind = '' as SceneTriggerKind; form.productId = undefined; form.productName = undefined; form.deviceIds = []; form.groupIds = []; form.propertyId = undefined; form.eventId = undefined; form.eventOutputId = undefined; form.eventOutputName = undefined; form.eventTermValue = undefined; form.termValue = undefined; form.alarm = { modes: [] }; form.aiEvent = defaultForm().aiEvent; properties.value = []; events.value = []; validation.field = '' }
+function clearTrigger() { form.multiTriggers = undefined; form.triggerKind = '' as SceneTriggerKind; form.productId = undefined; form.productName = undefined; form.deviceIds = []; form.groupIds = []; form.propertyId = undefined; form.eventId = undefined; form.eventOutputId = undefined; form.eventOutputName = undefined; form.eventTermValue = undefined; form.termValue = undefined; form.alarm = { modes: [] }; form.aiEvent = defaultForm().aiEvent; properties.value = []; events.value = []; validation.field = '' }
 function resetRepeatSelections() { form.repeatWeekdays = []; form.repeatMonthDays = [] }
 function changeRepeatCustomMode() { resetRepeatSelections() }
 function updateTriggerProperty(value: string) { const property = propertyOptions.value.find(item => item.value === value); const termTypes = getTermTypes(property?.valueType); form.propertyName = property?.label || value; form.termType = termTypes.includes(form.termType) ? form.termType : termTypes[0]; form.termValue = undefined; if (value && hasError('property')) { validation.field = ''; validation.message = '' } }
@@ -880,7 +907,7 @@ async function validate() {
 async function ensureSceneCompatible(id: string) {
   const response = await getSceneDetail(id)
   const scene = response?.result || response
-  if (hasUnsupportedLegacyAlarmAction(scene)) {
+  if (hasUnsupportedLegacyAction(scene)) {
     onlyMessage(t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning')
     return false
   }
@@ -895,62 +922,84 @@ const getEditorModeValue = (value: unknown): SceneEditorMode | undefined => {
   return selected === 'quick' || selected === 'detail' ? selected : undefined
 }
 
-/**
- * 快速编辑草稿首次进入详细模式时，生成完整规则草稿；后续切回详细模式恢复会话草稿，
- * 不能以快速表单覆盖用户尚未保存的详细配置。
- */
-async function switchFromQuick(value: unknown) {
+/** 确认切换后清空目标详细草稿，不再尝试把快速规则反向投影为原版规则树。 */
+function switchFromQuick(value: unknown) {
   const mode = getEditorModeValue(value)
   if (mode !== 'detail' || saving.value) return
-  if (!hasDetailedSession.value) {
-    // 快速模式尚未选择触发条件时，不能调用其请求构建器；该构建器会按历史兼容逻辑落为定时触发。
-    const quickRule = hasTrigger.value
-      ? buildRequest({ ...form, editorMode: 'detail' }, await resolveSceneConditionColumns(form))
-      : {
-          name: form.name,
-          description: form.description,
-          trigger: {},
-          branches: [],
-          options: {},
-        }
-    const detailedRule = mergeDetailedDraft(originalSnapshot.value, quickRule)
-    // 无过滤条件的快速规则进入详细模式时，统一为原版“执行：开 + 待填写条件”的编辑态。
-    canonicalDraft.value = hasTrigger.value
-      ? prepareQuickRuleForDetailedEditing(detailedRule)
-      : detailedRule
-    hasDetailedSession.value = true
+  // 名称和说明不属于规则配置；空草稿直接切换，保留原有低打断体验。
+  if (!hasQuickConfiguration()) {
+    resetDetailedDraft()
+    return
   }
-  editorMode.value = 'detail'
-}
-
-function switchFromDetailed(mode: SceneEditorMode, detailedDraft: SceneRuleRecord) {
-  if (mode !== 'quick' || saving.value) return
   Modal.confirm({
     title: t('IotSceneLinkage.confirm.resetQuickTitle'),
     content: t('IotSceneLinkage.confirm.resetQuickContent'),
     okText: t('IotSceneLinkage.action.confirm'),
     cancelText: t('IotSceneLinkage.action.cancel'),
-    onOk: () => {
-      const next = defaultForm()
-      next.id = detailedDraft.id || form.id
-      next.name = detailedDraft.name || form.name
-      next.description = detailedDraft.description || form.description
-      next.triggerKind = '' as SceneTriggerKind
-      next.editorMode = 'quick'
-      Object.assign(form, next)
-      // 重新填写快速模式时不能再与原详细树合并，否则已确认清空的配置会被带回。
-      quickProjectionBase.value = {
-        id: next.id,
-        name: next.name,
-        description: next.description,
-        options: { editorMode: 'quick' },
-      }
-      canonicalDraft.value = quickProjectionBase.value
-      hasDetailedSession.value = false
-      quickResetFromDetailed.value = true
-      editorMode.value = 'quick'
-    },
+    onOk: () => resetDetailedDraft(),
   })
+}
+
+function switchFromDetailed(mode: SceneEditorMode, detailedDraft: SceneRuleRecord) {
+  if (mode !== 'quick' || saving.value) return
+  if (!hasDetailedConfiguration(detailedDraft)) {
+    resetQuickDraft(detailedDraft)
+    return
+  }
+  Modal.confirm({
+    title: t('IotSceneLinkage.confirm.resetQuickTitle'),
+    content: t('IotSceneLinkage.confirm.resetQuickContent'),
+    okText: t('IotSceneLinkage.action.confirm'),
+    cancelText: t('IotSceneLinkage.action.cancel'),
+    onOk: () => resetQuickDraft(detailedDraft),
+  })
+}
+
+/** 名称和说明以外的快速模式输入才视为需要用户确认丢弃的规则配置。 */
+function hasQuickConfiguration() {
+  return Boolean(form.triggerKind || form.additionalConditions.length || form.actions.length || form.debounceEnabled)
+}
+
+/** 原版详细编辑器会初始化空分支和条件占位；只有真实内容才需要切换确认。 */
+function hasDetailedConfiguration(draft: SceneRuleRecord) {
+  if (draft.triggerType || draft.trigger?.type) return true
+  return (draft.branches || []).some((branch: SceneRuleRecord) => {
+    const hasAction = (branch.then || []).some((group: SceneRuleRecord) => (group.actions || []).length)
+    const hasCondition = (branch.when || []).some((condition: SceneRuleRecord) => (condition.terms || []).some((term: SceneRuleRecord) => term.column || term.value?.value !== undefined))
+    return hasAction || hasCondition || branch.shakeLimit?.enabled
+  })
+}
+
+/** 清空目标详细草稿；编辑态的 Provider 锁保留在加载快照中而非草稿内。 */
+function resetDetailedDraft() {
+  canonicalDraft.value = createClearedDetailedDraft({
+    id: form.id,
+    name: form.name,
+    description: form.description,
+  })
+  quickResetFromDetailed.value = false
+  editorMode.value = 'detail'
+}
+
+/** 清空目标快速草稿而非投影详细规则，防止已确认清除的分支在保存时回流。 */
+function resetQuickDraft(detailedDraft: SceneRuleRecord) {
+  const next = defaultForm()
+  next.id = detailedDraft.id || form.id
+  next.name = detailedDraft.name || form.name
+  // 说明允许被主动清空；只有历史数据未带此字段时才沿用当前快速草稿的值。
+  next.description = typeof detailedDraft.description === 'string' ? detailedDraft.description : form.description
+  next.triggerKind = '' as SceneTriggerKind
+  next.editorMode = 'quick'
+  Object.assign(form, next)
+  quickProjectionBase.value = {
+    id: next.id,
+    name: next.name,
+    description: next.description,
+    options: { editorMode: 'quick' },
+  }
+  canonicalDraft.value = quickProjectionBase.value
+  quickResetFromDetailed.value = true
+  editorMode.value = 'quick'
 }
 
 /** 快速和详细模式最终都只提交统一规则树。 */
@@ -963,7 +1012,7 @@ async function persistCanonicalDraft(scene: SceneRuleRecord) {
 }
 
 async function saveDetailed(scene: SceneRuleRecord) {
-  if (hasUnsupportedLegacyAlarmAction(scene)) {
+  if (hasUnsupportedLegacyAction(scene)) {
     onlyMessage(t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning')
     return
   }
@@ -1024,7 +1073,6 @@ async function init() {
     editorMode.value = 'quick'
     canonicalDraft.value = { name: form.name, description: form.description, options: {} }
     quickProjectionBase.value = {}
-    hasDetailedSession.value = editorMode.value === 'detail'
     loadingScene.value = false
     return
   }
@@ -1035,7 +1083,6 @@ async function init() {
   quickProjectionBase.value = scene
   editorMode.value = resolveInitialEditorMode(scene)
   canonicalDraft.value = scene
-  hasDetailedSession.value = editorMode.value === 'detail'
   Object.assign(form, toForm(scene))
   if (form.productId) {
     const response: any = await getProduct(form.productId)

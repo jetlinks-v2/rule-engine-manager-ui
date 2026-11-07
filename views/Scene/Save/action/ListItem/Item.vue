@@ -4,9 +4,10 @@
       :name="['branches', branchesName, 'then', thenName, 'actions', name]"
       :rules="rules"
     >
-      <div class="actions-item">
+      <div :class="['actions-item', { 'actions-item--show-controls': showActionControls }]">
         <CheckItem v-bind="props" ref="checkItemRef">
           <div class="item-options-warp">
+            <span class="item-number">{{ name + 1 }}</span>
             <div class="item-options-type" @click="onAdd">
               <AIcon
                 :type="
@@ -16,7 +17,7 @@
                 "
               />
             </div>
-            <div class="item-options-content" v-if="data?.executor" @click="onType(data?.executor)">
+          <div class="item-options-content" v-if="data?.executor" @click="onType(data?.executor)">
               <template v-if="data.executor === 'delay'">
                 {{ options?.name }}
               </template>
@@ -26,15 +27,17 @@
             </div>
             <a-button v-else @click="onAdd">{{ $t('ListItem.Item.637563-17') }}</a-button>
           </div>
-          <div class="item-number">{{ name + 1 }}</div>
           <ConfirmModal
             v-if="!isReadOnly"
             :title="$t('ListItem.Item.637563-18')"
             :onConfirm="onDelete"
-            className="actions-item-delete"
+            :className="showActionControls ? 'actions-item-delete actions-item-delete--show' : 'actions-item-delete'"
           >
             <AIcon type="DeleteOutlined" />
           </ConfirmModal>
+          <a-tooltip v-if="showActionControls && !isReadOnly" :title="$t('IotSceneLinkage.action.edit')">
+            <a-button class="actions-item__edit" type="text" @click.stop="onType(data?.executor || '')"><AIcon type="EditOutlined" /></a-button>
+          </a-tooltip>
         </CheckItem>
       </div>
     </a-form-item>
@@ -163,6 +166,10 @@ const props = defineProps({
   },
   isLast: {
     type: Boolean,
+  },
+  showActionControls: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -330,7 +337,6 @@ const onSave = (data: ActionsType, options: any) => {
   );
   checkItemRef.value?.formTouchOff?.();
   visible.value = false;
-  console.log('key', key)
   EventEmitter.emit(key!, data); // 发布消息
   const onKeys =  EventSubscribeKeys({
     branch: props.branchesName,
@@ -386,67 +392,58 @@ const rules = [
 </script>
 
 <style lang="less" scoped>
-.deleteBtn() {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  display: none;
-  width: 20px;
-  height: 20px;
-  color: #999;
-  line-height: 20px;
-  text-align: center;
-  background-color: #f1f1f1;
-  border-radius: 50%;
-  cursor: pointer;
-
-  &.show {
-    display: block;
-  }
-
-  &:hover {
-    background-color: #f3f3f3;
-  }
-}
-
 .actions-item {
   position: relative;
-  //margin-bottom: 24px;
-  padding: 16px;
-  border: 1px dashed #999;
-  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+  padding: 12px 16px;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--radius-jet-sm, 8px);
+  transition: border-color .2s ease, box-shadow .2s ease;
+
+  &:hover {
+    border-color: var(--ant-color-primary);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .04);
+  }
 
   .item-options-warp {
-    display: inline-flex;
-    height: 48px;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-width: 0;
+    gap: var(--space-3, 12px);
+    padding-right: 28px;
 
     .item-options-type {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 48px;
-      background-color: #f0f0f0;
-      border-radius: 6px 0 0 6px;
+      flex: none;
+      width: 32px;
+      height: 32px;
+      color: var(--ant-color-primary);
+      background-color: var(--ant-color-primary-bg);
+      border-radius: 6px;
       cursor: pointer;
     }
 
     .item-options-content {
       display: flex;
+      flex: 1;
       align-items: center;
-      padding: 0 8px;
-      background: #fafafa;
-      border-radius: 0 6px 6px 0;
+      min-width: 0;
+      padding: 0;
+      color: var(--ant-color-text);
       cursor: pointer;
 
       div {
-        padding: 6px 10px;
-        color: #333;
+        min-width: 0;
+        padding: 0;
+        color: var(--ant-color-text);
         font-size: 14px;
         line-height: 22px;
-        background-color: #fff;
-        border-radius: 22px;
 
         .notify-text-highlight {
           margin-left: 5px;
@@ -457,16 +454,46 @@ const rules = [
           margin: 0 10px;
           color: rgba(0, 0, 0, 0.8);
         }
+
       }
     }
   }
 
   .item-number {
-    position: absolute;
-    top: 0;
-    left: 16px;
-    font-weight: 800;
-    transform: translateY(-50%);
+    flex: none;
+    order: -1;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    color: var(--ant-color-primary);
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1;
+    background: var(--ant-color-primary-bg);
+    border-radius: 50%;
+  }
+
+  &--show-controls {
+    .item-options-warp {
+      padding-right: 64px;
+    }
+
+    .actions-item__edit {
+      position: absolute;
+      top: 50%;
+      right: 40px;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      color: var(--ant-color-text-secondary);
+      transform: translateY(-50%);
+
+      &:hover {
+        color: var(--ant-color-primary);
+        background: var(--ant-color-primary-bg);
+      }
+    }
   }
 }
 
@@ -474,12 +501,13 @@ const rules = [
   position: relative;
   margin-bottom: 24px;
   padding: 2px 0;
-  border: 1px dashed #999;
-  border-radius: 30px;
+  border: 1px dashed var(--ant-color-border);
+  border-radius: var(--radius-jet-sm, 8px);
 
   &.filter-border {
     padding: 2px 16px;
-    border-radius: 2px;
+    border-color: var(--ant-color-border-secondary);
+    border-radius: var(--radius-jet-sm, 8px);
   }
 
   .actions-item-filter-warp-tip {
@@ -487,11 +515,11 @@ const rules = [
     top: 0;
     left: 16px;
     z-index: 2;
-    color: rgba(0, 0, 0, 0.55);
-    font-weight: 800;
+    color: var(--ant-color-text-secondary);
+    font-weight: 600;
     font-size: 14px;
     line-height: 1;
-    background-color: #fff;
+    background-color: var(--ant-color-bg-container);
     transform: translateY(-50%);
   }
 
@@ -505,7 +533,7 @@ const rules = [
 
   .filter-add-button {
     width: 100%;
-    color: rgba(0, 0, 0, 0.3);
+    color: var(--ant-color-text-tertiary);
     text-align: center;
     cursor: pointer;
   }
@@ -541,21 +569,31 @@ const rules = [
 <style lang="less">
 .actions-item-delete {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 50%;
+  right: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  color: #e50012;
-  background-color: rgba(229, 0, 18, 0.1);
-  border-radius: 50%;
-  transform: translate(50%, -50%);
+  width: 28px;
+  height: 28px;
+  color: var(--ant-color-error);
+  background-color: transparent;
+  border-radius: 6px;
+  opacity: 0;
+  transform: translateY(-50%);
   cursor: pointer;
+  transition: opacity .2s ease, background-color .2s ease;
+
+  .actions-item:hover & {
+    opacity: 1;
+  }
+
+  &.actions-item-delete--show {
+    opacity: 1;
+  }
 
   &:hover {
-    background-color: rgba(#e50012, 0.2);
+    background-color: var(--ant-color-error-bg);
   }
 }
 </style>

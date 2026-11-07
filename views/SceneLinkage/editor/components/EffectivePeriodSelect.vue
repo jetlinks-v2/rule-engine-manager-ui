@@ -10,28 +10,28 @@
 <script setup lang="ts">
 import { computed, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { SceneTimeRange } from '../../utils'
+import { formatSceneTimeRange, type SceneTimeRange } from '../../utils'
 
-type EffectivePeriod = 'all' | 'daytime' | 'night' | 'custom'
+type EffectivePeriod = 'all' | 'workday' | 'evening' | 'custom'
 const props = defineProps({ modelValue: { type: Array as PropType<SceneTimeRange[]>, required: true } })
 const emit = defineEmits<{ (event: 'update:modelValue', value: SceneTimeRange[]): void }>()
 const { t } = useI18n()
 const customVisible = ref(false)
 const customRange = ref<string[]>(['09:00', '18:00'])
 const periodRanges: Record<Exclude<EffectivePeriod, 'custom'>, SceneTimeRange[]> = {
-  all: [], daytime: [{ start: '08:00', end: '20:00' }], night: [{ start: '20:00', end: '08:00' }],
+  all: [], workday: [{ start: '09:00', end: '18:00' }], evening: [{ start: '20:00', end: '08:00' }],
 }
 const options = computed(() => [
   { value: 'all', label: t('IotSceneLinkage.effectivePeriod.all') },
-  { value: 'daytime', label: t('IotSceneLinkage.effectivePeriod.daytime') },
-  { value: 'night', label: t('IotSceneLinkage.effectivePeriod.night') },
+  { value: 'workday', label: formatSceneTimeRange(t, periodRanges.workday[0]) },
+  { value: 'evening', label: formatSceneTimeRange(t, periodRanges.evening[0]) },
   { value: 'custom', label: t('IotSceneLinkage.effectivePeriod.custom') },
 ])
 const selectedPeriod = ref<EffectivePeriod>(findPeriod(props.modelValue))
 
 /** 自定义时段单独以弹层编辑，避免下拉选中后配置控件被侧栏裁切或忽略。 */
 function changePeriod(value: unknown) {
-  if (value !== 'all' && value !== 'daytime' && value !== 'night' && value !== 'custom') return
+  if (value !== 'all' && value !== 'workday' && value !== 'evening' && value !== 'custom') return
   if (value === 'custom') {
     const range = props.modelValue[0] || { start: '09:00', end: '18:00' }
     customRange.value = [range.start, range.end]

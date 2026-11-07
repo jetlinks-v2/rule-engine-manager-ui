@@ -10,6 +10,6 @@ const props = defineProps({
   options: { type: Object, default: () => ({}) },
 })
 
-// 告警状态查询由“附加条件”生成，详细模式仅展示已有节点，避免它被当作普通执行动作重新配置。
+// 告警记录查询既可由快速模式的附加条件生成，也可在详细模式作为普通执行动作配置。
 const targetName = computed(() => props.options?.name || props.options?.alarmConfigName || '')
 </script>

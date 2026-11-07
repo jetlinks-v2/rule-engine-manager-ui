@@ -26,10 +26,9 @@
         <span v-else>{{ part.text }}</span>
       </template>
     </div>
-    <div class="scene-rule-summary__clause scene-rule-summary__clause--action">
-      <span class="scene-rule-summary__keyword scene-rule-summary__keyword--action">{{ $t('IotSceneLinkage.summary.then') }}</span>
-      <template v-if="actionSummaries.length">
-        <template v-for="(action, index) in actionSummaries" :key="index">
+    <template v-if="actionSummaries.length">
+      <div v-for="(action, index) in actionSummaries" :key="index" class="scene-rule-summary__clause scene-rule-summary__clause--action">
+        <span :class="['scene-rule-summary__keyword', 'scene-rule-summary__keyword--action', { 'scene-rule-summary__keyword--continuation': index > 0 }]" :aria-hidden="index > 0">{{ $t('IotSceneLinkage.summary.then') }}</span>
           <template v-if="action.type === 'notify'">
             <span class="scene-rule-summary__action-text">{{ $t('IotSceneLinkage.action.send') }}</span>
             <span class="scene-rule-summary__field scene-rule-summary__field--action" :title="action.title">{{ action.channel }}</span>
@@ -41,9 +40,11 @@
             <span v-if="part.field" class="scene-rule-summary__field scene-rule-summary__field--action" :title="part.title || part.text">{{ part.text }}</span>
             <span v-else class="scene-rule-summary__action-text">{{ part.text }}</span>
           </template>
-        </template>
-      </template>
-      <span v-if="!actionSummaries.length" class="scene-rule-summary__empty scene-rule-summary__empty--action">{{ $t('IotSceneLinkage.rule.previewNoAction') }}</span>
+      </div>
+    </template>
+    <div v-else class="scene-rule-summary__clause scene-rule-summary__clause--action">
+      <span class="scene-rule-summary__keyword scene-rule-summary__keyword--action">{{ $t('IotSceneLinkage.summary.then') }}</span>
+      <span class="scene-rule-summary__empty scene-rule-summary__empty--action">{{ $t('IotSceneLinkage.rule.previewNoAction') }}</span>
     </div>
     <div v-if="debounceSummary" class="scene-rule-summary__clause scene-rule-summary__clause--debounce">
       <span class="scene-rule-summary__keyword scene-rule-summary__keyword--debounce">{{ $t('IotSceneLinkage.debounce.enable') }}</span>
@@ -56,7 +57,7 @@
 import { computed, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getProduct, queryDeviceAlarmPreprocesses } from '../../../../api/scene-linkage'
-import { formatSceneDuration, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTimeRange } from '../../utils'
+import { formatSceneDuration, formatSceneTimeRange, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTimeRange } from '../../utils'
 import { formatDeviceScopeText, formatDeviceScopeTitle, formatProductScopeText, toTriggerScopeValue, type SceneDeviceScopeValue } from '../deviceScopeLabel'
 import { toThingModelOptions } from '../thingModel'
 
@@ -117,12 +118,7 @@ const propertyLabel = (productId: string | undefined, id: string | undefined) =>
 const eventName = (productId: string | undefined, id: string | undefined) => products.value[productId || '']?.metadata?.events?.find((item: any) => item.id === id)?.name || id || ''
 const functionName = (productId: string | undefined, id: string | undefined) => products.value[productId || '']?.metadata?.functions?.find((item: any) => item.id === id)?.name || id || ''
 const alarmName = (alarm: any) => alarm.options?.alarmConfigName || alarmNames.value[alarm.alarmConfigId || ''] || alarm.alarmConfigId || ''
-const timeRangeLabel = (range: SceneTimeRange) => {
-  if (range.start === '08:00' && range.end === '20:00') return `${t('IotSceneLinkage.effectivePeriod.daytime')} ${range.start}–${range.end}`
-  if (range.start === '09:00' && range.end === '18:00') return `${t('IotSceneLinkage.timeTemplate.workday')} ${range.start}–${range.end}`
-  if (range.start === '20:00' && range.end === '08:00') return `${t('IotSceneLinkage.timeTemplate.evening')} ${range.start}–${range.end}`
-  return `${t('IotSceneLinkage.timeTemplate.custom')} ${range.start}–${range.end}`
-}
+const timeRangeLabel = (range: SceneTimeRange) => formatSceneTimeRange(t, range)
 type SummaryPart = { text: string; title?: string; field?: boolean }
 const summaryPlainText = (text: unknown): SummaryPart => ({ text: String(text ?? '') })
 const summaryField = (text: unknown, title?: unknown): SummaryPart => ({ text: String(text ?? ''), title: title === undefined ? undefined : String(title), field: true })
@@ -332,7 +328,7 @@ watch([summaryTitleText, resolved], ([value]) => { if (resolved.value || props.f
 
 <style scoped>
 .scene-rule-summary { display: grid; gap: 8px; line-height: 28px; }.scene-rule-summary__clause { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; width: max-content; max-width: 100%; }.scene-rule-summary__clause--trigger { color: #d46b08; }.scene-rule-summary__clause--condition { color: #087443; }.scene-rule-summary__clause--action { color: var(--ant-color-primary); }.scene-rule-summary__clause--debounce { color: #6c4fe0; }
-.scene-rule-summary__keyword { padding: 0 8px; border-radius: 4px; font-weight: 600; }.scene-rule-summary__keyword--trigger { color: #d46b08; background: #fff1d6; }.scene-rule-summary__keyword--condition { color: #087443; background: #e8f7ef; }.scene-rule-summary__keyword--action { color: var(--ant-color-primary); background: #e6f0ff; }.scene-rule-summary__keyword--debounce { color: #6c4fe0; background: #efebff; }
+.scene-rule-summary__keyword { padding: 0 8px; border-radius: 4px; font-weight: 600; }.scene-rule-summary__keyword--trigger { color: #d46b08; background: #fff1d6; }.scene-rule-summary__keyword--condition { color: #087443; background: #e8f7ef; }.scene-rule-summary__keyword--action { color: var(--ant-color-primary); background: #e6f0ff; }.scene-rule-summary__keyword--debounce { color: #6c4fe0; background: #efebff; }.scene-rule-summary__keyword--continuation { visibility: hidden; background: transparent; }
 .scene-rule-summary__field { padding: 0 8px; border-radius: 4px; }.scene-rule-summary__field--trigger { color: #ad6800; background: #fff7e6; }.scene-rule-summary__field--condition { color: #087443; background: #f0fff7; }.scene-rule-summary__field--action { color: var(--ant-color-primary); background: #eef4ff; }.scene-rule-summary__field--debounce { color: #6c4fe0; background: #efebff; }
 .scene-rule-summary__action-text { color: var(--ant-color-primary); }
 .scene-rule-summary__clause .scene-rule-summary__empty { padding: 0; color: #86909c; background: transparent; }

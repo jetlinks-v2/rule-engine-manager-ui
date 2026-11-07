@@ -69,9 +69,16 @@ export const findSceneCondition = (
 }
 
 /**
- * 场景告警动作已从本期编辑范围移除。历史节点允许打开查看，
- * 但在用户重新配置为新规则前不能再次保存，以免保留已下线的编辑契约。
+ * 历史场景告警和通知模板动作均不再提供可写编辑器。它们可查看和删除，
+ * 但在重新配置完成前不能保存，避免重新提交已下线的执行契约。
  */
+export const hasUnsupportedLegacyAction = (scene: unknown) => isRecord(scene)
+  && asArray(scene.branches)
+    .flatMap(branch => asArray(branch.then))
+    .flatMap(group => asArray(group.actions))
+    .some(action => ['alarm', 'notify'].includes(String(action.executor)))
+
+/** @deprecated 新调用统一使用 hasUnsupportedLegacyAction，同时保留旧调用方的告警判断。 */
 export const hasUnsupportedLegacyAlarmAction = (scene: unknown) => isRecord(scene)
   && asArray(scene.branches)
     .flatMap(branch => asArray(branch.then))

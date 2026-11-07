@@ -86,6 +86,14 @@ export interface SceneTimeRange {
   end: string
 }
 
+/** 快速配置的侧栏、条件卡片、编辑弹窗和规则预览统一采用同一套时段名称与时间范围。 */
+export const formatSceneTimeRange = (t: SceneTranslator, range: SceneTimeRange) => {
+  if (range.start === '08:00' && range.end === '20:00') return `${t('IotSceneLinkage.effectivePeriod.daytime')} ${range.start}–${range.end}`
+  if (range.start === '09:00' && range.end === '18:00') return `${t('IotSceneLinkage.timeTemplate.workday')} ${range.start}–${range.end}`
+  if (range.start === '20:00' && range.end === '08:00') return `${t('IotSceneLinkage.timeTemplate.evening')} ${range.start}–${range.end}`
+  return `${t('IotSceneLinkage.timeTemplate.custom')} ${range.start}–${range.end}`
+}
+
 export type SceneConditionForm =
   | { actionId?: number; type: 'timeRange'; ranges: SceneTimeRange[]; source?: 'effective-period' }
   | {

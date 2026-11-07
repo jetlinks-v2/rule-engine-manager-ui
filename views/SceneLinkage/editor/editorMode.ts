@@ -1,5 +1,4 @@
 import { isPrivateDeployment } from '@jetlinks-web-core/utils/deployment'
-import { randomNumber } from '@jetlinks-web/utils'
 
 export type SceneEditorMode = 'quick' | 'detail'
 
@@ -80,47 +79,35 @@ export const mergeDetailedDraft = (
   return mergeEditorMode(merged, 'detail')
 }
 
-const createEmptyDetailedCondition = () => ({
-  terms: [{
-    column: undefined,
-    value: { source: 'fixed', value: undefined },
-    termType: undefined,
-    key: `params_${randomNumber()}`,
-    type: 'and',
-  }],
-  type: 'and',
-  key: `terms_${randomNumber()}`,
+/**
+ * 两种编辑模式不互相投影。确认切换后仅保留基础信息，避免另一种编辑器的树结构
+ * 在预览、节点反向解析或保存合并时被误当成当前模式的配置。
+ */
+export const createClearedDetailedDraft = (rule: SceneRuleRecord): SceneRuleRecord => ({
+  id: rule.id,
+  name: rule.name,
+  description: rule.description,
+  triggerType: '',
+  trigger: {},
+  branches: [],
+  // 显式清空原版编辑器会读取的元数据，防止 mergeDetailedDraft 把旧分支摘要重新带回。
+  options: { editorMode: 'detail', when: [], summary: '', summaryTitle: '' },
 })
 
 /**
- * 快速模式没有过滤条件时仍是有效规则；切到详细模式后按原版新建规则的编辑态补一个空条件。
- * 该草稿须经详细表单补全后才能保存，保证“执行：开”的展示与真实条件结构一致。
+ * 已保存场景可重新配置触发规则，但只能使用首次保存时的 Provider。
+ * multi 根节点本身不是叶子类型，因此从已有叶子中恢复可选 Provider。
  */
-export const prepareQuickRuleForDetailedEditing = (rule: SceneRuleRecord): SceneRuleRecord => {
-  const next = cloneRule(rule)
-  const branch = asRecords(next.branches)[0]
-  if (!branch) return next
+export const resolveLockedTriggerProviders = (rule: SceneRuleRecord): string[] => {
+  const trigger = isRecord(rule.trigger) ? rule.trigger : {}
+  const triggerType = typeof rule.triggerType === 'string' ? rule.triggerType : trigger.type
+  if (!triggerType) return []
+  if (triggerType !== 'multi') return [String(triggerType)]
 
-  branch.executeAnyway = true
-  if (!asRecords(branch.when).length) {
-    branch.when = [createEmptyDetailedCondition()]
-  }
-
-  const options = isRecord(next.options) ? next.options : {}
-  const branchOptions = asRecords(options.when)
-  const branchOption = branchOptions[0] || {}
-  next.options = {
-    ...options,
-    when: [{
-      ...branchOption,
-      terms: cloneRule(branch.when),
-      branchName: branch.branchName || branchOption.branchName,
-      key: branch.branchId || branchOption.key,
-      executeAnyway: true,
-      groupIndex: 1,
-    }, ...branchOptions.slice(1)],
-  }
-  return next
+  const triggers = asRecords(isRecord(trigger.multi) ? trigger.multi.triggers : undefined)
+  return [...new Set(triggers
+    .map(item => isRecord(item.trigger) ? item.trigger.type : undefined)
+    .filter((type): type is string => typeof type === 'string' && type !== 'multi'))]
 }
 
 /**

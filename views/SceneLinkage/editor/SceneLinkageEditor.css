@@ -9,23 +9,32 @@
     gap: var(--space-4, 16px);
 }
 
+.scene-editor__page-header {
+    margin-bottom: var(--space-3, 12px) !important;
+    padding: var(--space-3, 12px) var(--space-4, 16px) !important;
+}
+
+.scene-editor__page-header .cloud-page-header__title,
+.scene-editor__page-header .cloud-page-header__title h1 {
+    font-size: .875rem;
+    font-weight: 400;
+}
+
 .scene-editor__workspace {
     flex: 1;
     display: grid;
     grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
+    column-gap: var(--space-4, 16px);
     overflow: hidden;
     background: var(--jet-theme-bg-container);
-    border: 1px solid var(--scene-editor-subtle-border);
-    border-radius: 8px;
 }
 
 .scene-editor__sidebar {
     display: flex;
     flex-direction: column;
     gap: var(--space-4, 16px);
-    padding: var(--space-5, 20px);
-    background: var(--ant-color-fill-quaternary);
-    border-right: 1px solid var(--scene-editor-subtle-border);
+    padding: 0 0 var(--space-5, 20px);
+    overflow: hidden;
 }
 
 .scene-editor__sidebar-section,
@@ -34,10 +43,46 @@
     gap: var(--space-2, 8px);
 }
 
+/* 快速、详细模式共用的场景基础信息卡，确保切换模式时名称和说明区域不产生视觉跳变。 */
+.scene-editor__scene-meta {
+    display: grid;
+    align-content: start;
+    gap: var(--space-2, 8px);
+    min-height: 10.5rem;
+    padding: var(--space-4, 16px) var(--space-5, 20px);
+    background: #fafbfc;
+    border: 1px solid var(--scene-editor-section-border);
+    border-radius: var(--radius-jet-sm, 8px);
+}
+
+.scene-editor__scene-meta-description {
+    display: grid;
+    gap: var(--space-2, 8px);
+    margin-top: var(--space-2, 8px);
+}
+
+.scene-editor__scene-meta .ant-input,
+.scene-editor__scene-meta .ant-input-textarea textarea {
+    font-size: .875rem;
+}
+
+.scene-editor__scene-meta .ant-input-textarea textarea {
+    line-height: 1.375rem;
+    resize: none;
+}
+
 .scene-editor__sidebar-label {
     color: var(--ant-color-text);
     font-size: .875rem;
     font-weight: 600;
+}
+
+.scene-editor__required {
+    margin-right: 4px;
+    color: var(--ant-color-error, #ff4d4f);
+    font-family: SimSun, serif;
+    font-size: .875rem;
+    font-weight: 400;
 }
 
 .scene-editor__sidebar-field > label {
@@ -61,8 +106,10 @@
 }
 
 .scene-editor__debounce-panel {
-    padding-top: var(--space-4, 16px);
-    border-top: 1px solid var(--scene-editor-subtle-border);
+    padding: var(--space-4, 16px) var(--space-5, 20px);
+    background: #fafbfc;
+    border: 1px solid var(--scene-editor-section-border);
+    border-radius: var(--radius-jet-sm, 8px);
 }
 
 /* 字段间略大于字段内部间距，帮助区分“标签—控件—说明”的完整配置单元。 */
@@ -93,38 +140,26 @@
     flex-direction: column;
     gap: var(--space-4, 16px);
     min-width: 0;
-    padding: var(--space-5, 20px);
+    padding: 0 0 var(--space-5, 20px);
 }
 
 .scene-editor__footer {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--z-index-popup-base, 100);
     display: flex;
     gap: var(--space-2, 8px);
     justify-content: flex-end;
     margin-top: auto;
-    padding: var(--space-3, 12px) 0;
+    padding: var(--space-3, 12px) var(--space-5, 20px);
+    background: var(--jet-theme-bg-container);
+    border-top: 1px solid var(--scene-editor-section-border);
 }
 
 .scene-editor__debounce-help {
     margin-left: var(--space-1, 4px);
     color: var(--ant-color-primary);
     cursor: help;
-}
-
-.scene-editor__rule-preview {
-    padding: var(--space-3, 12px) var(--space-4, 16px);
-    background: var(--ant-color-fill-quaternary);
-    border: 1px solid var(--scene-editor-section-border);
-    border-radius: 8px;
-}
-
-.scene-editor__rule-preview-title {
-    display: flex;
-    gap: var(--space-2, 8px);
-    align-items: center;
-    margin-bottom: var(--space-2, 8px);
-    color: var(--ant-color-text-secondary);
-    font-size: .875rem;
-    font-weight: 600;
 }
 
 .scene-editor__header {
@@ -134,7 +169,7 @@
 }
 
 .scene-editor__name {
-    font-weight: 600;
+    font-weight: 400;
     flex: 1;
     max-width: 620px
 }
@@ -215,12 +250,12 @@
     gap: var(--space-3, 12px);
     align-items: flex-start;
     padding: var(--space-4, 16px) var(--space-5, 20px);
-    background: var(--ant-color-fill-quaternary);
+    background: #fafbfc;
     border-bottom: 1px solid var(--scene-editor-subtle-border);
 }
 
 .scene-editor__rule-group-header > div { min-width: 0; }
-.scene-editor__rule-group-header h3 { margin: 0; font-size: 16px; }
+.scene-editor__rule-group-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
 .scene-editor__rule-group-header p { margin: 4px 0 0; color: var(--ant-color-text-secondary); font-size: 12px; line-height: 20px; }
 .scene-editor__rule-group-icon { display: grid; flex: none; place-items: center; width: 28px; height: 28px; color: #1677ff; background: #e8f3ff; border-radius: 6px; }
 .scene-editor__rule-group--condition .scene-editor__rule-group-icon { color: #d48806; background: #fff7e6; }
@@ -229,12 +264,12 @@
 .scene-editor__rule-group-body > .scene-editor__add { width: 100%; margin-top: 0; }
 
 .scene-editor__rule-card { overflow: hidden; border: 1px solid var(--scene-editor-subtle-border); border-radius: 8px; background: var(--ant-color-bg-container); }
-.scene-editor__rule-card > header { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 48px; padding: 0 var(--space-4, 16px); background: var(--ant-color-fill-quaternary); }
+.scene-editor__rule-card > header { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 48px; padding: 0 var(--space-4, 16px); background: #fafbfc; }
 .scene-editor__rule-card > header small { color: var(--ant-color-text-tertiary); }
 .scene-editor__rule-card-description { padding: var(--space-4, 16px); color: var(--ant-color-text); overflow-wrap: anywhere; }
 .scene-editor__rule-card-actions { display: inline-flex; gap: 2px; margin-left: auto; }
-.scene-editor__rule-card--trigger { border-color: #f5dfc7; }.scene-editor__rule-card--trigger > header { background: color-mix(in srgb, #fff7e6 58%, var(--ant-color-bg-container)); }
-.scene-editor__rule-card--action > header { background: color-mix(in srgb, #eef4ff 55%, var(--ant-color-bg-container)); }
+.scene-editor__rule-card--trigger { border-color: #f5dfc7; }.scene-editor__rule-card--trigger > header { background: #fffaf4; }
+.scene-editor__rule-card--action > header { background: #f7faff; }
 
 .scene-editor__marker {
     display: inline-block;
@@ -257,7 +292,9 @@
 }
 
 .scene-editor__add {
-    height: 42px;
+    height: 2.5rem;
+    color: var(--ant-color-primary);
+    border-color: var(--ant-color-primary);
     border-style: dashed;
     margin-top: var(--space-4)
 }
@@ -483,11 +520,6 @@
 
     .scene-editor__workspace {
         grid-template-columns: 1fr;
-    }
-
-    .scene-editor__sidebar {
-        border-right: 0;
-        border-bottom: 1px solid var(--scene-editor-subtle-border);
     }
 
     .scene-editor__custom-repeat {
@@ -845,4 +877,183 @@
 .scene-editor__device-trigger-option > div { display: grid; gap: 2px; min-width: 0; }
 .scene-editor__device-trigger-option b { font-size: .8125rem; font-weight: 600; }
 .scene-editor__device-trigger-option small { overflow: hidden; color: var(--ant-color-text-secondary); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+
+.detailed-scene-editor { --detailed-scene-border: var(--jet-theme-border, #e5e6eb); --detailed-scene-subtle-border: var(--jet-theme-border-color-1, #f0f0f0); display: flex; flex-direction: column; min-height: 100%; padding-bottom: 4.5rem; }.detailed-scene-editor__page-header { margin-bottom: var(--space-3, 12px) !important; padding: var(--space-3, 12px) var(--space-4, 16px) !important; }.detailed-scene-editor__page-header .cloud-page-header__title { font-size: var(--fs-16, 16px); }.detailed-scene-editor__form { display: grid; gap: var(--space-4, 16px); max-width: 1200px; }.detailed-scene-editor__overview { display: grid; grid-template-columns: minmax(17rem, .7fr) minmax(22rem, 1.3fr); gap: var(--space-4, 16px); align-items: stretch; }.detailed-scene-editor__overview .ant-form-item { display: flex; flex-direction: column; justify-content: center; margin: 0; padding: var(--space-4, 16px) var(--space-5, 20px); background: var(--jet-theme-bg-container); border: 1px solid var(--detailed-scene-border); border-radius: 8px; }.detailed-scene-editor__section { overflow: hidden; background: var(--jet-theme-bg-container); border: 1px solid var(--detailed-scene-border); border-radius: 8px; }.detailed-scene-editor__section-header { display: flex; gap: var(--space-3, 12px); align-items: flex-start; padding: var(--space-4, 16px) var(--space-5, 20px); background: var(--ant-color-fill-quaternary); border-bottom: 1px solid var(--detailed-scene-subtle-border); }.detailed-scene-editor__section-header > div { display: grid; gap: 2px; min-width: 0; }.detailed-scene-editor__section-header h2 { margin: 0; color: var(--ant-color-text); font-size: 1rem; line-height: 1.5; }.detailed-scene-editor__section-header p { margin: 4px 0 0; color: var(--ant-color-text-secondary); font-size: .75rem; line-height: 1.25rem; }.detailed-scene-editor__section-icon { display: grid; flex: none; place-items: center; width: 28px; height: 28px; color: #1677ff; background: #e8f3ff; border-radius: 6px; }.detailed-scene-editor__execution-section .detailed-scene-editor__section-icon { color: #0e8a5f; background: #e6f5ee; }.detailed-scene-editor__section-body { padding: var(--space-4, 16px) var(--space-5, 20px); }.detailed-scene-editor__footer { position: fixed; right: var(--space-6, 24px); bottom: var(--space-5, 20px); z-index: var(--z-index-popup-base, 100); display: flex; gap: var(--space-2, 8px); padding: var(--space-2, 8px); background: var(--jet-theme-bg-container); border: 1px solid var(--detailed-scene-subtle-border); border-radius: 8px; box-shadow: 0 6px 16px rgba(0, 0, 0, .08); }.detailed-scene-editor__provider-placeholder { padding: var(--space-6, 24px); border: 1px dashed var(--detailed-scene-border); border-radius: 8px; }.detailed-scene-editor__trigger-add, .detailed-scene-editor__multi-trigger-add { height: 2.5rem; color: var(--ant-color-primary); border-color: var(--ant-color-primary); border-style: dashed; }.detailed-scene-editor__multi-trigger-add { margin-top: var(--space-3, 12px); }.detailed-scene-editor__trigger-picker { display: flex; align-items: center; min-height: 4.125rem; padding: var(--space-3, 12px) var(--space-4, 16px); text-align: left; background: var(--ant-color-fill-quaternary); border: 1px solid var(--detailed-scene-subtle-border); border-radius: 8px; }.detailed-scene-editor__trigger-picker-icon { display: grid; flex: none; place-items: center; width: 2.5rem; height: 2.5rem; margin-right: var(--space-3, 12px); color: var(--ant-color-primary); background: var(--ant-color-primary-bg); border-radius: 6px; }.detailed-scene-editor__trigger-picker-icon .anticon { font-size: 1.25rem; }.detailed-scene-editor__trigger-picker-content { display: grid; flex: 1; gap: var(--space-1, 4px); min-width: 0; }.detailed-scene-editor__trigger-picker-content b, .detailed-scene-editor__trigger-picker-content small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.detailed-scene-editor__trigger-picker-content b { color: var(--ant-color-text); }.detailed-scene-editor__trigger-picker-content small, .detailed-scene-editor__trigger-picker-lock { color: var(--ant-color-text-tertiary); }.detailed-scene-editor__trigger-picker-content small { font-size: .75rem; }.detailed-scene-editor__trigger-picker-lock, .detailed-scene-editor__trigger-picker-delete { flex: none; }.detailed-scene-editor__trigger-picker-delete { margin-left: var(--space-2, 8px); }@media (max-width: 900px) { .detailed-scene-editor__overview { grid-template-columns: 1fr; }.detailed-scene-editor__footer { right: var(--space-4, 16px); bottom: var(--space-4, 16px); } }
+/* 详细模式沿用快速模式的页头、浅边框和分区节奏，但保留原版规则树的配置密度。 */
+.detailed-scene-editor {
+    --scene-editor-section-border: var(--jet-theme-border);
+    width: 100%;
+    gap: var(--space-4, 16px);
+}
+
+.detailed-scene-editor__page-header {
+    margin-bottom: var(--space-3, 12px) !important;
+    padding: var(--space-3, 12px) var(--space-4, 16px) !important;
+}
+
+.detailed-scene-editor__page-header .cloud-page-header__title,
+.detailed-scene-editor__page-header .cloud-page-header__title h1 {
+    font-size: .875rem;
+    font-weight: 400;
+}
+
+.detailed-scene-editor__page-header .cloud-page-header__back {
+    width: 16px;
+    min-width: 16px;
+}
+
+.detailed-scene-editor__form {
+    width: 100%;
+    max-width: none;
+}
+
+.detailed-scene-editor__overview {
+    grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
+}
+
+.detailed-scene-editor__overview > .scene-editor__scene-meta {
+    height: 100%;
+    box-sizing: border-box;
+    padding: var(--space-4, 16px) var(--space-5, 20px);
+    background: var(--jet-theme-bg-container);
+    border: 1px solid var(--scene-editor-section-border);
+    border-radius: var(--radius-jet-sm, 8px);
+}
+
+.detailed-scene-editor__overview > .scene-rule-preview {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.detailed-scene-editor__overview .scene-editor__scene-meta .ant-form-item {
+    display: block;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+}
+
+.detailed-scene-editor__overview .scene-editor__scene-meta .ant-form-item + .ant-form-item {
+    margin-top: var(--space-2, 8px);
+}
+
+.detailed-scene-editor__overview .scene-editor__scene-meta .ant-form-item-label {
+    padding-bottom: var(--space-2, 8px);
+}
+
+.detailed-scene-editor__overview .scene-editor__scene-meta .ant-form-item-label > label {
+    color: var(--ant-color-text);
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.detailed-scene-editor__overview .detailed-scene-editor__name-field .ant-form-item-required::before {
+    margin-right: 4px;
+    color: var(--ant-color-error, #ff4d4f);
+    font-family: SimSun, serif;
+    font-size: .875rem;
+    font-weight: 400;
+}
+
+.detailed-scene-editor__overview .detailed-scene-editor__name-field :deep(.ant-input::placeholder) {
+    color: var(--ant-color-text-placeholder);
+    font-weight: 600;
+}
+
+.detailed-scene-editor__overview .detailed-scene-editor__description-field :deep(.ant-input::placeholder) {
+    color: var(--ant-color-text-placeholder);
+}
+
+.detailed-scene-editor__section-body {
+    padding: var(--space-4, 16px) var(--space-5, 20px);
+}
+
+.detailed-scene-editor__configuration-panel {
+    position: relative;
+    padding: var(--space-4, 16px);
+    background: var(--ant-color-fill-quaternary);
+    border: 1px solid var(--detailed-scene-subtle-border);
+    border-radius: var(--radius-jet-sm, 8px);
+}
+
+.detailed-scene-editor__configuration-panel > .ant-form-item:last-child,
+.detailed-scene-editor__configuration-panel > .detailed-scene-execution > .ant-form-item:last-child {
+    margin-bottom: 0;
+}
+
+.detailed-scene-editor__trigger-rule-actions {
+    position: absolute;
+    top: var(--space-4, 16px);
+    right: var(--space-4, 16px);
+    z-index: 1;
+    display: inline-flex;
+    gap: 2px;
+}
+
+.detailed-scene-editor__trigger-picker {
+    background: var(--ant-color-bg-container);
+    border-color: var(--ant-color-border-secondary);
+}
+
+/* 两种模式共用页面节奏：浅色信息卡与底部操作栏只调整承载样式，不改变规则树。 */
+.detailed-scene-editor {
+    padding-bottom: 0;
+}
+
+.detailed-scene-editor__overview > .scene-editor__scene-meta {
+    background: #fafbfc;
+}
+
+.detailed-scene-editor__configuration-panel {
+    padding: var(--space-4, 16px) var(--space-5, 20px);
+}
+
+.detailed-scene-editor__overview .detailed-scene-editor__name-field :deep(.ant-input::placeholder) {
+    font-weight: 400;
+}
+
+.scene-editor,
+.detailed-scene-editor {
+    /* 为视口固定的保存操作留出可滚动空间，避免遮挡最后一个规则节点。 */
+    padding-bottom: 5.5rem;
+}
+
+.scene-editor__footer,
+.detailed-scene-editor__footer {
+    /* 操作栏固定在视口底部且横跨编辑页，长规则树滚动时始终保留取消和保存入口。 */
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-index-popup-base, 100);
+    display: flex;
+    gap: var(--space-2, 8px);
+    justify-content: flex-end;
+    margin: 0;
+    padding: var(--space-3, 12px) var(--space-6, 24px);
+    background: var(--jet-theme-bg-container);
+    border-top: 1px solid var(--scene-editor-section-border);
+    border-radius: 0;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, .06);
+}
+
+/* 当前主题的 fill-quaternary 与容器白色过于接近，分区标题使用稳定的浅灰卡片底色。 */
+.detailed-scene-editor__section-header {
+    background: #fafbfc;
+}
+
+@media (max-width: 900px) {
+    .detailed-scene-editor__overview {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .scene-editor__footer,
+    .detailed-scene-editor__footer {
+        padding-right: var(--space-4, 16px);
+        padding-left: var(--space-4, 16px);
+    }
+}
+
 @media (max-width: 640px) { .scene-editor__timer-method-list { grid-template-columns: 1fr; } }

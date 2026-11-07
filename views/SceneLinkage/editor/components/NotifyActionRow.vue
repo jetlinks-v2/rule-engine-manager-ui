@@ -185,7 +185,7 @@ watch(() => props.autoOpen, value => {
 </script>
 
 <style scoped>
-.notify-action-row { overflow: hidden; margin-bottom: var(--space-3, 12px); border: 1px solid var(--jet-theme-border-secondary); border-radius: var(--radius-jet-sm, 10px); }.notify-action-row > header { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 48px; padding: 0 var(--space-4, 16px); background: var(--ant-color-fill-quaternary); }.notify-action-row > header small { color: var(--ant-color-text-tertiary); }.notify-action-row__actions { display: inline-flex; gap: 2px; margin-left: auto; }.notify-action-row__description { padding: var(--space-4, 16px); overflow-wrap: anywhere; }
+.notify-action-row { overflow: hidden; margin-bottom: var(--space-3, 12px); border: 1px solid var(--jet-theme-border-secondary); border-radius: var(--radius-jet-sm, 10px); }.notify-action-row > header { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 48px; padding: 0 var(--space-4, 16px); background: #fafbfc; }.notify-action-row > header small { color: var(--ant-color-text-tertiary); }.notify-action-row__actions { display: inline-flex; gap: 2px; margin-left: auto; }.notify-action-row__description { padding: var(--space-4, 16px); overflow-wrap: anywhere; }
 .notify-action-row--invalid { border-color: var(--ant-color-error); }
 .notify-action-row__summary { display: grid; grid-template-columns: 22px 28px max-content minmax(0, 1fr) auto auto; gap: var(--space-3, 12px); align-items: center; min-width: 0; }
 .notify-action-row__summary-text { min-width: 0; overflow: hidden; color: var(--ant-color-text-secondary); text-overflow: ellipsis; white-space: nowrap; }

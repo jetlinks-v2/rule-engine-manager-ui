@@ -94,7 +94,8 @@ const providerOrder = ['device', 'timer', 'iot-alarm', 'visual-alarm', 'ai-event
 const categories = computed(() => {
   if (props.mode === 'provider') {
     return props.options.map(item => ({
-      provider: item.provider,
+      // provider 模式用于详细配置的多条件选择；同一 Provider 下的每个叶子都是独立触发规则。
+      provider: item.value,
       icon: item.icon,
       label: item.label,
       description: item.description,

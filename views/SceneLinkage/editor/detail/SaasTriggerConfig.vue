@@ -1,5 +1,9 @@
 <template>
   <section class="saas-trigger-config">
+    <header class="saas-trigger-config__header">
+      <span class="saas-trigger-config__icon"><AIcon :type="data.triggerType === 'alarm' ? 'AlertOutlined' : 'RadarChartOutlined'" /></span>
+      <div><strong>{{ title }}</strong><small>{{ hint }}</small></div>
+    </header>
     <AlarmTriggerSourceRow v-if="data.triggerType === 'alarm'" v-model="alarm" />
     <AiEventTriggerRow v-else-if="data.triggerType === 'ai-event'" v-model="aiEvent" />
   </section>
@@ -14,10 +18,18 @@ import { AI_EVENT_RESULT_COLUMNS } from '../../utils'
 import { findSceneCondition, replaceManagedSceneCondition } from '../../sceneRule'
 import AlarmTriggerSourceRow from '../components/AlarmTriggerSourceRow.vue'
 import AiEventTriggerRow from '../components/AiEventTriggerRow.vue'
+import { useI18n } from 'vue-i18n'
 
 const { data: storeData } = storeToRefs(useSceneStore())
 // 原版 Store 类型只声明了早期触发器，详细桥接需要同时承载 SaaS 专用 Provider 配置。
 const data = storeData as unknown as Ref<Record<string, any>>
+const { t } = useI18n()
+const title = computed(() => data.value.triggerType === 'alarm'
+  ? t('IotSceneLinkage.detail.alarmTrigger')
+  : t('IotSceneLinkage.detail.aiEventTrigger'))
+const hint = computed(() => data.value.triggerType === 'alarm'
+  ? t('IotSceneLinkage.detail.alarmTriggerHint')
+  : t('IotSceneLinkage.detail.aiEventTriggerHint'))
 
 const ensureFirstBranch = () => {
   if (!data.value.branches?.length) data.value.branches = [{ when: [], then: [] }] as any
@@ -112,5 +124,6 @@ defineExpose({ validate })
 </script>
 
 <style scoped>
-.saas-trigger-config { padding: var(--space-4, 16px); margin-bottom: var(--space-4, 16px); background: var(--ant-color-bg-container); border: 1px solid var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 10px); }
+.saas-trigger-config { display: grid; gap: var(--space-4, 16px); padding: var(--space-4, 16px); margin-bottom: var(--space-4, 16px); background: var(--ant-color-bg-container); border: 1px solid var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 10px); }
+.saas-trigger-config__header { display: flex; gap: var(--space-3, 12px); align-items: center; padding-bottom: var(--space-3, 12px); border-bottom: 1px solid var(--ant-color-border-secondary); }.saas-trigger-config__header > div { display: grid; gap: 2px; }.saas-trigger-config__header strong { color: var(--ant-color-text); font-weight: 600; }.saas-trigger-config__header small { color: var(--ant-color-text-tertiary); font-size: 12px; }.saas-trigger-config__icon { display: grid; place-items: center; width: 30px; height: 30px; color: var(--ant-color-primary); background: var(--ant-color-primary-bg); border-radius: 6px; }
 </style>

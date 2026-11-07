@@ -1,26 +1,26 @@
 <template>
   <section class="detailed-multi-trigger-config">
-    <a-form-item :label="$t('IotSceneLinkage.form.triggerType')" name="trigger.multi.triggers" :rules="rules">
+    <a-form-item name="trigger.multi.triggers" :rules="rules">
       <div v-if="triggers.length" class="detailed-multi-trigger-config__list">
         <MultiTriggerCard
           v-for="(item, index) in triggers"
           :key="item.clientId"
           :trigger="item"
-          :removable="triggers.length > 1"
+          :removable="true"
+          :auto-open="item.clientId === pendingTriggerClientId"
           @remove="removeTrigger(index)"
+          @opened="pendingTriggerClientId = undefined"
         />
       </div>
       <a-button block class="detailed-multi-trigger-config__add" @click="pickerVisible = true">
         <AIcon type="PlusOutlined" />
-        {{ triggers.length ? $t('IotSceneLinkage.editor.addAnotherTrigger') : $t('IotSceneLinkage.action.addTrigger') }}
+        {{ $t('IotSceneLinkage.detail.addTriggerRule') }}
       </a-button>
     </a-form-item>
 
-    <!-- 混合触发只替换触发源；分支条件和动作仍复用原版详细编辑器。 -->
-    <Terms v-if="triggers.length" />
-
     <TriggerPickerModal
       :open="pickerVisible"
+      mode="provider"
       :options="triggerOptions"
       @cancel="pickerVisible = false"
       @select="addTrigger"
@@ -34,7 +34,6 @@ import { cloneDeep } from 'lodash-es'
 import { buildRequest, defaultForm, defaultMultiTriggerForm, toForm, type SceneMultiTriggerForm, type SceneTriggerKind } from '../../utils'
 import MultiTriggerCard from '../components/MultiTriggerCard.vue'
 import TriggerPickerModal, { type TriggerPickerOption } from '../components/TriggerPickerModal.vue'
-import Terms from '../../../Scene/Save/components/Terms/Terms.vue'
 
 const props = defineProps({
   modelValue: {
@@ -45,14 +44,20 @@ const props = defineProps({
     type: Array as PropType<TriggerPickerOption[]>,
     default: () => [],
   },
+  collapseToSingle: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, any>]
+  collapse: [value: { triggerType: string; trigger: Record<string, any> }]
 }>()
 
 const pickerVisible = ref(false)
 const triggers = ref<SceneMultiTriggerForm[]>([])
+const pendingTriggerClientId = ref<number>()
 let syncingFromModel = false
 let localTriggerSignature = ''
 
@@ -95,14 +100,27 @@ function emitTrigger() {
 }
 
 function addTrigger(value: string) {
+  // 选项已由父级按 Provider 过滤，再校验一次以防旧弹窗状态提交不被允许的叶子。
+  if (!props.triggerOptions.some(item => item.value === value && !item.disabled)) return
   const next = defaultMultiTriggerForm()
   next.triggerKind = value as SceneTriggerKind
   triggers.value = [...triggers.value, next]
+  // 由选择器新增的叶子尚未完成配置，创建后立刻进入对应类型的配置流。
+  pendingTriggerClientId.value = next.clientId
   pickerVisible.value = false
 }
 
 function removeTrigger(index: number) {
-  triggers.value = triggers.value.filter((_, triggerIndex) => triggerIndex !== index)
+  const next = triggers.value.filter((_, triggerIndex) => triggerIndex !== index)
+  if (next.length !== 1 || !props.collapseToSingle) {
+    triggers.value = next
+    return
+  }
+  // 多条件仅在至少两条触发规则时成立；剩下一条时恢复为对应的原生触发器。
+  const form = defaultForm()
+  Object.assign(form, cloneDeep(next[0]), { multiTriggers: undefined })
+  const request = buildRequest(form)
+  emit('collapse', { triggerType: String(request.trigger?.type || next[0].triggerKind), trigger: request.trigger || {} })
 }
 
 /** 多触发器叶子由卡片编辑，不能依赖顶层 FormItem 的“非空”校验。 */
@@ -139,7 +157,11 @@ function validate() {
 watch(() => props.modelValue, loadTriggers, { immediate: true, deep: true })
 watch(triggers, emitTrigger, { deep: true })
 
-defineExpose({ validate })
+function openPicker() {
+  pickerVisible.value = true
+}
+
+defineExpose({ validate, openPicker })
 </script>
 
 <style scoped>

@@ -51,7 +51,7 @@
             </template>
           </dl>
 
-          <section class="alarm-condition-modal__state">
+          <section v-if="states.length" class="alarm-condition-modal__state">
             <strong>{{ stateTitle }}</strong>
             <div class="alarm-condition-modal__state-options">
               <button
@@ -108,7 +108,7 @@ type AlarmRule = {
 const props = defineProps({
   open: Boolean,
   sourceKind: { type: String as PropType<SourceKind>, required: true },
-  mode: { type: String as PropType<'trigger' | 'condition'>, default: 'condition' },
+  mode: { type: String as PropType<'trigger' | 'condition' | 'query'>, default: 'condition' },
   modelValue: { type: Object as PropType<SceneAlarmTriggerConfig>, required: true },
 })
 const emit = defineEmits<{
@@ -125,9 +125,11 @@ const rules = ref<AlarmRule[]>([])
 const selectedRuleId = ref<string>()
 const draft = ref<SceneAlarmTriggerConfig>(clone(props.modelValue))
 
-const title = computed(() => t(props.sourceKind === 'visual-ai'
-  ? 'IotSceneLinkage.condition.visualAlarmState'
-  : 'IotSceneLinkage.condition.iotAlarmState'))
+const title = computed(() => props.mode === 'query'
+  ? t('IotSceneLinkage.alarmCondition.queryTitle')
+  : t(props.sourceKind === 'visual-ai'
+    ? 'IotSceneLinkage.condition.visualAlarmState'
+    : 'IotSceneLinkage.condition.iotAlarmState'))
 const listTitle = computed(() => t(props.sourceKind === 'visual-ai'
   ? 'IotSceneLinkage.alarmCondition.visualRuleList'
   : 'IotSceneLinkage.alarmCondition.iotRuleList'))
@@ -145,7 +147,9 @@ const filteredRules = computed(() => {
 })
 const selectedRule = computed(() => rules.value.find(rule => rule.id === selectedRuleId.value))
 const states = computed(() => [
-  ...(props.mode === 'trigger'
+  ...(props.mode === 'query'
+    ? []
+    : props.mode === 'trigger'
     ? [
         { value: 'trigger', label: t('IotSceneLinkage.alarmMode.trigger'), description: t('IotSceneLinkage.alarmMode.triggerHint'), icon: 'AlertOutlined' },
         { value: 'relieve', label: t('IotSceneLinkage.alarmMode.relieve'), description: t('IotSceneLinkage.alarmMode.relieveHint'), icon: 'SafetyCertificateOutlined' },
@@ -158,11 +162,14 @@ const states = computed(() => [
 const stateTitle = computed(() => props.mode === 'trigger'
   ? t('IotSceneLinkage.alarmCondition.triggerWhen')
   : t('IotSceneLinkage.alarmCondition.currentState'))
-const previewLabel = computed(() => t(props.mode === 'trigger'
-  ? 'IotSceneLinkage.alarmCondition.triggerRule'
-  : 'IotSceneLinkage.alarmCondition.previewLabel'))
+const previewLabel = computed(() => t(props.mode === 'query'
+  ? 'IotSceneLinkage.summary.queryAlarmRecords'
+  : props.mode === 'trigger'
+    ? 'IotSceneLinkage.alarmCondition.triggerRule'
+    : 'IotSceneLinkage.alarmCondition.previewLabel'))
 const previewText = computed(() => {
   const name = selectedRule.value?.name || draft.value.options?.alarmConfigName || t('IotSceneLinkage.alarmCondition.selectRule')
+  if (props.mode === 'query') return t('IotSceneLinkage.alarmCondition.queryPreviewText', { name })
   const state = props.mode === 'trigger'
     ? t(`IotSceneLinkage.alarmMode.${draft.value.modes[0] || 'trigger'}`)
     : draft.value.state === 'normal'

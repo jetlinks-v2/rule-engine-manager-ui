@@ -2,54 +2,43 @@
   <a-modal
     :title="$t('Device.AddModal.3725211-0')"
     open
-    :width='950'
-    @ok='save'
+    :width="1240"
+    :footer="null"
     @cancel='cancel'
     :maskClosable="false"
   >
-    <a-steps :current='addModel.stepNumber' @change='stepChange'>
-      <a-step>
-        <template #title>{{ $t('Device.AddModal.3725211-1') }}</template>
-      </a-step>
-      <a-step>
-        <template #title>{{ $t('Device.AddModal.3725211-2') }}</template>
-      </a-step>
-      <a-step>
-        <template #title>{{ $t('Device.AddModal.3725211-3') }}</template>
-      </a-step>
-    </a-steps>
-    <a-divider style='margin-bottom: 0px' />
-    <div class='steps-content'>
+    <section v-if="!selectingScope" class="detailed-device-trigger-modal__product">
+      <header><strong>{{ $t('Device.AddModal.3725211-1') }}</strong><small>{{ $t('IotSceneLinkage.detail.productFirstHint') }}</small></header>
+      <div class="detailed-device-trigger-modal__product-content">
         <Product
-          v-if='addModel.stepNumber === 0'
           v-model:rowKey='addModel.productId'
           v-model:detail='addModel.productDetail'
           @change='productChange'
         />
-        <DeviceSelect
-          v-else-if='addModel.stepNumber === 1'
-          :productId='addModel.productId'
-          v-model:deviceKeys='addModel.deviceKeys'
-          v-model:orgId='addModel.orgId'
-          v-model:selector='addModel.selector'
-          v-model:selectorValues='addModel.selectorValues'
-        />
-        <Type
-          ref='typeRef'
-          v-else-if='addModel.stepNumber === 2'
-          :metadata='addModel.metadata'
-          :operator='addModel.operator'
-          :options="optionsCache"
-        />
-    </div>
-    <template #footer>
-      <div class='steps-action'>
-        <a-button v-if='addModel.stepNumber === 0' @click='cancel'>{{ $t('Device.AddModal.3725211-4') }}</a-button>
-        <a-button v-else @click='prev'>{{ $t('Device.AddModal.3725211-5') }}</a-button>
-        <a-button type='primary' v-if='addModel.stepNumber < 2' @click='saveClick'>{{ $t('Device.AddModal.3725211-6') }}</a-button>
-        <a-button type='primary' v-else @click='saveClick'>{{ $t('Device.AddModal.3725211-7') }}</a-button>
       </div>
-    </template>
+      <footer><a-button @click="cancel">{{ $t('Device.AddModal.3725211-4') }}</a-button><a-button type="primary" :loading="productDetailLoading" @click="openScope">{{ $t('IotSceneLinkage.action.next') }}</a-button></footer>
+    </section>
+    <section v-else class="detailed-device-trigger-modal__scope">
+      <DeviceScopeModal
+        embedded
+        detailed
+        multiple
+        lock-product
+        :open="selectingScope"
+        :product-id="addModel.productId"
+        :model-value="scopeValue"
+        :validate="validateScope"
+        @cancel="cancel"
+        @select-devices="handleSelectedDevices"
+        @save="saveScope"
+      >
+        <template #toolbar-actions><a-button type="link" @click="selectingScope = false">{{ $t('IotSceneLinkage.action.changeProduct') }}</a-button></template>
+        <template #configuration>
+          <Type ref="typeRef" :metadata="addModel.metadata" :operator="addModel.operator" :options="optionsCache" />
+        </template>
+        <template #preview><span>{{ $t('IotSceneLinkage.detail.deviceTriggerPreview') }}</span></template>
+      </DeviceScopeModal>
+    </section>
   </a-modal>
 </template>
 
@@ -58,9 +47,10 @@ import type { PropType } from 'vue'
 import type { metadataType , TriggerDevice, TriggerDeviceOptions, SelectorValuesItem } from '../../typings'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { detail as deviceDetail } from '../../../../api/others'
+import { getProduct } from '../../../../api/scene-linkage'
 import Product from './Product.vue'
-import DeviceSelect from './DeviceSelect.vue'
 import Type from './Type.vue'
+import DeviceScopeModal, { type DeviceScope } from '../../../SceneLinkage/editor/components/DeviceScopeModal.vue'
 import { handleTimerOptions } from '../components/Timer/util'
 import { Form } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
@@ -74,7 +64,6 @@ type Emit = {
 
 
 interface AddModelType extends Omit<TriggerDevice, 'selectorValues'> {
-  stepNumber: number
   deviceKeys: SelectorValuesItem[]
   orgId: SelectorValuesItem[]
   productDetail: any
@@ -106,7 +95,6 @@ const addModel = reactive<AddModelType>({
   productId: props.value.productId || '',
   selector: props.value.selector || 'fixed',
   selectorValues: props.value.selectorValues || [],
-  stepNumber: 0,
   deviceKeys: props.value.selectorValues || [],
   orgId: props.value.selectorValues || [],
   productDetail: {},
@@ -117,9 +105,19 @@ const addModel = reactive<AddModelType>({
 })
 
 const optionsCache = ref(props.options)
+const selectingScope = ref(false)
+const productDetailLoading = ref(false)
+let productDetailTask: Promise<void> | undefined
+const scopeValidation = ref<any>()
+const scopeValue = computed<DeviceScope>(() => ({
+  selector: addModel.selector as DeviceScope['selector'],
+  selectorValues: addModel.selectorValues.map(item => ({ value: String(item.value), name: item.name })),
+  productId: addModel.productId,
+  productName: addModel.productDetail?.name,
+}))
 
 const handleOptions = (data: TriggerDeviceOptions) => {
-  const typeIconMap = {
+  const typeIconMap: Record<string, string> = {
     writeProperty: 'icon-bianji1',
     invokeFunction: 'icon-widgets',
     reportEvent: 'icon-shijian',
@@ -194,10 +192,6 @@ const handleOptions = (data: TriggerDeviceOptions) => {
   return _options;
 }
 
-const prev = () => {
-  addModel.stepNumber = addModel.stepNumber - 1
-}
-
 const cancel = () => {
   emit("cancel")
 }
@@ -210,7 +204,9 @@ const handleMetadata = (metadata?: string) => {
   }
 }
 
-const productChange = () => {
+/** 复用设备管理的产品卡片展示字段，同时补查规则编辑需要的完整物模型。 */
+const productChange = (product: { id: string }) => {
+  addModel.productDetail = product
   addModel.deviceKeys = []
   addModel.orgId = []
   addModel.selector = 'fixed'
@@ -218,52 +214,71 @@ const productChange = () => {
     operator: 'online'
   }
   addModel.selectorValues = []
+  productDetailLoading.value = true
+  productDetailTask = (async () => {
+    try {
+      const response: any = await getProduct(product.id)
+      // 切换卡片时忽略旧请求，避免把上一产品的物模型带入当前范围选择。
+      if (addModel.productId !== product.id) return
+      addModel.productDetail = { ...product, ...(response?.result || response || {}) }
+    } catch {
+      // 产品卡片字段仍可完成范围选择；仅物模型配置会在后续校验中提示补齐。
+    } finally {
+      if (addModel.productId === product.id) {
+        handleMetadata(addModel.productDetail?.metadata)
+        productDetailLoading.value = false
+      }
+    }
+  })()
+  return productDetailTask
+}
+
+async function openScope() {
+  if (!addModel.productId) {
+    onlyMessage($t('Device.AddModal.3725211-14'), 'error')
+    return
+  }
+  await productDetailTask
+  handleMetadata(addModel.productDetail?.metadata)
+  selectingScope.value = true
+}
+
+async function handleSelectedDevices(devices: Array<{ id: string }>) {
+  if (devices.length !== 1) {
+    handleMetadata(addModel.productDetail?.metadata)
+    return
+  }
+  handleMetadata(await getDeviceDetailByMetadata(devices[0].id))
+}
+
+/** 保存前由右侧触发规则表单校验；范围本身由 DeviceScopeModal 校验并原样保存。 */
+async function validateScope() {
+  const result = await typeRef.value?.vail()
+  if (!result) return false
+  scopeValidation.value = result
+  return true
+}
+
+function saveScope(scope: DeviceScope) {
+  const typeData = scopeValidation.value
+  if (!typeData) return
+  Object.assign(addModel, { selector: scope.selector, selectorValues: scope.selectorValues.map(item => ({ value: item.value, name: item.name || item.value })) })
+  optionsCache.value.action = typeData.action
+  const operation = typeData.data
+  const options = handleOptions(operation)
+  emit('save', {
+    operation,
+    selector: scope.selector,
+    selectorValues: addModel.selectorValues,
+    productId: scope.productId || addModel.productId,
+    source: 'fixed',
+  } as TriggerDevice, options)
+  formItemContext.onFieldChange()
 }
 
 const getDeviceDetailByMetadata = async (deviceId: string) => {
   const resp = await deviceDetail(deviceId)
   return resp.result?.metadata
-}
-
-const save = async (step?: number) => {
-  let _step = step !== undefined ? step : addModel.stepNumber
-  if (_step === 0) {
-    addModel.productId ? addModel.stepNumber = 1 : onlyMessage($t('Device.AddModal.3725211-14'), 'error')
-  } else if (_step === 1) {
-    const isFixed = addModel.selector === 'fixed' // 是否选择方式为设备
-    if ((['fixed', 'org'].includes(addModel.selector) ) && !addModel.selectorValues?.length) {
-      return onlyMessage(isFixed ? $t('Device.AddModal.3725211-15') : $t('Device.AddModal.3725211-16'), 'error')
-    }
-    // 选择方式为设备且仅选中一个设备时，物模型取该设备
-    const onlyOneDevice = isFixed && addModel.selectorValues?.length === 1
-    handleMetadata( onlyOneDevice ? await getDeviceDetailByMetadata(addModel.selectorValues[0].value) : addModel.productDetail?.metadata)
-    addModel.stepNumber = 2
-  } else {
-    const typeData = await typeRef.value.vail()
-    if (typeData) {
-      optionsCache.value.action = typeData.action
-      const _options = handleOptions(typeData.data);
-      const data = {
-        operation: typeData.data,
-        selector: addModel.selector,
-        selectorValues: addModel.selectorValues,
-        productId: addModel.productId,
-        source: 'fixed'
-      }
-      emit('save', data, _options)
-      formItemContext.onFieldChange()
-    }
-  }
-}
-
-const saveClick = () => save()
-
-const stepChange = (step: number) => {
-  if (step !== 0) {
-    save(step - 1)
-  } else {
-    addModel.stepNumber = 0
-  }
 }
 
 const initQuery = async () => {
@@ -279,10 +294,5 @@ nextTick(() => {
 </script>
 
 <style scoped>
-.steps-content {
-  width: 100%;
-  max-height: 500px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
+.detailed-device-trigger-modal__product, .detailed-device-trigger-modal__scope { display: grid; gap: var(--space-4, 16px); min-height: 38rem; }.detailed-device-trigger-modal__product > header, .detailed-device-trigger-modal__scope-header { display: flex; justify-content: space-between; gap: var(--space-3, 12px); align-items: center; }.detailed-device-trigger-modal__product > header > *, .detailed-device-trigger-modal__scope-header > div { display: grid; gap: 4px; }.detailed-device-trigger-modal__product header strong, .detailed-device-trigger-modal__scope-header strong { color: var(--ant-color-text); }.detailed-device-trigger-modal__product header small, .detailed-device-trigger-modal__scope-header small { color: var(--ant-color-text-tertiary); font-size: 12px; }.detailed-device-trigger-modal__product-content { min-height: 0; overflow: auto; }.detailed-device-trigger-modal__product > footer { display: flex; justify-content: flex-end; gap: var(--space-2, 8px); padding-top: var(--space-3, 12px); border-top: 1px solid var(--ant-color-border-secondary); }.detailed-device-trigger-modal__scope { min-height: 0; }.detailed-device-trigger-modal__scope :deep(.device-scope-modal__selection) { min-width: 19rem; }.detailed-device-trigger-modal__scope :deep(.type) { margin-top: 0; }
 </style>

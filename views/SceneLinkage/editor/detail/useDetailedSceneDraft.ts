@@ -6,6 +6,9 @@ import { type SceneRuleRecord } from '../editorMode'
 import { toDetailedConditionGroups } from '../../sceneRule'
 
 const createEmptyOptions = () => ({ trigger: {}, when: [] as any[] })
+const isBranchRecord = (value: unknown): value is SceneRuleRecord => Boolean(value)
+  && typeof value === 'object'
+  && !Array.isArray(value)
 
 /**
  * 为未按原版编辑器结构保存的规则补齐原版组件所需的展示元数据。
@@ -25,10 +28,10 @@ const toLegacyDraft = (rule: SceneRuleRecord): SceneRuleRecord => {
   // 新建详细草稿必须保留未选择触发方式的状态，不能为了复用原版组件隐式补成手动触发。
   draft.trigger = draft.trigger || {}
   draft.triggerType = draft.triggerType || draft.trigger.type
-  draft.branches = branches.map((branch: SceneRuleRecord) => ({
-    ...branch,
-    when: toDetailedConditionGroups(branch.when),
-  }))
+  // 私有化旧规则可使用空分支来表达同一条件组的动作序列；展示规范化必须保留它们的索引。
+  draft.branches = branches.map((branch: SceneRuleRecord) => isBranchRecord(branch)
+    ? { ...branch, when: toDetailedConditionGroups(branch.when) }
+    : branch)
   draft.options = {
     ...createEmptyOptions(),
     ...options,
@@ -37,7 +40,7 @@ const toLegacyDraft = (rule: SceneRuleRecord): SceneRuleRecord => {
     when: Array.isArray(options.when) ? options.when.map((item: SceneRuleRecord) => ({
       ...item,
       terms: options.editorMode === 'quick' ? toDetailedConditionGroups(item.terms) : item.terms,
-    })) : draft.branches.map((branch: SceneRuleRecord, index: number) => ({
+    })) : draft.branches.filter(isBranchRecord).map((branch: SceneRuleRecord, index: number) => ({
       terms: branch.when || [],
       branchName: branch.branchName,
       key: branch.branchId,
