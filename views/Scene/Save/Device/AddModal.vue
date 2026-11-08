@@ -105,7 +105,8 @@ const addModel = reactive<AddModelType>({
 })
 
 const optionsCache = ref(props.options)
-const selectingScope = ref(false)
+// 编辑已有设备触发器时直接回到设备列表；只有新建或主动更换产品才进入产品选择。
+const selectingScope = ref(Boolean(props.value.productId))
 const productDetailLoading = ref(false)
 let productDetailTask: Promise<void> | undefined
 const scopeValidation = ref<any>()
@@ -281,7 +282,22 @@ const getDeviceDetailByMetadata = async (deviceId: string) => {
   return resp.result?.metadata
 }
 
+async function hydrateSelectedProduct() {
+  if (!addModel.productId) return
+  const productId = addModel.productId
+  productDetailLoading.value = true
+  try {
+    const response: any = await getProduct(productId)
+    if (addModel.productId !== productId) return
+    addModel.productDetail = { ...addModel.productDetail, ...(response?.result || response || {}) }
+    handleMetadata(addModel.productDetail?.metadata)
+  } finally {
+    if (addModel.productId === productId) productDetailLoading.value = false
+  }
+}
+
 const initQuery = async () => {
+  await hydrateSelectedProduct()
   if (props.value.selector === 'fixed' && props.value.selectorValues?.length) {
     handleMetadata(await getDeviceDetailByMetadata(props.value.selectorValues[0].value))
   }

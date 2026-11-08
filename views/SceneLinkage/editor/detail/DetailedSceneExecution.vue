@@ -40,15 +40,25 @@ const props = defineProps({
 
 const { t } = useI18n()
 const firstBranch = computed(() => props.rule.branches?.find((branch: SceneRuleRecord) => Boolean(branch)))
-// 定时和手动触发原本只使用首个动作组；其余触发器继续使用完整 Terms 树，
-// 因此移动视觉承载不会改变分支、变量、串并行或防抖的既有保存语义。
-const usesDirectAction = computed(() => ['manual', 'timer'].includes(props.triggerType))
+const hasConfiguredConditions = computed(() => (props.rule.branches || [])
+  .some((branch: SceneRuleRecord) => Array.isArray(branch?.when) && branch.when.length > 0))
+const timerOnlyMultiTrigger = computed(() => {
+  if (props.triggerType !== 'multi' || hasConfiguredConditions.value) return false
+  const triggers = props.rule.trigger?.multi?.triggers
+  return Array.isArray(triggers)
+    && triggers.length > 0
+    && triggers.every((item: SceneRuleRecord) => item?.trigger?.type === 'timer')
+})
+// 定时、手动和仅含定时叶子的 multi 原本都只使用首个动作组。
+// 空条件树没有可配置参数；保留已有 when 时仍使用完整 Terms，避免改写历史分支语义。
+const isTimerAction = computed(() => props.triggerType === 'timer' || timerOnlyMultiTrigger.value)
+const usesDirectAction = computed(() => props.triggerType === 'manual' || isTimerAction.value)
 const directActionRules = computed(() => [{
   validator(_: unknown, value?: Array<{ actions?: unknown[] }>) {
     const hasAction = value?.some(item => Boolean(item.actions?.length))
     return hasAction
       ? Promise.resolve()
-      : Promise.reject(t(props.triggerType === 'timer'
+      : Promise.reject(t(isTimerAction.value
         ? 'Timer.index.663670-4'
         : 'Manual.index.515142-3'))
   },

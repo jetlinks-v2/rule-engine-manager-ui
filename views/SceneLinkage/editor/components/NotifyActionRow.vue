@@ -1,5 +1,5 @@
 <template>
-  <article :class="['notify-action-row', { 'notify-action-row--invalid': invalid }]">
+  <article v-if="!dialogOnly" :class="['notify-action-row', { 'notify-action-row--invalid': invalid }]">
     <header><span class="notify-action-row__icon"><AIcon type="NotificationOutlined" /></span><strong>{{ $t('IotSceneLinkage.action.sendNotify') }}</strong><small>{{ index + 1 }}</small><span class="notify-action-row__actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button class="notify-action-row__remove" type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></span></header>
     <div class="notify-action-row__description">{{ summaryText }}</div>
   </article>
@@ -56,6 +56,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import type { SceneNotifyMethod, SceneNotifyUser } from '../../../../api/scene-linkage'
 import type { SceneActionForm } from '../../utils'
 
@@ -68,6 +69,8 @@ const props = defineProps<{
   usersLoading?: boolean
   invalid?: boolean
   autoOpen?: boolean
+  /** 详细模式沿用此对话框，但由原版动作卡承载列表项。 */
+  dialogOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -78,6 +81,7 @@ const emit = defineEmits<{
   'load-more-users': []
   'method-change': [method: SceneNotifyMethod]
   change: [action: SceneActionForm]
+  saved: [action: SceneActionForm]
 }>()
 const { t } = useI18n()
 
@@ -148,6 +152,11 @@ function cancelEditor() {
   editorVisible.value = false
 }
 function saveEditor() {
+  if (!methodValue.value || !recipientIds.value.length) {
+    onlyMessage(t('IotSceneLinkage.message.notifyRequired'), 'warning')
+    return
+  }
+  emit('saved', props.action)
   originalAction.value = undefined
   createdByPicker.value = false
   editorVisible.value = false

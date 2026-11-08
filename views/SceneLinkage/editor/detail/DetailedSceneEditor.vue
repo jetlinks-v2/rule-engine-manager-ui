@@ -7,7 +7,7 @@
       @back="$emit('cancel')"
     >
       <template #actions>
-        <div class="scene-editor__header-actions">
+        <div v-if="showModeSwitch" class="scene-editor__header-actions">
           <a-radio-group :value="'detail'" button-style="solid" @change="switchToQuick">
             <a-radio-button value="quick">{{ $t('IotSceneLinkage.editor.quickMode') }}</a-radio-button>
             <a-radio-button value="detail">{{ $t('IotSceneLinkage.editor.detailMode') }}</a-radio-button>
@@ -52,7 +52,7 @@
               <Manual v-if="data.triggerType === 'manual'" :show-actions="false" />
               <DetailedTimerTrigger v-else-if="data.triggerType === 'timer'" ref="timerTriggerRef" />
               <Device v-else-if="data.triggerType === 'device'" ref="deviceRef" :show-terms="false" :show-title="false" />
-              <Collector v-else-if="data.triggerType === 'collector'" ref="collectorRef" :show-terms="false" :show-title="false" />
+              <Collector v-else-if="data.triggerType === 'collector'" ref="collectorRef" :show-terms="false" :show-title="false" @cancel-config="cancelNewCollector" @save-config="collectorPending = false" />
               <DetailedMultiTriggerConfig v-else-if="data.triggerType === 'multi'" ref="multiTriggerRef" v-model="data.trigger" :trigger-options="multiTriggerOptions" :collapse-to-single="lockedTriggerRoot !== 'multi'" @collapse="restoreSingleTrigger" />
               <SaasTriggerConfig ref="saasTriggerRef" v-else-if="['alarm', 'ai-event'].includes(data.triggerType)" />
               <section v-else-if="data.triggerType" class="detailed-scene-editor__provider-placeholder">
@@ -134,6 +134,10 @@ const props = defineProps({
     type: Object as PropType<SceneRuleRecord>,
     required: true,
   },
+  showModeSwitch: {
+    type: Boolean,
+    default: false,
+  },
   supportedTriggers: {
     type: Array as PropType<string[]>,
     default: () => [],
@@ -170,7 +174,7 @@ const deviceRef = ref()
 const timerTriggerRef = ref<{ openConfig: () => void }>()
 const collectorRef = ref<{ openConfig: () => void }>()
 const multiTriggerRef = ref<{ validate: () => string | undefined; openPicker: () => void }>()
-const saasTriggerRef = ref<{ validate: () => string | undefined }>()
+const saasTriggerRef = ref<{ validate: () => string | undefined; openConfig: () => void }>()
 const actionOptions = ref<SceneProviderInfo[]>([])
 const termColumns = ref<Record<string, string>>({})
 const readOnlyActionProviders = ref(['alarm', 'notify'])
@@ -191,6 +195,12 @@ const triggerIcons: Record<string, string> = {
   manual: 'ThunderboltOutlined',
   multi: 'ClusterOutlined',
 }
+const alarmPickerKinds = new Set(['iot-alarm', 'visual-alarm'])
+
+/** Provider 可能返回 i18n key 或已翻译文案，两种响应都统一为最终显示文本。 */
+function resolveProviderText(value: string | undefined, fallbackKey: string) {
+  return value?.startsWith('IotSceneLinkage.') ? t(value) : value || t(fallbackKey)
+}
 /**
  * 顶层触发器名称和说明由后端 Provider 按当前语言环境返回，
  * 前端只保留 Provider 值作为异常数据的最小展示兜底。
@@ -200,19 +210,25 @@ function toTriggerPickerOption(item: SceneProviderInfo): TriggerPickerOption {
     value: item.provider,
     provider: item.provider,
     icon: triggerIcons[item.provider] || 'ThunderboltOutlined',
-    // 触发器名称及描述以 Provider 返回的国际化结果为准，前端仅为异常旧数据保留类型值兜底。
-    label: item.name || item.provider,
-    description: item.description || '',
+    // 触发器名称及描述以 Provider 返回的国际化结果为准，兼容旧接口直接返回 i18n key。
+    label: resolveProviderText(item.name, `IotSceneLinkage.triggerType.${item.provider}`),
+    description: resolveProviderText(item.description, `IotSceneLinkage.triggerTypeDesc.${item.provider}`),
   }
 }
 const triggerOptions = computed<TriggerPickerOption[]>(() => props.triggerProviders
   // 多条件由“添加触发规则”自动升级，不作为独立的首次触发方式入口。
   .filter(item => item.provider !== 'multi' && props.supportedTriggers.includes(item.provider))
-  .map(item => ({
-    ...toTriggerPickerOption(item),
-    disabled: Boolean(props.lockedTriggerProviders.length && !props.lockedTriggerProviders.includes(item.provider)),
-    disabledReason: 'IotSceneLinkage.message.triggerProviderLocked',
-  })))
+  .flatMap(item => {
+    const disabled = Boolean(props.lockedTriggerProviders.length && !props.lockedTriggerProviders.includes(item.provider))
+    const disabledReason = 'IotSceneLinkage.message.triggerProviderLocked'
+    if (item.provider === 'alarm') {
+      return [
+        { value: 'iot-alarm', provider: 'alarm', icon: 'AlertOutlined', label: t('IotSceneLinkage.triggerCategory.iotAlarm'), description: t('IotSceneLinkage.triggerCategoryDesc.iotAlarm'), disabled, disabledReason },
+        { value: 'visual-alarm', provider: 'alarm', icon: 'EyeOutlined', label: t('IotSceneLinkage.triggerCategory.visualAlarm'), description: t('IotSceneLinkage.triggerCategoryDesc.visualAlarm'), disabled, disabledReason },
+      ]
+    }
+    return [{ ...toTriggerPickerOption(item), disabled, disabledReason }]
+  }))
 // 与后端 MultiTrigger 的固定叶子限制保持一致，避免选择后才在保存时失败。
 const multiTriggerOptions = computed<TriggerPickerOption[]>(() => {
   const triggerKinds = [
@@ -226,12 +242,23 @@ const multiTriggerOptions = computed<TriggerPickerOption[]>(() => {
     { value: 'state', icon: 'SyncOutlined', provider: 'device' },
     { value: 'alarm', icon: 'AlertOutlined', provider: 'alarm' },
   ]
-  return triggerKinds
-    .filter(item => MULTI_TRIGGER_PROVIDERS.includes(item.provider as typeof MULTI_TRIGGER_PROVIDERS[number]))
-    .filter(item => props.supportedTriggers.includes(item.provider))
-    .map(item => {
+  const supportedProviders = props.triggerProviders
+    .filter(item => item.provider !== 'multi' && props.supportedTriggers.includes(item.provider))
+  const options: TriggerPickerOption[] = []
+  supportedProviders.forEach(provider => {
+    if (!MULTI_TRIGGER_PROVIDERS.includes(provider.provider as typeof MULTI_TRIGGER_PROVIDERS[number])) {
+      options.push({
+        ...toTriggerPickerOption(provider),
+        disabled: true,
+        disabledReason: 'IotSceneLinkage.message.multiTriggerProviderUnsupported',
+      })
+      return
+    }
+    triggerKinds
+      .filter(item => item.provider === provider.provider)
+      .forEach(item => {
       const provider = props.triggerProviders.find(providerItem => providerItem.provider === item.provider)
-      return {
+      options.push({
         ...item,
         label: t(`IotSceneLinkage.trigger.${item.value}`),
         description: t(`IotSceneLinkage.triggerDesc.${item.value}`),
@@ -239,8 +266,10 @@ const multiTriggerOptions = computed<TriggerPickerOption[]>(() => {
         providerDescription: provider?.description || '',
         disabled: Boolean(props.lockedTriggerProviders.length && !props.lockedTriggerProviders.includes(item.provider)),
         disabledReason: 'IotSceneLinkage.message.triggerProviderLocked',
-      }
+      })
     })
+  })
+  return options
 })
 const canConvertToMulti = computed(() => data.value.triggerType !== 'multi'
   && MULTI_TRIGGER_PROVIDERS.includes(String(data.value.triggerType) as typeof MULTI_TRIGGER_PROVIDERS[number])
@@ -256,18 +285,24 @@ function changeTrigger(triggerType: string) {
     : { type: triggerType }
 }
 
-async function selectTriggerFromPicker(triggerType: string) {
+const collectorPending = ref(false)
+async function selectTriggerFromPicker(pickerType: string) {
   triggerPickerVisible.value = false
+  const triggerType = alarmPickerKinds.has(pickerType) ? 'alarm' : pickerType
   // 编辑场景删除后仍可重选，但不能通过选择器回调绕过已保存 Provider 的限制。
   if (props.lockedTriggerProviders.length && !props.lockedTriggerProviders.includes(triggerType)) return
   // 重选当前触发方式不能清空已经填写的原版触发器配置。
   if (data.value.triggerType === triggerType) return
   changeTrigger(triggerType)
+  if (triggerType === 'alarm') {
+    data.value.trigger = { type: 'alarm', configuration: { sourceKind: pickerType === 'visual-alarm' ? 'visual-ai' : 'iot-device' } }
+  }
   // 选择后直接进入对应配置，避免把“选择类型”和“填写规则”拆成两步。
   await nextTick()
   if (triggerType === 'device') deviceRef.value?.openConfig()
   else if (triggerType === 'timer') timerTriggerRef.value?.openConfig()
-  else if (triggerType === 'collector') collectorRef.value?.openConfig()
+  else if (triggerType === 'collector') { collectorPending.value = true; collectorRef.value?.openConfig() }
+  else if (triggerType === 'ai-event') saasTriggerRef.value?.openConfig()
 }
 
 /** 与快速模式保持一致：已选规则提供显式编辑入口，但已保存规则不允许更换类型。 */
@@ -282,6 +317,13 @@ function removeTrigger() {
   data.value.triggerType = ''
   data.value.trigger = {}
   sceneForm.value?.clearValidate?.('triggerType')
+}
+
+/** 新建采集器规则在弹窗确认前只保留会话草稿；取消时恢复未选择触发器的状态。 */
+function cancelNewCollector() {
+  if (!collectorPending.value) return
+  collectorPending.value = false
+  removeTrigger()
 }
 
 /** 多条件删除至一条时回到普通触发器，避免把单条规则误展示为组合规则。 */

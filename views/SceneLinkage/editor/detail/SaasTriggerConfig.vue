@@ -5,12 +5,18 @@
       <div><strong>{{ title }}</strong><small>{{ hint }}</small></div>
     </header>
     <AlarmTriggerSourceRow v-if="data.triggerType === 'alarm'" v-model="alarm" />
-    <AiEventTriggerRow v-else-if="data.triggerType === 'ai-event'" v-model="aiEvent" />
+    <AiEventTriggerRow
+      v-else-if="data.triggerType === 'ai-event'"
+      :open="aiEventConfigOpen"
+      :model-value="aiEvent"
+      @confirm="confirmAiEvent"
+      @cancel="aiEventConfigOpen = false"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, type Ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSceneStore } from '@rule-engine-manager-ui/store/scene'
 import type { SceneAiEventTriggerConfig, SceneAlarmTriggerConfig } from '../../utils'
@@ -24,6 +30,7 @@ const { data: storeData } = storeToRefs(useSceneStore())
 // 原版 Store 类型只声明了早期触发器，详细桥接需要同时承载 SaaS 专用 Provider 配置。
 const data = storeData as unknown as Ref<Record<string, any>>
 const { t } = useI18n()
+const aiEventConfigOpen = ref(false)
 const title = computed(() => data.value.triggerType === 'alarm'
   ? t('IotSceneLinkage.detail.alarmTrigger')
   : t('IotSceneLinkage.detail.aiEventTrigger'))
@@ -48,7 +55,10 @@ const alarm = computed<SceneAlarmTriggerConfig>({
   get: () => ({
     modes: [],
     ...(data.value.trigger?.configuration || {}),
-    sourceKind: data.value.trigger?.configuration?.targetType === 'aiTaskMediaTarget' ? 'visual-ai' : 'iot-device',
+    sourceKind: data.value.trigger?.configuration?.sourceKind === 'visual-ai'
+      || data.value.trigger?.configuration?.targetType === 'aiTaskMediaTarget'
+      ? 'visual-ai'
+      : 'iot-device',
   }),
   set: value => {
     const branch = ensureFirstBranch()
@@ -64,6 +74,16 @@ const alarm = computed<SceneAlarmTriggerConfig>({
     )
   },
 })
+
+/** 详细模式选择视觉事件后立即进入与快速模式相同的资源配置弹窗。 */
+function openConfig() {
+  if (data.value.triggerType === 'ai-event') aiEventConfigOpen.value = true
+}
+
+function confirmAiEvent(value: SceneAiEventTriggerConfig) {
+  aiEvent.value = value
+  aiEventConfigOpen.value = false
+}
 
 const aiEvent = computed<SceneAiEventTriggerConfig>({
   get: () => {
@@ -120,7 +140,7 @@ function validate() {
   return undefined
 }
 
-defineExpose({ validate })
+defineExpose({ validate, openConfig })
 </script>
 
 <style scoped>

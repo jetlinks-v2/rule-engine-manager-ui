@@ -8,7 +8,7 @@
         :maskClosable="false"
     >
         <header class="scene-delay__header"><strong>{{ $t('IotSceneLinkage.detail.delayDuration') }}</strong><small>{{ $t('IotSceneLinkage.detail.delayDurationHint') }}</small></header>
-        <a-form layout="vertical"><a-form-item :label="$t('IotSceneLinkage.detail.delayDuration')"><a-input-number style="max-width: 220px" :placeholder="$t('Delay.index.9667826-1')" v-model:value="_value" :precision="0" :min="0" :max="65535"><template #addonAfter><a-select style="min-width: 60px" :options="unitOptions" v-model:value="unit" /></template></a-input-number></a-form-item></a-form>
+        <a-form layout="vertical"><a-form-item :label="$t('IotSceneLinkage.detail.delayDuration')"><a-input-number style="max-width: 220px" :placeholder="$t('Delay.index.9667826-1')" v-model:value="_value" :precision="0" :min="1" :max="65535"><template #addonAfter><a-select style="min-width: 60px" :options="unitOptions" v-model:value="unit" /></template></a-input-number></a-form-item></a-form>
         <section class="scene-delay__preview"><span>{{ $t('IotSceneLinkage.detail.currentDelay') }}</span><b>{{ delaySummary }}</b></section>
         <footer class="scene-delay__footer"><a-button @click="onCancel">{{ $t('IotSceneLinkage.action.cancel') }}</a-button><a-button type="primary" @click="onOk">{{ $t('IotSceneLinkage.action.confirm') }}</a-button></footer>
     </a-modal>
@@ -24,7 +24,7 @@ const props = defineProps({
         type: Object,
         default: () => {
             return {
-                time: 0,
+                time: 1,
                 unit: 'seconds',
             };
         },
@@ -44,7 +44,7 @@ const unitOptions = [
 
 const emit = defineEmits(['cancel', 'save']);
 
-const _value = ref<number>(props.value.time);
+const _value = ref<number>(props.value?.time ?? 1);
 const unit = ref<'seconds' | 'minutes' | 'hours'>(
     props.value?.unit || 'seconds',
 );
@@ -55,7 +55,7 @@ const delaySummary = computed(() => _value.value
 watch(
     () => props.value,
     (newVal) => {
-        _value.value = newVal?.time || 0;
+        _value.value = newVal?.time ?? 1;
         unit.value = newVal?.unit || 'seconds';
     },
     {

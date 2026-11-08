@@ -6,7 +6,7 @@
     </div>
     <a-form ref="typeForm" :model="formModel" layout="vertical" :colon="false">
       <a-form-item required :label="$t('Device.Type.372529-1')">
-        <a-select v-model:value="formModel.operator" :options="topOptions" popup-class-name="scene-editor__resource-dropdown" :dropdown-match-select-width="false">
+        <a-select v-model:value="formModel.operator" :options="topOptions" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="false">
           <template #option="option">
             <div class="scene-editor__device-trigger-option">
               <span><AIcon :type="optionValue(option).icon" /></span>

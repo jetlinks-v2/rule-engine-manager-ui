@@ -20,7 +20,9 @@
 
     <TriggerPickerModal
       :open="pickerVisible"
-      mode="provider"
+      mode="multi"
+      :title="$t('IotSceneLinkage.detail.triggerRule')"
+      :hint="$t('IotSceneLinkage.editor.triggerPickerHint')"
       :options="triggerOptions"
       @cancel="pickerVisible = false"
       @select="addTrigger"

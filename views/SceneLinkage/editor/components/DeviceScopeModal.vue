@@ -10,7 +10,7 @@
       </a-radio-group>
       <slot name="toolbar-actions" />
     </header>
-    <div class="device-scope-modal__layout">
+    <div :class="['device-scope-modal__layout', { 'device-scope-modal__layout--scope': scopeMode !== 'fixed' }]">
       <aside class="device-scope-modal__navigation">
         <template v-if="scopeMode === 'fixed'">
           <a-button :type="selectedSpaceId ? 'text' : 'primary'" block @click="selectAllDevices"><AIcon type="AppstoreOutlined" />{{ $t('IotSceneLinkage.editor.allDevices') }}</a-button>
@@ -20,42 +20,46 @@
         </template>
         <template v-else-if="scopeMode === 'space'">
           <div class="device-scope-modal__space-title"><AIcon type="EnvironmentOutlined" />{{ $t('IotSceneLinkage.editor.areas') }}</div>
-          <a-tree class="device-scope-modal__tree" block-node checkable :tree-data="spaceTreeData" :checked-keys="selectedScopeValues.map(item => item.value)" :loading="scopeLoading" @check="selectScopedValues($event, spaceTreeData)" />
+          <p class="device-scope-modal__scope-hint">{{ scopeModeHint }}</p>
+          <a-tree :class="['device-scope-modal__tree', { 'is-error': scopeError }]" block-node checkable :tree-data="spaceTreeData" :checked-keys="selectedScopeValues.map(item => item.value)" :loading="scopeLoading" @check="selectScopedValues($event, spaceTreeData)" />
+          <p v-if="scopeError" class="device-scope-modal__scope-error">{{ selectionHint }}</p>
         </template>
-        <template v-else>
+        <template v-else-if="scopeMode !== 'all'">
           <div class="device-scope-modal__space-title"><AIcon :type="scopeMode === 'device-group' ? 'ClusterOutlined' : 'ApartmentOutlined'" />{{ scopeModeLabel }}</div>
-          <a-tree class="device-scope-modal__tree" block-node checkable :tree-data="scopeTreeData" :checked-keys="selectedScopeValues.map(item => item.value)" :loading="scopeLoading" @check="selectScopedValues($event, scopeTreeData)" />
+          <p class="device-scope-modal__scope-hint">{{ scopeModeHint }}</p>
+          <a-tree :class="['device-scope-modal__tree', { 'is-error': scopeError }]" block-node checkable :tree-data="scopeTreeData" :checked-keys="selectedScopeValues.map(item => item.value)" :loading="scopeLoading" @check="selectScopedValues($event, scopeTreeData)" />
+          <p v-if="scopeError" class="device-scope-modal__scope-error">{{ selectionHint }}</p>
         </template>
+        <div v-else class="device-scope-modal__scope-overview"><AIcon type="AppstoreOutlined" /><strong>{{ scopeModeLabel }}</strong><span>{{ scopeModeHint }}</span></div>
       </aside>
-      <section class="device-scope-modal__content">
-        <div class="device-scope-modal__filters" v-if="scopeMode === 'fixed'">
+      <section v-if="scopeMode === 'fixed'" class="device-scope-modal__content">
+        <div class="device-scope-modal__filters">
           <a-input-search v-model:value="keyword" :placeholder="$t('IotSceneLinkage.placeholder.searchDevice')" :loading="deviceLoading" @search="searchDevices" />
           <IotAlarmTargetSelect v-if="!lockProduct" v-model="productFilter" class="device-scope-modal__product-filter" :request="requestProducts" :placeholder="$t('IotSceneLinkage.placeholder.product')" @change="changeProductFilter" />
         </div>
-        <div v-if="scopeMode === 'fixed'" class="device-scope-modal__device-list-head">
+        <div class="device-scope-modal__device-list-head">
           <span>{{ $t('IotSceneLinkage.form.device') }}</span><span>{{ $t('IotSceneLinkage.form.product') }}</span><span>{{ $t('IotSceneLinkage.device.status') }}</span>
         </div>
-        <a-spin v-if="scopeMode === 'fixed'" :spinning="deviceLoading" class="device-scope-modal__device-loading">
+        <a-spin :spinning="deviceLoading" class="device-scope-modal__device-loading">
           <div v-if="deviceOptions.length" class="device-scope-modal__device-list">
             <button v-for="device in deviceOptions" :key="device.id" type="button" :class="['device-scope-modal__device-row', { 'is-selected': isDeviceSelected(device.id) }]" @click="selectDevice(device)">
-              <span :title="device.name">{{ device.name }}</span><span :title="device.productName">{{ device.productName }}</span><span :class="['device-scope-modal__status', device.online ? 'is-online' : 'is-offline']"><i class="device-scope-modal__status-dot" />{{ device.statusText }}</span>
+              <span :title="device.name">{{ device.name }}</span><span :title="device.productName">{{ device.productName }}</span><j-badge-status :text="device.statusText" :status="device.status" />
             </button>
           </div>
           <CloudEmpty v-else-if="!deviceLoading" :description="$t('IotSceneLinkage.scope.empty')" />
         </a-spin>
-        <a-pagination v-if="scopeMode === 'fixed' && total > pageSize" class="device-scope-modal__pagination" size="small" :current="pageIndex + 1" :page-size="pageSize" :total="total" show-less-items @change="changePage" />
-        <div v-else class="device-scope-modal__scope-description"><AIcon type="InfoCircleOutlined" /><span>{{ scopeModeHint }}</span></div>
+        <a-pagination v-if="total > pageSize" class="device-scope-modal__pagination" size="small" :current="pageIndex + 1" :page-size="pageSize" :total="total" show-less-items @change="changePage" />
       </section>
       <aside class="device-scope-modal__selection">
-        <template v-if="hasSelection">
-          <div class="device-scope-modal__selected-device"><strong>{{ selectionTitle }}</strong><span>{{ selectionDescription }}</span></div>
+        <template v-if="hasSelection || scopeMode !== 'fixed' || detailed">
+          <div v-if="hasSelection && !detailed" class="device-scope-modal__selected-device"><strong>{{ selectionTitle }}</strong><span>{{ selectionDescription }}</span></div>
           <slot name="configuration" :selected-device="selectedDevice" :selected-devices="selectedDevices" :has-selection="hasSelection" :scope="scopeMode" />
-          <div class="device-scope-modal__preview"><slot name="preview" :selected-device="selectedDevice" :selected-devices="selectedDevices" :scope="scopeMode" /></div>
+          <div v-if="hasSelection" class="device-scope-modal__preview"><slot name="preview" :selected-device="selectedDevice" :selected-devices="selectedDevices" :scope="scopeMode" /></div>
         </template>
         <CloudEmpty v-else :description="selectionHint" />
       </aside>
     </div>
-    <div class="device-scope-modal__footer"><a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button><a-button type="primary" :disabled="!hasSelection" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button></div>
+    <div class="device-scope-modal__footer"><a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button><a-button type="primary" :disabled="scopeMode === 'fixed' && !hasSelection" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button></div>
   </component>
 </template>
 <script setup lang="ts">
@@ -72,7 +76,7 @@ export type DeviceScope = {
   productId?: string
   productName?: string
 }
-type DeviceOption = { id: string; name: string; productId: string; productName: string; spaceName?: string; online: boolean; statusText: string }
+type DeviceOption = { id: string; name: string; productId: string; productName: string; spaceName?: string; online: boolean; statusText: string; status: 'success' | 'error' | 'default' }
 type SpaceNode = { key: string; title: string; children?: SpaceNode[] }
 type ScopeMode = DeviceScope['selector']
 const UNBOUND_SPACE_KEY = '__scene-unbound-space__'
@@ -109,6 +113,7 @@ const deviceOptions = ref<DeviceOption[]>([])
 const selectedDevices = ref<DeviceOption[]>([])
 const selectedScopeValues = ref<Array<{ value: string; name?: string }>>([])
 const scopeMode = ref<ScopeMode>('fixed')
+const scopeError = ref(false)
 const draft = reactive({ deviceId: '', deviceName: '', productId: '', productName: '' })
 let requestSequence = 0
 let searchTimer: ReturnType<typeof setTimeout> | undefined
@@ -145,12 +150,12 @@ const scopeModeHint = computed(() => {
 
 watch(() => props.open, async open => {
   if (!open) { clearSearchTimer(); return }
-  keyword.value = ''; pageIndex.value = 0; selectedSpaceId.value = ''
+  keyword.value = ''; pageIndex.value = 0; selectedSpaceId.value = ''; scopeError.value = false
   productFilter.value = props.modelValue.productId || props.productId || undefined
   scopeMode.value = props.detailed && props.modelValue.selector !== 'fixed' ? props.modelValue.selector : 'fixed'
   if (!props.scopeModes.includes(scopeMode.value)) scopeMode.value = 'fixed'
   Object.assign(draft, { deviceId: props.modelValue.selector === 'fixed' ? String(props.modelValue.selectorValues[0]?.value || '') : '', deviceName: props.modelValue.selectorValues[0]?.name || '', productId: props.modelValue.productId || props.productId || '', productName: props.modelValue.productName || '' })
-  selectedDevices.value = props.modelValue.selector === 'fixed' ? props.modelValue.selectorValues.map(item => ({ id: String(item.value), name: item.name || String(item.value), productId: draft.productId, productName: draft.productName, online: false, statusText: '' })) : []
+  selectedDevices.value = props.modelValue.selector === 'fixed' ? props.modelValue.selectorValues.map(item => ({ id: String(item.value), name: item.name || String(item.value), productId: draft.productId, productName: draft.productName, online: false, statusText: '', status: 'default' })) : []
   selectedScopeValues.value = props.modelValue.selector === 'fixed' ? [] : [...props.modelValue.selectorValues]
   await Promise.all([loadSpaceTree(), loadScopeTrees()])
   if (scopeMode.value === 'fixed') await loadDevices()
@@ -158,7 +163,20 @@ watch(() => props.open, async open => {
 watch(scopeMode, mode => {
   if (!props.open) return
   selectedSpaceId.value = ''
+  scopeError.value = false
   if (mode === 'fixed') void searchDevices()
+})
+watch(selectedScopeValues, values => {
+  if (values.length) scopeError.value = false
+}, { deep: true })
+watch([
+  () => props.modelValue.productId,
+  () => props.modelValue.productName,
+  () => props.productId,
+], ([modelProductId, modelProductName, productId]) => {
+  if (!props.open) return
+  draft.productId = modelProductId || productId || draft.productId
+  if (modelProductName) draft.productName = modelProductName
 })
 watch(keyword, () => {
   if (!props.open) return
@@ -189,7 +207,9 @@ async function loadDevices() {
 function toDeviceOption(device: any): DeviceOption {
   const status = device.state?.text || device.state?.value || device.state || device.status?.text || device.status || ''
   const online = ['online', 'enabled', '正常', '在线'].includes(String(status).toLowerCase()) || device.online === true
-  return { id: String(device.id), name: device.name || device.id, productId: String(device.productId || device.product?.id || ''), productName: device.productName || device.product?.name || device.productId || '-', spaceName: device.area || device.spaceName || device.others?.spaceName, online, statusText: status || (online ? t('IotSceneLinkage.deviceState.online') : t('IotSceneLinkage.deviceState.offline')) }
+  const normalizedStatus = String(status).toLowerCase()
+  const statusTone = online ? 'success' : ['offline', '离线'].includes(normalizedStatus) ? 'error' : 'default'
+  return { id: String(device.id), name: device.name || device.id, productId: String(device.productId || device.product?.id || ''), productName: device.productName || device.product?.name || device.productId || '-', spaceName: device.area || device.spaceName || device.others?.spaceName, online, statusText: status || (online ? t('IotSceneLinkage.deviceState.online') : t('IotSceneLinkage.deviceState.offline')), status: statusTone }
 }
 function isDeviceSelected(id: string) { return selectedDevices.value.some(item => item.id === id) }
 
@@ -279,7 +299,11 @@ async function requestProducts(query: IotAlarmTargetSelectQuery) {
 }
 /** The shell owns resource selection only; the right-side business editor validates its own fields before commit. */
 async function save() {
-  if (!hasSelection.value) return
+  if (!hasSelection.value) {
+    scopeError.value = true
+    return
+  }
+  scopeError.value = false
   if (props.validate && !(await props.validate(selectedDevice.value as DeviceOption))) return
   const selector = scopeMode.value
   const values = selector === 'fixed'
@@ -298,10 +322,10 @@ async function save() {
 </script>
 
 <style scoped>
-.device-scope-modal__toolbar { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 52px; padding: var(--space-3, 12px) var(--space-4, 16px); margin-bottom: var(--space-3, 12px); background: var(--ant-color-fill-quaternary); border: 1px solid var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 8px); }.device-scope-modal__product-summary { display: grid; flex: 1; gap: 2px; min-width: 0; }.device-scope-modal__product-summary strong, .device-scope-modal__product-summary small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.device-scope-modal__product-summary small { color: var(--ant-color-text-tertiary); font-size: 12px; }.device-scope-modal__layout { display: grid; grid-template-columns: 13rem minmax(25rem, 1fr) 23rem; min-height: 34rem; border: 1px solid var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 8px); }
+.device-scope-modal__toolbar { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 52px; padding: var(--space-3, 12px) var(--space-4, 16px); margin-bottom: var(--space-3, 12px); background: var(--ant-color-fill-quaternary); border: 1px solid var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 8px); }.device-scope-modal__product-summary { display: grid; flex: 1; gap: 2px; min-width: 0; }.device-scope-modal__product-summary strong, .device-scope-modal__product-summary small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.device-scope-modal__product-summary small { color: var(--ant-color-text-tertiary); font-size: 12px; }.device-scope-modal__layout { display: grid; grid-template-columns: 13rem minmax(25rem, 1fr) 23rem; min-height: 34rem; border: 1px solid var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 8px); }.device-scope-modal__layout--scope { grid-template-columns: minmax(20rem, 1fr) 23rem; }
 .device-scope-modal__navigation, .device-scope-modal__selection { display: flex; flex-direction: column; gap: var(--space-2, 8px); padding: var(--space-3, 12px); background: var(--ant-color-fill-quaternary); }.device-scope-modal__navigation { border-right: 1px solid var(--ant-color-border-secondary); }.device-scope-modal__selection { border-left: 1px solid var(--ant-color-border-secondary); }
 .device-scope-modal__embedded { display: block; }.device-scope-modal__embedded .device-scope-modal__layout { min-height: 31rem; }.device-scope-modal__scope-mode { display: flex; flex-wrap: wrap; gap: 4px; }.device-scope-modal__scope-mode :deep(.ant-radio-button-wrapper) { display: inline-flex; gap: 4px; align-items: center; justify-content: center; height: 30px; padding: 0 8px; font-size: 12px; border-radius: 4px; }.device-scope-modal__scope-mode :deep(.ant-radio-button-wrapper)::before { display: none; }
-.device-scope-modal__navigation :deep(.ant-btn) { display: flex; gap: var(--space-2, 8px); align-items: center; justify-content: flex-start; }.device-scope-modal__space-title { display: flex; gap: var(--space-2, 8px); align-items: center; padding: 8px; color: var(--ant-color-text-secondary); font-size: 12px; font-weight: 600; }.device-scope-modal__tree { flex: 1; min-height: 0; overflow: auto; }.device-scope-modal__node { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.device-scope-modal__content { display: flex; flex-direction: column; min-width: 0; padding: var(--space-4, 16px); }.device-scope-modal__filters { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: var(--space-3, 12px); margin-bottom: 12px; }.device-scope-modal__device-list-head, .device-scope-modal__device-row { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 5rem; gap: 12px; align-items: center; }.device-scope-modal__device-list-head { padding: 0 12px 8px; color: var(--ant-color-text-secondary); font-size: 12px; }.device-scope-modal__device-loading { min-height: 0; flex: 1; }.device-scope-modal__device-list { overflow: auto; border: 1px solid var(--ant-color-border-secondary); border-radius: 6px; }.device-scope-modal__device-row { width: 100%; min-height: 50px; padding: 0 12px; color: var(--ant-color-text); text-align: left; background: var(--ant-color-bg-container); border: 0; border-bottom: 1px solid var(--ant-color-border-secondary); cursor: pointer; }.device-scope-modal__device-row:last-child { border-bottom: 0; }.device-scope-modal__device-row:hover, .device-scope-modal__device-row.is-selected { background: var(--ant-color-primary-bg); }.device-scope-modal__device-row.is-selected { box-shadow: inset 0 0 0 1px var(--ant-color-primary); }.device-scope-modal__device-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.device-scope-modal__status { display: inline-flex; align-items: center; font-size: .75rem; }.device-scope-modal__status-dot { width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: currentColor; }.device-scope-modal__status.is-online { color: var(--ant-color-success); }.device-scope-modal__status.is-offline { color: var(--ant-color-text-tertiary); }.device-scope-modal__pagination { display: flex; justify-content: flex-end; margin-top: 12px; }.device-scope-modal__scope-description { display: grid; place-content: center; gap: 8px; flex: 1; min-height: 0; padding: 24px; color: var(--ant-color-text-secondary); text-align: center; font-size: 13px; }.device-scope-modal__scope-description :deep(.anticon) { justify-self: center; color: var(--ant-color-primary); font-size: 20px; }.device-scope-modal__selected-device { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--ant-color-border-secondary); }.device-scope-modal__selected-device span { color: var(--ant-color-text-secondary); font-size: 12px; }.device-scope-modal__preview { margin-top: auto; padding-top: 12px; color: var(--ant-color-text-secondary); border-top: 1px solid var(--ant-color-border-secondary); font-size: 12px; line-height: 20px; }.device-scope-modal__footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 16px; }
+.device-scope-modal__navigation :deep(.ant-btn) { display: flex; gap: var(--space-2, 8px); align-items: center; justify-content: flex-start; }.device-scope-modal__space-title { display: flex; gap: var(--space-2, 8px); align-items: center; padding: 8px; color: var(--ant-color-text-secondary); font-size: 12px; font-weight: 600; }.device-scope-modal__scope-hint { margin: 0; padding: 0 8px 8px; color: var(--ant-color-text-tertiary); font-size: 12px; line-height: 1.5; }.device-scope-modal__scope-error { margin: 0; padding: 6px 8px 0; color: var(--ant-color-error); font-size: 12px; }.device-scope-modal__scope-overview { display: grid; place-content: center; gap: 8px; flex: 1; padding: 24px; color: var(--ant-color-text-secondary); text-align: center; font-size: 13px; }.device-scope-modal__scope-overview :deep(.anticon) { justify-self: center; color: var(--ant-color-primary); font-size: 20px; }.device-scope-modal__scope-overview strong { color: var(--ant-color-text); }.device-scope-modal__tree { flex: 1; min-height: 0; overflow: auto; }.device-scope-modal__tree.is-error { outline: 1px solid var(--ant-color-error); border-radius: var(--radius-jet-sm, 8px); }.device-scope-modal__node { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.device-scope-modal__content { display: flex; flex-direction: column; min-width: 0; padding: var(--space-4, 16px); }.device-scope-modal__filters { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: var(--space-3, 12px); margin-bottom: 12px; }.device-scope-modal__device-list-head, .device-scope-modal__device-row { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 5rem; gap: 12px; align-items: center; }.device-scope-modal__device-list-head { padding: 0 12px 8px; color: var(--ant-color-text-secondary); font-size: 12px; }.device-scope-modal__device-loading { min-height: 0; flex: 1; }.device-scope-modal__device-list { overflow: auto; border: 1px solid var(--ant-color-border-secondary); border-radius: 6px; }.device-scope-modal__device-row { width: 100%; min-height: 50px; padding: 0 12px; color: var(--ant-color-text); text-align: left; background: var(--ant-color-bg-container); border: 0; border-bottom: 1px solid var(--ant-color-border-secondary); cursor: pointer; }.device-scope-modal__device-row:last-child { border-bottom: 0; }.device-scope-modal__device-row:hover, .device-scope-modal__device-row.is-selected { background: var(--ant-color-primary-bg); }.device-scope-modal__device-row.is-selected { position: relative; z-index: 1; box-shadow: inset 0 0 0 1px var(--ant-color-primary); }.device-scope-modal__device-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.device-scope-modal__pagination { display: flex; justify-content: flex-end; margin-top: 12px; }.device-scope-modal__selected-device { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--ant-color-border-secondary); }.device-scope-modal__selected-device span { color: var(--ant-color-text-secondary); font-size: 12px; }.device-scope-modal__preview { margin-top: auto; padding-top: 12px; color: var(--ant-color-text-secondary); border-top: 1px solid var(--ant-color-border-secondary); font-size: 12px; line-height: 20px; }.device-scope-modal__footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 16px; }
 @media (max-width: 900px) { .device-scope-modal__toolbar { align-items: flex-start; flex-wrap: wrap; }.device-scope-modal__scope-mode { order: 3; width: 100%; }.device-scope-modal__layout { grid-template-columns: 11rem minmax(0, 1fr); }.device-scope-modal__selection { grid-column: 1 / -1; min-height: 12rem; border-top: 1px solid var(--ant-color-border-secondary); border-left: 0; }.device-scope-modal__filters { grid-template-columns: 1fr; } }
 </style>

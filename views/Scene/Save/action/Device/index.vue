@@ -318,14 +318,34 @@ const prev = () => {
 };
 
 const saveClick = () => save();
+
+/** 编辑已有详细模式动作时补齐物模型数据，但不重置已选设备和指令。 */
+async function hydrateSelectedProduct(productId: string) {
+    productDetailLoading.value = true
+    const selectedProductId = productId
+    productDetailTask = getProduct(selectedProductId)
+        .then((response: any) => {
+            if (DeviceModel.productId !== selectedProductId) return
+            productDetail.value = response?.result || response || {}
+            DeviceOptions.value.productName = productDetail.value.name || DeviceOptions.value.productName
+        })
+        .finally(() => {
+            if (DeviceModel.productId === selectedProductId) productDetailLoading.value = false
+        })
+    await productDetailTask
+}
+
 watch(
     () => props.value,
     (newValue) => {
         Object.assign(DeviceModel, newValue);
         activeProductId.value = newValue?.productId || ''
+        // 详细模式编辑已有动作时直接展示已选产品下的设备列表并回显范围。
+        current.value = isDetailedEditor.value && newValue?.productId ? 1 : 0
         scopeEditorMode.value = ['context', 'relation', 'tag'].includes(newValue?.selector)
             ? 'advanced'
             : 'resource';
+        if (isDetailedEditor.value && newValue?.productId) void hydrateSelectedProduct(newValue.productId)
     },
     { immediate: true },
 );

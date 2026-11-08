@@ -15,8 +15,8 @@ import {
   toDetailedConditionGroups,
 } from '../views/SceneLinkage/sceneRule'
 
-test('editor mode prefers persisted metadata and uses deployment only for historical rules', () => {
-  assert.equal(resolveInitialEditorMode({ options: { editorMode: 'detail' } }, false), 'detail')
+test('SaaS always opens quick mode while private deployments honor persisted editor mode', () => {
+  assert.equal(resolveInitialEditorMode({ options: { editorMode: 'detail' } }, false), 'quick')
   assert.equal(resolveInitialEditorMode({ options: { editorMode: 'quick' } }, true), 'quick')
   assert.equal(resolveInitialEditorMode({ options: { editorMode: 'unexpected' } }, true), 'detail')
   assert.equal(resolveInitialEditorMode({}, false), 'quick')

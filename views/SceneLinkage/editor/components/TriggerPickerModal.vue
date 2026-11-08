@@ -62,7 +62,7 @@ export type TriggerPickerOption = {
   disabledReason?: string
 }
 
-type TriggerPickerMode = 'quick' | 'provider'
+type TriggerPickerMode = 'quick' | 'provider' | 'multi'
 
 const props = defineProps<{
   open: boolean
@@ -122,7 +122,10 @@ const categories = computed(() => {
       label: providerInfo?.categoryLabel || providerInfo?.providerLabel || t(`IotSceneLinkage.triggerType.${provider}`),
       description: providerInfo?.categoryDescription || providerInfo?.providerDescription || t(`IotSceneLinkage.triggerTypeDesc.${provider}`),
       // 快速模式把设备和定时的细分配置放在后续统一弹窗中，类型选择器只承担入口选择。
-      canExpand: items.length > 1 && !['device', 'timer'].includes(provider),
+      // multi 先按 Provider 收敛候选，再进入对应叶子，避免把全部可组合触发方式平铺到同一层。
+      canExpand: props.mode === 'multi'
+        ? items.length > 1
+        : items.length > 1 && !['device', 'timer'].includes(provider),
       items,
       disabled: items.every(item => item.disabled),
       disabledReason: items.find(item => item.disabled)?.disabledReason || '',

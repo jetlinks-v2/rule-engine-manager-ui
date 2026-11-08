@@ -45,7 +45,8 @@ const asRecord = (value: unknown): SceneRuleRecord => value && typeof value === 
 const displayList = (value: unknown): string => Array.isArray(value)
   ? value.map(displayList).filter(Boolean).join('、')
   : value === undefined || value === null || value === '' ? '' : String(value)
-const optionText = (options: SceneRuleRecord, ...keys: string[]) => keys.map(key => displayList(options[key])).find(Boolean) || ''
+// Provider 配置会在选择触发器后逐步补齐；预览必须能先展示未配置状态，不能因可选 options 尚不存在而中断编辑器渲染。
+const optionText = (options: SceneRuleRecord | undefined, ...keys: string[]) => keys.map(key => displayList(options?.[key])).find(Boolean) || ''
 const providerName = (provider: string, providers: SceneProviderInfo[], prefix: 'triggerType' | 'action') => providers.find(item => item.provider === provider)?.name
   || t(`IotSceneLinkage.${prefix}.${provider}`)
 const continuationLabel = (kind: PreviewLineKind) => kind === 'when'

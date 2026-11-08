@@ -4,6 +4,7 @@
 		<DetailedSceneEditor
 			v-else-if="editorMode === 'detail'"
 			:rule="canonicalDraft"
+			:show-mode-switch="showEditorModeSwitch"
 			:supported-triggers="supportedTriggers"
 			:trigger-providers="triggerProviders"
 			:locked-trigger-providers="lockedTriggerProviders"
@@ -22,7 +23,7 @@
 					@back="menuStore.jumpPage(sceneRouteKey)"
 			>
 				<template #actions>
-					<div class="scene-editor__header-actions">
+					<div v-if="showEditorModeSwitch" class="scene-editor__header-actions">
 						<a-radio-group :value="editorMode" button-style="solid" @change="switchFromQuick">
 							<a-radio-button value="quick">{{ $t('IotSceneLinkage.editor.quickMode') }}</a-radio-button>
 							<a-radio-button value="detail">{{ $t('IotSceneLinkage.editor.detailMode') }}</a-radio-button>
@@ -171,7 +172,7 @@
 					<a-form layout="vertical">
 						<template v-if="hasSelection">
 							<a-form-item :label="$t('IotSceneLinkage.form.triggerType')">
-								<a-select class="scene-editor__device-trigger-type" :value="form.triggerKind" :options="deviceTriggerKinds" popup-class-name="scene-editor__resource-dropdown" @change="changeDeviceTriggerKind">
+								<a-select class="scene-editor__device-trigger-type" :value="form.triggerKind" :options="deviceTriggerKinds" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="false" @change="changeDeviceTriggerKind">
 									<template #option="option"><div class="scene-editor__device-trigger-option"><span><AIcon :type="optionValue(option).icon" /></span><div><b>{{ optionValue(option).label }}</b><small>{{ optionValue(option).description }}</small></div></div></template>
 								</a-select>
 							</a-form-item>
@@ -282,6 +283,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Modal } from 'ant-design-vue'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
+import { isPrivateDeployment } from '@jetlinks-web-core/utils/deployment'
 import { createSceneLinkage, getProduct, getSceneDetail, queryCurrentSceneNotifyUser, queryProtocolUnits, querySceneNotifyChannelTemplates, querySceneNotifyChannels, querySceneNotifyUsers, querySceneSupportedActions, querySceneSupportedTriggers, updateSceneLinkage, type SceneNotifyMethod, type SceneNotifyUser, type SceneProviderInfo } from '../../../api/scene-linkage'
 import { canReceiveProfileBackedNotification, mergeNotifyUsersById } from '../../../utils/notifyUser'
 import { applyMultiTriggerForm, buildRequest, defaultForm, formatSceneDuration, MULTI_TRIGGER_PROVIDERS, normalizeResult, toForm, type SceneConditionForm, type SceneEditorMode, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTimeRange, type SceneTriggerKind } from '../utils'
@@ -317,6 +319,8 @@ const notifyUsersTotal = ref(0)
 // 编辑器由 SaaS 与私有化两套菜单进入，新增和编辑分别对应各自菜单的动作码。
 const sceneRoutePermissionKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, ''))
 const savePermission = computed(() => `${sceneRoutePermissionKey.value}:${route.params.id ? 'update' : 'add'}`)
+// SaaS 只提供标准化的快速配置；详细规则仅在私有化部署中开放。
+const showEditorModeSwitch = isPrivateDeployment()
 // 新编辑路由按当前菜单分别使用 SaaS 的 add/update 与私有化菜单的 add/update 动作权限。
 const route = useRoute(); const { t } = useI18n(); const permissionKey = useScenePermission(); const menuStore = useMenuStore(); const sceneRouteKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, '')); const form = reactive<SceneLinkageForm>(defaultForm()); const properties = ref<any[]>([]); const events = ref<any[]>([]); const saving = ref(false); const triggerPickerVisible = ref(false); const actionPickerVisible = ref(false); const scopeVisible = ref(false); const conditionVisible = ref(false); const delayEditorVisible = ref(false); const delayEditingIndex = ref<number>(); const delayCreating = ref(false); const delayDraft = reactive({ time: 1, unit: 'seconds' }); const autoOpenActionIndex = ref<number>(); const autoOpenConditionIndex = ref<number>(); const notifyMethods = ref<SceneNotifyMethod[]>([]); const notifyUsers = ref<SceneNotifyUser[]>([]); const notifyMethodsLoading = ref(false); const notifyUsersLoading = ref(false); const supportedTriggers = ref<string[]>([]); const triggerProviders = ref<SceneProviderInfo[]>([]); const supportedActions = ref<string[]>([]); const validation = reactive({ field: '', message: '' }); const loadingScene = ref(Boolean(route.params.id)); const editorMode = ref<SceneEditorMode>('quick'); const originalSnapshot = ref<SceneRuleRecord>({}); const quickProjectionBase = ref<SceneRuleRecord>({}); const canonicalDraft = ref<SceneRuleRecord>({}); const quickResetFromDetailed = ref(false); const legacyAlarmActionReadOnly = ref(false)
 // 编辑态允许重配触发器的具体条件，但 Provider 必须保持为首次保存时的类型。

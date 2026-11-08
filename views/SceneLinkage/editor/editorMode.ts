@@ -28,17 +28,18 @@ const cloneRule = <T>(value: T): T => {
 }
 
 /**
- * 读取已保存的模式标识；历史规则没有标识时按当前部署形态选择默认入口。
+ * SaaS 只提供快速配置；私有化部署才读取已保存的模式标识。
  *
- * 模式只属于编辑器元数据，不能从规则结构猜测，避免首次打开历史复杂规则时发生隐式迁移。
+ * 这样历史详细规则在 SaaS 打开时不会绕过产品入口约束，而私有化仍可按原模式继续编辑。
  */
 export const resolveInitialEditorMode = (
   rule: unknown,
   privateDeployment = isPrivateDeployment(),
 ): SceneEditorMode => {
+  if (!privateDeployment) return 'quick'
   const savedMode = isRecord(rule) && isRecord(rule.options) ? rule.options.editorMode : undefined
   if (savedMode === 'quick' || savedMode === 'detail') return savedMode
-  return privateDeployment ? 'detail' : 'quick'
+  return 'detail'
 }
 
 /**

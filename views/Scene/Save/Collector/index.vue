@@ -12,7 +12,7 @@
       >
         <Title :options='formData.options.trigger'/>
       </AddButton>
-      <AddModel v-if='visible && formData.triggerType==="collector"' @cancel='visible = false' @save='save'
+      <AddModel v-if='visible && formData.triggerType==="collector"' @cancel='cancelConfig' @save='save'
                 :value='formData.trigger.collector' :options='formData.options.trigger'/>
     </a-form-item>
     <Terms v-if="showTerms" ref="termsRef"/>
@@ -38,6 +38,10 @@ const formData = storeData as unknown as Ref<Record<string, any>>
 const { t: $t } = useI18n()
 const visible = ref(false)
 const termsRef = ref()
+const emit = defineEmits<{
+  (event: 'cancel-config'): void
+  (event: 'save-config'): void
+}>()
 
 defineProps({
   /** 详细模式使用同一棵 Terms 树，但由页面的执行动作区统一承载。 */
@@ -76,6 +80,12 @@ const save = (collector: TriggerCollector, options: Record<string, any>) => {
   formData.value.options!.trigger = options
   visible.value = false
   EventEmitter.emit(DeviceEmitterKey, collector)
+  emit('save-config')
+}
+
+function cancelConfig() {
+  visible.value = false
+  emit('cancel-config')
 }
 
 defineExpose({

@@ -553,6 +553,11 @@
     max-width: calc(100vw - 24px) !important;
 }
 
+.scene-editor__device-trigger-dropdown.ant-select-dropdown {
+    width: min(22rem, calc(100vw - 24px)) !important;
+    min-width: min(22rem, calc(100vw - 24px)) !important;
+}
+
 .scene-editor__compact-dropdown.ant-select-dropdown {
     box-sizing: border-box;
     width: min(14rem, calc(100vw - 24px)) !important;
@@ -872,7 +877,7 @@
 .scene-editor__timer-interval-input { display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); align-items: center; }
 .scene-editor__timer-interval-input :deep(.ant-input-number) { width: 8rem; }
 .scene-editor__timer-interval-input :deep(.ant-select) { width: 7rem; }
-.scene-editor__device-trigger-option { display: flex; gap: var(--space-2, 8px); align-items: center; padding: 2px 0; }
+.scene-editor__device-trigger-option { display: flex; justify-content: flex-start; width: 100%; gap: var(--space-2, 8px); align-items: center; padding: 2px 0; text-align: left; }
 .scene-editor__device-trigger-option > span { display: grid; flex: none; place-items: center; width: 28px; height: 28px; color: var(--ant-color-primary); background: var(--ant-color-primary-bg); border-radius: 6px; }
 .scene-editor__device-trigger-option > div { display: grid; gap: 2px; min-width: 0; }
 .scene-editor__device-trigger-option b { font-size: .8125rem; font-weight: 600; }

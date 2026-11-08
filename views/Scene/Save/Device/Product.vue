@@ -1,5 +1,6 @@
 <template>
   <IotAddDeviceProductStep
+    compact-meta
     :category-tree="categoryTree"
     :category-loading="categoryLoading"
     :total-product-count="totalProductCount"
@@ -153,3 +154,9 @@ watch(() => props.rowKey, async id => {
 
 void Promise.all([loadCategories(), loadProducts()])
 </script>
+
+<style scoped>
+/* 场景选择产品时不需要设备库卡片的等高网格，避免短摘要被拉出大块空白。 */
+:deep(.add-device-library__grid) { align-items: start; }
+:deep(.add-device-library__grid > .card-shell) { height: auto; }
+</style>
