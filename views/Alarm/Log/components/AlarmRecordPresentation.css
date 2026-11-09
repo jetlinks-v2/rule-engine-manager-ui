@@ -1,0 +1,180 @@
+.alarm-record {
+  min-width: 0;
+  width: 100%;
+  color: var(--ink-1);
+}
+.alarm-record.list {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+}
+.alarm-symbol {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  color: var(--ink-2);
+}
+.alarm-symbol :deep(.alarm-level-icon) {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.occurrence .alarm-symbol :deep(.alarm-level-icon) {
+  width: 18px;
+  height: 18px;
+}
+.alarm-record.expanded {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.alarm-record.expanded time {
+  color: var(--ink-2);
+  font-size: 11px;
+}
+.alarm-record.expanded p {
+  margin: 0;
+}
+.active .alarm-symbol {
+  color: var(--err);
+  background: var(--err-bg);
+}
+.occurrence.list .alarm-symbol {
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+}
+.alarm-content {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+.alarm-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.alarm-title strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+}
+.alarm-title > .anticon:last-child {
+  color: var(--ink-3);
+  font-size: 10px;
+}
+.alarm-meta,
+.alarm-context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.alarm-meta time {
+  margin-inline-start: auto;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.alarm-meta :deep(.meta-chip) {
+  font-size: 10px;
+  padding: 1px 7px;
+}
+.alarm-duration {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.alarm-duration {
+  font-variant-numeric: tabular-nums;
+}
+.alarm-duration:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.alarm-cause {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 18px;
+}
+.alarm-record.detail {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 6px;
+  container-type: inline-size;
+}
+.alarm-title h3 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.alarm-narrative {
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.alarm-narrative p {
+  margin: 0;
+}
+.detail-cause {
+  color: var(--ink-2);
+}
+.alarm-context {
+  flex-wrap: wrap;
+}
+.alarm-context > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.alarm-timeline {
+  margin: 8px 0 0;
+}
+.alarm-timeline :deep(.ant-timeline-item) {
+  padding-bottom: 16px;
+}
+.alarm-timeline :deep(.ant-timeline-item-last) {
+  padding-bottom: 0;
+}
+.alarm-timeline :deep(.ant-timeline-item-content) {
+  min-height: 22px;
+  font-size: 12px;
+}
+.alarm-moment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.alarm-moment time {
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.alarm-moment .alarm-duration {
+  margin-inline-start: 0;
+}
+time {
+  font-variant-numeric: tabular-nums;
+}
