@@ -1,5 +1,16 @@
 <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+      type="primary"
+      @click="handleAdd"
+      :hasPermission="`${permissionKey}:add`"
+    >
+      <template #icon><AIcon type="PlusOutlined" /></template>
+      {{ $t('Scene.index.895630-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <FullPage transparentBackground>
       
         <JProTable
@@ -12,18 +23,16 @@
           :defaultParams="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
           :params="params"
         >
+          <template #emptyText>
+            <CloudEmpty :search="params?.terms" :search-name="$t('Configuration.index.021440-10')">
+              <EmptyCreateButton />
+            </CloudEmpty>
+          </template>
           <template #headerLeftRender>
             <a-flex :gap="16">
               <ConditionFilter :columns="columns" target="scene" @search="handleSearch" />
               <a-space>
-                <j-permission-button
-                  type="primary"
-                  @click="handleAdd"
-                  :hasPermission="`${permissionKey}:add`"
-                >
-                  <template #icon><AIcon type="PlusOutlined" /></template>
-                  {{ $t('Scene.index.895630-0') }}
-                </j-permission-button>
+                <EmptyCreateButton />
                 <j-permission-button
                   @click="handleImport"
                   :hasPermission="`${permissionKey}:add`"
@@ -140,6 +149,8 @@
 </template>
 
 <script setup lang="ts" name="Scene">
+import { createReusableTemplate } from '@vueuse/core'
+
 import SaveModal from "./Save/save.vue";
 import ImportModal from "./Import/index.vue";
 import { useMenuStore } from "@jetlinks-web-core/store/menu";
@@ -468,6 +479,8 @@ const handleView = (id: string, triggerType: string) => {
     query: { triggerType: triggerType, id, type: "view" },
   });
 };
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style scoped lang="less">

@@ -1,4 +1,15 @@
 <template>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+      type="primary"
+      @click="add"
+      :hasPermission="permissionKey + ':add'"
+    >
+      <template #icon><AIcon type="PlusOutlined" /></template>
+      {{ $t('Configuration.index.021440-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
   <j-page-container>
     <FullPage transparentBackground>
       
@@ -21,16 +32,14 @@
               }"
               :params="params"
             >
+              <template #emptyText>
+                <CloudEmpty :search="params?.terms" :search-name="$t('EmptyCreate.names.alarm_rules')">
+                  <EmptyCreateButton />
+                </CloudEmpty>
+              </template>
               <template #headerLeftRender>
                 <a-space>
-                  <j-permission-button
-                    type="primary"
-                    @click="add"
-                    :hasPermission="permissionKey + ':add'"
-                  >
-                    <template #icon><AIcon type="PlusOutlined" /></template>
-                    {{ $t('Configuration.index.021440-0') }}
-                  </j-permission-button>
+                  <EmptyCreateButton />
                 </a-space>
               </template>
               <template #card="slotProps">
@@ -163,6 +172,8 @@
 </template>
 
 <script lang="ts" setup>
+import { createReusableTemplate } from '@vueuse/core'
+
 import {
   queryList,
   _enable,
@@ -471,6 +482,8 @@ const refreshTable = () => {
   visibleDelete.value = false;
   tableRef.value.reload();
 };
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style lang="less" scoped>
 .content-des-title {

@@ -1,4 +1,17 @@
 <template>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+      type="primary"
+      @click="showModal"
+      :hasPermission="`${permissionKey}:add`"
+    >
+      <template #icon>
+        <AIcon type="PlusOutlined" />
+      </template>
+      {{ $t('Scene.index.021455-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
   <FullPage>
     <JProTable
       mode="CARD"
@@ -22,18 +35,14 @@
       }"
       ref="actionRef"
     >
+      <template #emptyText>
+        <CloudEmpty :search-name="$t('Configuration.index.021440-10')">
+          <EmptyCreateButton />
+        </CloudEmpty>
+      </template>
       <template #headerLeftRender>
         <a-space>
-          <j-permission-button
-            type="primary"
-            @click="showModal"
-            :hasPermission="`${permissionKey}:add`"
-          >
-            <template #icon>
-              <AIcon type="PlusOutlined" />
-            </template>
-            {{ $t('Scene.index.021455-0') }}
-          </j-permission-button>
+          <EmptyCreateButton />
         </a-space>
       </template>
       <template #card="slotProps">
@@ -72,6 +81,8 @@
 </template>
 
 <script lang="ts" setup>
+import { createReusableTemplate } from '@vueuse/core'
+
 import { query } from "../../../../../api/scene";
 import { queryBindScene } from "../../../../../api/configuration";
 import { useRoute } from "vue-router";
@@ -172,6 +183,8 @@ const sceneCancel = () => {
   scene.detail = undefined;
   actionRef.value?.reload();
 };
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style lang="less" scoped>
 .subTitle {

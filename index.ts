@@ -76,9 +76,17 @@ const register = () => {
     moduleRegistry.register(name, registerSetting)
 }
 
+/** 仪表盘沿用资源中心的页面背景，整页不额外包裹统一内容面板。 */
+const getContentPanelOverrides = () => ({
+    'rule-engine/DashBoard': false,
+    'AlarmDashboard': false,
+    '/alarms/dashboard': false,
+})
+
 export default {
     getAsyncRoutesMap,
     getExtraRoutesMap,
+    getContentPanelOverrides,
     register,
     priority: -100
 }

@@ -1,4 +1,13 @@
 <template>
+
+  <DefineEmptyCreate>
+    <a-button type="link" @click="showAlarm">
+      <template #icon>
+        <AIcon type="PlusOutlined" />
+      </template>
+      {{ $t('TriggerAlarm.index.966773-0') }}
+    </a-button>
+  </DefineEmptyCreate>
   <a-modal
     open
     :title="$t('TriggerAlarm.index.966773-0')"
@@ -11,12 +20,7 @@
   >
     <div class="related-alarms-content">
       <div class="related-alarms-add-btn">
-        <a-button type="link" @click="showAlarm">
-          <template #icon>
-            <AIcon type="PlusOutlined" />
-          </template>
-          {{ $t('TriggerAlarm.index.966773-0') }}
-        </a-button>
+        <EmptyCreateButton />
       </div>
       <div class="related-alarms-total" style="margin-bottom: 8px">
         {{ $t('TriggerAlarm.index.966773-1') }}<span>{{ count }}</span>
@@ -49,6 +53,11 @@
           ],
         }"
       >
+        <template #emptyText>
+          <CloudEmpty :search-name="$t('EmptyCreate.names.alarm_rules')">
+            <EmptyCreateButton />
+          </CloudEmpty>
+        </template>
         <template #level="slotProps">
           <div style="display: flex">
             <LevelIcon :level="slotProps.level"></LevelIcon>
@@ -98,6 +107,8 @@
 </template>
 
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { queryAlarmPage } from "@rule-engine-manager-ui/api/scene";
 import AlarmModal from "./AlarmModal.vue";
 import {
@@ -243,6 +254,8 @@ const queryData = async (terms: any) => {
     ...resp
   };
 };
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style scoped lang="less">
 .related-alarms-content {

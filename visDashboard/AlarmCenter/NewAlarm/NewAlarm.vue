@@ -54,13 +54,13 @@
       v-else
       class="empty-body"
     >
-      <j-empty :image="Empty.PRESENTED_IMAGE_SIMPLE"></j-empty>
+      <CloudEmpty></CloudEmpty>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { Empty } from 'ant-design-vue'
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import fireIcon from '@rule-engine-manager-ui/assets/rule-engine/dashboard/fire-icon.png'
 import dayjs from 'dayjs'
 import { getAlarm as getLatestAlarm, getAlarmLevel as queryAlarmLevel } from '@rule-engine-manager-ui/api/dashboard'

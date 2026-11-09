@@ -2,6 +2,7 @@ import {useRulePermissionContext, useScenePermissionContext} from '@rule-engine-
 import {EventEmitter, DeviceEmitterKey, ACTION_DATA} from '@rule-engine-manager-ui/views/Scene/Save/util';
 import type { DataCapabilityProviderManifest } from '@jetlinks-web-core/data-capability'
 import type { AgentCapabilityProviderResource } from '@jetlinks-web-core/layout/components/AiChat/routeCapabilityLoader'
+import { queryAlarmLevelOptions, normalizeAlarmLevelValue } from './api/alarmLevel'
 import { ALARM_ANALYSIS_EXTENSION_KEY } from './agentCapabilities/alarmAnalysis/constants'
 import {
     RULE_EDITOR_FLOWCHART_EXTENSION_KEY,
@@ -15,16 +16,31 @@ const homeAgentProviderKeyMap: Record<string, string> = {
     './views/Instance/homeAgentProvider.ts': 'rule-engine/Instance'
 }
 
+const homeAgentProviderPaths: Record<string, string[]> = {
+    'rule-engine/DashBoard': ['/alarms/dashboard', '/iot/Alarm/dashboard'],
+    'rule-engine/Instance': ['/rule-engine/Instance', '/iot/rule-engine/Instance'],
+}
+
 const toHomeAgentProviderKey = (path: string) => (
     homeAgentProviderKeyMap[path] || path.replace('./views/', '').replace('/homeAgentProvider.ts', '')
 )
 
 const homeAgentProviderModules = import.meta.glob('./views/**/homeAgentProvider.ts') as Record<string, HomeAgentProviderLoader>
 const homeAgentProviders = Object.fromEntries(
-    Object.entries(homeAgentProviderModules).map(([path, loader]) => [
-        toHomeAgentProviderKey(path),
-        loader
-    ])
+    Object.entries(homeAgentProviderModules).map(([path, loader]) => {
+        const key = toHomeAgentProviderKey(path)
+        return [key, {
+            loader,
+            activation: {
+                version: 'general-agent-provider-activation/v1',
+                scopes: [
+                    { kind: 'menuCode', values: [key] },
+                    { kind: 'routeName', values: key === 'rule-engine/DashBoard' ? [key, 'AlarmDashboard'] : [key] },
+                    { kind: 'path', values: homeAgentProviderPaths[key] },
+                ],
+            },
+        } satisfies AgentCapabilityProviderResource]
+    })
 )
 
 export default {
@@ -50,7 +66,9 @@ export default {
     },
     stores: {},
     utils: {
-        EventEmitter, DeviceEmitterKey, ACTION_DATA
+        EventEmitter, DeviceEmitterKey, ACTION_DATA,
+        // 概览通过公开注册能力读取动态等级，不静态依赖规则模块的安装路径。
+        queryAlarmLevelOptions, normalizeAlarmLevelValue
     },
     homeAgentProviders,
     dataCapabilityProviders: {

@@ -292,6 +292,8 @@ import { canReceiveProfileBackedNotification, mergeNotifyUsersById } from '../..
 import { applyMultiTriggerForm, buildRequest, defaultForm, formatSceneDuration, MULTI_TRIGGER_PROVIDERS, normalizeResult, toForm, type SceneConditionForm, type SceneEditorMode, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTimeRange, type SceneTriggerKind } from '../utils'
 import DetailedSceneEditor from './detail/DetailedSceneEditor.vue'
 import { createClearedDetailedDraft, mergeDetailedDraft, mergeQuickDraft, resolveInitialEditorMode, resolveLockedTriggerProviders, type SceneRuleRecord } from './editorMode'
+import { requiresSceneNotifyTemplate, toSceneNotifyMethods } from '../../../utils/sceneNotify'
+import IotAlarmTargetSelect, { type IotAlarmTargetSelectOption, type IotAlarmTargetSelectQuery } from './alarm/IotAlarmTargetSelect.vue'
 import { getSceneCompatibility } from '../sceneCompatibility'
 import { hasUnsupportedLegacyAction, hasUnsupportedLegacyAlarmAction } from '../sceneRule'
 import ActionPickerModal from './components/ActionPickerModal.vue'
@@ -715,10 +717,12 @@ function clearActionValidationIfResolved() {
 }
 async function changeNotifyMethod(index: number, method: SceneNotifyMethod) { await refreshNotifyTemplate(index, method, true) }
 async function refreshNotifyTemplate(index: number, method: SceneNotifyMethod, changed = false) {
-  const response: any = await querySceneNotifyChannelTemplates(method.providerId)
-  const detail = response?.result ?? response
-  const item = detail?.channels?.find((channel: any) => channel.channel?.id === method.id)
-  const template = item?.template
+  let template: any
+  if (requiresSceneNotifyTemplate(method.channelProvider)) {
+    const response: any = await querySceneNotifyChannelTemplates(method.providerId)
+    const detail = response?.result ?? response
+    template = detail?.channels?.find((channel: any) => channel.channel?.id === method.id)?.template
+  }
   form.actions[index] = {
     ...form.actions[index],
     config: { ...form.actions[index].config, ...(changed ? { notifyChannelIds: [method.id] } : {}) },
@@ -750,7 +754,7 @@ function getTemplateVariables(template: any) {
     .filter((variable: any) => variable?.id)
     .map((variable: any) => ({ id: String(variable.id), name: variable.name, i18nName: variable.i18nName }))
 }
-async function loadNotifyMethods(force = false) { if ((!force && notifyMethods.value.length) || notifyMethodsLoading.value) return; notifyMethodsLoading.value = true; try { const providers: any[] = normalizeResult(await querySceneNotifyChannels()).data; notifyMethods.value = providers.filter(provider => provider.provider === 'scene').flatMap(provider => (provider.channels || []).map((channel: any) => ({ id: channel.id, providerId: provider.id || provider.provider, name: channel.name || channel.channelProvider, channelProvider: channel.channelProvider }))).filter(method => method.id && method.providerId && (method.channelProvider?.startsWith('notifier-') || ['inside-mail', 'inbox'].includes(method.channelProvider))); } finally { notifyMethodsLoading.value = false } }
+async function loadNotifyMethods(force = false) { if ((!force && notifyMethods.value.length) || notifyMethodsLoading.value) return; notifyMethodsLoading.value = true; try { const providers: any[] = normalizeResult(await querySceneNotifyChannels()).data; notifyMethods.value = toSceneNotifyMethods(providers); } finally { notifyMethodsLoading.value = false } }
 const selectedNotifyUserIds = () => [...new Set(form.actions
   .filter(action => action.type === 'sceneNotify')
   .flatMap(action => action.config?.userIds || [])

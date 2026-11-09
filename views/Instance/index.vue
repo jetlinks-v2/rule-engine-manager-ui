@@ -1,5 +1,18 @@
 <template>
-    <j-page-container>
+
+    <DefineEmptyCreate>
+      <j-permission-button
+        type="primary"
+        @click="add"
+        :hasPermission="`${permissionKey}:add`"
+      >
+       <template #icon
+       ><AIcon type="PlusOutlined"
+       /></template>
+       {{ $t('Instance.index.020452-0') }}
+      </j-permission-button>
+    </DefineEmptyCreate>
+    <j-page-container v-bind="$attrs">
         <div>
             <FullPage>
                 
@@ -14,6 +27,11 @@
 	                  :params="params"
 	                  class="pro-table__no-padding"
 	                >
+	                  <template #emptyText>
+	                    <CloudEmpty :search="params.terms" :search-name="$t('EmptyCreate.names.rules')">
+	                      <EmptyCreateButton />
+	                    </CloudEmpty>
+	                  </template>
 		                <template #headerLeftRender>
 			                <div class="rule-instance-toolbar">
 				                <h2 class="rule-instance-toolbar__title">
@@ -28,16 +46,7 @@
 				                  :fields="filterFields"
 				                  @change="handleSearch"
 				                />
-				                <j-permission-button
-				                  type="primary"
-				                  @click="add"
-				                  :hasPermission="`${permissionKey}:add`"
-				                >
-					                <template #icon
-					                ><AIcon type="PlusOutlined"
-					                /></template>
-					                {{ $t('Instance.index.020452-0') }}
-				                </j-permission-button>
+				                <EmptyCreateButton />
 			                </a-flex>
 		                </template>
 		                <template #card="slotProps">
@@ -192,6 +201,8 @@
 </template>
 
 <script lang="ts" setup>
+import { createReusableTemplate } from '@vueuse/core'
+
 import {
     queryList,
     startRule,
@@ -447,6 +458,8 @@ onMounted(() => {
         add();
     }
 });
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style scoped>
 .rule-instance-toolbar {
