@@ -1,14 +1,6 @@
 <template>
   <a-form-item :name="['trigger', 'timer']" :rules="rules" class="detailed-timer-trigger">
-    <template #label>{{ $t('IotSceneLinkage.detail.timerTrigger') }}</template>
-    <a-button block class="detailed-timer-trigger__card" @click="openModal">
-      <span class="detailed-timer-trigger__icon"><AIcon type="ClockCircleOutlined" /></span>
-      <span class="detailed-timer-trigger__content">
-        <b>{{ timerSummary }}</b>
-        <small>{{ $t('IotSceneLinkage.detail.timerTriggerHint') }}</small>
-      </span>
-      <AIcon type="RightOutlined" />
-    </a-button>
+    <DetailedTriggerNode :rule="data" @edit="openModal" @remove="emit('remove')" />
   </a-form-item>
 
   <a-modal
@@ -43,12 +35,14 @@ import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useSceneStore } from '@rule-engine-manager-ui/store/scene'
 import TimerEditor from '../../../Scene/Save/components/Timer/index.vue'
+import DetailedTriggerNode from './DetailedTriggerNode.vue'
 import { handleTimerOptions } from '../../../Scene/Save/components/Timer/util'
 import type { OperationTimer } from '../../../Scene/typings'
 
 const { data: storeData } = storeToRefs(useSceneStore())
 const data = storeData as unknown as Ref<Record<string, any>>
 const { t } = useI18n()
+const emit = defineEmits<{ remove: [] }>()
 const visible = ref(false)
 const timerRef = ref<{ validateFields: () => Promise<unknown> }>()
 const draftTimer = reactive<OperationTimer>({} as OperationTimer)
@@ -60,8 +54,6 @@ function getTimerSummary(timer?: OperationTimer) {
   return [when, time, extraTime].filter(Boolean).join('，')
 }
 
-const timerSummary = computed(() => getTimerSummary(data.value.trigger?.timer)
-  || t('IotSceneLinkage.detail.noTimerRule'))
 const draftSummary = computed(() => getTimerSummary(draftTimer)
   || t('IotSceneLinkage.detail.noTimerRule'))
 

@@ -1,7 +1,11 @@
 import { request } from '@jetlinks-web/core'
 import { IOT_DEVICE_LIST_EXCLUDED_ACCESS_PROVIDERS } from './deviceListDefaultTerms'
 
-export type SceneEntity = Record<string, any>
+/** 场景查询结果中的统计字段仅在运行时计算，不属于可保存的规则配置。 */
+export type SceneEntity = Record<string, any> & {
+  executionCount?: number
+  lastExecutionTime?: number | null
+}
 
 export interface SceneNotifyMethod {
   id: string

@@ -62,7 +62,7 @@ const description = computed(() => {
 </script>
 
 <style scoped>
-.thing-model-option { display: flex; gap: var(--space-2, 8px); align-items: center; min-width: 0; padding: var(--space-1, 4px) 0; }
+.thing-model-option { display: flex; gap: var(--space-2, 8px); align-items: center; justify-content: flex-start; min-width: 0; padding: var(--space-1, 4px) 0; text-align: left; }
 .thing-model-option__icon { display: grid; flex: none; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-jet-sm, 8px); }
 .thing-model-option__icon--property { color: #0e8a5f; background: #e6f5ee; }
 .thing-model-option__icon--event { color: #d02f5a; background: #ffecf0; }

@@ -1,8 +1,8 @@
 <template>
-  <article v-if="!dialogOnly" :class="['notify-action-row', { 'notify-action-row--invalid': invalid }]">
-    <header><span class="notify-action-row__icon"><AIcon type="NotificationOutlined" /></span><strong>{{ $t('IotSceneLinkage.action.sendNotify') }}</strong><small>{{ index + 1 }}</small><span class="notify-action-row__actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button class="notify-action-row__remove" type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></span></header>
-    <div class="notify-action-row__description">{{ summaryText }}</div>
-  </article>
+  <SceneNodeCard v-if="!dialogOnly" :class="['notify-action-row', { 'notify-action-row--invalid': invalid }]" :title="$t('IotSceneLinkage.action.sendNotify')" icon="NotificationOutlined" :number="index + 1">
+    <template #actions><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></template>
+    <SceneNotifySummary :config="action.config" :options="action.options" :users="users" :methods="methods" />
+  </SceneNodeCard>
 
   <a-modal :open="editorVisible" :title="$t('IotSceneLinkage.action.sendNotify')" :mask-closable="false" @cancel="cancelEditor" @ok="saveEditor">
     <div class="notify-action-row__editor">
@@ -55,6 +55,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import SceneNodeCard from './SceneNodeCard.vue'
+import SceneNotifySummary from './SceneNotifySummary.vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import type { SceneNotifyMethod, SceneNotifyUser } from '../../../../api/scene-linkage'
@@ -124,15 +126,7 @@ const templateSegments = computed(() => {
 const editorVisible = ref(false)
 const originalAction = ref<SceneActionForm>()
 const createdByPicker = ref(false)
-const summaryText = computed(() => {
-  const method = props.methods.find(item => item.id === methodValue.value)?.name || props.action.options?.channelName
-  const recipients = recipientIds.value
-    .map(id => props.users.find(user => user.id === id)?.name || id)
-    .filter(Boolean)
-  return method && recipients.length
-    ? t('IotSceneLinkage.summary.notify', { method, recipients: recipients.join('、') })
-    : ''
-})
+
 
 onMounted(() => {
   if (recipientIds.value.length) emit('load-users', true)
@@ -156,7 +150,17 @@ function saveEditor() {
     onlyMessage(t('IotSceneLinkage.message.notifyRequired'), 'warning')
     return
   }
-  emit('saved', props.action)
+  // 名称只写入 options 展示元数据，运行时仍使用原有渠道和用户 ID。
+  const action = {
+    ...props.action,
+    options: {
+      ...props.action.options,
+      channelName: props.methods.find(method => method.id === methodValue.value)?.name || props.action.options?.channelName,
+      users: props.users.filter(user => recipientIds.value.includes(user.id)).map(user => ({ id: user.id, name: user.name })),
+    },
+  }
+  emit('change', action)
+  emit('saved', action)
   originalAction.value = undefined
   createdByPicker.value = false
   editorVisible.value = false
@@ -194,7 +198,7 @@ watch(() => props.autoOpen, value => {
 </script>
 
 <style scoped>
-.notify-action-row { overflow: hidden; margin-bottom: var(--space-3, 12px); border: 1px solid var(--jet-theme-border-secondary); border-radius: var(--radius-jet-sm, 10px); }.notify-action-row > header { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 48px; padding: 0 var(--space-4, 16px); background: #fafbfc; }.notify-action-row > header small { color: var(--ant-color-text-tertiary); }.notify-action-row__actions { display: inline-flex; gap: 2px; margin-left: auto; }.notify-action-row__description { padding: var(--space-4, 16px); overflow-wrap: anywhere; }
+.notify-action-row { margin-bottom: var(--space-3, 12px); }
 .notify-action-row--invalid { border-color: var(--ant-color-error); }
 .notify-action-row__summary { display: grid; grid-template-columns: 22px 28px max-content minmax(0, 1fr) auto auto; gap: var(--space-3, 12px); align-items: center; min-width: 0; }
 .notify-action-row__summary-text { min-width: 0; overflow: hidden; color: var(--ant-color-text-secondary); text-overflow: ellipsis; white-space: nowrap; }

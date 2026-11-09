@@ -6,9 +6,11 @@
           v-for="(item, index) in triggers"
           :key="item.clientId"
           :trigger="item"
+          :index="index"
           :removable="true"
           :auto-open="item.clientId === pendingTriggerClientId"
           @remove="removeTrigger(index)"
+          @cancel-new="removeTrigger(index)"
           @opened="pendingTriggerClientId = undefined"
         />
       </div>
@@ -20,11 +22,11 @@
 
     <TriggerPickerModal
       :open="pickerVisible"
-      mode="multi"
+      mode="provider"
       :title="$t('IotSceneLinkage.detail.triggerRule')"
       :hint="$t('IotSceneLinkage.editor.triggerPickerHint')"
       :options="triggerOptions"
-      @cancel="pickerVisible = false"
+      @cancel="closePicker"
       @select="addTrigger"
     />
   </section>
@@ -105,7 +107,8 @@ function addTrigger(value: string) {
   // 选项已由父级按 Provider 过滤，再校验一次以防旧弹窗状态提交不被允许的叶子。
   if (!props.triggerOptions.some(item => item.value === value && !item.disabled)) return
   const next = defaultMultiTriggerForm()
-  next.triggerKind = value as SceneTriggerKind
+  next.triggerKind = (value === 'iot-alarm' || value === 'visual-alarm' ? 'alarm' : value) as SceneTriggerKind
+  if (next.triggerKind === 'alarm') next.alarm.sourceKind = value === 'visual-alarm' ? 'visual-ai' : 'iot-device'
   triggers.value = [...triggers.value, next]
   // 由选择器新增的叶子尚未完成配置，创建后立刻进入对应类型的配置流。
   pendingTriggerClientId.value = next.clientId
@@ -114,6 +117,10 @@ function addTrigger(value: string) {
 
 function removeTrigger(index: number) {
   const next = triggers.value.filter((_, triggerIndex) => triggerIndex !== index)
+  if (!next.length && props.collapseToSingle) {
+    emit('collapse', { triggerType: '', trigger: {} })
+    return
+  }
   if (next.length !== 1 || !props.collapseToSingle) {
     triggers.value = next
     return
@@ -152,12 +159,27 @@ function validate() {
           : alarm.targetType && alarm.options?.productId))
       if (!valid) return 'IotSceneLinkage.message.alarmTriggerRequired'
     }
+    if (trigger.triggerKind === 'ai-event') {
+      const config = trigger.aiEvent
+      if (!config.sceneId || !config.taskTarget || config.mediaTargets?.length !== 1
+        || config.mediaTargets.some(target => target.unavailable)
+        || (config.condition && config.condition.termType !== 'isnull'
+          && (config.condition.value === undefined || config.condition.value === ''))) {
+        return 'IotSceneLinkage.message.aiEventTriggerRequired'
+      }
+    }
   }
   return undefined
 }
 
 watch(() => props.modelValue, loadTriggers, { immediate: true, deep: true })
 watch(triggers, emitTrigger, { deep: true })
+
+/** 取消追加不能让新建场景永久停留在只有一个叶子的 multi 状态。 */
+function closePicker() {
+  pickerVisible.value = false
+  if (props.collapseToSingle && triggers.value.length < 2) removeTrigger(-1)
+}
 
 function openPicker() {
   pickerVisible.value = true

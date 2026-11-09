@@ -77,10 +77,11 @@
 				<header class="scene-editor__rule-group-header"><span class="scene-editor__rule-group-icon"><AIcon type="ThunderboltOutlined"/></span><div><h3>{{ $t('IotSceneLinkage.editor.triggerSectionTitle') }}</h3><p>{{ $t('IotSceneLinkage.editor.triggerGroupDescription') }}</p></div></header>
 				<div class="scene-editor__rule-group-body">
 					<template v-if="isMulti"><MultiTriggerCard v-for="(item, index) in form.multiTriggers" :key="item.clientId" :trigger="item" :index="index" :removable="isEditing || form.multiTriggers.length > 1" :auto-open="pendingMultiTriggerClientId === item.clientId" @opened="pendingMultiTriggerClientId = undefined" @cancel-new="removeMultiTrigger(index)" @remove="removeMultiTrigger(index)"/></template>
-					<article v-else-if="hasTrigger" :class="['scene-editor__rule-card scene-editor__rule-card--trigger', { 'scene-editor__invalid': hasError('trigger') }]">
-						<header><span class="scene-editor__trigger-icon" :style="{ color: form.triggerKind === 'ai-event' ? '#1E5EFF' : triggerIcon.color, background: form.triggerKind === 'ai-event' ? '#E8F0FF' : triggerIcon.background }"><svg v-if="triggerIcon.path" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path :d="triggerIcon.path"/></svg><AIcon v-else :type="form.triggerKind === 'ai-event' ? 'RadarChartOutlined' : triggerIcon.type"/></span><strong>{{ triggerText }}</strong><small>{{ $t('IotSceneLinkage.editor.conditionNumber', { index: 1 }) }}</small><span class="scene-editor__rule-card-actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button v-if="isDevice || form.triggerKind !== 'manual'" type="text" @click="isDevice ? openScope() : openTriggerEditor()"><AIcon type="EditOutlined"/></a-button></a-tooltip><a-button type="text" danger @click="clearTrigger"><AIcon type="DeleteOutlined"/></a-button></span></header>
-						<div class="scene-editor__rule-card-description">{{ isDevice ? deviceTriggerSummary : triggerConfigurationSummary }}</div>
-					</article>
+					<SceneNodeCard v-else-if="hasTrigger" :class="{ 'scene-editor__invalid': hasError('trigger') }" variant="trigger" :title="triggerNodeTitle(form.triggerKind, t)" :number="$t('IotSceneLinkage.editor.conditionNumber', { index: 1 })">
+						<template #icon><span class="scene-editor__trigger-icon" :style="{ color: form.triggerKind === 'ai-event' ? '#1E5EFF' : triggerIcon.color, background: form.triggerKind === 'ai-event' ? '#E8F0FF' : triggerIcon.background }"><svg v-if="triggerIcon.path" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path :d="triggerIcon.path"/></svg><AIcon v-else :type="form.triggerKind === 'ai-event' ? 'RadarChartOutlined' : triggerIcon.type"/></span></template>
+						<template #actions><span class="scene-editor__rule-card-actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button v-if="isDevice || form.triggerKind !== 'manual'" type="text" @click="isDevice ? openScope() : openTriggerEditor()"><AIcon type="EditOutlined"/></a-button></a-tooltip><a-button type="text" danger @click="clearTrigger"><AIcon type="DeleteOutlined"/></a-button></span></template>
+						<SceneTriggerSummary :form="form" />
+					</SceneNodeCard>
 					<a-tooltip v-if="showMultiTriggerControl" :title="multiTriggerDisabledReason ? $t(multiTriggerDisabledReason) : undefined"><span class="scene-editor__multi-trigger-add"><a-button block class="scene-editor__add" :disabled="!canAddMultiTrigger" @click="addMultiTrigger"><AIcon type="PlusOutlined"/>{{ $t('IotSceneLinkage.editor.addAnotherTrigger') }}</a-button></span></a-tooltip>
 					<a-button v-else-if="!hasTrigger" block :class="['scene-editor__add', { 'scene-editor__invalid': hasError('trigger') }]" @click="triggerPickerVisible = true"><AIcon type="PlusOutlined"/>{{ $t('IotSceneLinkage.editor.addTrigger') }}</a-button>
 					<p v-if="hasError('trigger')" class="scene-editor__error-message">{{ errorMessage('trigger') }}</p>
@@ -124,10 +125,10 @@
 					/>
 					<DeviceActionRow v-else-if="action.type === 'device'" :action="action" :index="index" :auto-open="autoOpenActionIndex === index"
 					                 @opened="autoOpenActionIndex = undefined" @cancel-new="form.actions.splice(index, 1)" @update="updateAction(index, $event)" @remove="form.actions.splice(index, 1)"/>
-					<article v-else class="scene-editor__rule-card scene-editor__rule-card--action">
-						<header><span class="scene-editor__action-icon"><AIcon :type="actionIcon(action.type)"/></span><strong>{{ $t(`IotSceneLinkage.action.${action.type}`) }}</strong><small>{{ index + 1 }}</small><span class="scene-editor__rule-card-actions"><a-tooltip v-if="action.type === 'delay'" :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openDelayEditor(index)"><AIcon type="EditOutlined"/></a-button></a-tooltip><a-button type="text" danger @click="form.actions.splice(index, 1)"><AIcon type="DeleteOutlined"/></a-button></span></header>
-						<div class="scene-editor__rule-card-description" v-if="action.type === 'delay'">{{ action.time }} {{ $t(`IotSceneLinkage.unit.${action.unit}`) }}</div>
-					</article>
+					<SceneNodeCard v-else :title="$t(`IotSceneLinkage.action.${action.type}`)" :icon="actionIcon(action.type)" :number="index + 1">
+						<template #actions><span class="scene-editor__rule-card-actions"><a-tooltip v-if="action.type === 'delay'" :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openDelayEditor(index)"><AIcon type="EditOutlined"/></a-button></a-tooltip><a-button type="text" danger @click="form.actions.splice(index, 1)"><AIcon type="DeleteOutlined"/></a-button></span></template>
+						<SceneActionSummary v-if="action.type === 'delay'" :action="{ executor: 'delay', delay: action }" />
+					</SceneNodeCard>
 				</template>
 					<article v-if="legacyAlarmActionReadOnly" class="scene-editor__rule-card scene-editor__rule-card--action scene-editor__action-row--readonly"><header><span class="scene-editor__action-icon"><AIcon type="AlertOutlined"/></span><strong>{{ $t('IotSceneLinkage.summary.legacyAlarmAction') }}</strong></header><div class="scene-editor__rule-card-description">{{ $t('IotSceneLinkage.message.legacyConfigurationUnsupported') }}</div></article>
 				<a-button block
@@ -201,7 +202,7 @@
 					</a-form>
 				</div>
 			</template>
-			<template #preview><span>{{ deviceTriggerSummary }}</span></template>
+			<template #preview><SceneTriggerSummary :form="form" /></template>
 		</DeviceScopeModal>
 		<AlarmStateConditionModal
 			v-if="form.triggerKind === 'alarm'"
@@ -278,6 +279,8 @@
 	</j-page-container>
 </template>
 <script setup lang="ts">
+import SceneTriggerSummary from './components/SceneTriggerSummary.vue'
+import SceneActionSummary from './components/SceneActionSummary.vue'
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -294,6 +297,8 @@ import { hasUnsupportedLegacyAction, hasUnsupportedLegacyAlarmAction } from '../
 import ActionPickerModal from './components/ActionPickerModal.vue'
 import ConditionPickerModal from './components/ConditionPickerModal.vue'
 import DeviceActionRow from './components/DeviceActionRow.vue'
+import SceneNodeCard from './components/SceneNodeCard.vue'
+import { triggerNodeTitle } from './triggerNodeSummary'
 import DeviceStateTriggerRow from './components/DeviceStateTriggerRow.vue'
 import DeviceScopeModal, { type DeviceScope } from './components/DeviceScopeModal.vue'
 import MultiTriggerCard from './components/MultiTriggerCard.vue'
@@ -429,53 +434,7 @@ const pendingMultiTriggerClientId = ref<string>()
 const triggerEditorVisible = ref(false)
 const triggerEditorSnapshot = ref<SceneLinkageForm>()
 const triggerEditorWasNew = ref(false)
-const deviceTriggerSummary = computed(() => {
-  const target = formatProductScopeText(t, form.productName || form.productId || '', scopeText.value)
-  if (form.triggerKind === 'property') return [target, form.propertyName || form.propertyId, form.termValue].filter(value => value !== undefined && value !== '').join(' · ')
-  if (form.triggerKind === 'event') return [target, form.eventName || form.eventId, form.eventOutputName || form.eventOutputId, form.eventTermValue].filter(value => value !== undefined && value !== '').join(' · ')
-  return target
-})
 const triggerForms = computed(() => isMulti.value ? form.multiTriggers || [] : [form])
-const aiEventRecognitionRuleSummary = (rule: SceneLinkageForm['aiEvent']['recognitionRule']) => {
-  if (!rule) return ''
-  const time = debounceTimeLabel(rule.time)
-  return rule.type === 'hits'
-    ? t('IotSceneLinkage.aiEvent.rule.hitsPreview', { time, count: rule.threshold })
-    : t('IotSceneLinkage.aiEvent.rule.missedPreview', { time })
-}
-const multiTriggerDescription = (trigger: SceneMultiTriggerForm) => {
-  const join = (...values: Array<string | number | boolean | undefined>) => values
-    .filter(value => value !== undefined && value !== '')
-    .map(String)
-    .join(' · ')
-  const type = t(`IotSceneLinkage.trigger.${trigger.triggerKind}`)
-  const target = formatProductScopeText(t, trigger.productName || trigger.productId || '', formatDeviceScopeText(t, toTriggerScopeValue(trigger)))
-  switch (trigger.triggerKind) {
-    case 'repeat': return join(type, t(`IotSceneLinkage.repeat.${trigger.repeatMode}`), trigger.repeatTime)
-    case 'date': return join(type, trigger.dateTime)
-    case 'interval': return join(type, trigger.interval, t(`IotSceneLinkage.unit.${trigger.intervalUnit}`))
-    case 'property': return join(type, target, trigger.propertyName || trigger.propertyId, trigger.termValue)
-    case 'event': return join(type, target, trigger.eventName || trigger.eventId, trigger.eventOutputName || trigger.eventOutputId, trigger.eventTermValue)
-    case 'state': return join(type, target, t(`IotSceneLinkage.deviceState.${trigger.deviceState}`))
-    case 'alarm': return join(type, trigger.alarm.options?.alarmConfigName)
-    default: return join(type, target)
-  }
-}
-const triggerConfigurationSummary = computed(() => {
-  switch (form.triggerKind) {
-    case 'repeat': {
-      const repeat = form.repeatMode === 'custom'
-        ? `${t(`IotSceneLinkage.repeat.${form.repeatCustomMode}`)} · ${(form.repeatCustomMode === 'weekly' ? form.repeatWeekdays : form.repeatMonthDays).join('、')}`
-        : t(`IotSceneLinkage.repeat.${form.repeatMode}`)
-      return [repeat, form.repeatTime].filter(Boolean).join(' · ')
-    }
-    case 'date': return form.dateTime || t('IotSceneLinkage.editor.dateExecutionHint')
-    case 'interval': return [form.interval, form.intervalUnit ? t(`IotSceneLinkage.unit.${form.intervalUnit}`) : undefined].filter(Boolean).join(' · ')
-    case 'alarm': return [form.alarm.options?.alarmConfigName, form.alarm.modes?.map(mode => t(`IotSceneLinkage.alarmMode.${mode}`)).join('、')].filter(Boolean).join(' · ')
-    case 'ai-event': return [form.aiEvent.sceneName, form.aiEvent.taskTargetName, aiEventRecognitionRuleSummary(form.aiEvent.recognitionRule)].filter(Boolean).join(' · ')
-    default: return t(`IotSceneLinkage.triggerDesc.${form.triggerKind}`)
-  }
-})
 const selectedEvent = computed(() => events.value.find(item => item.id === form.eventId))
 const eventOutputOptions = computed(() => {
   const outputs = selectedEvent.value?.outputs || selectedEvent.value?.output?.properties || selectedEvent.value?.output || selectedEvent.value?.valueType?.properties || []
@@ -523,7 +482,9 @@ const triggerOptions = computed(() => [
 }))
 const availableTriggerOptions = computed(() => {
   const options = addingMultiTrigger.value
-    ? triggerOptions.value.filter(item => MULTI_TRIGGER_PROVIDERS.includes(item.provider as typeof MULTI_TRIGGER_PROVIDERS[number]))
+    ? triggerOptions.value.map(item => MULTI_TRIGGER_PROVIDERS.some(provider => provider === item.provider)
+      ? item
+      : { ...item, disabled: true, disabledReason: 'IotSceneLinkage.message.multiTriggerProviderUnsupported' })
     : triggerOptions.value
   return options
 })

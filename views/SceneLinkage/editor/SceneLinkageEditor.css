@@ -548,9 +548,8 @@
 .scene-editor__resource-dropdown.ant-select-dropdown,
 .scene-editor__thing-model-dropdown.ant-select-dropdown {
     box-sizing: border-box;
-    width: min(30rem, calc(100vw - 24px)) !important;
-    min-width: min(30rem, calc(100vw - 24px)) !important;
     max-width: calc(100vw - 24px) !important;
+    text-align: left;
 }
 
 .scene-editor__device-trigger-dropdown.ant-select-dropdown {
@@ -1062,3 +1061,6 @@
 }
 
 @media (max-width: 640px) { .scene-editor__timer-method-list { grid-template-columns: 1fr; } }
+
+/* 触发节点已有完整卡片边界，与快速模式一致，不再套额外配置框。 */
+.detailed-scene-editor__configuration-panel.detailed-scene-editor__configuration-panel--triggers { padding: 0; background: transparent; border: 0; border-radius: 0; }

@@ -121,15 +121,27 @@ export function getSceneCompatibility(scene: unknown): SceneCompatibilityResult 
 }
 
 /**
- * 将场景深拷贝为可复用模板，移除实例和审计字段，避免导入时覆盖已有场景。
+ * 将场景深拷贝为可复用模板，移除实例、审计及场景运行时统计字段。
  */
 export function toSceneTemplate(scene: unknown): unknown {
   if (Array.isArray(scene)) return scene.map(toSceneTemplate)
+  const template = stripTemplateInstanceFields(scene)
+  if (isRecord(template)) {
+    // 只裁剪场景顶层统计，保留嵌套物模型参数或扩展配置中的同名业务字段。
+    delete template.executionCount
+    delete template.lastExecutionTime
+  }
+  return template
+}
+
+/** 递归复制模板中的规则配置，保留既有实例和审计字段的裁剪规则。 */
+function stripTemplateInstanceFields(scene: unknown): unknown {
+  if (Array.isArray(scene)) return scene.map(stripTemplateInstanceFields)
   if (!isRecord(scene)) return scene
   return Object.entries(scene).reduce<SceneRecord>((result, [key, value]) => {
     if (!TEMPLATE_OMIT_KEYS.has(key)) result[key] = Array.isArray(value)
-      ? value.map(item => isRecord(item) || Array.isArray(item) ? toSceneTemplate(item) : item)
-      : isRecord(value) ? toSceneTemplate(value) : value
+      ? value.map(item => isRecord(item) || Array.isArray(item) ? stripTemplateInstanceFields(item) : item)
+      : isRecord(value) ? stripTemplateInstanceFields(value) : value
     return result
   }, {})
 }

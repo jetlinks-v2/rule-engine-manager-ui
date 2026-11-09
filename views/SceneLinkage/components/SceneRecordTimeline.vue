@@ -8,6 +8,15 @@
     @update:open="emit('update:open', $event)"
   >
     <section class="scene-record-timeline">
+      <div class="scene-record-timeline__filter">
+        <span>{{ $t('IotSceneLinkage.form.timeRange') }}</span>
+        <a-range-picker
+          show-time
+          :allow-clear="false"
+          :value="range"
+          @change="onRangeChange"
+        />
+      </div>
       <a-spin :spinning="state.loading && !state.records.length">
         <a-result
           v-if="state.loadError && !state.records.length"
@@ -97,8 +106,9 @@
 
 <script setup lang="ts">
 import type { PropType } from 'vue'
+import dayjs, { type Dayjs } from 'dayjs'
 import { useI18n } from 'vue-i18n'
-import { formatSceneExecutionDuration, formatSceneExecutionTime, type SceneExecutionRecord, type SceneExecutionRecordState } from '../hooks/useSceneExecutionRecords'
+import { formatSceneExecutionDuration, formatSceneExecutionTime, type SceneExecutionRecord, type SceneExecutionRecordRange, type SceneExecutionRecordState } from '../hooks/useSceneExecutionRecords'
 import { enumText } from '../utils'
 
 interface SceneInfo {
@@ -119,6 +129,10 @@ defineProps({
     type: Object as PropType<SceneExecutionRecordState>,
     required: true,
   },
+  range: {
+    type: Array as PropType<SceneExecutionRecordRange>,
+    required: true,
+  },
 })
 
 const emit = defineEmits<{
@@ -127,6 +141,7 @@ const emit = defineEmits<{
   (event: 'load-more'): void
   (event: 'retry'): void
   (event: 'retry-detail'): void
+  (event: 'range', value: SceneExecutionRecordRange): void
 }>()
 
 const { t: $t } = useI18n()
@@ -134,12 +149,28 @@ const { t: $t } = useI18n()
 function formatAction(value: SceneExecutionRecord['action']) {
   return enumText(value, $t('IotSceneLinkage.action.execute'))
 }
+
+function onRangeChange(value: [Dayjs, Dayjs] | [string, string] | null) {
+  if (!value) return
+  emit('range', [dayjs(value[0]), dayjs(value[1])])
+}
 </script>
 
 <style scoped>
 .scene-record-timeline {
   display: grid;
   gap: var(--space-3);
+}
+
+.scene-record-timeline__filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.scene-record-timeline__filter > span {
+  color: var(--ant-color-text-secondary);
 }
 
 .scene-record-timeline__card {

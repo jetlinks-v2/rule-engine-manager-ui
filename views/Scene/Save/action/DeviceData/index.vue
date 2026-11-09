@@ -2,12 +2,13 @@
     <a-modal
         :title="$t('Device.index.9667820-0')"
         open
-        :width="860"
+        :width="isDetailedEditor ? 1180 : 860"
+        :footer="isDetailedEditor ? null : undefined"
         @cancel="onCancel"
         @ok="save"
         :maskClosable="false"
     >
-        <a-steps :current="current" @change="stepChange">
+        <a-steps v-if="!isDetailedEditor" :current="current" @change="stepChange">
             <a-step>
                 <template #title>{{ $t('Device.index.9667820-1') }}</template>
             </a-step>
@@ -15,10 +16,22 @@
                 <template #title>{{ $t('Device.index.9667820-2') }}</template>
             </a-step>
         </a-steps>
-        <a-divider style="margin-bottom: 10px" />
+        <a-divider v-if="!isDetailedEditor" style="margin-bottom: 10px" />
         <div class="steps-content">
-            <Product
-                v-if="current === 0"
+            <section v-if="isDetailedEditor && current === 0" class="detailed-device-data__product">
+                <Product v-model:rowKey="DeviceModel.productId" v-model:detail="productDetail" @change="onProductChange" />
+                <footer><a-button @click="onCancel">{{ $t('IotSceneLinkage.action.cancel') }}</a-button><a-button type="primary" @click="saveClick">{{ $t('IotSceneLinkage.action.next') }}</a-button></footer>
+            </section>
+            <DeviceScopeModal
+                v-else-if="isDetailedEditor" embedded detailed multiple lock-product :open="true"
+                :product-id="DeviceModel.productId" :model-value="scopeDraft"
+                :scope-modes="['fixed', 'space', 'device-group']" @save="saveResourceScope" @cancel="onCancel"
+            >
+                <template #toolbar-actions><a-button type="link" @click="current = 0">{{ $t('IotSceneLinkage.action.changeProduct') }}</a-button></template>
+                <template #configuration><strong>{{ $t('IotSceneLinkage.detail.deviceInfoTitle') }}</strong><p>{{ $t('IotSceneLinkage.detail.deviceInfoDescription') }}</p></template>
+            </DeviceScopeModal>
+            <LegacyProduct
+                v-else-if="current === 0"
                 v-model:rowKey="DeviceModel.productId"
                 v-model:detail="productDetail"
                 @change="onProductChange"
@@ -35,7 +48,7 @@
                 @save="onDeviceSave"
             />
         </div>
-        <template #footer>
+        <template v-if="!isDetailedEditor" #footer>
             <div class="steps-action">
               <template v-if="current === 0">
                 <a-button @click="onCancel">{{ $t('Device.index.9667820-3') }}</a-button>
@@ -52,7 +65,10 @@
 
 <script lang="ts" setup name="ActionDeviceModal">
 import type {DeviceModelDataType, DeviceOptionType} from './typings';
-import Product from './Product.vue';
+import Product from '../../Device/Product.vue';
+import LegacyProduct from './Product.vue';
+import DeviceScopeModal, { type DeviceScope } from '../../../../SceneLinkage/editor/components/DeviceScopeModal.vue'
+import { getProduct } from '../../../../../api/scene-linkage'
 import Device from './device/index.vue';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { detail } from '@rule-engine-manager-ui/api/instance';
@@ -97,9 +113,11 @@ const props = defineProps({
     }
 });
 
+const isDetailedEditor = inject('scene-editor-mode', 'legacy') === 'detail'
 const current = ref<number>(0);
 const deviceRef = ref<any>();
 const productDetail = ref<any>({});
+const activeProductId = ref(String(props.value?.productId || ''));
 
 const DeviceModel = reactive<DeviceModelDataType>({
     productId: '',
@@ -115,7 +133,19 @@ const DeviceModel = reactive<DeviceModelDataType>({
     },
 });
 
-const DeviceOptions = ref<DeviceOptionType>({});
+const DeviceOptions = ref<DeviceOptionType>({ ...props.options });
+const scopeDraft = computed<DeviceScope>(() => ({
+    selector: DeviceModel.selector.selector as DeviceScope['selector'],
+    selectorValues: DeviceModel.selector.selectorValues || [],
+    productId: DeviceModel.productId,
+    productName: productDetail.value.name || props.options.productName,
+}))
+/** 设备信息读取沿用嵌套 selector 配置，只替换详细模式的选择承载。 */
+function saveResourceScope(scope: DeviceScope) {
+    DeviceModel.selector = { ...DeviceModel.selector, selector: scope.selector, selectorValues: scope.selectorValues, source: 'fixed', upperKey: '' } as typeof DeviceModel.selector
+    Object.assign(DeviceOptions.value, { name: scope.selectorValues.map(item => item.name || item.value), productName: scope.productName })
+    void onSave()
+}
 
 const emit = defineEmits<Emit>();
 
@@ -125,10 +155,15 @@ const onCancel = () => {
 
 const onSave = async () => {
     let metadata = productDetail.value.metadata || '{}';
-    if (DeviceModel.selector.selector === 'fixed' && DeviceModel.selector.selectorValues === 1) {
-      const resp = await detail(DeviceModel.selector.selectorValues[0].id);
+    // 产品卡列表只含摘要，新建动作保存前补全物模型，避免动态范围读不到产品字段。
+    if (isDetailedEditor && !productDetail.value.metadata) {
+      const response: any = await getProduct(DeviceModel.productId);
+      metadata = (response?.result || response)?.metadata || metadata;
+    }
+    if (DeviceModel.selector.selector === 'fixed' && DeviceModel.selector.selectorValues?.length === 1) {
+      const resp = await detail(DeviceModel.selector.selectorValues[0].value);
       if (resp.success) {
-        metadata = resp.result?.metadata || '{}'
+        metadata = resp.result?.metadata || metadata
       }
     }
 
@@ -136,23 +171,23 @@ const onSave = async () => {
         selector: DeviceModel.selector,
         productId: DeviceModel.productId,
         configs: ['state', 'onlineTime', 'offlineTime', 'deviceName', 'productName'],
-        ...handleMetadata(JSON.parse(metadata)),
+        ...handleMetadata(typeof metadata === 'string' ? JSON.parse(metadata) : metadata),
     };
     if (DeviceModel.selector.selector === 'relation') {
         item.selector.upperKey = 'scene.deviceId';
     }
     const _options: any = {
-        selector: DeviceModel.selector.selector, //选择器标识
         triggerName: data.value.options?.trigger?.name || $t('Device.index.9667820-7'),
         ...DeviceOptions.value,
+        selector: DeviceModel.selector.selector, //选择器标识
         otherColumns: [],
     };
-    console.log(item)
     emit('save', item, JSON.parse(JSON.stringify(_options)));
 };
 
 const onProductChange = (_val: any, bol: boolean) => {
-    if (!bol) {
+    // 产品选择器先更新 v-model，独立保存旧 ID 才能识别更换产品并清空旧设备范围。
+    if (!bol && activeProductId.value && activeProductId.value !== _val.id) {
       DeviceModel.selector = {
         selectorValues: undefined,
         selector: 'fixed',
@@ -161,7 +196,7 @@ const onProductChange = (_val: any, bol: boolean) => {
       }
         DeviceModel.deviceId = ''
         const flag = isActionChange(
-            JSON.parse(_val.metadata || '{}'),
+            typeof _val.metadata === 'string' ? JSON.parse(_val.metadata || '{}') : _val.metadata || {},
             DeviceModel?.message,
         );
         if (!flag) {
@@ -171,6 +206,7 @@ const onProductChange = (_val: any, bol: boolean) => {
         }
     }
     productDetail.value = _val;
+    activeProductId.value = String(_val.id || '');
     DeviceOptions.value.productName = _val?.name;
 };
 
@@ -217,6 +253,13 @@ watch(
     () => props.value,
     (newValue) => {
         Object.assign(DeviceModel, newValue);
+        activeProductId.value = String(newValue?.productId || '');
+        if (isDetailedEditor && newValue?.productId) {
+            current.value = 1
+            void getProduct(newValue.productId).then((response: any) => {
+                if (DeviceModel.productId === newValue.productId) productDetail.value = response?.result || response || {}
+            })
+        }
     },
     { immediate: true },
 );
@@ -232,8 +275,13 @@ watch(
 
 .steps-content {
     width: 100%;
-    max-height: 500px;
+    max-height: 70vh;
     overflow-y: auto;
     overflow-x: hidden;
 }
+</style>
+
+<style scoped>
+.detailed-device-data__product { display: grid; gap: 16px; }
+.detailed-device-data__product footer { display: flex; justify-content: flex-end; gap: 8px; }
 </style>

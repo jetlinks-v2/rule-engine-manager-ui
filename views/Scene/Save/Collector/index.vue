@@ -6,7 +6,8 @@
         v-if="formData.triggerType==='collector'"
         :label="showTitle ? $t('Device.index.372524-0') : undefined"
     >
-      <AddButton
+      <DetailedTriggerNode v-if="cardLayout" :rule="formData" @edit="visible = true" @remove="emit('remove')" />
+      <AddButton v-else
           :style="{ width: '100%' }"
           @click='visible = true'
       >
@@ -29,6 +30,7 @@ import Terms from "../components/Terms";
 import {useSceneStore} from "@rule-engine-manager-ui/store/scene";
 import {storeToRefs} from "pinia";
 import { useI18n } from 'vue-i18n'
+import DetailedTriggerNode from '@rule-engine-manager-ui/views/SceneLinkage/editor/detail/DetailedTriggerNode.vue'
 import type { Ref } from 'vue'
 
 const sceneStore = useSceneStore()
@@ -41,9 +43,11 @@ const termsRef = ref()
 const emit = defineEmits<{
   (event: 'cancel-config'): void
   (event: 'save-config'): void
+  (event: 'remove'): void
 }>()
 
 defineProps({
+  cardLayout: { type: Boolean, default: false },
   /** 详细模式使用同一棵 Terms 树，但由页面的执行动作区统一承载。 */
   showTerms: {
     type: Boolean,

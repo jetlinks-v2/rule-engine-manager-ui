@@ -42,23 +42,23 @@
           <div><h2>{{ $t('IotSceneLinkage.detail.triggerRule') }}</h2><p>{{ $t('IotSceneLinkage.detail.triggerRuleHint') }}</p></div>
         </header>
         <div class="detailed-scene-editor__section-body">
-          <div class="detailed-scene-editor__configuration-panel">
+          <div class="detailed-scene-editor__configuration-panel detailed-scene-editor__configuration-panel--triggers">
             <a-form-item v-if="!data.triggerType" name="triggerType" :rules="triggerRules">
               <a-button block class="detailed-scene-editor__trigger-add" @click="triggerPickerVisible = true">
                 <AIcon type="PlusOutlined" />{{ $t('IotSceneLinkage.detail.addTriggerRule') }}
               </a-button>
             </a-form-item>
             <template v-else>
-              <Manual v-if="data.triggerType === 'manual'" :show-actions="false" />
-              <DetailedTimerTrigger v-else-if="data.triggerType === 'timer'" ref="timerTriggerRef" />
-              <Device v-else-if="data.triggerType === 'device'" ref="deviceRef" :show-terms="false" :show-title="false" />
-              <Collector v-else-if="data.triggerType === 'collector'" ref="collectorRef" :show-terms="false" :show-title="false" @cancel-config="cancelNewCollector" @save-config="collectorPending = false" />
+              <DetailedTriggerNode v-if="data.triggerType === 'manual'" :rule="data" @remove="removeTrigger" />
+              <DetailedTimerTrigger v-else-if="data.triggerType === 'timer'" ref="timerTriggerRef" @remove="removeTrigger" />
+              <Device v-else-if="data.triggerType === 'device'" ref="deviceRef" :show-terms="false" :show-title="false" card-layout @remove="removeTrigger" />
+              <Collector v-else-if="data.triggerType === 'collector'" ref="collectorRef" :show-terms="false" :show-title="false" @cancel-config="cancelNewCollector" @save-config="collectorPending = false" card-layout @remove="removeTrigger" />
               <DetailedMultiTriggerConfig v-else-if="data.triggerType === 'multi'" ref="multiTriggerRef" v-model="data.trigger" :trigger-options="multiTriggerOptions" :collapse-to-single="lockedTriggerRoot !== 'multi'" @collapse="restoreSingleTrigger" />
-              <SaasTriggerConfig ref="saasTriggerRef" v-else-if="['alarm', 'ai-event'].includes(data.triggerType)" />
+              <SaasTriggerConfig ref="saasTriggerRef" v-else-if="['alarm', 'ai-event'].includes(data.triggerType)" @remove="removeTrigger" />
               <section v-else-if="data.triggerType" class="detailed-scene-editor__provider-placeholder">
                 <a-empty :description="$t('IotSceneLinkage.message.detailProviderPending', { provider: data.triggerType })" />
               </section>
-              <div v-if="showTriggerRuleActions" class="detailed-scene-editor__trigger-rule-actions">
+              <div v-if="showTriggerRuleActions && !['manual', 'device', 'timer', 'collector', 'alarm', 'ai-event'].includes(data.triggerType)" class="detailed-scene-editor__trigger-rule-actions">
                 <a-tooltip v-if="canEditTrigger" :title="$t('IotSceneLinkage.action.edit')">
                   <a-button type="text" @click="editCurrentTrigger"><AIcon type="EditOutlined" /></a-button>
                 </a-tooltip>
@@ -109,6 +109,7 @@
   </main>
 </template>
 <script setup lang="ts">
+import type { PreviewColumns } from './detailedRuleSummaryParts'
 import { computed, nextTick, onMounted, provide, ref, watch, type PropType } from 'vue'
 import { cloneDeep } from 'lodash-es'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
@@ -116,7 +117,7 @@ import { PageHeader } from '@jetlinks-web-core/components'
 import { useI18n } from 'vue-i18n'
 import { querySceneSupportedActions, type SceneProviderInfo } from '../../../../api/scene-linkage'
 import { getParseTerm } from '../../../../api/scene'
-import Manual from '../../../Scene/Save/Manual/index.vue'
+import DetailedTriggerNode from './DetailedTriggerNode.vue'
 import Device from '../../../Scene/Save/Device/index.vue'
 import Collector from '../../../Scene/Save/Collector/index.vue'
 import SaasTriggerConfig from './SaasTriggerConfig.vue'
@@ -129,6 +130,7 @@ import TriggerPickerModal, { type TriggerPickerOption } from '../components/Trig
 import { MULTI_TRIGGER_PROVIDERS, normalizeResult } from '../../utils'
 import { type SceneEditorMode, type SceneRuleRecord } from '../editorMode'
 import { useDetailedSceneDraft } from './useDetailedSceneDraft'
+import { provideSceneNotifyLabels } from './useSceneNotifyLabels'
 const props = defineProps({
   rule: {
     type: Object as PropType<SceneRuleRecord>,
@@ -176,10 +178,11 @@ const collectorRef = ref<{ openConfig: () => void }>()
 const multiTriggerRef = ref<{ validate: () => string | undefined; openPicker: () => void }>()
 const saasTriggerRef = ref<{ validate: () => string | undefined; openConfig: () => void }>()
 const actionOptions = ref<SceneProviderInfo[]>([])
-const termColumns = ref<Record<string, string>>({})
+const termColumns = ref<PreviewColumns>({})
 const readOnlyActionProviders = ref(['alarm', 'notify'])
 const triggerPickerVisible = ref(false)
 const { data, load, getDraft } = useDetailedSceneDraft()
+provideSceneNotifyLabels(data)
 const nameRules = [{ required: true, message: t('IotSceneLinkage.message.nameRequired') }]
 const triggerRules = [{ required: true, message: t('IotSceneLinkage.message.triggerRequired') }]
 provide('action-options', actionOptions)
@@ -229,50 +232,15 @@ const triggerOptions = computed<TriggerPickerOption[]>(() => props.triggerProvid
     }
     return [{ ...toTriggerPickerOption(item), disabled, disabledReason }]
   }))
-// 与后端 MultiTrigger 的固定叶子限制保持一致，避免选择后才在保存时失败。
-const multiTriggerOptions = computed<TriggerPickerOption[]>(() => {
-  const triggerKinds = [
-    { value: 'repeat', icon: 'ClockCircleOutlined', provider: 'timer' },
-    { value: 'date', icon: 'CalendarOutlined', provider: 'timer' },
-    { value: 'interval', icon: 'SyncOutlined', provider: 'timer' },
-    { value: 'property', icon: 'RiseOutlined', provider: 'device' },
-    { value: 'event', icon: 'NotificationOutlined', provider: 'device' },
-    { value: 'online', icon: 'LoginOutlined', provider: 'device' },
-    { value: 'offline', icon: 'LogoutOutlined', provider: 'device' },
-    { value: 'state', icon: 'SyncOutlined', provider: 'device' },
-    { value: 'alarm', icon: 'AlertOutlined', provider: 'alarm' },
-  ]
-  const supportedProviders = props.triggerProviders
-    .filter(item => item.provider !== 'multi' && props.supportedTriggers.includes(item.provider))
-  const options: TriggerPickerOption[] = []
-  supportedProviders.forEach(provider => {
-    if (!MULTI_TRIGGER_PROVIDERS.includes(provider.provider as typeof MULTI_TRIGGER_PROVIDERS[number])) {
-      options.push({
-        ...toTriggerPickerOption(provider),
-        disabled: true,
-        disabledReason: 'IotSceneLinkage.message.multiTriggerProviderUnsupported',
-      })
-      return
-    }
-    triggerKinds
-      .filter(item => item.provider === provider.provider)
-      .forEach(item => {
-      const provider = props.triggerProviders.find(providerItem => providerItem.provider === item.provider)
-      options.push({
-        ...item,
-        label: t(`IotSceneLinkage.trigger.${item.value}`),
-        description: t(`IotSceneLinkage.triggerDesc.${item.value}`),
-        providerLabel: provider?.name || item.provider,
-        providerDescription: provider?.description || '',
-        disabled: Boolean(props.lockedTriggerProviders.length && !props.lockedTriggerProviders.includes(item.provider)),
-        disabledReason: 'IotSceneLinkage.message.triggerProviderLocked',
-      })
-    })
-  })
-  return options
-})
+// 首次与追加使用相同 Provider 入口，设备、定时的细分方式在后续配置弹窗选择。
+const multiTriggerOptions = computed<TriggerPickerOption[]>(() => triggerOptions.value.map(item => ({
+  ...item,
+  value: item.provider === 'device' ? 'property' : item.provider === 'timer' ? 'repeat' : item.value,
+  disabled: item.disabled || !MULTI_TRIGGER_PROVIDERS.some(provider => provider === item.provider),
+  disabledReason: item.disabled ? item.disabledReason : 'IotSceneLinkage.message.multiTriggerProviderUnsupported',
+})))
 const canConvertToMulti = computed(() => data.value.triggerType !== 'multi'
-  && MULTI_TRIGGER_PROVIDERS.includes(String(data.value.triggerType) as typeof MULTI_TRIGGER_PROVIDERS[number])
+  && MULTI_TRIGGER_PROVIDERS.some(type => type === data.value.triggerType)
   && props.supportedTriggers.includes('multi'))
 const canEditTrigger = computed(() => ['device', 'timer', 'collector'].includes(String(data.value.triggerType)))
 const canRemoveTrigger = computed(() => Boolean(data.value.triggerType) && data.value.triggerType !== 'multi')
@@ -302,7 +270,7 @@ async function selectTriggerFromPicker(pickerType: string) {
   if (triggerType === 'device') deviceRef.value?.openConfig()
   else if (triggerType === 'timer') timerTriggerRef.value?.openConfig()
   else if (triggerType === 'collector') { collectorPending.value = true; collectorRef.value?.openConfig() }
-  else if (triggerType === 'ai-event') saasTriggerRef.value?.openConfig()
+  else if (triggerType === 'alarm' || triggerType === 'ai-event') saasTriggerRef.value?.openConfig()
 }
 
 /** 与快速模式保持一致：已选规则提供显式编辑入口，但已保存规则不允许更换类型。 */
@@ -333,7 +301,7 @@ function restoreSingleTrigger(value: { triggerType: string; trigger: Record<stri
 }
 
 /**
- * 后端的 multi 仅接受设备、定时和告警叶子。转换时保留原始触发器节点，
+ * 仅转换前后端约定可组合的 Provider。转换时保留原始触发器节点，
  * 只替换触发根节点，不触碰详细分支、条件和执行动作。
  */
 async function convertTriggerToMulti() {
@@ -358,12 +326,16 @@ async function loadActionOptions() {
     }))
 }
 
-/** 将后端解析的上下文字段树压平为预览可用名称，避免把 properties.xxx 这类内部路径直接展示给用户。 */
-function toTermColumnMap(columns: any[]): Record<string, string> {
+/** 保留后端字段名称、枚举与操作符元数据；同名列按事件源索引区分，不把内部路径直接展示给用户。 */
+function toTermColumnMap(columns: any[]): PreviewColumns {
   return columns.reduce((result, item) => {
-    if (item?.column) result[item.column] = item.fullName || item.name || item.label || item.column
+    if (item?.column) {
+      const index = item.others?._multiTriggerIndex
+      if (index !== undefined) result[`${index}:${item.column}`] = item
+      if (!result[item.column]) result[item.column] = item
+    }
     return { ...result, ...toTermColumnMap(item?.children || []) }
-  }, {} as Record<string, string>)
+  }, {} as PreviewColumns)
 }
 
 let latestTermColumnsRequest = 0
@@ -397,7 +369,7 @@ function createTermColumnsDraft(): SceneRuleRecord | undefined {
     const when = normalizeParseConditions(branch.when)
     return when.length ? [{ ...branch, when }] : []
   })
-  if (!branches.length) return undefined
+  if (!branches.length && !normalizeParseConditions(draft.terms).length && trigger.type !== 'multi') return undefined
 
   draft.branches = branches
   const options = asRuleRecord(draft.options)
@@ -419,7 +391,7 @@ async function loadTermColumns() {
     const response = await getParseTerm(draft)
     if (requestId === latestTermColumnsRequest) termColumns.value = toTermColumnMap(response?.result || [])
   } catch {
-    // 字段解析失败时仍保留已存展示名称或字段路径，不能阻断详细规则编辑。
+    // 字段解析失败时仍保留已存展示名称，缺失名称时展示可读提示，不能阻断详细规则编辑。
     if (requestId === latestTermColumnsRequest) termColumns.value = {}
   }
 }

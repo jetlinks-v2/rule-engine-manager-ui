@@ -14,11 +14,8 @@ export const formatSceneDuration = (t: SceneTranslator, seconds: number) => seco
   ? t('IotSceneLinkage.debounce.minutes', { value: seconds / 60 })
   : t('IotSceneLinkage.debounce.seconds', { value: seconds })
 
-/**
- * 多触发器由后端 MultiTrigger 固定校验这三类 Provider。快速、详细模式共用该边界，
- * 避免界面允许选择后在保存时才被后端拒绝。
- */
-export const MULTI_TRIGGER_PROVIDERS = ['device', 'timer', 'alarm'] as const
+/** 与后端 MultiTrigger 约定保持一致，手动、采集及嵌套组合不参与任一触发。 */
+export const MULTI_TRIGGER_PROVIDERS = ['device', 'timer', 'alarm', 'ai-event'] as const
 
 export const AI_EVENT_RESULT_COLUMNS = ['hitResults', 'maxTargetScore', 'targetCount', 'results', 'numberResults'] as const
 
@@ -64,6 +61,9 @@ export interface SceneAlarmTriggerConfig {
   options?: {
     productId?: string
     deviceId?: string
+    /** 仅缓存界面展示名，告警订阅和运行仍以 ID 为准。 */
+    productName?: string
+    deviceName?: string
     alarmConfigName?: string
     sceneId?: string
     sceneName?: string
@@ -399,9 +399,10 @@ export const toForm = (detail: any): SceneLinkageForm => {
     const toLeafForm = (item: any) => toForm({
       ...scene,
       trigger: item.trigger,
-      branches: (scene.branches || []).map((branch: any, index: number) => index
-        ? branch
-        : { ...branch, when: item.terms || [] }),
+      terms: [],
+      options: { ...scene.options, trigger: item.options || scene.options?.trigger },
+      // 叶子的识别计数与全局分支防抖独立；详细模式尚无分支时也要还原叶子条件。
+      branches: [{ ...scene.branches?.[0], when: item.terms || [], shakeLimit: item.shakeLimit }],
     })
     const first = items[0]
     if (first) {
@@ -506,7 +507,8 @@ export const toForm = (detail: any): SceneLinkageForm => {
     allDevices: device.selector === 'all',
     dynamicScope: ['space', 'device-group'].includes(device.selector),
     dynamicScopeType: device.selector === 'space' ? 'space' : 'device-group',
-    scopeOptions: device.options || {},
+    // 原生详细规则的设备名称也可能只保存在 selectorValues，回显时保留这些显示名。
+    scopeOptions: { ...device.options, names: selectorValues.map((item: any, index: number) => item.name || device.options?.names?.[index] || String(item.value)) },
     groupIds: ['space', 'device-group'].includes(device.selector) ? selectorValues.map((item: any) => String(item.value)) : [],
     deviceIds: device.selector === 'fixed' ? selectorValues.map((item: any) => String(item.value)) : [],
     propertyId: propertyTriggerTerm?.column?.split('.')?.[1],
@@ -678,7 +680,7 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
         rolling: false,
       }
     : undefined
-  const aiEventRecognitionRule = form.triggerKind === 'ai-event' ? form.aiEvent.recognitionRule : undefined
+  const aiEventRecognitionRule = !form.multiTriggers?.length && form.triggerKind === 'ai-event' ? form.aiEvent.recognitionRule : undefined
   const aiEventShakeLimit = aiEventRecognitionRule
     ? aiEventRecognitionRule.type === 'hits'
       ? {
@@ -752,6 +754,8 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
             index: index + 1,
             trigger: leaf.trigger,
             terms: leaf.branches?.[0]?.when || [],
+            shakeLimit: leaf.branches?.[0]?.shakeLimit,
+            options: leaf.options.trigger,
           }
         }),
       },
@@ -885,7 +889,7 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
     branchId,
     branchName: '条件 1',
     executeAnyway: true,
-    shakeLimit: aiEventShakeLimit || debounceShakeLimit || (form.triggerKind === 'state' && form.deviceStateTriggerMode === 'sustained' ? {
+    shakeLimit: aiEventShakeLimit || debounceShakeLimit || (!multiTriggers && form.triggerKind === 'state' && form.deviceStateTriggerMode === 'sustained' ? {
       enabled: true,
       time: form.deviceStateSustainedTime,
       threshold: 1,

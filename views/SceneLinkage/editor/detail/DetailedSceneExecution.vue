@@ -101,7 +101,7 @@ const directActionRules = computed(() => [{
 .detailed-scene-execution :deep(.actions-warp .ant-collapse-content-box) { padding: 0 !important; }
 .detailed-scene-execution :deep(.actions-warp .actions-list) { padding: var(--space-3, 12px); margin: 0; background: transparent; border: 0; }
 .detailed-scene-execution :deep(.actions-warp .action-list-content) { gap: var(--space-3, 12px); }
-.detailed-scene-execution :deep(.actions-warp .actions-item-warp > .ant-form-item) { margin: 0; padding: 0 var(--space-3, 12px); background: var(--ant-color-bg-container); border: 1px dashed var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 6px); }
+.detailed-scene-execution :deep(.actions-warp .actions-item-warp > .ant-form-item) { margin: 0; padding: 0; background: transparent; border: 0; }
 .detailed-scene-execution :deep(.actions-warp .actions-item-filter-warp:not(.filter-border)) { margin-bottom: 0; padding: 0; border: 0; }
 .detailed-scene-execution :deep(.actions-warp .actions-item-filter-warp:not(.filter-border) .filter-add-button) { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 2rem; color: var(--ant-color-text-tertiary); border: 1px dashed var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 6px); }
 .detailed-scene-execution :deep(.actions-warp .actions-item-filter-warp:not(.filter-border) .filter-add-button:hover) { color: var(--ant-color-primary); border-color: var(--ant-color-primary); background: var(--ant-color-primary-bg); }
@@ -113,31 +113,32 @@ const directActionRules = computed(() => [{
 .detailed-scene-execution :deep(.actions-warp .actions-add-list__button) { width: 100% !important; height: 2.5rem; border-style: dashed !important; }
 /* 详细模式的分支仍复用原版树，仅把条件与动作分段为可读的嵌套卡片。 */
 .detailed-scene-execution :deep(.actions-terms-warp--detail) { display: block; width: 100% !important; padding: 0; margin: 0 0 var(--space-3, 12px) !important; overflow: hidden; background: var(--ant-color-bg-container); border: 1px solid var(--detailed-scene-border, #e5e6eb); border-radius: var(--radius-jet-sm, 8px); }
-.detailed-scene-execution :deep(.actions-terms-warp--detail > .actions-terms-options) { position: static; display: block; width: auto; padding: var(--space-3, 12px) var(--space-4, 16px) var(--space-4, 16px); background: transparent; border: 0; }
-.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-terms-list) { display: block; min-height: 0; padding: 0; background: transparent; border: 0; }
-.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-terms-list-content__items) { display: block; padding: 0; overflow: visible; }
-.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-branches) { padding: var(--space-3, 12px) 0 0; margin: var(--space-3, 12px) 0 0; border-top: 1px solid var(--detailed-scene-subtle-border, #f0f0f0); }
-.detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card) { margin: 0; }
-.detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card > .ant-form-item) { margin: 0; padding: var(--space-3, 12px) 0 0; }
-.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-branches .actions-title) { display: flex; justify-content: flex-end; padding: 0 0 var(--space-2, 8px); background: transparent; border: 0; }
+.detailed-scene-execution :deep(.actions-terms-warp--detail > .actions-terms-options) { position: static; display: block; width: auto; padding: 0; margin: 0; background: transparent; border: 0; }
+.detailed-scene-execution :deep(.actions-terms-warp--detail:not(.first-children) > .actions-terms-options) { padding-top: var(--space-3, 12px); }
+.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-terms-list) { display: block; min-height: 0; margin: 0; padding: var(--space-3, 12px) var(--space-4, 16px); background: transparent; border: 0; }
+/* 分组沿横向排列，由原有滚动容器承接溢出；边缘留白容纳条件项的悬浮操作。 */
+.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-terms-list-content__items) { display: flex; flex-wrap: nowrap; align-items: center; padding: var(--space-3, 12px); overflow: visible; }
+.detailed-scene-execution :deep(.actions-terms-warp--detail .terms-params-content) { padding-right: 2rem; }
+.detailed-scene-execution :deep(.actions-terms-warp--detail .terms-params-content > .terms-params-delete) { top: 4px; right: 4px; }
+.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-branches) { padding: 0; margin: 0; border: 0; }
+/* 条件与动作标题共用分支外框的左右边界，串行/并行在各自内容区内表达层级。 */
+.detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card) { margin: 0; border: 0; border-radius: 0; }
+.detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card > .detailed-scene-section-header) { border-top: 1px solid var(--detailed-scene-subtle-border, #f0f0f0); }
+.detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card > .ant-form-item) { margin: 0; padding: var(--space-3, 12px) var(--space-4, 16px) var(--space-4, 16px); }
+.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-branches .actions-title) { display: none; }
 .detailed-scene-execution :deep(.actions-terms-warp--detail .actions-branches .actions-title > span:first-child), .detailed-scene-execution__direct-card :deep(.actions-title) { display: none; }
-.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-branches .shakeLimit) { position: absolute; top: var(--space-3, 12px); right: var(--space-4, 16px); z-index: 1; width: auto; }
 .detailed-scene-execution :deep(.actions-terms-warp--detail.actions-terms-warp--otherwise) { display: block; }
 .detailed-scene-execution :deep(.actions-terms-warp--detail.actions-terms-warp--otherwise .actions-terms-options.no-when) { display: block; width: auto; padding: var(--space-3, 12px) var(--space-4, 16px); }
 .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-filter-delete) { display: none !important; }
-.detailed-scene-execution :deep(.actions-terms-warp--detail:not(.first-children) > .actions-terms-options.border) { position: relative; margin: var(--space-3, 12px); padding: var(--space-3, 12px) var(--space-4, 16px) var(--space-4, 16px); background: var(--ant-color-bg-container); border: 1px solid var(--detailed-scene-subtle-border, #f0f0f0); border-radius: var(--radius-jet-sm, 6px); }
-.detailed-scene-execution :deep(.actions-terms-warp--detail:not(.first-children) > .actions-terms-options.border > .detailed-scene-branch-delete) { top: calc(var(--space-2, 8px) * -1); right: calc(var(--space-2, 8px) * -1); z-index: 2; }
-.detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-branch-card__header), .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card__header) { display: flex; gap: var(--space-3, 12px); align-items: flex-start; padding: var(--space-3, 12px) var(--space-4, 16px); background: #fafbfc; border-bottom: 1px solid var(--detailed-scene-subtle-border, #f0f0f0); }
+.detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-branch-card__header:not(.detailed-scene-section-header)), .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card__header:not(.detailed-scene-section-header)) { display: flex; gap: var(--space-3, 12px); align-items: flex-start; padding: var(--space-3, 12px) var(--space-4, 16px); background: #fafbfc; border-bottom: 1px solid var(--detailed-scene-subtle-border, #f0f0f0); }
 .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-branch-card__icon), .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card__icon) { display: grid; flex: none; width: 1.75rem; height: 1.75rem; place-items: center; color: var(--ant-color-primary); background: var(--ant-color-primary-bg); border-radius: var(--radius-jet-sm, 6px); }
 .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-branch-card__icon--otherwise) { color: var(--ant-color-primary); background: var(--ant-color-primary-bg); }
 .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-branch-card__header > div), .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card__header > div) { display: grid; gap: 2px; min-width: 0; }
 .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-branch-card__header strong), .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card__header strong) { color: var(--ant-color-text); font-size: .875rem; font-weight: 600; line-height: 1.25rem; }
 .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-branch-card__header small), .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card__header small) { color: var(--ant-color-text-tertiary); font-size: .75rem; line-height: 1.125rem; }
-.detailed-scene-execution :deep(.detailed-scene-branch-card__add-condition) { display: inline-flex; height: 2rem; padding: 0; color: var(--ant-color-text-secondary); }
+.detailed-scene-execution :deep(.detailed-scene-branch-card__add-otherwise) { display: inline-flex; align-items: center; justify-content: center; width: 2rem; min-width: 2rem; height: 2rem; padding: 0; color: var(--ant-color-text-tertiary); background: var(--ant-color-bg-container); border-color: var(--ant-color-border); line-height: 1; }
 .detailed-scene-execution :deep(.actions-terms-warp--detail.actions-terms-warp--otherwise .actions-terms-options) { text-align: center; }
-.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-terms-options.border .when-add) { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 2.5rem; padding: 0; color: var(--ant-color-text-secondary); background: var(--ant-color-bg-container); border: 1px dashed var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 6px); }
-.detailed-scene-execution :deep(.actions-terms-warp--detail .actions-terms-options.border .when-add:hover) { color: var(--ant-color-primary); border-color: var(--ant-color-primary); background: var(--ant-color-primary-bg); }
 /* 同一分支只保留一条内容对齐线，串行/并行依靠自身边框表达动作层级，不再继续向右缩进。 */
 .detailed-scene-execution :deep(.actions-terms-warp--detail .detailed-scene-action-card .actions-warp) { margin: 0; padding: 0; background: transparent; border: 0; border-radius: 0; }
-.detailed-scene-execution :deep(.detailed-scene-branch-card__add-condition:hover) { color: var(--ant-color-primary); }
+.detailed-scene-execution :deep(.detailed-scene-branch-card__add-otherwise:hover) { color: var(--ant-color-primary); border-color: var(--ant-color-primary); }
 </style>

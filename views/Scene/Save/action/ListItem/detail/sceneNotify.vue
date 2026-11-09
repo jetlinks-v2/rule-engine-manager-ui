@@ -1,17 +1,10 @@
 <template>
-  <span>{{ $t('IotSceneLinkage.action.sendNotify') }}：{{ recipientSummary }}</span>
+  <SceneNotifySummary :config="data.configuration" :options="data.options" />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-
-const props = defineProps({
-  data: { type: Object, default: () => ({}) },
-})
-const { t } = useI18n()
-const recipientSummary = computed(() => {
-  const count = props.data?.configuration?.userIds?.length || 0
-  return count ? t('IotSceneLinkage.detailNotify.recipientCount', { count }) : t('IotSceneLinkage.detailNotify.unconfigured')
-})
+import SceneNotifySummary from '@rule-engine-manager-ui/views/SceneLinkage/editor/components/SceneNotifySummary.vue'
+// 通用动作详情会传入额外 options，避免其透传覆盖摘要显式绑定的元数据。
+defineOptions({ inheritAttrs: false })
+defineProps({ data: { type: Object, default: () => ({}) } })
 </script>

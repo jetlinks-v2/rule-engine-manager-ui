@@ -2,7 +2,7 @@
   <div class="scene-condition-row-wrapper">
     <article :class="['scene-condition-row', { 'scene-condition-row--invalid': invalid }]">
       <header><span :class="['scene-condition-row__icon', `scene-condition-row__icon--${condition.type}`]"><AIcon :type="condition.type === 'timeRange' ? 'ClockCircleOutlined' : condition.type === 'alarmState' ? 'AlertOutlined' : 'BarChartOutlined'" /></span><strong>{{ conditionTitle }}</strong><small>{{ $t('IotSceneLinkage.editor.conditionNumber', { index: index + 1 }) }}</small><span class="scene-condition-row__actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></span></header>
-      <div class="scene-condition-row__description">{{ conditionSummary }}</div>
+      <div class="scene-condition-row__description"><SceneSummaryParts :parts="conditionParts" /></div>
     </article>
     <p v-if="invalid" class="scene-condition-row__error">{{ errorMessage }}</p>
 
@@ -31,7 +31,7 @@
           </a-form>
         </div>
       </template>
-      <template #preview><span>{{ conditionSummary }}</span></template>
+      <template #preview><SceneSummaryParts :parts="conditionParts" /></template>
     </DeviceScopeModal>
     <AlarmStateConditionModal
       v-else-if="condition.type === 'alarmState'"
@@ -49,6 +49,8 @@
 </template>
 
 <script setup lang="ts">
+import SceneSummaryParts from './SceneSummaryParts.vue'
+import { conditionNodeSummaryParts } from '../conditionNodeSummary'
 import { computed, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
@@ -82,19 +84,7 @@ const conditionTitle = computed(() => {
     ? t('IotSceneLinkage.condition.visualAlarmState')
     : t('IotSceneLinkage.condition.iotAlarmState')
 })
-const deviceConditionSummary = computed(() => {
-  if (props.condition.type !== 'deviceProperty') return ''
-  const scope = formatDeviceScopeText(t, { selector: props.condition.selector, selectorValues: props.condition.selectorValues, options: props.condition.options }, { emptyText: t('IotSceneLinkage.placeholder.device') })
-  const term = t(`IotSceneLinkage.term.${props.condition.termType}`)
-  return [scope, props.condition.options?.propertiesName || props.condition.propertyId, term, props.condition.value].filter(value => value !== undefined && value !== '').join(' · ')
-})
-const conditionSummary = computed(() => {
-  if (props.condition.type === 'deviceProperty') return deviceConditionSummary.value
-  if (props.condition.type === 'timeRange') return props.condition.ranges.map(range => formatSceneTimeRange(t, range)).join('、')
-  const alarm = props.condition.alarm
-  return [alarm.options?.alarmConfigName, alarm.state === 'normal' ? t('IotSceneLinkage.alarmState.normal') : t('IotSceneLinkage.alarmState.warning')].filter(Boolean).join(' · ')
-})
-
+const conditionParts = computed(() => conditionNodeSummaryParts(props.condition, t, { property: selectedProperty.value?.label }))
 function update(value: SceneConditionForm) { emit('update', value) }
 function updateAlarm(alarm: Extract<SceneConditionForm, { type: 'alarmState' }>['alarm']) { if (props.condition.type === 'alarmState') update({ ...props.condition, alarm }) }
 function updateTimeRanges(ranges: Extract<SceneConditionForm, { type: 'timeRange' }>['ranges']) { if (props.condition.type === 'timeRange') update({ ...props.condition, ranges }) }

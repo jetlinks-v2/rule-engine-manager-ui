@@ -1,28 +1,28 @@
 <template>
-  <section class="saas-trigger-config">
-    <header class="saas-trigger-config__header">
-      <span class="saas-trigger-config__icon"><AIcon :type="data.triggerType === 'alarm' ? 'AlertOutlined' : 'RadarChartOutlined'" /></span>
-      <div><strong>{{ title }}</strong><small>{{ hint }}</small></div>
-    </header>
-    <AlarmTriggerSourceRow v-if="data.triggerType === 'alarm'" v-model="alarm" />
-    <AiEventTriggerRow
-      v-else-if="data.triggerType === 'ai-event'"
-      :open="aiEventConfigOpen"
-      :model-value="aiEvent"
-      @confirm="confirmAiEvent"
-      @cancel="aiEventConfigOpen = false"
-    />
-  </section>
+  <DetailedTriggerNode :rule="data" @edit="openConfig" @remove="emit('remove')" />
+  <AlarmStateConditionModal
+    v-if="data.triggerType === 'alarm'"
+    :open="alarmConfigOpen"
+    :source-kind="alarmDraft.sourceKind === 'visual-ai' ? 'visual-ai' : 'iot-device'"
+    mode="trigger"
+    v-model="alarmDraft"
+    @cancel="alarmConfigOpen = false"
+    @save="saveAlarm"
+  />
+  <AiEventTriggerRow v-if="data.triggerType === 'ai-event'" :open="aiEventConfigOpen" :model-value="aiEvent" @confirm="confirmAiEvent" @cancel="aiEventConfigOpen = false" />
 </template>
 
 <script setup lang="ts">
 import { computed, ref, type Ref } from 'vue'
+import { cloneDeep } from 'lodash-es'
+import { onlyMessage } from '@jetlinks-web-core/utils/comm'
+import DetailedTriggerNode from './DetailedTriggerNode.vue'
 import { storeToRefs } from 'pinia'
 import { useSceneStore } from '@rule-engine-manager-ui/store/scene'
 import type { SceneAiEventTriggerConfig, SceneAlarmTriggerConfig } from '../../utils'
 import { AI_EVENT_RESULT_COLUMNS } from '../../utils'
 import { findSceneCondition, replaceManagedSceneCondition } from '../../sceneRule'
-import AlarmTriggerSourceRow from '../components/AlarmTriggerSourceRow.vue'
+import AlarmStateConditionModal from '../components/AlarmStateConditionModal.vue'
 import AiEventTriggerRow from '../components/AiEventTriggerRow.vue'
 import { useI18n } from 'vue-i18n'
 
@@ -31,12 +31,10 @@ const { data: storeData } = storeToRefs(useSceneStore())
 const data = storeData as unknown as Ref<Record<string, any>>
 const { t } = useI18n()
 const aiEventConfigOpen = ref(false)
-const title = computed(() => data.value.triggerType === 'alarm'
-  ? t('IotSceneLinkage.detail.alarmTrigger')
-  : t('IotSceneLinkage.detail.aiEventTrigger'))
-const hint = computed(() => data.value.triggerType === 'alarm'
-  ? t('IotSceneLinkage.detail.alarmTriggerHint')
-  : t('IotSceneLinkage.detail.aiEventTriggerHint'))
+const alarmConfigOpen = ref(false)
+const alarmDraft = ref<SceneAlarmTriggerConfig>({ modes: [] })
+const emit = defineEmits<{ remove: [] }>()
+
 
 const ensureFirstBranch = () => {
   if (!data.value.branches?.length) data.value.branches = [{ when: [], then: [] }] as any
@@ -78,6 +76,7 @@ const alarm = computed<SceneAlarmTriggerConfig>({
 /** 详细模式选择视觉事件后立即进入与快速模式相同的资源配置弹窗。 */
 function openConfig() {
   if (data.value.triggerType === 'ai-event') aiEventConfigOpen.value = true
+  else if (data.value.triggerType === 'alarm') { alarmDraft.value = cloneDeep(alarm.value); alarmConfigOpen.value = true }
 }
 
 function confirmAiEvent(value: SceneAiEventTriggerConfig) {
@@ -120,9 +119,7 @@ const aiEvent = computed<SceneAiEventTriggerConfig>({
 })
 
 /** 专用 SaaS 触发器没有原版 FormItem，保存前由父编辑器调用此校验。 */
-function validate() {
-  const trigger = data.value.trigger as any
-  const configuration = trigger?.configuration || {}
+function validate(configuration: Record<string, any> = data.value.trigger?.configuration || {}) {
   if (data.value.triggerType === 'alarm') {
     const visualAi = configuration.sourceKind === 'visual-ai' || configuration.targetType === 'aiTaskMediaTarget'
     const valid = Boolean(configuration.alarmConfigId && configuration.modes?.length
@@ -140,10 +137,13 @@ function validate() {
   return undefined
 }
 
+/** 卡片编辑只在确认后提交告警配置，仍由原有 setter 维护关联条件。 */
+function saveAlarm() {
+  const message = validate(alarmDraft.value)
+  if (message) { onlyMessage(t(message), 'warning'); return }
+  alarm.value = cloneDeep(alarmDraft.value)
+  alarmConfigOpen.value = false
+}
+
 defineExpose({ validate, openConfig })
 </script>
-
-<style scoped>
-.saas-trigger-config { display: grid; gap: var(--space-4, 16px); padding: var(--space-4, 16px); margin-bottom: var(--space-4, 16px); background: var(--ant-color-bg-container); border: 1px solid var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 10px); }
-.saas-trigger-config__header { display: flex; gap: var(--space-3, 12px); align-items: center; padding-bottom: var(--space-3, 12px); border-bottom: 1px solid var(--ant-color-border-secondary); }.saas-trigger-config__header > div { display: grid; gap: 2px; }.saas-trigger-config__header strong { color: var(--ant-color-text); font-weight: 600; }.saas-trigger-config__header small { color: var(--ant-color-text-tertiary); font-size: 12px; }.saas-trigger-config__icon { display: grid; place-items: center; width: 30px; height: 30px; color: var(--ant-color-primary); background: var(--ant-color-primary-bg); border-radius: 6px; }
-</style>

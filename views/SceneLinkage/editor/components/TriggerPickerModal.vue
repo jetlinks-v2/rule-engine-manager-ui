@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 export type TriggerPickerOption = {
@@ -79,6 +79,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const selectedProvider = ref('')
+// 外部关闭后重新打开始终从入口开始，避免残留上一轮的二级选择。
+watch(() => props.open, () => { selectedProvider.value = '' })
 const providerIcons: Record<string, string> = {
   device: 'ApiOutlined',
   timer: 'ClockCircleOutlined',

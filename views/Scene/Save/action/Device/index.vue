@@ -53,7 +53,6 @@
                 :branches-name="branchesName"
                 :then-name="thenName"
                 :column-map="options.columnMap"
-                @advanced="scopeEditorMode = 'advanced'"
                 @change-product="current = 0"
                 @cancel="onCancel"
                 @save="onResourceScopeSave"
@@ -228,7 +227,7 @@ const onProductChange = (_val: any, bol = false) => {
         DeviceModel.source = 'fixed'
         scopeEditorMode.value = 'resource'
         const flag = isActionChange(
-            JSON.parse(_val.metadata || '{}'),
+            typeof _val.metadata === 'string' ? JSON.parse(_val.metadata || '{}') : _val.metadata || {},
             DeviceModel?.message,
         );
         if (!flag) {
@@ -258,16 +257,20 @@ const onDeviceSave = (_data: any, obj?: any) => {
     Object.assign(DeviceModel, { ..._data });
     DeviceOptions.value = { ...unref(DeviceOptions), ...obj };
 };
-/** 固定和静态范围在统一资源壳中一次完成范围与指令配置；变量、关系、标签继续走原版编辑器。 */
+/** 固定设备、空间、分组和标签在统一资源壳配置；历史变量及关系选择继续保留原数据。 */
 const onResourceScopeSave = (payload: any) => {
     Object.assign(DeviceModel, {
         selector: payload.scope.selector,
         selectorValues: payload.scope.selectorValues,
         productId: payload.scope.productId || DeviceModel.productId,
+        source: 'fixed',
+        upperKey: '',
     });
     DeviceOptions.value = {
         ...unref(DeviceOptions),
         ...payload.actionOptions,
+        name: payload.scope.selectorValues.map((item: { name?: string; value: unknown }) => item.name || item.value),
+        productName: payload.scope.productName || productDetail.value.name,
     };
     optionColumnCache.value = payload.optionColumns || [];
     onSave(payload.action, payload.columnMap);
@@ -342,7 +345,7 @@ watch(
         activeProductId.value = newValue?.productId || ''
         // 详细模式编辑已有动作时直接展示已选产品下的设备列表并回显范围。
         current.value = isDetailedEditor.value && newValue?.productId ? 1 : 0
-        scopeEditorMode.value = ['context', 'relation', 'tag'].includes(newValue?.selector)
+        scopeEditorMode.value = ['context', 'relation'].includes(newValue?.selector)
             ? 'advanced'
             : 'resource';
         if (isDetailedEditor.value && newValue?.productId) void hydrateSelectedProduct(newValue.productId)
@@ -362,7 +365,7 @@ watch(
 .detailed-device-action-modal__product {
     display: grid;
     gap: var(--space-4, 16px);
-    min-height: 38rem;
+    min-height: 0;
 
     > header > div {
         display: grid;

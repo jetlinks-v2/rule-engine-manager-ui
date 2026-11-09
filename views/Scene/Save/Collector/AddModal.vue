@@ -141,7 +141,7 @@ const addModel = reactive<AddModelType>({
 const optionsCache = ref(cloneDeep(props.options));
 const pointList = ref<Record<string, any>[]>([]);
 
-const handleOptions = (data: TriggerCollector) => {
+const handleOptions = (data: TriggerCollector & { readPoints?: string[]; writePoints?: Record<string, unknown> }) => {
   const typeIconMap = {
     write: "icon-bianji1",
     sub: "icon-shijian",
@@ -161,6 +161,10 @@ const handleOptions = (data: TriggerCollector) => {
     action: optionsCache.value?.action,
     pointsName: "",
     channelId: addModel.pointSelectInfo.channelId,
+    // 只缓存资源显示名，供节点与预览读取；不修改采集器运行配置。
+    channelName: addModel.channelDetail?.name || props.options?.channelName,
+    collectorName: addModel.collectorDetail?.name,
+    pointName: data.operator === 'sub' ? $t('IotSceneLinkage.node.allPoints') : pointList.value.filter(point => (data.readPoints || Object.keys(data.writePoints || {})).includes(point.id)).map(point => point.name).join('、'),
   };
   _options.name = addModel.collectorDetail?.name;
   if (data.operator === "sub") {

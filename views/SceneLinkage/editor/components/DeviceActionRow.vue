@@ -1,8 +1,8 @@
 <template>
-  <article class="device-action-row">
-    <header><span class="device-action-row__icon"><AIcon type="ControlOutlined" /></span><strong>{{ $t('IotSceneLinkage.action.device') }}</strong><small>{{ index + 1 }}</small><span class="device-action-row__actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></span></header>
-    <div class="device-action-row__description">{{ actionSummary }}</div>
-  </article>
+  <SceneNodeCard class="device-action-row" :title="$t('IotSceneLinkage.action.device')" icon="ControlOutlined" :number="index + 1">
+    <template #actions><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></template>
+    <SceneActionSummary :action="{ executor: 'device', device: action.config, options: { ...action.config?.options, ...action.options } }" />
+  </SceneNodeCard>
 
   <DeviceScopeModal
     :open="editorVisible"
@@ -56,12 +56,14 @@
         </a-form>
       </div>
     </template>
-    <template #preview><span>{{ actionSummary }}</span></template>
+    <template #preview><SceneActionSummary :action="{ executor: 'device', device: config, options: config.options }" /></template>
   </DeviceScopeModal>
 </template>
 
 <script setup lang="ts">
+import SceneActionSummary from './SceneActionSummary.vue'
 import { computed, reactive, ref, watch, type PropType } from 'vue'
+import SceneNodeCard from './SceneNodeCard.vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { getProduct } from '../../../../api/scene-linkage'
@@ -70,7 +72,6 @@ import type { SceneActionForm } from '../../utils'
 import DeviceScopeModal, { type DeviceScope } from './DeviceScopeModal.vue'
 import ThingModelSelect from './ThingModelSelect.vue'
 import ThingModelValueInput from './ThingModelValueInput.vue'
-import { formatDeviceScopeText } from '../deviceScopeLabel'
 import { getValueType, isSupportedValueType, toThingModelOptions } from '../thingModel'
 
 const props = defineProps({ action: { type: Object as PropType<SceneActionForm>, required: true }, index: { type: Number, required: true }, autoOpen: Boolean })
@@ -87,7 +88,6 @@ const config = computed(() => {
   const current = editingAction.value?.config || props.action.config || {}
   return { productId: current.productId || '', selector: current.selector || 'fixed', selectorValues: current.selectorValues || [], options: current.options || {}, message: current.message || { messageType: 'READ_PROPERTY', properties: [] } }
 })
-const scopeText = computed(() => formatDeviceScopeText(t, { selector: config.value.selector, selectorValues: config.value.selectorValues, options: config.value.options }, { emptyText: t('IotSceneLinkage.placeholder.device') }))
 const readableProperties = computed(() => toThingModelOptions(metadata.value.properties.filter(item => item.expands?.type?.includes('read') !== false), 'property'))
 const writableProperties = computed(() => toThingModelOptions(metadata.value.properties.filter(item => item.expands?.type?.includes('write') !== false), 'property'))
 const functions = computed(() => toThingModelOptions(metadata.value.functions.filter(item => (item.inputs || []).every((input: any) => isSupportedValueType(getValueType(input)))), 'function'))
@@ -126,12 +126,6 @@ const operationValue = computed(() => {
   return message.messageType === 'INVOKE_FUNCTION' ? message.functionId : message.messageType === 'WRITE_PROPERTY' ? Object.keys(message.properties || {})[0] : message.properties?.[0]
 })
 const operationName = computed(() => t('IotSceneLinkage.action.issueCommand'))
-const actionSummary = computed(() => {
-  const actionName = operationTypeOptions.value.find(item => item.value === operationType.value)?.label || operationName.value
-  const targetName = config.value.options.propertiesName || operationValue.value || '-'
-  return `${scopeText.value} · ${actionName} ${targetName}`
-})
-
 /** 设备动作只有点击确定后才回写规则，避免取消弹窗时泄露半成品字段。 */
 function openEditor() {
   editingAction.value = cloneAction(props.action)
@@ -249,7 +243,7 @@ watch(() => props.autoOpen, value => {
 </script>
 
 <style scoped>
-.device-action-row { overflow: hidden; margin-bottom: 10px; border: 1px solid var(--jet-theme-border-secondary); border-radius: 8px; background: var(--ant-color-bg-container); }.device-action-row > header { display: flex; gap: 10px; align-items: center; min-height: 48px; padding: 0 16px; background: #fafbfc; }.device-action-row > header small { color: var(--ant-color-text-tertiary); }.device-action-row__actions { display: inline-flex; gap: 2px; margin-left: auto; }.device-action-row__description { padding: 14px 16px; overflow-wrap: anywhere; }
+.device-action-row { margin-bottom: var(--space-3, 12px); }
 .device-action-row__index, .device-action-row__icon { display: grid; flex: none; place-items: center; width: 28px; height: 28px; border-radius: 6px; }
 .device-action-row__index { width: 22px; height: 22px; color: var(--ant-color-primary); background: var(--ant-color-fill-secondary); border-radius: 50%; font-size: 12px; font-weight: 600; }
 .device-action-row__icon { color: #1e5eff; background: #e8f0ff; }

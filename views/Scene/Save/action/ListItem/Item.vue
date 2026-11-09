@@ -6,6 +6,8 @@
     >
       <div :class="['actions-item', { 'actions-item--show-controls': showActionControls }]">
         <CheckItem v-bind="props" ref="checkItemRef">
+          <DetailedActionNode v-if="showActionControls" :action="data || {}" :options="options" :index="name" :read-only="isReadOnly" @edit="data?.executor ? onType(data.executor) : onAdd()" @remove="onDelete" @visible-change="changeTriggerVisible" />
+          <template v-else>
           <div class="item-options-warp">
             <span class="item-number">{{ name + 1 }}</span>
             <div class="item-options-type" @click="onAdd">
@@ -38,6 +40,7 @@
           <a-tooltip v-if="showActionControls && !isReadOnly" :title="$t('IotSceneLinkage.action.edit')">
             <a-button class="actions-item__edit" type="text" @click.stop="onType(data?.executor || '')"><AIcon type="EditOutlined" /></a-button>
           </a-tooltip>
+          </template>
         </CheckItem>
       </div>
     </a-form-item>
@@ -65,6 +68,7 @@
             />
           </div>
         </template>
+        <SceneFilterAddButton v-else-if="showActionControls" @add="addFilterParams" />
         <div v-else class="filter-add-button" @click="addFilterParams">
           <AIcon type="PlusOutlined" style="padding-right: 4px" />
           <span>{{ $t('ListItem.Item.637563-20') }}</span>
@@ -124,9 +128,11 @@ import { useSceneStore } from "@rule-engine-manager-ui/store/scene";
 import { storeToRefs } from "pinia";
 import { iconMap} from "./util";
 import FilterGroup from "./FilterGroup.vue";
+import SceneFilterAddButton from "../../components/SceneFilterAddButton.vue";
 import { randomString } from "@jetlinks-web/utils";
 import { EventEmitter, EventEmitterKeys, EventSubscribeKeys } from "../../util";
 import CheckItem from "./CheckItem.vue";
+import DetailedActionNode from "./DetailedActionNode.vue";
 import { useI18n } from 'vue-i18n'
 import ComponentsMap from './detail'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
@@ -497,6 +503,16 @@ const rules = [
   }
 }
 
+/* 详细模式由共享节点卡承载，保留原版 CheckItem 的校验与动作编辑生命周期。 */
+.actions-item.actions-item--show-controls {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
 .actions-item-filter-warp {
   position: relative;
   margin-bottom: 24px;

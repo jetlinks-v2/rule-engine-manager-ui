@@ -1,5 +1,5 @@
 import { computed, ref, watch, type Ref } from 'vue'
-import { applyMultiTriggerForm, defaultMultiTriggerForm, toMultiTriggerForm, type SceneLinkageForm, type SceneTriggerKind } from '../utils'
+import { applyMultiTriggerForm, defaultMultiTriggerForm, MULTI_TRIGGER_PROVIDERS, toMultiTriggerForm, type SceneLinkageForm, type SceneTriggerKind } from '../utils'
 
 export const useMultiSceneTrigger = (
   form: SceneLinkageForm,
@@ -8,15 +8,18 @@ export const useMultiSceneTrigger = (
   isEditing: () => boolean,
   clearTrigger: () => void,
 ) => {
+  const triggerProvider = (kind: SceneTriggerKind) => ['repeat', 'date', 'interval'].includes(kind)
+    ? 'timer'
+    : ['property', 'event', 'online', 'offline', 'state'].includes(kind) ? 'device' : kind
   const activeMultiTriggerIndex = ref(0)
   const addingMultiTrigger = ref(false)
   let applyingMultiTrigger = false
   // multi 保留一个叶子时仍须使用 multi 模型，避免编辑已保存场景时改变根触发器类型。
   const isMulti = computed(() => Boolean(form.multiTriggers?.length))
-  // 只要后端已启用 multi，任意非手动快速触发器都可追加；旧版单条件规则保存后也允许补充条件。
+  // 组合类型沿用前后端约定，仍需后端已启用 multi 且已注册当前触发类型。
   const showMultiTriggerControl = computed(() => supportedTriggers.value.includes('multi')
-    && Boolean(form.triggerKind)
-    && form.triggerKind !== 'manual')
+    && MULTI_TRIGGER_PROVIDERS.some(provider => provider === triggerProvider(form.triggerKind)
+      && supportedTriggers.value.includes(provider)))
   const multiTriggerDisabledReason = computed(() => {
     if (!showMultiTriggerControl.value) return ''
     if (form.triggerKind === 'manual') {

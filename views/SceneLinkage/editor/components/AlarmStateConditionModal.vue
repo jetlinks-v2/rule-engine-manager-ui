@@ -303,7 +303,7 @@ async function loadIotAlarmRules(): Promise<AlarmRule[]> {
         modes: [],
         state: draft.value.state || 'warning',
         alarmConfigId: id,
-        options: { productId, deviceId: deviceId === '@all' ? undefined : deviceId, alarmConfigName: name },
+        options: { productId, productName, deviceId: deviceId === '@all' ? undefined : deviceId, deviceName, alarmConfigName: name },
       },
     }]
   })

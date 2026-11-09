@@ -1,6 +1,5 @@
 <template>
   <section class="legacy-action-summary">
-    <span class="legacy-action-summary__icon"><AIcon type="FileUnknownOutlined" /></span>
     <div>
       <strong>{{ $t('IotSceneLinkage.detail.legacyAction') }}</strong>
       <p>{{ summary }}</p>

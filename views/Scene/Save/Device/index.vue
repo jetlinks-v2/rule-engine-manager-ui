@@ -8,7 +8,8 @@
         <TitleComponent :data="$t('Device.index.372524-0')"/>
       </template>
 
-        <AddButton
+        <DetailedTriggerNode v-if="cardLayout" :rule="data" @edit="visible = true" @remove="emit('remove')" />
+        <AddButton v-else
           style='width: 100%'
           @click='visible = true'
         >
@@ -27,6 +28,7 @@ import { useSceneStore } from '../../../../store/scene'
 import AddModel from './AddModal.vue'
 import AddButton from '../components/AddButton.vue'
 import Title from '../components/Title.vue'
+import DetailedTriggerNode from '@rule-engine-manager-ui/views/SceneLinkage/editor/detail/DetailedTriggerNode.vue'
 import Terms from '../components/Terms'
 import type { TriggerDevice } from '../../typings';
 import { EventEmitter, DeviceEmitterKey } from '../util';
@@ -40,7 +42,9 @@ const { data } = storeToRefs(sceneStore)
 const visible = ref(false)
 const termsRef = ref()
 
+const emit = defineEmits<{ remove: [] }>()
 defineProps({
+  cardLayout: { type: Boolean, default: false },
   /** 详细模式使用同一棵 Terms 树，但由页面的执行动作区统一承载。 */
   showTerms: {
     type: Boolean,

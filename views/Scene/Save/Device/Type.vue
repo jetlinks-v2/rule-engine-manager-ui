@@ -109,6 +109,7 @@ const invokeRef = ref();
 
 const topOptions = computed(() => {
   const cloneTypeEnum = cloneDeep(TypeEnum);
+  // 保留选项对象引用，使物模型判断后的解禁状态同步到下拉列表。
   const baseOptions = [
     {
       label: $t('Device.Type.372529-3'),
@@ -122,11 +123,11 @@ const topOptions = computed(() => {
       icon: 'LogoutOutlined',
       description: $t('IotSceneLinkage.triggerDesc.offline'),
     },
-    { ...cloneTypeEnum.reportEvent, icon: 'NotificationOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.reportEvent') },
-    { ...cloneTypeEnum.readProperty, icon: 'ReadOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.readProperty') },
-    { ...cloneTypeEnum.writeProperty, icon: 'EditOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.writeProperty') },
-    { ...cloneTypeEnum.reportProperty, icon: 'RiseOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.reportProperty') },
-    { ...cloneTypeEnum.invokeFunction, icon: 'ControlOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.invokeFunction') },
+    Object.assign(cloneTypeEnum.reportEvent, { icon: 'NotificationOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.reportEvent') }),
+    Object.assign(cloneTypeEnum.readProperty, { icon: 'ReadOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.readProperty') }),
+    Object.assign(cloneTypeEnum.writeProperty, { icon: 'EditOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.writeProperty') }),
+    Object.assign(cloneTypeEnum.reportProperty, { icon: 'RiseOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.reportProperty') }),
+    Object.assign(cloneTypeEnum.invokeFunction, { icon: 'ControlOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.invokeFunction') }),
   ];
 
   if (!props.metadata) return baseOptions;

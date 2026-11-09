@@ -1,15 +1,9 @@
-<template>
-  <span>{{ $t('IotSceneLinkage.summary.queryAlarmRecords') }}{{ targetName ? `：${targetName}` : '' }}</span>
-</template>
+<template><SceneActionSummary :action="{ ...data, executor: 'alarm-record-query' }" :options="options" /></template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
-const props = defineProps({
-  data: { type: Object, default: () => ({}) },
-  options: { type: Object, default: () => ({}) },
-})
-
-// 告警记录查询既可由快速模式的附加条件生成，也可在详细模式作为普通执行动作配置。
-const targetName = computed(() => props.options?.name || props.options?.alarmConfigName || '')
+import SceneActionSummary from '@rule-engine-manager-ui/views/SceneLinkage/editor/components/SceneActionSummary.vue'
+import type { SceneRuleRecord } from '@rule-engine-manager-ui/views/SceneLinkage/editor/editorMode'
+// 旧详情入口与新版节点卡片共用只读摘要，不再各自拼接图标和资源名称。
+defineOptions({ inheritAttrs: false })
+withDefaults(defineProps<{ data: SceneRuleRecord; options?: SceneRuleRecord }>(), { options: () => ({}) })
 </script>

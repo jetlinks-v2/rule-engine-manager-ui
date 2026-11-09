@@ -6,7 +6,10 @@
                 :label="$t('actions.index.9667837-0')"
                 :rules="[{ required: true, message: $t('actions.index.9667837-1') }]"
             >
-                <TopCard
+                <a-select v-if="compact" v-model:value="modelRef.message.messageType" :options="actionTypeOptions" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="false" @change="onMessageTypeChange">
+                    <template #option="option"><div class="scene-editor__device-trigger-option"><span><AIcon :type="optionValue(option).icon" /></span><div><b>{{ optionValue(option).label }}</b><small>{{ optionValue(option).description }}</small></div></div></template>
+                </a-select>
+                <TopCard v-else
                     :typeList="TypeList"
                     v-model:value="modelRef.message.messageType"
                     @change="onMessageTypeChange"
@@ -118,7 +121,14 @@ const TypeList = [
     },
 ];
 
+const actionTypeOptions = computed(() => TypeList.map((item, index) => ({
+    ...item,
+    icon: ['AppstoreOutlined', 'SearchOutlined', 'EditOutlined'][index],
+    description: $t(`IotSceneLinkage.actionDescription.${['executeFunction', 'readProperty', 'writeProperty'][index]}`),
+})))
+function optionValue(option: any) { return option?.data?.value ? option.data : option }
 const props = defineProps({
+    compact: { type: Boolean, default: false },
     values: {
         type: Object,
         default: () => {},
@@ -337,6 +347,11 @@ watch(
     () => props.productDetail,
     (newVal) => {
         if (newVal?.id) {
+            // 详细资源弹窗的动作能力来自产品物模型，不能因设备尚未选中而隐藏可配置字段。
+            if (props.compact) {
+                metadata.value = typeof newVal.metadata === 'string' ? JSON.parse(newVal.metadata || '{}') : newVal.metadata || {};
+                return;
+            }
             if (
                 props.values?.selector === 'fixed' &&
                 props.values?.selectorValues?.length === 1

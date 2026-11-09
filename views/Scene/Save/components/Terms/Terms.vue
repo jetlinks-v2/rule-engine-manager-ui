@@ -69,8 +69,16 @@
                                     {{ $t('Terms.Terms.9093429-5') }}
                                 </div>
                                 <div class="actions-terms-options no-when">
-                                    <a-button v-if="detailCardLayout" type="text" class="detailed-scene-branch-card__add-condition" @click="() => addBranches(b.start + b.len)">
-                                        <AIcon type="PlusOutlined" />{{ $t('Terms.Branches.9093534-4') }}
+                                    <a-button
+                                        v-if="detailCardLayout"
+                                        type="dashed"
+                                        shape="circle"
+                                        class="detailed-scene-branch-card__add-otherwise"
+                                        :aria-label="$t('IotSceneLinkage.detail.addOtherwise')"
+                                        :title="$t('IotSceneLinkage.detail.addOtherwise')"
+                                        @click="() => addBranches(b.start + b.len)"
+                                    >
+                                        <template #icon><AIcon type="PlusOutlined" /></template>
                                     </a-button>
                                     <AIcon v-else type="PlusOutlined" class="when-add-button" @click="() => addBranches(b.start + b.len)" />
                                 </div>

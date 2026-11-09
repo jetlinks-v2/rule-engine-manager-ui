@@ -111,7 +111,11 @@ function save(value: SceneActionForm) {
     onlyMessage(t('IotSceneLinkage.message.notifyRequired'), 'warning')
     return
   }
-  emit('save', value.config, value.options)
+  emit('save', value.config, {
+    ...value.options,
+    channelName: methods.value.find(method => value.config?.notifyChannelIds?.includes(method.id))?.name || value.options?.channelName,
+    users: users.value.filter(user => value.config?.userIds?.includes(user.id)).map(user => ({ id: user.id, name: user.name })),
+  })
 }
 
 onMounted(() => { void loadMethods(); void loadUsers(true) })

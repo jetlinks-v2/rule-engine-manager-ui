@@ -1,5 +1,6 @@
 <template>
   <IotAddDeviceProductStep
+    class="scene-device-product-picker"
     compact-meta
     :category-tree="categoryTree"
     :category-loading="categoryLoading"
@@ -156,7 +157,9 @@ void Promise.all([loadCategories(), loadProducts()])
 </script>
 
 <style scoped>
-/* 场景选择产品时不需要设备库卡片的等高网格，避免短摘要被拉出大块空白。 */
-:deep(.add-device-library__grid) { align-items: start; }
-:deep(.add-device-library__grid > .card-shell) { height: auto; }
+/* 仅调整场景产品选择：两行说明与自然高度网格，分类列表独立滚动。 */
+.scene-device-product-picker { min-height: 0; }
+.scene-device-product-picker :deep(.add-device-product-picker__categories) { height: min(27rem, calc(100dvh - 22rem)); }
+.scene-device-product-picker :deep(.add-device-library__grid) { min-height: 0; grid-auto-rows: minmax(10.5rem, auto); align-items: stretch; }
+.scene-device-product-picker :deep(.card-summary__description) { min-height: 3em; line-height: 1.5; -webkit-line-clamp: 2; }
 </style>

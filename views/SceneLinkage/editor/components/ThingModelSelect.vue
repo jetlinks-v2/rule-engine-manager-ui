@@ -9,7 +9,7 @@
     :disabled="disabled"
     show-search
     :filter-option="filterOption"
-    :dropdown-match-select-width="false"
+    :dropdown-match-select-width="true"
     popup-class-name="scene-editor__thing-model-dropdown"
     @change="change"
     @dropdownVisibleChange="$emit('dropdownVisibleChange', $event)"
