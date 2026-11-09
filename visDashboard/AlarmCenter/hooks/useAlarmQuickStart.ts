@@ -1,6 +1,7 @@
 import { computed, type Ref } from 'vue'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
-import type { AlarmQuickAction } from '../dashboard.types'
+import type { AlarmCapabilities, AlarmQuickAction } from '../dashboard.types'
+import { useAlarmCapabilities } from './useAlarmCapabilities'
 
 const targets = [
   { key: 'iotRules', icon: 'BellOutlined', menus: ['iot-user/device/alarm', 'rule-engine/Alarm/Configuration'] },
@@ -10,14 +11,14 @@ const targets = [
 ]
 
 /** 可见入口来自当前项目菜单；设计预览显示全部入口但不执行导航。 */
-export function useAlarmQuickStart(preview: Ref<boolean>) {
+export function useAlarmQuickStart(preview: Ref<boolean>, capabilities: Readonly<Ref<AlarmCapabilities>> = useAlarmCapabilities(preview)) {
   const menu = useMenuStore()
   const resolve = (item: typeof targets[number]) => item.menus.find(code => Boolean(menu.getMenu(code)))
   const actions = computed<AlarmQuickAction[]>(() => targets
-    .filter(item => preview.value || resolve(item))
+    .filter(item => capabilities.value.ready && (item.key !== 'visionRules' || capabilities.value.vision) && (preview.value || resolve(item)))
     .map(item => ({ key: item.key, icon: item.icon, disabled: preview.value })))
   function open(key: string) {
-    if (preview.value) return
+    if (preview.value || !capabilities.value.ready || (key === 'visionRules' && !capabilities.value.vision)) return
     const item = targets.find(action => action.key === key)
     const code = item && resolve(item)
     if (code) menu.jumpPage(code)

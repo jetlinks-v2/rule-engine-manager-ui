@@ -2157,7 +2157,7 @@
 	"alarmDashboard.partialFailed": "部分指标加载失败",
 	"alarmDashboard.seriesFailed": "{names}加载失败",
 	"alarmDashboard.retry": "重试",
-	"alarmDashboard.loadError": "告警数据加载失败，请重试",
+	"alarmDashboard.loadError": "告警数据加载失败",
 	"alarmDashboard.catalogError": "告警仪表盘组件加载失败",
 	"alarmDashboard.invalidResponse": "告警统计返回了无效数据",
 	"alarmDashboard.noTrend": "当前时段没有事件或告警记录",

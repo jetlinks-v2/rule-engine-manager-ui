@@ -2156,7 +2156,7 @@
 	"alarmDashboard.partialFailed": "Some metrics could not be loaded",
 	"alarmDashboard.seriesFailed": "Could not load {names}",
 	"alarmDashboard.retry": "Retry",
-	"alarmDashboard.loadError": "Could not load alarm data. Try again.",
+	"alarmDashboard.loadError": "Could not load alarm data.",
 	"alarmDashboard.catalogError": "Could not load dashboard components",
 	"alarmDashboard.invalidResponse": "Alarm statistics returned invalid data",
 	"alarmDashboard.noTrend": "No events or alarms in this period",
