@@ -1,7 +1,7 @@
 <template>
   <DeviceScopeModal embedded detailed multiple lock-product :open="true"
     :product-id="productDetail.id || scope.productId" :model-value="scope"
-    :scope-modes="['fixed', 'space', 'device-group', 'tag', 'context', 'relation']"
+    :scope-modes="['fixed', 'space', 'device-group', 'tag', 'context']"
     :disabled-scope-modes="disabledModes" :validate="validateScope"
     @cancel="$emit('cancel')" @save="saveScope" @select-devices="$emit('select-devices', $event)">
     <template #scope-editor="{ mode, value, update, invalid }">

@@ -38,16 +38,24 @@ const toLegacyDraft = (rule: SceneRuleRecord): SceneRuleRecord => {
     ...options,
     trigger: options.trigger || {},
     // 快速模式的 options.when 与运行时分支同样是扁平叶子；原版详细组件则读取条件组。
-    when: Array.isArray(options.when) ? options.when.map((item: SceneRuleRecord) => ({
-      ...item,
-      terms: options.editorMode === 'quick' ? toDetailedConditionGroups(item.terms) : item.terms,
-    })) : draft.branches.filter(isBranchRecord).map((branch: SceneRuleRecord, index: number) => ({
-      terms: branch.when || [],
-      branchName: branch.branchName,
-      key: branch.branchId,
-      executeAnyway: branch.executeAnyway,
-      groupIndex: index + 1,
-    })),
+    // 新建页面会传入空 options.when；仍需为每个分支补齐条件组件读写的展示记录。
+    // 展示条件必须独立克隆，否则删除条件时会同时修改运行条件树两次。
+    when: draft.branches.filter(isBranchRecord).map((branch: SceneRuleRecord, index: number) => {
+      const existing = Array.isArray(options.when)
+        ? options.when.find((item: SceneRuleRecord) => branch.branchId != null && item?.key === branch.branchId) || options.when[index]
+        : undefined
+      return {
+        terms: (branch.when || []).map((group: SceneRuleRecord) => ({
+          terms: (group.terms || []).map((term: SceneRuleRecord) => [term.column || '', term.termType || 'eq', cloneDeep(term.value?.value ?? ''), term.type || 'and']),
+        })),
+        branchName: branch.branchName,
+        key: branch.branchId,
+        executeAnyway: branch.executeAnyway,
+        groupIndex: index + 1,
+        ...existing,
+        ...(existing && options.editorMode === 'quick' ? { terms: toDetailedConditionGroups(existing.terms) } : {}),
+      }
+    }),
   }
   return draft
 }

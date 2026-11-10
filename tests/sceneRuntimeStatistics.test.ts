@@ -6,6 +6,7 @@ test('scene templates omit runtime statistics while preserving nested business p
   const source = {
     id: 'scene-1',
     name: '场景模板',
+    runtimeInfo: { sceneId: 'scene-1', executionCount: 12, errorCount: 2, lastExecutionTime: 1790000000000 },
     executionCount: 12,
     lastExecutionTime: 1790000000000,
     options: { summary: '规则摘要' },
@@ -14,6 +15,7 @@ test('scene templates omit runtime statistics while preserving nested business p
   const template = toSceneTemplate(source) as Record<string, unknown>
   assert.equal('executionCount' in template, false)
   assert.equal('lastExecutionTime' in template, false)
+  assert.equal('runtimeInfo' in template, false)
   assert.equal('id' in template, false)
   assert.deepEqual(template.actions, source.actions)
   assert.deepEqual(template.options, source.options)

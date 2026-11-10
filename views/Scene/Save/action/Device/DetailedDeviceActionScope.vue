@@ -1,7 +1,7 @@
 <template>
   <section class="detailed-device-action-scope">
     <header>
-      <div><strong>{{ $t('IotSceneLinkage.detail.deviceActionScope') }}</strong><small>{{ $t('IotSceneLinkage.detail.deviceActionScopeHint') }}</small></div>
+      <strong>{{ $t('IotSceneLinkage.detail.deviceActionScope') }}</strong><small>{{ $t('IotSceneLinkage.detail.deviceActionScopeHint') }}</small>
 
     </header>
     <DeviceActionScope :scope="scopeDraft" :product-detail="productDetail" :name="name" :then-name="thenName"
@@ -107,6 +107,6 @@ watch(() => props.values, syncValues, { immediate: true, deep: true })
 
 <style scoped>
 .detailed-device-action-scope { display: grid; gap: var(--space-3, 12px); }
-.detailed-device-action-scope > header { display: flex; justify-content: space-between; gap: var(--space-3, 12px); align-items: center; }.detailed-device-action-scope > header > div { display: grid; gap: 4px; }.detailed-device-action-scope strong { color: var(--ant-color-text); }.detailed-device-action-scope small { color: var(--ant-color-text-tertiary); font-size: 12px; }
+.detailed-device-action-scope > header { display: flex; justify-content: space-between; gap: var(--space-3, 12px); align-items: center; }.detailed-device-action-scope strong { color: var(--ant-color-text); }.detailed-device-action-scope small { color: var(--ant-color-text-tertiary); font-size: 12px; }
 .detailed-device-action-scope :deep(.device-scope-modal__selection) { min-width: 20rem; }.detailed-device-action-scope :deep(.device-scope-modal__layout) { min-height: 32rem; }
 </style>
