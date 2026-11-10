@@ -4,7 +4,9 @@ import { IOT_DEVICE_LIST_EXCLUDED_ACCESS_PROVIDERS } from './deviceListDefaultTe
 export type SceneEntity = Record<string, any>
 
 export interface SceneRuntimeInfo {
-  sceneId: string
+  instanceId: string
+  nodeId?: string
+  executor?: string
   serverId?: string | null
   executionCount: number
   errorCount: number

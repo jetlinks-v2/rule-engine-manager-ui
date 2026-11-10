@@ -35,7 +35,7 @@ test('scene list queries the detail endpoint and preserves filters, pagination a
   const params = { pageIndex: 2, pageSize: 100, sorts: [{ name: 'createTime', order: 'desc' }],
     terms: [{ column: 'name', termType: 'like', value: '%场景%' }] }
   const response = { status: 200, result: { total: 205, pageIndex: 2, pageSize: 100,
-    data: [{ id: 'scene-1', runtimeInfo: { sceneId: 'scene-1', executionCount: 12, errorCount: 2, lastExecutionTime: 1790000000000 } }] } }
+    data: [{ id: 'scene-1', runtimeInfo: { instanceId: 'scene-1', nodeId: 'scene-1', executor: 'scene', executionCount: 12, errorCount: 2, lastExecutionTime: 1790000000000 } }] } }
   globalThis.sceneQueryHttp = { post: async (url, data) => {
     assert.equal(url, '/scene/detail/_query')
     assert.equal(data, params)
