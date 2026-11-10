@@ -20,7 +20,7 @@
                 <ConfirmModal
                     :title="$t('Terms.WhenItem.9093425-2')"
                     :onConfirm="onDelete"
-                    :show="showDelete"
+                    :show="detailCardLayout || showDelete"
                     className="terms-params-delete"
                 >
                     <AIcon type="CloseOutlined" />
@@ -74,6 +74,11 @@ const props = defineProps({
             shakeLimit: {},
             then: [],
         }),
+    },
+    /** 详细模式允许删除最后一组条件，删除后回到过滤条件添加入口。 */
+    detailCardLayout: {
+        type: Boolean,
+        default: false,
     },
     showDeleteBtn: {
         type: Boolean,

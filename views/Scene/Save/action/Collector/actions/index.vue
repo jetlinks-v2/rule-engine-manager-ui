@@ -6,7 +6,10 @@
                 :label="$t('actions.index.9667837-0')"
                 :rules="[{ required: true, message: $t('actions.index.9667837-1') }]"
             >
-                <TopCard
+                <a-select v-if="compact" v-model:value="modelRef.message.messageType" :options="actionTypeOptions" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="false" @change="handleChange">
+                    <template #option="option"><div class="scene-editor__device-trigger-option"><span><AIcon :type="optionValue(option).icon" /></span><div><b>{{ optionValue(option).label }}</b><small>{{ optionValue(option).description }}</small></div></div></template>
+                </a-select>
+                <TopCard v-else
                     :typeList="TypeList"
                     v-model:value="modelRef.message.messageType"
                     @change="handleChange"
@@ -18,7 +21,8 @@
                     :label="$t('Collector.actions.index-6100078-0')"
                     :rules="[{validator: validator, trigger: 'change'}]"
                 >
-                    <a-select
+                    <ThingModelSelect v-if="compact" v-model="modelRef.message.properties" :options="readPointOptions" :placeholder="$t('Collector.actions.index-6100078-2')" />
+                    <a-select v-else
                         showSearch
                         :placeholder="$t('Collector.actions.index-6100078-2')"
                         v-model:value="modelRef.message.properties"
@@ -40,6 +44,7 @@
                     v-model:columnMap="columnMap"
                     :builtInList="builtInList"
                     :pointList="pointList"
+                    :compact="compact"
                     @change="onWriteChange"
                 />
             </template>
@@ -49,6 +54,7 @@
 
 <script lang="ts" setup name="ActionDeviceActions">
 import TopCard from '../../Device/device/TopCard.vue';
+import ThingModelSelect from '../../../../../SceneLinkage/editor/components/ThingModelSelect.vue';
 import WriteProperty from './WriteProperty.vue';
 import {sceneImages} from "@rule-engine-manager-ui/assets";
 import { useI18n } from 'vue-i18n';
@@ -77,7 +83,14 @@ const TypeList = [
     },
 ];
 
+const actionTypeOptions = computed(() => TypeList.map((item, index) => ({
+    ...item, icon: index ? 'EditOutlined' : 'SearchOutlined',
+    description: $t(index ? 'IotSceneLinkage.collector.writeDescription' : 'IotSceneLinkage.collector.readDescription'),
+})))
+function optionValue(option: any) { return option?.data?.value ? option.data : option }
 const props = defineProps({
+    compact: { type: Boolean, default: false },
+    selectedPointId: { type: String, default: undefined },
     values: {
         type: Object,
         default: () => {},
@@ -111,7 +124,7 @@ const props = defineProps({
         default: () => ([]),
     }
 });
-const emit = defineEmits(['change']);
+const emit = defineEmits(['change', 'type-change', 'point-change']);
 const action_data = inject(ACTION_DATA)
 const readPointList = computed(() => {
   /**
@@ -132,6 +145,7 @@ const readPointList = computed(() => {
   })
 })
 
+const readPointOptions = computed(() => readPointList.value.map(item => ({ label: item.name, value: item.id, valueType: item.dataType, kind: 'property' as const })))
 const formRef = ref();
 const columnMap = ref(props.columnMap || {});
 
@@ -214,6 +228,7 @@ const queryBuiltIn = async () => {
 
 const handleChange = (val) => {
   columnMap.value = {};
+  emit('type-change', val)
   const flag = val === 'write';
   modelRef.message = {
     messageType: val,
@@ -240,13 +255,28 @@ const onWriteChange = (val: string, optionColumn: string[]) => {
 watch(
   () => props.values,
   (newVal) => {
-    if(newVal.handlerType === 'write') {
-      modelRef
+    if(newVal?.handlerType === 'write') {
       queryBuiltIn();
     }
   },
   { immediate: true },
 );
+/** 点位列表和右侧原有参数编辑器共享同一选中值，回显时保留已保存的写入参数。 */
+watch([() => props.selectedPointId, deviceMessageType], ([value]) => {
+  if (!props.compact) return
+  const previousId = modelRef.message.messageType === 'write' ? Object.keys(modelRef.message.properties || {})[0] : modelRef.message.properties
+  if (value === previousId) return
+  modelRef.message.properties = modelRef.message.messageType === 'write'
+    ? value ? { [value]: { source: 'fixed', value: undefined } } : undefined
+    : value
+}, { immediate: true })
+
+// 右侧下拉和中间点位列表使用同一个选中值，写入参数变化不能打断选择同步。
+watch(() => modelRef.message.properties, value => {
+  if (!props.compact) return
+  emit('point-change', modelRef.message.messageType === 'write' ? Object.keys(value || {})[0] || '' : value || '')
+}, { deep: true })
+
 defineExpose({
     onFormSave,
     getColumnMap

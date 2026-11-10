@@ -1,7 +1,7 @@
 <template>
   <a-modal
     :open="open"
-    :width="520"
+    :width="680"
     :footer="null"
     :mask-closable="false"
     wrap-class-name="condition-picker-modal"
@@ -15,9 +15,10 @@
     </template>
     <div class="condition-picker__body">
       <div class="condition-picker__items">
-        <button v-for="item in conditionTypes" :key="item.value" class="condition-picker__item" :disabled="item.disabled" @click="selectType(item.value)">
+        <button v-for="item in conditionTypes" :key="item.key" class="condition-picker__item" @click="selectType(item)">
           <span class="condition-picker__icon"><AIcon :type="item.icon" /></span>
           <span class="condition-picker__content"><b>{{ item.label }}</b><small>{{ item.description }}</small></span>
+          <AIcon class="condition-picker__arrow" type="RightOutlined" />
         </button>
       </div>
     </div>
@@ -29,22 +30,31 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { SceneConditionForm } from '../../utils'
 
-const props = defineProps({ open: { type: Boolean, default: false } })
+const props = defineProps({
+  open: { type: Boolean, default: false },
+  showTimeRange: { type: Boolean, default: true },
+})
 const emit = defineEmits<{
   (event: 'cancel'): void
-  (event: 'select', value: SceneConditionForm['type']): void
+  (event: 'select', value: Exclude<SceneConditionForm['type'], 'alarmState'>): void
+  (event: 'select-alarm-source', source: 'iot-device' | 'visual-ai'): void
 }>()
 
 const { t } = useI18n()
 type ConditionPickerType = SceneConditionForm['type']
-const conditionTypes = computed(() => [
-  { value: 'timeRange', icon: 'ClockCircleOutlined', label: t('IotSceneLinkage.condition.timeRange'), description: t('IotSceneLinkage.condition.timeRangeHint') },
-  { value: 'deviceProperty', icon: 'BarChartOutlined', label: t('IotSceneLinkage.condition.deviceProperty'), description: t('IotSceneLinkage.condition.devicePropertyHint') },
-  { value: 'alarmState', icon: 'SafetyCertificateOutlined', label: t('IotSceneLinkage.condition.alarmState'), description: t('IotSceneLinkage.condition.alarmStateHint') },
-])
+const conditionTypes = computed(() => {
+  const types: Array<{ key: string; value: ConditionPickerType; source?: 'iot-device' | 'visual-ai'; icon: string; label: string; description: string }> = [
+    { key: 'timeRange', value: 'timeRange', icon: 'ClockCircleOutlined', label: t('IotSceneLinkage.condition.timeRange'), description: t('IotSceneLinkage.condition.timeRangeHint') },
+    { key: 'deviceProperty', value: 'deviceProperty', icon: 'BarChartOutlined', label: t('IotSceneLinkage.condition.deviceProperty'), description: t('IotSceneLinkage.condition.devicePropertyHint') },
+    { key: 'iotAlarmState', value: 'alarmState', source: 'iot-device', icon: 'SafetyCertificateOutlined', label: t('IotSceneLinkage.condition.iotAlarmState'), description: t('IotSceneLinkage.condition.iotAlarmStateHint') },
+    { key: 'visualAlarmState', value: 'alarmState', source: 'visual-ai', icon: 'EyeOutlined', label: t('IotSceneLinkage.condition.visualAlarmState'), description: t('IotSceneLinkage.condition.visualAlarmStateHint') },
+  ]
+  return types.filter(item => props.showTimeRange || item.value !== 'timeRange')
+})
 
-function selectType(type: ConditionPickerType) {
-  emit('select', type)
+function selectType(type: { value: ConditionPickerType; source?: 'iot-device' | 'visual-ai' }) {
+  if (type.value === 'alarmState') emit('select-alarm-source', type.source || 'iot-device')
+  else emit('select', type.value)
 }
 </script>
 
@@ -99,7 +109,8 @@ function selectType(type: ConditionPickerType) {
 
 .condition-picker__items {
   display: grid;
-  gap: .5rem;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--space-3, 12px);
 }
 
 .condition-picker__item {
@@ -119,12 +130,25 @@ function selectType(type: ConditionPickerType) {
 
 .condition-picker__item:hover:not(:disabled) {
   border-color: #1e72f0;
+  background: #e8f3ff;
+}
+
+.condition-picker__item:hover:not(:disabled) .condition-picker__icon {
+  color: #fff;
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.condition-picker__item:hover:not(:disabled) .condition-picker__arrow {
+  color: #1e72f0;
 }
 
 .condition-picker__item:disabled {
   cursor: not-allowed;
   opacity: .56;
 }
+
+.condition-picker__arrow { flex: none; color: var(--ant-color-text-tertiary); transition: color .2s; }
 
 .condition-picker__content {
   display: grid;
@@ -160,9 +184,12 @@ function selectType(type: ConditionPickerType) {
   background: linear-gradient(180deg, #f6f9fe 0%, #fefefe 100%);
   border: 1px solid #f3f7fc;
   border-radius: 50%;
+  transition: color .2s, background-color .2s, border-color .2s;
 }
 
 .condition-picker__icon :deep(.anticon) {
   font-size: 1.25rem;
 }
+
+@media (max-width: 640px) { .condition-picker__items { grid-template-columns: 1fr; } }
 </style>

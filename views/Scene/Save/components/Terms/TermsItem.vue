@@ -1,4 +1,5 @@
 <template>
+  <!-- 校验时机继承所属表单，详细模式只在保存场景时检查条件。 -->
   <a-form-item
       :name='["branches", branchName, "when", whenName, "terms", props.name]'
       :rules='rules'
@@ -118,7 +119,6 @@ const rules = [
       }
       return Promise.resolve();
     },
-    trigger: 'change'
   }
 ]
 

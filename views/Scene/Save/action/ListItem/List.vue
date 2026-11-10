@@ -10,11 +10,12 @@
                 :type="type"
                 :isLast="index === actions.length - 1"
                 :options="item.options"
+                :show-action-controls="showActionControls"
                 @delete="_delete(item.key || '')"
             />
         </template>
         <div class="actions-add-list" :class="{ 'border': props.actions.length }">
-            <a-button type="primary" ghost style="width: 100%" @click="onAdd">
+            <a-button class="actions-add-list__button" type="primary" ghost style="width: 100%" @click="onAdd">
                 <template #icon><AIcon type="PlusOutlined" /></template>
                 {{ $t('ListItem.List.9667815-0') }}
             </a-button>
@@ -70,6 +71,11 @@ const props = defineProps({
       default: 0
     },
     parallel: Boolean,
+    /** 仅详细模式使用显式的编辑、删除图标，原版入口继续保留整行编辑。 */
+    showActionControls: {
+      type: Boolean,
+      default: false,
+    },
 });
 
 const emit = defineEmits(['delete', 'add']);
@@ -115,7 +121,9 @@ const _update = () => {
 
 <style lang="less" scoped>
 .action-list-content {
-    padding: 8px;
+    display: grid;
+    gap: var(--space-3, 12px);
+    padding: 4px 0;
 
     .actions-list_form {
         .action-list-add {
@@ -136,8 +144,20 @@ const _update = () => {
 
     .actions-add-list {
         &.border {
-            padding-top: 16px;
-            border-top: 1px solid @primary-color;
+            padding-top: var(--space-3, 12px);
+            border-top: 1px solid var(--ant-color-border-secondary);
+        }
+
+        .actions-add-list__button {
+            height: 40px;
+            border-style: dashed;
+            border-color: var(--ant-color-border-secondary);
+            background: var(--ant-color-bg-container);
+
+            &:hover {
+                border-color: var(--ant-color-primary);
+                background: var(--ant-color-primary-bg);
+            }
         }
     }
 }

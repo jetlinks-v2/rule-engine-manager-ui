@@ -6,6 +6,7 @@
     "baseUrl": "./",
     "paths": {
       "@jetlinks-web-core/*": ["../../jetlinks-web-core/src/*"],
+      "@device-manager-ui/*": ["../device-manager-ui/*"],
       "@rule-engine-manager-ui/*": ["./*"]
     }
   },

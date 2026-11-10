@@ -60,3 +60,27 @@ export const thenRules = [{
     return Promise.resolve();
   }
 }]
+
+type Option = { id: string | number; name: string }
+export type SceneTermColumn = {
+  column?: string
+  dataType?: string
+  options?: Option[]
+  children?: SceneTermColumn[]
+  others?: { _multiTriggerType?: string; [key: string]: unknown }
+  [key: string]: unknown
+}
+export type AlarmOptions = { level: Option[]; targetType: Option[]; alarmState: Option[] }
+
+/** 只补全告警事件源的枚举元数据，保留接口的操作符、事件源索引及设备字段。 */
+export function withAlarmTermOptions(columns: SceneTermColumn[], triggerType: string, options: AlarmOptions): SceneTermColumn[] {
+  return columns.map(column => {
+    const type = column.others?._multiTriggerType || triggerType
+    const values = type === 'alarm' ? options[column.column as keyof AlarmOptions] : undefined
+    return {
+      ...column,
+      ...(values?.length && !column.options?.length ? { dataType: 'enum', options: values } : {}),
+      ...(column.children ? { children: withAlarmTermOptions(column.children, type, options) } : {}),
+    }
+  })
+}

@@ -5,15 +5,11 @@
         name='readProperties'
         :rules="[{ required: true, message: $t('Device.ReadProperties.372521-0') }]"
       >
-        <a-select
-          show-search
-          mode='multiple'
-          max-tag-count='responsive'
+        <ThingModelSelect
+          multiple
           :placeholder="$t('Device.ReadProperties.372521-0')"
-          style='width: 100%'
-          v-model:value='readProperties'
+          v-model='readProperties'
           :options='properties'
-          :filter-option='filterSelectNode'
           @change='change'
         />
       </a-form-item>
@@ -25,9 +21,9 @@
 </template>
 
 <script setup lang='ts' name='ReadProperties'>
-import { filterSelectNode } from '../../../../utils/comm'
 import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
+import ThingModelSelect from '../../../SceneLinkage/editor/components/ThingModelSelect.vue'
 
 const { t: $t } = useI18n()
 type Emit = {
@@ -54,8 +50,9 @@ const emit = defineEmits<Emit>()
 
 const readProperties = ref<string[]>(props.value)
 
-const change = (values: string[], optionItems: any[]) => {
-  const names = optionItems.map((item) => item.name);
+const change = (values: string[]) => {
+  const optionItems = props.properties.filter((item: any) => values.includes(item.value))
+  const names = optionItems.map((item: any) => item.label || item.name);
   let extraStr = '';
   let isLimit = false;
   let indexOf = 0;

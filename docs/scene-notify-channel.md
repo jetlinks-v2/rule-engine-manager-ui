@@ -4,7 +4,7 @@
 
 规则引擎场景联动的“发送通知”以 `GET /notify/channel/all` 返回的已启用、当前用户可访问通道为唯一候选来源。当消息模板中的场景主题启用且接口返回 `inside-mail` 时，通知方式中应可选“站内信”；主题禁用或当前用户不可访问时，接口不返回该候选，前端不补造。
 
-归属模块为 `runtime-ui/modules/rule-engine-manager-ui`，实现入口为 `views/SceneLinkage/editor/index.vue`。本次不修改后端、消息模板启停规则、通知发送协议、运营端 `ui/` 或其他非场景通知通道。
+归属模块为 `runtime-ui/modules/rule-engine-manager-ui`，快速模式入口为 `views/SceneLinkage/editor/index.vue`，详细模式通过 `views/Scene/Save/action/SceneNotify/index.vue` 复用 `NotifyActionRow.vue`。本次不修改后端、消息模板启停规则、通知发送协议、运营端 `ui/` 或其他非场景通知通道。
 
 ## 实施计划
 
@@ -19,8 +19,12 @@
 ## 实施结果
 
 - `utils/sceneNotify.ts` 统一过滤场景通知通道：仅保留后端返回的 `inside-mail` 和 `notifier-*`，不在前端生成站内信候选。
-- `views/SceneLinkage/editor/index.vue` 在选择或回显站内信时跳过模板详情请求，直接保存通道 ID；外部通道保持原有模板查询。
+- `views/SceneLinkage/editor/index.vue` 在选择或回显站内信时跳过模板详情请求，直接保存通道 ID；外部通道保持原有模板查询，并缓存模板变量名称供配置和摘要展示。
 - `utils/notifyUser.ts` 允许具有用户 ID 的当前用户接收站内信，不再错误要求邮箱或手机号。
+
+## 节点回显与规则预览
+
+快速与详细模式共用通知配置交互和 `SceneNotifySummary.vue` 摘要，突出通知方式、收信人及模板变量值。详细模式仍保存原生 `action.configuration`，仅由适配层转换为公共组件需要的结构；展示名称通过已有权限查询补齐，不回写或替换运行配置。规则预览和列表中的持久化摘要沿用“当 / 且 / 就”的语义与关键词颜色，兼容旧摘要中的连接冒号，显示时不再添加冒号。
 
 验证结果：
 
