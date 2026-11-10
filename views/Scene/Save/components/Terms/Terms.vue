@@ -117,7 +117,7 @@ import { useSceneStore } from '../../../../../store/scene';
 import { cloneDeep } from 'lodash-es';
 import { provide } from 'vue';
 import { ColumnOptionsMapKey, ContextKey, handleParamsData, handleParamsDataMap } from './util'
-import { getParseTerm } from '../../../../../api/scene';
+import { useSceneTermColumns } from './useSceneTermColumns';
 import type { FormModelType } from '../../../typings';
 import Branches from './Branches.vue';
 import { randomNumber, randomString } from '@jetlinks-web/utils';
@@ -156,6 +156,7 @@ const props = defineProps({
         default: false,
     },
 })
+const { queryTermColumns } = useSceneTermColumns();
 const columnOptions = ref<any>([]);
 const columnOptionsMap = ref<any>(new Map());
 const group = ref<Array<{ id: string; len: number }>>([]);
@@ -241,7 +242,7 @@ const change = (e: boolean, groupItem: any, index: number) => {
 const queryColumn = (dataModel: FormModelType) => {
     const cloneDevice = cloneDeep(dataModel);
     cloneDevice.branches = cloneDevice.branches?.filter((item) => !!item);
-    getParseTerm(cloneDevice).then((res) => {
+    queryTermColumns(cloneDevice).then((res) => {
         columnOptions.value = handleParamsData(
             res.result as any[],
             'column',

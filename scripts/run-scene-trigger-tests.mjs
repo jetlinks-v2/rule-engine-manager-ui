@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const directory = await mkdtemp(path.join(tmpdir(), 'scene-trigger-tests-'))
 try {
-  const tests = ['sceneMultiTrigger', 'sceneNodeSummary', 'deviceScopeTree', 'triggerNodeSummary', 'collectorPoint', 'sceneNodePresentation', 'sceneRuntimeStatistics', 'sceneRulePreview', 'sceneListSummary']
+  const tests = ['sceneMultiTrigger', 'sceneNodeSummary', 'deviceScopeTree', 'triggerNodeSummary', 'collectorPoint', 'sceneNodePresentation', 'sceneRuntimeStatistics', 'sceneRulePreview', 'sceneListSummary', 'sceneTemplate', 'sceneAlarmTerms']
   await build({ entryPoints: tests.map(name => path.join(root, `tests/${name}.test.ts`)), outdir: directory, outExtension: { '.js': '.mjs' },
     bundle: true, platform: 'node', format: 'esm', target: 'node22',
     alias: { '@jetlinks-web-core/locales/index': path.join(root, 'tests/sceneTestLocale.ts') },

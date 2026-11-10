@@ -319,6 +319,8 @@ defineExpose({
 
 Object.assign(formModel, props.value);
 formModel.when = props.value.when || [];
+// 将界面实际显示的默认配置同步给调用方，避免概览只读取到空草稿。
+onMounted(updateValue);
 
 watchEffect(() => {
     if (props.value?.period?.unit === 'hours') {

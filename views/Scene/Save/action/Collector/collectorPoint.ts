@@ -4,6 +4,9 @@ export type CollectorPointDataType = { type?: string; [key: string]: unknown }
 export type ConvertedCollectorPoint = {
   id: string
   name: string
+  address?: string | number
+  interval?: number
+  description?: string
   accessModes?: Array<string | { value: string; text?: string }>
   metadata?: { dataType?: CollectorPointDataType; [key: string]: unknown }
   [key: string]: unknown

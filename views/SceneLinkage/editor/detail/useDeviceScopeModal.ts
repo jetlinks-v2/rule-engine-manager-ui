@@ -25,7 +25,7 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
   const spaceDescendants = new Map<string, string[]>()
   const deviceOptions = ref<DeviceOption[]>([])
   const selectedDevices = ref<DeviceOption[]>([])
-  const selectedScopeValues = ref<Array<{ value: string; name?: string }>>([])
+  const selectedScopeValues = ref<DeviceScope['selectorValues']>([])
   const scopeMode = ref<ScopeMode>('fixed')
   const scopeError = ref(false)
   const draft = reactive({ deviceId: '', deviceName: '', productId: '', productName: '' })
@@ -41,6 +41,8 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
     { value: 'space' as const, icon: 'EnvironmentOutlined', label: t('IotSceneLinkage.editor.areas') },
     { value: 'device-group' as const, icon: 'ClusterOutlined', label: t('IotSceneLinkage.editor.groups') },
     { value: 'tag' as const, icon: 'TagsOutlined', label: t('device.util.9667827-4') },
+    { value: 'context' as const, icon: 'BranchesOutlined', label: t('device.util.9667827-6') },
+    { value: 'relation' as const, icon: 'LinkOutlined', label: t('device.util.9667827-2') },
     { value: 'org' as const, icon: 'ApartmentOutlined', label: t('IotSceneLinkage.editor.organizations') },
   ]).filter(item => props.scopeModes.includes(item.value)))
   const scopeModeLabel = computed(() => availableScopeModes.value.find(item => item.value === scopeMode.value)?.label || '')
@@ -72,7 +74,10 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
     if (!props.scopeModes.includes(scopeMode.value)) scopeMode.value = 'fixed'
     Object.assign(draft, { deviceId: props.modelValue.selector === 'fixed' ? String(props.modelValue.selectorValues[0]?.value || '') : '', deviceName: props.modelValue.selectorValues[0]?.name || '', productId: props.modelValue.productId || props.productId || '', productName: props.modelValue.productName || '' })
     selectedDevices.value = props.modelValue.selector === 'fixed' ? props.modelValue.selectorValues.map(item => ({ id: String(item.value), name: item.name || String(item.value), productId: draft.productId, productName: draft.productName, online: false, statusText: '', status: 'default' })) : []
-    selectedScopeValues.value = props.modelValue.selector === 'fixed' ? [] : [...props.modelValue.selectorValues]
+    // 变量范围的运行配置只保存 upperKey；编辑时临时映射为资源壳的单选草稿。
+    selectedScopeValues.value = props.modelValue.selector === 'context'
+      ? props.modelValue.upperKey ? [{ value: props.modelValue.upperKey, name: props.modelValue.options?.names?.[0] }] : []
+      : props.modelValue.selector === 'fixed' ? [] : [...props.modelValue.selectorValues]
     await reloadTrees()
     if (scopeMode.value === 'fixed') await loadDevices()
   }, { immediate: true })
@@ -129,20 +134,37 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
     const statusTone = online ? 'success' : ['offline', '离线'].includes(normalizedStatus) ? 'error' : 'default'
     return { id: String(device.id), name: device.name || device.id, productId: String(device.productId || device.product?.id || ''), productName: device.productName || device.product?.name || device.productId || '-', spaceName: device.area || device.spaceName || device.others?.spaceName, online, statusText: status || (online ? t('IotSceneLinkage.deviceState.online') : t('IotSceneLinkage.deviceState.offline')), status: statusTone }
   }
-  function isDeviceSelected(id: string) { return selectedDevices.value.some(item => item.id === id) }
+  const deviceColumns = computed(() => [
+    { title: t('IotSceneLinkage.form.device'), dataIndex: 'name', key: 'name', ellipsis: true },
+    { title: t('IotSceneLinkage.form.product'), dataIndex: 'productName', key: 'productName', ellipsis: true },
+    { title: t('IotSceneLinkage.device.status'), key: 'status', width: 90 },
+  ])
+  // 与设备列表使用同一套 Table 勾选列；跨页选择以已有草稿和当前页记录共同解析。
+  const deviceRowSelection = computed(() => ({
+    type: props.multiple ? 'checkbox' as const : 'radio' as const,
+    selectedRowKeys: selectedDevices.value.map(item => item.id),
+    preserveSelectedRowKeys: true,
+    columnWidth: 40,
+    onChange: (keys: Array<string | number>) => updateDeviceSelection(keys.map(String)),
+  }))
 
-  /** 详细模式仅在固定设备范围允许多选；动态范围保留 selector + selectorValues，不能展开为设备 ID。 */
-  function selectDevice(device: DeviceOption) {
-    const selected = selectedDevices.value.findIndex(item => item.id === device.id)
-    if (props.multiple) {
-      selectedDevices.value = selected >= 0
-        ? selectedDevices.value.filter(item => item.id !== device.id)
-        : [...selectedDevices.value, device]
-    } else {
-      selectedDevices.value = [device]
-    }
-    Object.assign(draft, { deviceId: selectedDevices.value[0]?.id || '', deviceName: selectedDevices.value[0]?.name || '', productId: device.productId, productName: device.productName })
-    emit('select-device', device)
+  /** 行点击与勾选共用同一入口，点击勾选列时交给 Table，避免一次点击切换两次。 */
+  function deviceRow(device: DeviceOption) {
+    return { onClick: (event: MouseEvent) => {
+      if ((event.target as Element).closest('.ant-table-selection-column')) return
+      const keys = selectedDevices.value.map(item => item.id)
+      const toggledKeys = keys.includes(device.id) ? keys.filter(id => id !== device.id) : [...keys, device.id]
+      updateDeviceSelection(props.multiple ? toggledKeys : [device.id])
+    } }
+  }
+
+  /** 只更新选择草稿及原有选择事件，确定后仍按原生 selectorValues 保存。 */
+  function updateDeviceSelection(keys: string[]) {
+    const records = new Map([...selectedDevices.value, ...deviceOptions.value].map(item => [item.id, item]))
+    selectedDevices.value = keys.map(key => records.get(key)).filter((item): item is DeviceOption => Boolean(item))
+    const first = selectedDevices.value[0]
+    Object.assign(draft, { deviceId: first?.id || '', deviceName: first?.name || '', productId: first?.productId || draft.productId, productName: first?.productName || draft.productName })
+    if (first) emit('select-device', first)
     emit('select-devices', selectedDevices.value)
   }
   async function loadSpaceTree() {
@@ -219,7 +241,7 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
   }
   /** The shell owns resource selection only; the right-side business editor validates its own fields before commit. */
   async function save() {
-    if (!hasSelection.value) {
+    if (!hasSelection.value || props.disabledScopeModes?.includes(scopeMode.value)) {
       scopeError.value = true
       return
     }
@@ -252,7 +274,7 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
   async function refreshCounts() {
     const sequence = ++countSequence
     scopeCounts.value = {}; countsError.value = false
-    if (!props.open || scopeMode.value === 'tag') { countsLoading.value = false; return }
+    if (!props.open || ['tag', 'context', 'relation'].includes(scopeMode.value)) { countsLoading.value = false; return }
     countsLoading.value = true
     const requests = buildScopeCountRequests(scopeMode.value, navigationNodes.value)
     const baseTerms = productFilter.value ? [{ column: 'productId', termType: 'eq', value: productFilter.value }] : []
@@ -270,7 +292,7 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
   return { modalTitle, dialogProps, scopeMode, draft, productFilter, availableScopeModes, scopeModeLabel, scopeModeHint,
     navigationNodes, scopeCounts, countsLoading, countsError, refreshCounts,
     treeError, reloadTrees, selectedSpaceId, scopeError, scopeLoading, selectedScopeValues, selectionHint, selectSpace, selectScopedValues,
-    keyword, deviceLoading, searchDevices, requestProducts, changeProductFilter, deviceOptions, isDeviceSelected, selectDevice,
+    keyword, deviceLoading, searchDevices, requestProducts, changeProductFilter, deviceOptions, deviceColumns, deviceRowSelection, deviceRow,
     total, pageSize, pageIndex, changePage, hasSelection, selectionTitle, selectionDescription, selectedDevice, selectedDevices, save }
 
 }

@@ -44,6 +44,7 @@
 
 <script setup lang='ts' name='AddModel'>
 import type { PropType } from 'vue'
+import { cloneDeep } from 'lodash-es'
 import type { metadataType , TriggerDevice, TriggerDeviceOptions, SelectorValuesItem } from '../../typings'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { detail as deviceDetail } from '../../../../api/others'
@@ -52,7 +53,6 @@ import Product from './Product.vue'
 import Type from './Type.vue'
 import DeviceScopeModal, { type DeviceScope } from '../../../SceneLinkage/editor/components/DeviceScopeModal.vue'
 import { handleTimerOptions } from '../components/Timer/util'
-import { Form } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
@@ -71,7 +71,6 @@ interface AddModelType extends Omit<TriggerDevice, 'selectorValues'> {
   metadata: metadataType,
   operator: TriggerDeviceOptions
 }
-const formItemContext = Form.useInjectFormItemContext();
 
 const emit = defineEmits<Emit>()
 const typeRef = ref()
@@ -91,7 +90,8 @@ const props = defineProps({
   }
 })
 
-const addModel = reactive<AddModelType>({
+// 资源选择、操作参数和展示元数据只在确认后回写。
+const addModel = reactive<AddModelType>(cloneDeep({
   productId: props.value.productId || '',
   selector: props.value.selector || 'fixed',
   selectorValues: props.value.selectorValues || [],
@@ -102,9 +102,9 @@ const addModel = reactive<AddModelType>({
   operator: props.value.operation || {
     operator: 'online'
   }
-})
+}))
 
-const optionsCache = ref(props.options)
+const optionsCache = ref(cloneDeep(props.options))
 // 编辑已有设备触发器时直接回到设备列表；只有新建或主动更换产品才进入产品选择。
 const selectingScope = ref(Boolean(props.value.productId))
 const productDetailLoading = ref(false)
@@ -131,7 +131,7 @@ const handleOptions = (data: TriggerDeviceOptions) => {
     onlyName: false,
     type: '', // 触发类型
     typeIcon: typeIconMap[data.operator],
-    productName: '',
+    productName: addModel.productDetail.name || optionsCache.value.productName || '',
     selectorIcon: '',
     time: undefined,
     when: undefined,
@@ -274,7 +274,6 @@ function saveScope(scope: DeviceScope) {
     productId: scope.productId || addModel.productId,
     source: 'fixed',
   } as TriggerDevice, options)
-  formItemContext.onFieldChange()
 }
 
 const getDeviceDetailByMetadata = async (deviceId: string) => {

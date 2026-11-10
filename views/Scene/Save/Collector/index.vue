@@ -1,6 +1,7 @@
 <template>
   <div class='device'>
     <a-form-item
+        ref="triggerField"
         :rules='rules'
         :name='["trigger", "collector"]'
         v-if="formData.triggerType==='collector'"
@@ -13,9 +14,9 @@
       >
         <Title :options='formData.options.trigger'/>
       </AddButton>
-      <AddModel v-if='visible && formData.triggerType==="collector"' @cancel='cancelConfig' @save='save'
-                :value='formData.trigger.collector' :options='formData.options.trigger'/>
     </a-form-item>
+    <AddModel v-if='visible && formData.triggerType==="collector"' @cancel='cancelConfig' @save='save'
+                :value='formData.trigger.collector' :options='formData.options.trigger'/>
     <Terms v-if="showTerms" ref="termsRef"/>
   </div>
 </template>
@@ -39,6 +40,7 @@ const { data: storeData } = storeToRefs(sceneStore)
 const formData = storeData as unknown as Ref<Record<string, any>>
 const { t: $t } = useI18n()
 const visible = ref(false)
+const triggerField = ref()
 const termsRef = ref()
 const emit = defineEmits<{
   (event: 'cancel-config'): void
@@ -84,6 +86,7 @@ const save = (collector: TriggerCollector, options: Record<string, any>) => {
   formData.value.options!.trigger = options
   visible.value = false
   EventEmitter.emit(DeviceEmitterKey, collector)
+  triggerField.value?.onFieldChange()
   emit('save-config')
 }
 

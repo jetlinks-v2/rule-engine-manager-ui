@@ -1,6 +1,7 @@
 <template>
   <div class='device'>
     <a-form-item
+      ref="triggerField"
       :rules='rules'
       :name='["trigger", "device"]'
     >
@@ -15,9 +16,9 @@
         >
           <Title :options='data.options.trigger' />
         </AddButton>
-        <AddModel v-if='visible' @cancel='visible = false' @save='save' :value='data.trigger.device' :options='data.options.trigger' />
         <CheckItem />
     </a-form-item>
+    <AddModel v-if='visible' @cancel='cancelConfig' @save='save' :value='data.trigger.device' :options='data.options.trigger' />
     <Terms v-if="showTerms" ref="termsRef" />
   </div>
 </template>
@@ -40,9 +41,10 @@ const sceneStore = useSceneStore()
 const { data } = storeToRefs(sceneStore)
 
 const visible = ref(false)
+const triggerField = ref()
 const termsRef = ref()
 
-const emit = defineEmits<{ remove: [] }>()
+const emit = defineEmits<{ remove: []; 'cancel-config': []; 'save-config': [] }>()
 defineProps({
   cardLayout: { type: Boolean, default: false },
   /** 详细模式使用同一棵 Terms 树，但由页面的执行动作区统一承载。 */
@@ -82,7 +84,15 @@ const save = (device: TriggerDevice, options: Record<string, any>) => {
   data.value.trigger!.device = device
   data.value.options!.trigger = options
   visible.value = false
+  triggerField.value?.onFieldChange()
+  emit('save-config')
   EventEmitter.emit(DeviceEmitterKey, device)
+}
+
+/** 由父编辑器区分新建占位与已有节点，取消不提交弹窗草稿。 */
+function cancelConfig() {
+  visible.value = false
+  emit('cancel-config')
 }
 
 defineExpose({

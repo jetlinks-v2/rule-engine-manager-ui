@@ -76,9 +76,10 @@ const getUnitName = (item?: any): string | undefined => {
   return standardUnit || (text && /^[a-z][A-Za-z0-9]*$/.test(text) ? undefined : text)
 }
 
-export const toThingModelOptions = (items: any[] = [], kind: ThingModelKind = 'property'): ThingModelOption[] => items
+/** 条件默认过滤复杂类型；执行动作可显式保留对象、数组等原有物模型能力。 */
+export const toThingModelOptions = (items: any[] = [], kind: ThingModelKind = 'property', includeComplex = false): ThingModelOption[] => items
   // 事件的 valueType 通常是 object，但仍应作为事件输出参数的入口提供选择。
-  .filter(item => kind === 'event' || isSupportedValueType(getValueType(item)))
+  .filter(item => includeComplex || kind === 'event' || isSupportedValueType(getValueType(item)))
   .map(item => ({
     label: item.name || item.id,
     value: item.id,

@@ -143,19 +143,6 @@
     padding: 0 0 var(--space-5, 20px);
 }
 
-.scene-editor__footer {
-    position: sticky;
-    bottom: 0;
-    z-index: var(--z-index-popup-base, 100);
-    display: flex;
-    gap: var(--space-2, 8px);
-    justify-content: flex-end;
-    margin-top: auto;
-    padding: var(--space-3, 12px) var(--space-5, 20px);
-    background: var(--jet-theme-bg-container);
-    border-top: 1px solid var(--scene-editor-section-border);
-}
-
 .scene-editor__debounce-help {
     margin-left: var(--space-1, 4px);
     color: var(--ant-color-primary);
@@ -1022,25 +1009,6 @@
     padding-bottom: 5.5rem;
 }
 
-.scene-editor__footer,
-.detailed-scene-editor__footer {
-    /* 操作栏固定在视口底部且横跨编辑页，长规则树滚动时始终保留取消和保存入口。 */
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: var(--z-index-popup-base, 100);
-    display: flex;
-    gap: var(--space-2, 8px);
-    justify-content: flex-end;
-    margin: 0;
-    padding: var(--space-3, 12px) var(--space-6, 24px);
-    background: var(--jet-theme-bg-container);
-    border-top: 1px solid var(--scene-editor-section-border);
-    border-radius: 0;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, .06);
-}
-
 /* 当前主题的 fill-quaternary 与容器白色过于接近，分区标题使用稳定的浅灰卡片底色。 */
 .detailed-scene-editor__section-header {
     background: #fafbfc;
@@ -1052,13 +1020,6 @@
     }
 }
 
-@media (max-width: 640px) {
-    .scene-editor__footer,
-    .detailed-scene-editor__footer {
-        padding-right: var(--space-4, 16px);
-        padding-left: var(--space-4, 16px);
-    }
-}
 
 @media (max-width: 640px) { .scene-editor__timer-method-list { grid-template-columns: 1fr; } }
 

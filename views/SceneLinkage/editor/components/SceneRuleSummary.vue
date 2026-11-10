@@ -30,8 +30,10 @@ import { summaryField, summaryPartsText } from '../summaryParts'
 import { computed, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getProduct, queryDeviceAlarmPreprocesses, type SceneNotifyUser } from '../../../../api/scene-linkage'
-import { formatSceneDuration, type SceneLinkageForm, type SceneMultiTriggerForm } from '../../utils'
-import { formatDeviceScopeText, formatDeviceScopeTitle, formatProductScopeText, toTriggerScopeValue, type SceneDeviceScopeValue } from '../deviceScopeLabel'
+import { formatSceneDuration, type SceneLinkageForm } from '../../utils'
+import { deviceScopeSummaryParts } from '../deviceScopeLabel'
+import { deviceTriggerTargetParts } from '../triggerNodeSummary'
+import { formatDeviceScopeText, formatDeviceScopeTitle, formatProductScopeText, type SceneDeviceScopeValue } from '../deviceScopeLabel'
 import { toThingModelOptions } from '../thingModel'
 
 const props = defineProps({ form: { type: Object as PropType<SceneLinkageForm>, required: true }, users: { type: Array as PropType<SceneNotifyUser[]>, default: () => [] } })
@@ -66,17 +68,11 @@ const deviceAlarmIds = computed(() => [...new Set([
   ...props.form.additionalConditions.filter((item: any) => item.type === 'alarmState').map((item: any) => item.alarm),
 ].filter(alarm => !isVisualAiAlarm(alarm)).map(alarm => alarm.alarmConfigId).filter(Boolean) as string[])])
 const productName = (id?: string) => id ? products.value[id]?.name || (id === props.form.productId ? props.form.productName : '') || id : ''
-const productScopeName = (form: Omit<SceneMultiTriggerForm, 'clientId'>, full = false) => formatProductScopeText(t, productName(form.productId), (full ? formatDeviceScopeTitle : formatDeviceScopeText)(t, toTriggerScopeValue(form)))
 /** 快速配置已限定单个固定设备；摘要优先显示设备名称，旧范围配置仍保留原有范围描述。 */
 const quickDeviceName = (scope: SceneDeviceScopeValue) => {
   if (scope.selector !== 'fixed' || scope.selectorValues?.length !== 1) return ''
   const device = scope.selectorValues[0]
   return device.name || scope.options?.names?.[0] || device.value || ''
-}
-const triggerTargetName = (form: Omit<SceneMultiTriggerForm, 'clientId'>, full = false) => quickDeviceName(toTriggerScopeValue(form)) || productScopeName(form, full)
-const conditionTargetName = (condition: any, full = false) => {
-  const scope = { selector: condition.selector, selectorValues: condition.selectorValues, options: condition.options } as SceneDeviceScopeValue
-  return quickDeviceName(scope) || formatProductScopeText(t, productName(condition.productId), (full ? formatDeviceScopeTitle : formatDeviceScopeText)(t, scope))
 }
 const actionTargetName = (action: any, full = false) => {
   const scope = { selector: action.config?.selector, selectorValues: action.config?.selectorValues, options: action.config?.options } as SceneDeviceScopeValue
@@ -92,7 +88,7 @@ const eventName = (productId: string | undefined, id: string | undefined) => pro
 const functionName = (productId: string | undefined, id: string | undefined) => products.value[productId || '']?.metadata?.functions?.find((item: any) => item.id === id)?.name || id || ''
 const alarmName = (alarm: any) => alarm.options?.alarmConfigName || alarmNames.value[alarm.alarmConfigId || ''] || alarm.alarmConfigId || ''
 const triggerSummaries = computed(() => triggerForms.value.map(form => {
-  const parts = quickTriggerSummaryParts(form, t, { target: triggerTargetName(form), targetTitle: triggerTargetName(form, true), property: propertyLabel(form.productId, form.propertyId), event: eventName(form.productId, form.eventId), alarm: alarmName(form.alarm), alarmTarget: productName(form.alarm.options?.productId) })
+  const parts = quickTriggerSummaryParts(form, t, { targetParts: deviceTriggerTargetParts({ ...form, productName: productName(form.productId) }, t), property: propertyLabel(form.productId, form.propertyId), event: eventName(form.productId, form.eventId), alarm: alarmName(form.alarm), alarmTarget: productName(form.alarm.options?.productId) })
   return { text: summaryPartsText(parts), title: summaryPartsText(parts), parts }
 }).filter(item => item.text))
 // 仅左侧快捷时段受防抖开关影响，右侧单独添加的时间条件仍会参与规则。
@@ -100,7 +96,7 @@ const conditionSummaries = computed(() => props.form.additionalConditions
   .filter(condition => condition.type !== 'timeRange' || condition.source !== 'effective-period' || props.form.debounceEnabled)
   .map(condition => {
     const parts = conditionNodeSummaryParts(condition, t, condition.type === 'deviceProperty'
-      ? { target: conditionTargetName(condition), property: propertyLabel(condition.productId, condition.propertyId) }
+      ? { targetParts: deviceScopeSummaryParts(t, condition, productName(condition.productId)), property: propertyLabel(condition.productId, condition.propertyId) }
       : condition.type === 'alarmState' ? { target: productName(condition.alarm.options?.productId), alarm: alarmName(condition.alarm) } : {})
     const value = summaryPartsText(parts)
     return { value, title: value, parts }
@@ -112,7 +108,7 @@ const actionSummaries = computed(() => props.form.actions.map(action => {
   const id = message.messageType === 'INVOKE_FUNCTION' ? message.functionId : message.messageType === 'WRITE_PROPERTY' ? Object.keys(message.properties || {})[0] : message.properties?.[0]
   const property = message.messageType === 'INVOKE_FUNCTION' ? functionName(config.productId, id) : propertyLabel(config.productId, id)
   const native = { executor: action.type, delay: action, configuration: config, device: config, options: { ...config.options, ...action.options } }
-  if (action.type === 'device') native.options = { ...native.options, name: actionTargetName(action), propertiesName: property }
+  if (action.type === 'device') native.options = { ...native.options, name: actionTargetName(action), productName: productName(config.productId), propertiesName: property }
   const parts = actionNodeSummaryParts(native, t, { users: props.users })
   return { value: summaryPartsText(parts), title: summaryPartsText(parts), parts }
 }))

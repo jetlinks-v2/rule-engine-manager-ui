@@ -16,7 +16,7 @@
     <a-spin v-else :spinning="loading" class="device-scope-tree__body">
       <a-tree v-if="filteredNodes.length" block-node :show-line="{ showLeafIcon: false }"
         :tree-data="filteredNodes" :selected-keys="checkable ? [] : selectedKeys"
-        :checkable="checkable" :checked-keys="checkedKeys" :expanded-keys="visibleExpandedKeys"
+        :checkable="checkable" check-strictly :checked-keys="checkedKeys" :expanded-keys="visibleExpandedKeys"
         @select="select" @check="check" @expand="expand">
         <template #leafIcon><AIcon class="ant-tree-switcher-line-icon" type="FileOutlined" /></template>
         <template #title="node">
@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import IotTreeNodeRow from '@device-manager-ui/components/IotTreeNodeRow.vue'
-import { checkScopeTree, filterScopeTree, type SpaceNode } from '../deviceScopeTree'
+import { filterScopeTree, type SpaceNode } from '../deviceScopeTree'
 
 const props = withDefaults(defineProps<{
   title: string; hint?: string; nodes: SpaceNode[]; counts?: Record<string, number>; showCounts?: boolean
@@ -56,7 +56,12 @@ const visibleExpandedKeys = computed(() => keyword.value.trim() ? allParentKeys.
 function expand(keys: Array<string | number>) { expandedKeys.value = keys.map(String) }
 function select(keys: Array<string | number>) { if (!props.checkable) emit('select', keys.map(String)) }
 function check(_keys: unknown, info: { node: { key: string | number }; checked: boolean }) {
-  emit('check', checkScopeTree(props.nodes, props.checkedKeys, String(info.node.key), info.checked))
+  // 范围按明确勾选的层级生效，父子互不联动；搜索隐藏的其他选择也必须保留。
+  const keys = new Set(props.checkedKeys)
+  const key = String(info.node.key)
+  if (info.checked) keys.add(key)
+  else keys.delete(key)
+  emit('check', [...keys])
 }
 </script>
 

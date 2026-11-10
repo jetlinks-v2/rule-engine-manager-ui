@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { ALL_DEVICES_COUNT_KEY, UNBOUND_SPACE_KEY, buildScopeCountRequests, checkScopeTree, filterScopeTree } from '../views/SceneLinkage/editor/deviceScopeTree'
+import { ALL_DEVICES_COUNT_KEY, UNBOUND_SPACE_KEY, buildScopeCountRequests, filterScopeTree } from '../views/SceneLinkage/editor/deviceScopeTree'
 
 const tree = [{ key: 'parent', title: '园区', children: [{ key: 'a', title: '一层' }, { key: 'b', title: '二层' }] }]
 
@@ -20,11 +20,13 @@ test('group and organization counts match selector semantics instead of using a 
   assert.deepEqual(org?.query.terms, [{ column: 'id', termType: 'dim-assets', value: { assetType: 'device', targets: [{ type: 'org', id: 'parent' }, { type: 'org', id: 'a' }, { type: 'org', id: 'b' }] } }])
 })
 
-test('search preserves ancestors and checking a filtered parent includes its hidden children', () => {
+test('search preserves ancestors without changing the full scope tree', () => {
   assert.deepEqual(filterScopeTree(tree, '一层'), [{ ...tree[0], children: [tree[0].children[0]] }])
   assert.deepEqual(filterScopeTree(tree, '园区'), tree)
   assert.deepEqual(filterScopeTree(tree, '不存在'), [])
-  assert.deepEqual(new Set(checkScopeTree(tree, ['elsewhere'], 'parent', true)), new Set(['elsewhere', 'parent', 'a', 'b']))
-  assert.deepEqual(checkScopeTree(tree, ['elsewhere', 'parent', 'a', 'b'], 'a', false), ['elsewhere', 'b'])
-  assert.deepEqual(new Set(checkScopeTree(tree, ['b'], 'a', true)), new Set(['parent', 'a', 'b']))
+  assert.equal(tree[0].children.length, 2)
+})
+
+test('variable, relation and tag scopes do not query resource tree counts', () => {
+  for (const mode of ['context', 'relation', 'tag'] as const) assert.deepEqual(buildScopeCountRequests(mode, tree), [])
 })

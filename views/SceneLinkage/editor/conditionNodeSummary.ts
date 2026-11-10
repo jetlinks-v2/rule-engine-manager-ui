@@ -1,12 +1,12 @@
 import { formatSceneTimeRange, type SceneConditionForm } from '../utils'
-import { deviceNodeTarget } from './actionNodeSummary'
-import { summaryField, summaryPlainText, validSummaryParts, type SummaryTranslate } from './summaryParts'
+import { deviceNodeTargetParts } from './actionNodeSummary'
+import { summaryField, summaryPlainText, validSummaryParts, type SummaryPart, type SummaryTranslate } from './summaryParts'
 
 /** 附加条件也遵循同一语句和字段样式；资源名称可由宿主已有查询补齐。 */
-export function conditionNodeSummaryParts(condition: SceneConditionForm, t: SummaryTranslate, labels: { target?: string; property?: string; alarm?: string } = {}) {
+export function conditionNodeSummaryParts(condition: SceneConditionForm, t: SummaryTranslate, labels: { targetParts?: SummaryPart[]; target?: string; property?: string; alarm?: string } = {}) {
   if (condition.type === 'timeRange') return [summaryField(condition.ranges.map(range => formatSceneTimeRange(t, range)).join('、'))]
   if (condition.type === 'deviceProperty') return validSummaryParts([
-    summaryField(labels.target || deviceNodeTarget(condition, condition.options || {}, t)), summaryPlainText(t('IotSceneLinkage.summary.deviceThingModelConnector')),
+    ...(labels.targetParts || deviceNodeTargetParts(condition, condition.options || {}, t)), summaryPlainText(t('IotSceneLinkage.summary.deviceThingModelConnector')),
     summaryField(labels.property || condition.options?.propertiesName || condition.propertyId), summaryPlainText(t(`IotSceneLinkage.term.${condition.termType}`)),
     ...(['isnull', 'notnull'].includes(condition.termType) ? [] : [summaryField(condition.value)]),
   ])

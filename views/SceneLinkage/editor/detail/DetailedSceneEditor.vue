@@ -15,7 +15,8 @@
         </div>
       </template>
     </PageHeader>
-    <a-form ref="sceneForm" :model="data" :colon="false" layout="vertical" class="detailed-scene-editor__form">
+    <!-- 原版动作会主动通知 change，显式使用 submit，让保存时的 validate() 统一执行校验。 -->
+    <a-form ref="sceneForm" :model="data" validate-trigger="submit" :validate-on-rule-change="false" :colon="false" layout="vertical" class="detailed-scene-editor__form">
       <section class="detailed-scene-editor__overview">
         <section class="scene-editor__scene-meta">
           <a-form-item class="detailed-scene-editor__name-field" :label="$t('IotSceneLinkage.form.sceneName')" name="name" :rules="nameRules">
@@ -50,11 +51,11 @@
             </a-form-item>
             <template v-else>
               <DetailedTriggerNode v-if="data.triggerType === 'manual'" :rule="data" @remove="removeTrigger" />
-              <DetailedTimerTrigger v-else-if="data.triggerType === 'timer'" ref="timerTriggerRef" @remove="removeTrigger" />
-              <Device v-else-if="data.triggerType === 'device'" ref="deviceRef" :show-terms="false" :show-title="false" card-layout @remove="removeTrigger" />
-              <Collector v-else-if="data.triggerType === 'collector'" ref="collectorRef" :show-terms="false" :show-title="false" @cancel-config="cancelNewCollector" @save-config="collectorPending = false" card-layout @remove="removeTrigger" />
+              <DetailedTimerTrigger v-else-if="data.triggerType === 'timer'" ref="timerTriggerRef" @cancel-config="cancelNewTrigger" @save-config="triggerPending = false" @remove="removeTrigger" />
+              <Device v-else-if="data.triggerType === 'device'" ref="deviceRef" :show-terms="false" :show-title="false" card-layout @cancel-config="cancelNewTrigger" @save-config="triggerPending = false" @remove="removeTrigger" />
+              <Collector v-else-if="data.triggerType === 'collector'" ref="collectorRef" :show-terms="false" :show-title="false" @cancel-config="cancelNewTrigger" @save-config="triggerPending = false" card-layout @remove="removeTrigger" />
               <DetailedMultiTriggerConfig v-else-if="data.triggerType === 'multi'" ref="multiTriggerRef" v-model="data.trigger" :trigger-options="multiTriggerOptions" :collapse-to-single="lockedTriggerRoot !== 'multi'" @collapse="restoreSingleTrigger" />
-              <SaasTriggerConfig ref="saasTriggerRef" v-else-if="['alarm', 'ai-event'].includes(data.triggerType)" @remove="removeTrigger" />
+              <SaasTriggerConfig ref="saasTriggerRef" v-else-if="['alarm', 'ai-event'].includes(data.triggerType)" @cancel-config="cancelNewTrigger" @save-config="triggerPending = false" @remove="removeTrigger" />
               <section v-else-if="data.triggerType" class="detailed-scene-editor__provider-placeholder">
                 <a-empty :description="$t('IotSceneLinkage.message.detailProviderPending', { provider: data.triggerType })" />
               </section>
@@ -90,13 +91,10 @@
         </div>
       </section>
     </a-form>
-    <!-- 内容面板使用 backdrop-filter，会改变 fixed 子元素的定位参照；操作栏挂到 body 才能始终相对视口固定。 -->
-    <Teleport to="body">
-      <footer class="detailed-scene-editor__footer">
-        <a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
-        <j-permission-button type="primary" :hasPermission="savePermission" :loading="saving" @click="save">{{ $t('IotSceneLinkage.action.saveScene') }}</j-permission-button>
-      </footer>
-    </Teleport>
+    <SceneEditorFooter>
+      <a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
+      <j-permission-button type="primary" :hasPermission="savePermission" :loading="saving" @click="save">{{ $t('IotSceneLinkage.action.saveScene') }}</j-permission-button>
+    </SceneEditorFooter>
     <TriggerPickerModal
       :open="triggerPickerVisible"
       mode="provider"
@@ -109,6 +107,7 @@
   </main>
 </template>
 <script setup lang="ts">
+import SceneEditorFooter from '../components/SceneEditorFooter.vue'
 import type { PreviewColumns } from './detailedRuleSummaryParts'
 import { computed, nextTick, onMounted, provide, ref, watch, type PropType } from 'vue'
 import { cloneDeep } from 'lodash-es'
@@ -116,7 +115,7 @@ import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { PageHeader } from '@jetlinks-web-core/components'
 import { useI18n } from 'vue-i18n'
 import { querySceneSupportedActions, type SceneProviderInfo } from '../../../../api/scene-linkage'
-import { getParseTerm } from '../../../../api/scene'
+import { useSceneTermColumns } from '../../../Scene/Save/components/Terms/useSceneTermColumns'
 import DetailedTriggerNode from './DetailedTriggerNode.vue'
 import Device from '../../../Scene/Save/Device/index.vue'
 import Collector from '../../../Scene/Save/Collector/index.vue'
@@ -130,6 +129,7 @@ import TriggerPickerModal, { type TriggerPickerOption } from '../components/Trig
 import { MULTI_TRIGGER_PROVIDERS, normalizeResult } from '../../utils'
 import { type SceneEditorMode, type SceneRuleRecord } from '../editorMode'
 import { useDetailedSceneDraft } from './useDetailedSceneDraft'
+import { SCENE_TRIGGER_CATEGORIES, SCENE_TRIGGER_CATEGORY_ORDER } from '../triggerPickerOptions'
 import { provideSceneNotifyLabels } from './useSceneNotifyLabels'
 const props = defineProps({
   rule: {
@@ -179,6 +179,7 @@ const multiTriggerRef = ref<{ validate: () => string | undefined; openPicker: ()
 const saasTriggerRef = ref<{ validate: () => string | undefined; openConfig: () => void }>()
 const actionOptions = ref<SceneProviderInfo[]>([])
 const termColumns = ref<PreviewColumns>({})
+const { queryTermColumns } = useSceneTermColumns()
 const readOnlyActionProviders = ref(['alarm', 'notify'])
 const triggerPickerVisible = ref(false)
 const { data, load, getDraft } = useDetailedSceneDraft()
@@ -205,17 +206,16 @@ function resolveProviderText(value: string | undefined, fallbackKey: string) {
   return value?.startsWith('IotSceneLinkage.') ? t(value) : value || t(fallbackKey)
 }
 /**
- * 顶层触发器名称和说明由后端 Provider 按当前语言环境返回，
- * 前端只保留 Provider 值作为异常数据的最小展示兜底。
+ * 共有入口复用快速模式的名称和说明，详细模式独有 Provider 保留后端返回的文案。
  */
 function toTriggerPickerOption(item: SceneProviderInfo): TriggerPickerOption {
+  const category = SCENE_TRIGGER_CATEGORIES[item.provider as keyof typeof SCENE_TRIGGER_CATEGORIES]
   return {
     value: item.provider,
     provider: item.provider,
     icon: triggerIcons[item.provider] || 'ThunderboltOutlined',
-    // 触发器名称及描述以 Provider 返回的国际化结果为准，兼容旧接口直接返回 i18n key。
-    label: resolveProviderText(item.name, `IotSceneLinkage.triggerType.${item.provider}`),
-    description: resolveProviderText(item.description, `IotSceneLinkage.triggerTypeDesc.${item.provider}`),
+    label: category ? t(category.label) : resolveProviderText(item.name, `IotSceneLinkage.triggerType.${item.provider}`),
+    description: category ? t(category.description) : resolveProviderText(item.description, `IotSceneLinkage.triggerTypeDesc.${item.provider}`),
   }
 }
 const triggerOptions = computed<TriggerPickerOption[]>(() => props.triggerProviders
@@ -231,6 +231,12 @@ const triggerOptions = computed<TriggerPickerOption[]>(() => props.triggerProvid
       ]
     }
     return [{ ...toTriggerPickerOption(item), disabled, disabledReason }]
+  }).sort((left, right) => {
+    const rank = (value: string) => {
+      const index = SCENE_TRIGGER_CATEGORY_ORDER.indexOf(value)
+      return index < 0 ? SCENE_TRIGGER_CATEGORY_ORDER.length : index
+    }
+    return rank(left.value) - rank(right.value)
   }))
 // 首次与追加使用相同 Provider 入口，设备、定时的细分方式在后续配置弹窗选择。
 const multiTriggerOptions = computed<TriggerPickerOption[]>(() => triggerOptions.value.map(item => ({
@@ -253,7 +259,7 @@ function changeTrigger(triggerType: string) {
     : { type: triggerType }
 }
 
-const collectorPending = ref(false)
+const triggerPending = ref(false)
 async function selectTriggerFromPicker(pickerType: string) {
   triggerPickerVisible.value = false
   const triggerType = alarmPickerKinds.has(pickerType) ? 'alarm' : pickerType
@@ -261,6 +267,7 @@ async function selectTriggerFromPicker(pickerType: string) {
   if (props.lockedTriggerProviders.length && !props.lockedTriggerProviders.includes(triggerType)) return
   // 重选当前触发方式不能清空已经填写的原版触发器配置。
   if (data.value.triggerType === triggerType) return
+  triggerPending.value = triggerType !== 'manual'
   changeTrigger(triggerType)
   if (triggerType === 'alarm') {
     data.value.trigger = { type: 'alarm', configuration: { sourceKind: pickerType === 'visual-alarm' ? 'visual-ai' : 'iot-device' } }
@@ -269,7 +276,7 @@ async function selectTriggerFromPicker(pickerType: string) {
   await nextTick()
   if (triggerType === 'device') deviceRef.value?.openConfig()
   else if (triggerType === 'timer') timerTriggerRef.value?.openConfig()
-  else if (triggerType === 'collector') { collectorPending.value = true; collectorRef.value?.openConfig() }
+  else if (triggerType === 'collector') collectorRef.value?.openConfig()
   else if (triggerType === 'alarm' || triggerType === 'ai-event') saasTriggerRef.value?.openConfig()
 }
 
@@ -282,16 +289,15 @@ function editCurrentTrigger() {
 
 /** 已保存场景也允许删除后重配；Provider 锁独立于草稿，因此不会被这一步清空。 */
 function removeTrigger() {
+  triggerPending.value = false
   data.value.triggerType = ''
   data.value.trigger = {}
   sceneForm.value?.clearValidate?.('triggerType')
 }
 
-/** 新建采集器规则在弹窗确认前只保留会话草稿；取消时恢复未选择触发器的状态。 */
-function cancelNewCollector() {
-  if (!collectorPending.value) return
-  collectorPending.value = false
-  removeTrigger()
+/** 与快速模式一致：取消新建会撤销占位节点；取消编辑只丢弃弹窗草稿。 */
+function cancelNewTrigger() {
+  if (triggerPending.value) removeTrigger()
 }
 
 /** 多条件删除至一条时回到普通触发器，避免把单条规则误展示为组合规则。 */
@@ -388,7 +394,7 @@ async function loadTermColumns() {
     return
   }
   try {
-    const response = await getParseTerm(draft)
+    const response = await queryTermColumns(draft)
     if (requestId === latestTermColumnsRequest) termColumns.value = toTermColumnMap(response?.result || [])
   } catch {
     // 字段解析失败时仍保留已存展示名称，缺失名称时展示可读提示，不能阻断详细规则编辑。
@@ -433,7 +439,7 @@ function switchToQuick() {
   emit('switch-mode', 'quick', getDraft())
 }
 
-watch(() => props.rule, load, { immediate: true, deep: true })
+watch(() => props.rule, rule => { triggerPending.value = false; load(rule) }, { immediate: true, deep: true })
 // 字段名称只依赖触发器与条件树；不要监听完整草稿，以免名称、说明等编辑触发无关请求。
 watch(() => ({ trigger: data.value.trigger, branches: data.value.branches }), loadTermColumns, { deep: true, immediate: true })
 onMounted(() => void loadActionOptions())

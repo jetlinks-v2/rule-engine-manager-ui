@@ -7,10 +7,12 @@ import type { QuickTriggerSummaryForm } from '../quickTriggerSummary'
 import type { SceneRuleRecord } from '../editorMode'
 import SceneSummaryParts from './SceneSummaryParts.vue'
 import { quickTriggerSummaryParts } from '../quickTriggerSummary'
+import { useTimerCalendarTags, hasCalendarTimer } from '../../../Scene/Save/components/Timer/useTimerCalendarTags'
 import { detailedTriggerSummaryParts } from '../detailedTriggerSummary'
 
 const props = defineProps<{ form?: QuickTriggerSummaryForm; rule?: SceneRuleRecord }>()
 const { t } = useI18n()
+const { tags: calendarTags } = useTimerCalendarTags(() => hasCalendarTimer(props.rule?.trigger))
 // 两种模式只共享阅读语言，不共享或转换可编辑草稿。
-const parts = computed(() => props.form ? quickTriggerSummaryParts(props.form, t) : detailedTriggerSummaryParts(props.rule?.trigger || {}, props.rule?.options?.trigger || {}, t, props.rule?.triggerType || '', props.rule))
+const parts = computed(() => props.form ? quickTriggerSummaryParts(props.form, t) : detailedTriggerSummaryParts(props.rule?.trigger || {}, props.rule?.options?.trigger || {}, t, props.rule?.triggerType || '', props.rule, {}, calendarTags.value))
 </script>

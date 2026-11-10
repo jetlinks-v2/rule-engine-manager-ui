@@ -28,7 +28,7 @@ export function useCollectorActionResources(initialCollectorId: string, initialC
     key: `channel:${channel.id}`, title: channel.name, icon: 'ClusterOutlined',
     children: collectors.value.filter(item => item.channelId === channel.id).map(item => ({ key: item.id, title: item.name, icon: 'DatabaseOutlined' })),
   })))
-  const availablePoints = computed(() => points.value.filter(point => (point.accessModeMask & (handlerType.value === 'write' ? 2 : 1)) !== 0))
+  const availablePoints = computed(() => points.value.filter(point => (point.accessModeMask & (handlerType.value === 'write' ? 2 : handlerType.value === 'sub' ? 4 : 1)) !== 0))
   const visiblePoints = computed(() => availablePoints.value.filter(point => [point.name, point.id].some(text => String(text || '').toLowerCase().includes(keyword.value.trim().toLowerCase()))))
 
   async function loadResources() {

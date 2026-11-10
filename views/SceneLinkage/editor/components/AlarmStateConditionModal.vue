@@ -70,7 +70,7 @@
 
       <div class="alarm-condition-modal__preview">
         <b>{{ previewLabel }}</b>
-        <span>{{ previewText }}</span>
+        <SceneSummaryParts v-if="mode === 'trigger'" :parts="triggerPreview" /><span v-else>{{ previewText }}</span>
       </div>
     </div>
     <footer class="alarm-condition-modal__footer">
@@ -92,7 +92,9 @@ import {
   type AiAggregateTaskOption,
   type AiSceneTreeOption,
 } from '../../../../api/scene-linkage'
-import { normalizeResult, type SceneAlarmTriggerConfig } from '../../utils'
+import { defaultForm, normalizeResult, type SceneAlarmTriggerConfig } from '../../utils'
+import SceneSummaryParts from './SceneSummaryParts.vue'
+import { quickTriggerSummaryParts } from '../quickTriggerSummary'
 import { formatTriggerText } from '../alarm/utils'
 
 type SourceKind = 'iot-device' | 'visual-ai'
@@ -167,6 +169,8 @@ const previewLabel = computed(() => t(props.mode === 'query'
   : props.mode === 'trigger'
     ? 'IotSceneLinkage.alarmCondition.triggerRule'
     : 'IotSceneLinkage.alarmCondition.previewLabel'))
+// 与编辑页共用概览，资源、告警名称和状态都使用统一关键词样式。
+const triggerPreview = computed(() => quickTriggerSummaryParts({ ...defaultForm(), triggerKind: 'alarm', alarm: draft.value }, t))
 const previewText = computed(() => {
   const name = selectedRule.value?.name || draft.value.options?.alarmConfigName || t('IotSceneLinkage.alarmCondition.selectRule')
   if (props.mode === 'query') return t('IotSceneLinkage.alarmCondition.queryPreviewText', { name })
@@ -390,7 +394,9 @@ function selectRule(rule: AlarmRule) {
         state: current.state || rule.value.state || 'warning',
         options: { ...rule.value.options, ...current.options },
       }
-    : { ...rule.value, state: current.state || 'warning' }
+    : { ...rule.value, modes: current.modes || [], state: current.state || 'warning' }
+  // 新建触发默认产生告警；切换规则、重新编辑时保留用户已选状态。
+  if (props.mode === 'trigger' && !draft.value.modes?.length) draft.value.modes = ['trigger']
 }
 
 function isStateSelected(value: string) {

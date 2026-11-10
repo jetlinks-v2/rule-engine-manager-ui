@@ -16,11 +16,11 @@ export const summaryField = (value: unknown, title?: string): SummaryPart => ({ 
 export const validSummaryParts = (parts: SummaryPart[]) => parts.filter(part => part.text !== '')
 export const summaryPartsText = (parts: SummaryPart[]) => parts.map(part => part.text).join('')
 
-/** 由本地化模板决定语序，参数只作为字段渲染；不解析用户文本或拼接 HTML。 */
-export function localizedSummaryParts(t: SummaryTranslate, key: string, values: Record<string, unknown>): SummaryPart[] {
+/** 由本地化模板决定语序；复合参数可复用已有片段，保留范围连接词及完整名称提示。 */
+export function localizedSummaryParts(t: SummaryTranslate, key: string, values: Record<string, unknown>, replacements: Record<string, SummaryPart[]> = {}): SummaryPart[] {
   const names = Object.keys(values)
   const markers = Object.fromEntries(names.map((name, index) => [name, `__scene_field_${index}__`]))
-  const fields = Object.fromEntries(names.map(name => [markers[name], summaryText(values[name])]))
-  return validSummaryParts(t(key, markers).split(/(__scene_field_\d+__)/g).map(text =>
-    Object.prototype.hasOwnProperty.call(fields, text) ? summaryField(fields[text]) : summaryPlainText(text)))
+  const fields = Object.fromEntries(names.map(name => [markers[name], replacements[name] || [summaryField(values[name])]]))
+  return validSummaryParts(t(key, markers).split(/(__scene_field_\d+__)/g).flatMap(text =>
+    Object.prototype.hasOwnProperty.call(fields, text) ? fields[text] : [summaryPlainText(text)]))
 }

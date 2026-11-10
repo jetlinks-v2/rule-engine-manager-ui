@@ -1,4 +1,5 @@
 import { AI_EVENT_RESULT_COLUMNS } from './utils'
+import { resolveInitialEditorMode } from './editor/editorMode'
 export { hasUnsupportedLegacyAlarmAction } from './sceneRule'
 
 export interface SceneCompatibilityResult {
@@ -147,13 +148,18 @@ function stripTemplateInstanceFields(scene: unknown): unknown {
 }
 
 /**
- * 校验导入文件的最小场景结构和当前编辑器支持边界；通过后才允许发送创建请求。
+ * 导入沿用编辑页的部署和模式边界：详细模式保留原生规则树，快速模式校验表单可表达性。
+ * Provider 配置的运行时校验仍由场景创建接口负责。
  */
-export function parseSceneTemplate(value: unknown): SceneCompatibilityResult & { data?: SceneRecord } {
+export function parseSceneTemplate(value: unknown, privateDeployment?: boolean): SceneCompatibilityResult & { data?: SceneRecord } {
   const template = toSceneTemplate(value)
-  if (!isRecord(template) || !template.name || !isRecord(template.trigger) || !Array.isArray(template.branches)) {
+  if (!isRecord(template) || typeof template.name !== 'string' || !template.name.trim()
+    || !isRecord(template.trigger) || typeof template.trigger.type !== 'string' || !template.trigger.type.trim()
+    || !Array.isArray(template.branches)) {
     return { ...unsupported('IotSceneLinkage.message.invalidTemplate'), data: undefined }
   }
+  // 快速模式的单设备、单分支及条件白名单不能用于限制私有化详细规则。
+  if (resolveInitialEditorMode(template, privateDeployment) === 'detail') return { supported: true, data: template }
   const compatibility = getSceneCompatibility(template)
   return compatibility.supported ? { supported: true, data: template } : compatibility
 }

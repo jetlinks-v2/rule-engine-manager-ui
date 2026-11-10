@@ -1,7 +1,7 @@
 import { storeToRefs } from 'pinia'
 import { cloneDeep } from 'lodash-es'
 import type { Ref } from 'vue'
-import { useSceneStore, defaultBranches } from '@rule-engine-manager-ui/store/scene'
+import { useSceneStore, defaultBranches, assignmentKey } from '@rule-engine-manager-ui/store/scene'
 import { type SceneRuleRecord } from '../editorMode'
 import { toDetailedConditionGroups } from '../../sceneRule'
 
@@ -29,9 +29,10 @@ const toLegacyDraft = (rule: SceneRuleRecord): SceneRuleRecord => {
   draft.trigger = draft.trigger || {}
   draft.triggerType = draft.triggerType || draft.trigger.type
   // 私有化旧规则可使用空分支来表达同一条件组的动作序列；展示规范化必须保留它们的索引。
-  draft.branches = branches.map((branch: SceneRuleRecord) => isBranchRecord(branch)
+  // 保存会移除 UI key，重新载入时复用原版初始化，确保动作删除和条件联动可定位节点。
+  draft.branches = assignmentKey(branches.map((branch: SceneRuleRecord) => isBranchRecord(branch)
     ? { ...branch, when: toDetailedConditionGroups(branch.when) }
-    : branch)
+    : branch))
   draft.options = {
     ...createEmptyOptions(),
     ...options,

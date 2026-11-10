@@ -44,6 +44,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { SCENE_TRIGGER_CATEGORY_ORDER } from '../triggerPickerOptions'
 
 export type TriggerPickerOption = {
   value: string
@@ -92,7 +93,7 @@ const providerIcons: Record<string, string> = {
   'iot-alarm': 'AlertOutlined',
   'visual-alarm': 'EyeOutlined',
 }
-const providerOrder = ['device', 'timer', 'iot-alarm', 'visual-alarm', 'ai-event', 'manual', 'collector', 'alarm', 'multi']
+const providerOrder = [...SCENE_TRIGGER_CATEGORY_ORDER, 'collector', 'alarm', 'multi']
 const categories = computed(() => {
   if (props.mode === 'provider') {
     return props.options.map(item => ({

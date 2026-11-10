@@ -1,5 +1,6 @@
 <template>
-  <div>
+  <!-- 配置弹窗独立承载校验，不能继承动作列表的错误状态或把搜索输入当作动作变更。 -->
+  <a-form-item no-style>
       <Device
         v-if="actionType === 'device'"
         v-bind="props"
@@ -58,7 +59,7 @@
       :data="data"
       :options="options"
     />
-  </div>
+  </a-form-item>
 </template>
 
 <script lang="ts" setup>

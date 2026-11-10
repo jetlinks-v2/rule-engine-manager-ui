@@ -6,10 +6,8 @@
           v-model:checked="shakeLimit.enabled"
           style="min-width: 90px"
       />
-      <a-form-item name="shakeLimit" style="margin-bottom: 0;" :rules="{
-          validator,
-          trigger: 'change'
-        }">
+      <!-- 条件与防抖统一继承场景表单的校验时机。 -->
+      <a-form-item name="shakeLimit" style="margin-bottom: 0;" :rules="{ validator }">
         <template v-if="shakeLimit.enabled">
             <div style="display: flex;flex-wrap: wrap;gap: 8px;align-items: center;flex: 1;">
                 <a-input-number :min="1" :precision="0" size="small" v-model:value="shakeLimit.time" style="width: 38px" />

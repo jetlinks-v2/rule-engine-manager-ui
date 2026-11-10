@@ -1,3 +1,5 @@
+import { deviceScopeSummaryParts } from './deviceScopeLabel'
+import { summaryPartsText } from './summaryParts'
 import type { SceneMultiTriggerForm } from '../utils'
 
 type Translate = (key: string, params?: Record<string, unknown>) => string
@@ -13,15 +15,14 @@ export function triggerNodeTitle(kind: string, t: Translate) {
 
 /** 固定设备直接展示名称；范围选择继续标明产品及范围，不向固定设备附加数量文案。 */
 export function deviceTriggerTarget(form: Omit<SceneMultiTriggerForm, 'clientId'>, t: Translate, scope?: Scope, fallbackName?: string | string[]) {
+  return summaryPartsText(deviceTriggerTargetParts(form, t, scope, fallbackName))
+}
+
+/** 快速、详细节点共用范围字段片段，固定设备名称超长时只截断显示。 */
+export function deviceTriggerTargetParts(form: Omit<SceneMultiTriggerForm, 'clientId'>, t: Translate, scope?: Scope, fallbackName?: string | string[]) {
   const selector = scope?.selector || (form.allDevices ? 'all' : form.dynamicScope ? form.dynamicScopeType : 'fixed')
   const values = scope?.selectorValues || (form.dynamicScope ? form.groupIds : form.deviceIds).map((value, index) => ({ value, name: form.scopeOptions.names?.[index] }))
-  const names = values.map((value, index) => value.name || scope?.options?.names?.[index]).filter(Boolean)
-  if (selector === 'fixed') return [...new Set(names)].join('、') || (Array.isArray(fallbackName) ? fallbackName.join('、') : fallbackName) || t('IotSceneLinkage.placeholder.device')
-  const joined = [...new Set(names)].join('、')
-  const range = selector === 'all' ? t('IotSceneLinkage.scope.all') : joined
-    ? t(selector === 'space' ? 'IotSceneLinkage.scope.areaGroupFull' : selector === 'org' ? 'IotSceneLinkage.node.organizationScope' : 'IotSceneLinkage.scope.deviceGroupFull', { names: joined })
-    : t('IotSceneLinkage.detail.previewUnconfigured')
-  return [form.productName, range].filter(Boolean).join(' · ')
+  return deviceScopeSummaryParts(t, { selector, selectorValues: values, options: scope?.options || form.scopeOptions }, form.productName || '', Array.isArray(fallbackName) ? fallbackName.join('、') : fallbackName)
 }
 
 /** 两种编辑模式共用设备触发摘要；仅返回文本，不回写配置或转换运行时结构。 */

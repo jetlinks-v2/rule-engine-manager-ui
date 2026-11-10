@@ -2500,5 +2500,15 @@
   "alarmDashboard.handling.rate": "Handling rate",
   "alarmDashboard.handling.noAlarms": "No alarms",
   "alarmDashboard.handling.noData": "No data",
-  "alarmDashboard.handling.unit": "Unit: alarms"
+  "alarmDashboard.handling.unit": "Unit: alarms",
+	"IotSceneLinkage.collector.address": "Address",
+	"IotSceneLinkage.collector.interval": "Collection interval",
+	"IotSceneLinkage.collector.mode.read": "Read",
+	"IotSceneLinkage.collector.mode.write": "Write",
+	"IotSceneLinkage.collector.mode.subscribe": "Subscribe",
+	"IotSceneLinkage.collector.subscribeDescription": "Subscribe to point reports from the selected collector",
+  "IotSceneLinkage.node.allProductTarget": "All {product}",
+  "IotSceneLinkage.node.scopedProductTarget": "All {product} in {scope}",
+  "IotSceneLinkage.timer.calendarCondition": "Calendar condition",
+  "IotSceneLinkage.timer.calendarLoadFailed": "Failed to load calendar tags"
 }

@@ -4,13 +4,14 @@
   </a-form-item>
 
   <a-modal
+    v-if="visible"
     :open="visible"
     :title="$t('IotSceneLinkage.detail.timerTrigger')"
     :width="820"
     :mask-closable="false"
     :keyboard="false"
     :footer="null"
-    @cancel="visible = false"
+    @cancel="cancelConfig"
   >
     <header class="detailed-timer-trigger__modal-header">
       <strong>{{ $t('IotSceneLinkage.detail.timerTrigger') }}</strong>
@@ -19,17 +20,17 @@
     <TimerEditor ref="timerRef" v-model:value="draftTimer" type="timer" />
     <section class="detailed-timer-trigger__preview">
       <span>{{ $t('IotSceneLinkage.detail.currentTimerRule') }}</span>
-      <b>{{ draftSummary }}</b>
+      <SceneSummaryParts :parts="draftSummary" />
     </section>
     <footer class="detailed-timer-trigger__footer">
-      <a-button @click="visible = false">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
+      <a-button @click="cancelConfig">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
       <a-button type="primary" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button>
     </footer>
   </a-modal>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, type Ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 import { cloneDeep } from 'lodash-es'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
@@ -37,28 +38,26 @@ import { useSceneStore } from '@rule-engine-manager-ui/store/scene'
 import TimerEditor from '../../../Scene/Save/components/Timer/index.vue'
 import DetailedTriggerNode from './DetailedTriggerNode.vue'
 import { handleTimerOptions } from '../../../Scene/Save/components/Timer/util'
+import SceneSummaryParts from '../components/SceneSummaryParts.vue'
+import { useTimerCalendarTags } from '../../../Scene/Save/components/Timer/useTimerCalendarTags'
+import { timerNodeSummaryParts } from '../timerNodeSummary'
 import type { OperationTimer } from '../../../Scene/typings'
 
 const { data: storeData } = storeToRefs(useSceneStore())
 const data = storeData as unknown as Ref<Record<string, any>>
 const { t } = useI18n()
-const emit = defineEmits<{ remove: [] }>()
+const emit = defineEmits<{ remove: []; 'cancel-config': []; 'save-config': [] }>()
 const visible = ref(false)
 const timerRef = ref<{ validateFields: () => Promise<unknown> }>()
-const draftTimer = reactive<OperationTimer>({} as OperationTimer)
+const draftTimer = ref<OperationTimer>({} as OperationTimer)
 const rules = computed(() => [{ required: true, message: t('IotSceneLinkage.detail.timerRequired') }])
 
-function getTimerSummary(timer?: OperationTimer) {
-  if (!timer) return ''
-  const { when, time, extraTime } = handleTimerOptions(timer)
-  return [when, time, extraTime].filter(Boolean).join('，')
-}
-
-const draftSummary = computed(() => getTimerSummary(draftTimer)
-  || t('IotSceneLinkage.detail.noTimerRule'))
+// 弹窗、节点和规则预览使用同一套时间语义及关键词样式。
+const { tags: calendarTags } = useTimerCalendarTags(() => visible.value && draftTimer.value.trigger === 'multi')
+const draftSummary = computed(() => timerNodeSummaryParts(draftTimer.value, calendarTags.value))
 
 function openModal() {
-  Object.assign(draftTimer, cloneDeep(data.value.trigger?.timer || {}))
+  draftTimer.value = cloneDeep(data.value.trigger?.timer || {})
   visible.value = true
 }
 
@@ -68,13 +67,20 @@ defineExpose({ openConfig: openModal })
 async function save() {
   const valid = await timerRef.value?.validateFields().catch(() => undefined)
   if (!valid) return
-  const timer = cloneDeep(draftTimer)
+  const timer = cloneDeep(draftTimer.value)
   data.value.trigger = { ...(data.value.trigger || {}), type: 'timer', timer }
   data.value.options = {
     ...(data.value.options || {}),
     trigger: handleTimerOptions(timer),
   }
   visible.value = false
+  emit('save-config')
+}
+
+/** 取消时丢弃本次定时草稿，重新打开会从已确认配置初始化。 */
+function cancelConfig() {
+  visible.value = false
+  emit('cancel-config')
 }
 </script>
 

@@ -20,6 +20,7 @@ import { computed, watch, type PropType } from 'vue'
 import { useSceneNotifyLabels } from './useSceneNotifyLabels'
 import SceneSummaryParts from '../components/SceneSummaryParts.vue'
 import { actionNodeSummaryParts } from '../actionNodeSummary'
+import { useTimerCalendarTags, hasCalendarTimer } from '../../../Scene/Save/components/Timer/useTimerCalendarTags'
 import { detailedTriggerSummaryParts } from '../detailedTriggerSummary'
 import { summaryPartsText, type SummaryPart } from '../summaryParts'
 import { detailedConditionSummaryParts, detailedDebounceSummaryParts, type PreviewColumns } from './detailedRuleSummaryParts'
@@ -40,6 +41,7 @@ const props = defineProps({
 })
 const emit = defineEmits<{ change: [value: string]; 'title-change': [value: string] }>()
 const { t } = useI18n()
+const { tags: calendarTags } = useTimerCalendarTags(() => hasCalendarTimer(props.rule.trigger))
 const notifyLabels = useSceneNotifyLabels()
 
 const asRecords = (value: unknown): SceneRuleRecord[] => Array.isArray(value)
@@ -87,7 +89,7 @@ function formatParallelActionParts(actions: SceneRuleRecord[]): PreviewPart[] {
 const previewLines = computed<PreviewLine[]>(() => {
   const ruleOptions = asRecord(props.rule.options)
   // 触发器正文不再猜测首个分支的比较值；分支条件在下方按原生组合完整展示。
-  const triggerParts = detailedTriggerSummaryParts(asRecord(props.rule.trigger), asRecord(ruleOptions.trigger), t, String(props.rule.triggerType || ''), {}, props.termColumns)
+  const triggerParts = detailedTriggerSummaryParts(asRecord(props.rule.trigger), asRecord(ruleOptions.trigger), t, String(props.rule.triggerType || ''), {}, props.termColumns, calendarTags.value)
   const triggerText = summaryPartsText(triggerParts).trim()
   const triggerLine: PreviewLine = { key: 'trigger', kind: 'when', label: t('IotSceneLinkage.rule.when'), value: triggerText || t('IotSceneLinkage.rule.previewNoTrigger'), parts: triggerParts, empty: !triggerText }
   const rootParts = detailedConditionSummaryParts(props.rule.terms, t, { columns: props.termColumns })

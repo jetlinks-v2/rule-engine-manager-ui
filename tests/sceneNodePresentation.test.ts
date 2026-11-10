@@ -1,3 +1,4 @@
+import { toThingModelOptions } from '../views/SceneLinkage/editor/thingModel'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import zh from '../locales/lang/zh.json'
@@ -36,7 +37,7 @@ test('device information supports nested selectors without icons or artificial n
     assert.ok(text.endsWith('的设备信息'))
     assert.ok(!text.includes('\n'))
     assert.ok(text.includes(selector.selector === 'fixed' ? 'TCP' : '3F'))
-    assert.equal(fields(parts).length, 1)
+    assert.equal(fields(parts).length, selector.selector === 'fixed' ? 1 : 2)
   }
   assert.doesNotThrow(() => actionNodeSummaryParts({ executor: 'device-data', configuration: {} }, t))
 })
@@ -126,6 +127,7 @@ test('detailed device triggers retain branch-based state duration and property c
 test('native Cron rules show localized readable time and retain invalid expressions without inventing defaults', () => {
   const timer = { trigger: 'cron' as const, cron: '0 0 8 ? * 1,5', mod: 'once' }
   const text = summaryPartsText(timerNodeSummaryParts(timer))
+  assert.equal(summaryPartsText(timerNodeSummaryParts({ cron: timer.cron } as typeof timer)), text)
   assert.ok(text.includes('08:00'))
   assert.ok(text.includes('星期一'))
   assert.ok(text.includes('星期五'))
@@ -161,4 +163,130 @@ test('unary property/event conditions show only their operator in quick and nati
     const parts = conditionNodeSummaryParts({ type: 'deviceProperty', productId: 'p', selector: 'fixed', selectorValues: [], propertyId: 'p', termType, value: 123 }, t)
     assert.ok(!summaryPartsText(parts).includes('123'))
   }
+})
+
+
+test('native timer summaries respect monthly dates, execution mode and custom calendar without stale fields', () => {
+  const period = { from: '01:00:00', to: '23:59:59', every: 55, unit: 'seconds' as const }
+  const monthly = { trigger: 'month' as const, when: ['10'], mod: 'period', period, once: { time: '08:00:00' } }
+  const before = structuredClone(monthly)
+  const text = summaryPartsText(timerNodeSummaryParts(monthly))
+  for (const value of ['10', '55', '01:00:00', '23:59:59']) assert.ok(text.includes(value), text)
+  assert.ok(!text.includes('08:00:00'))
+  const once = summaryPartsText(timerNodeSummaryParts({ ...monthly, mod: 'once' }))
+  assert.ok(once.includes('08:00:00'))
+  assert.ok(!once.includes('55'))
+  assert.equal(summaryPartsText(timerNodeSummaryParts({ trigger: 'multi', mod: 'period', multi: { type: 'and', spec: [] } })), '指定时间')
+  assert.deepEqual(monthly, before)
+})
+
+test('alarm overview highlights target, rule and chosen states without a connecting colon in both modes', () => {
+  const form = { ...defaultForm(), triggerKind: 'alarm' as const }
+  form.alarm = { ...form.alarm, modes: ['relieve'], options: { deviceName: '风扇', alarmConfigName: '过热' } }
+  const quick = quickTriggerSummaryParts(form, t)
+  assert.deepEqual(fields(quick), ['风扇', '过热', t('IotSceneLinkage.alarmMode.relieve')])
+  assert.ok(!summaryPartsText(quick).includes('：'))
+  const rule = buildRequest(form)
+  assert.equal(summaryPartsText(detailedTriggerSummaryParts(rule.trigger, rule.options.trigger, t)), summaryPartsText(quick))
+})
+
+
+test('device scopes show actual space/group/organization names with plain connectors in quick and detailed summaries', () => {
+  const productName = '蓝光照射仪'
+  for (const selector of ['space', 'device-group', 'org']) {
+    const trigger = { type: 'device', device: { productId: 'p', selector, selectorValues: [{ value: 's1', name: '2F' }], operation: { operator: 'online' } } }
+    const options = { productName, name: '所有的蓝光照射仪' }
+    const before = structuredClone(trigger)
+    const parts = detailedTriggerSummaryParts(trigger, options, t)
+    assert.equal(summaryPartsText(parts), '2F 所有的 蓝光照射仪在线')
+    assert.deepEqual(fields(parts), ['2F', productName])
+    assert.ok(parts.some(part => !part.field && part.text.includes('所有的')))
+    assert.deepEqual(trigger, before)
+    const action = actionNodeSummaryParts({ executor: 'device-data', configuration: { selector: trigger.device }, options }, t)
+    assert.deepEqual(fields(action), ['2F', productName])
+    if (selector !== 'org') {
+      const quick = quickTriggerSummaryParts({ ...defaultForm(), triggerKind: 'online', productName, dynamicScope: true, dynamicScopeType: selector, groupIds: ['s1'], scopeOptions: { names: ['2F'] } } as any, t)
+      assert.equal(summaryPartsText(quick), summaryPartsText(parts))
+    }
+  }
+})
+
+test('device summaries truncate by count and length but retain full names for hover and preserve the saved selection', () => {
+  for (const names of [['甲', '乙', '丙', '丁'], ['超长设备名称'.repeat(10)], ['一号设备', '二号设备', '三号设备']]) {
+    const rule = { type: 'device', device: { selector: 'fixed', selectorValues: names.map((name, index) => ({ value: String(index), name })), operation: { operator: 'online' } } }
+    const snapshot = structuredClone(rule)
+    const parts = detailedTriggerSummaryParts(rule, {}, t)
+    const target = parts.find(part => part.field)!
+    const truncated = names.length > 3 || Array.from(names.join('、')).length > 30
+    assert.equal(target.text.endsWith('…'), truncated)
+    assert.equal(target.title, names.join('、'))
+    assert.ok(Array.from(target.text).length <= 31)
+    assert.ok(summaryPartsText(parts).endsWith('在线'))
+    assert.deepEqual(rule, snapshot)
+    const quick = quickTriggerSummaryParts({ ...defaultForm(), triggerKind: 'online', deviceIds: names.map((_, index) => String(index)), scopeOptions: { names } }, t)
+    assert.equal(summaryPartsText(quick), summaryPartsText(parts))
+  }
+})
+
+
+test('legacy fixed device IDs retain cached names when selector values have no name', () => {
+  const parts = actionNodeSummaryParts({ executor: 'device-data', configuration: { selector: { selector: 'fixed', selectorValues: [{ value: 'raw-id' }] } }, options: { name: ['TCP设备'] } }, t)
+  assert.deepEqual(fields(parts), ['TCP设备'])
+  assert.ok(!summaryPartsText(parts).includes('raw-id'))
+})
+
+
+test('weekly and monthly summaries list one or two choices directly and only mark real omissions', () => {
+  for (const trigger of ['week', 'month'] as const) {
+    for (const when of [['1'], ['1', '3'], ['1', '3', '5'], ['1', '2', '3']]) {
+      const timer = { trigger, when, mod: 'once', once: { time: '08:00:00' } }
+      const original = structuredClone(timer)
+      const text = summaryPartsText(timerNodeSummaryParts(timer))
+      assert.equal(text.includes('...'), when.join(',') === '1,3,5', text)
+      assert.ok(text.includes('08:00:00'), text)
+      if (when.length <= 2) {
+        assert.ok(!text.includes('等'), text)
+        if (trigger === 'week') for (const day of when) assert.ok(text.includes(day === '1' ? '星期一' : '星期三'), text)
+        else for (const day of when) assert.ok(text.includes(day + '号'), text)
+      }
+      assert.deepEqual(timer, original)
+    }
+  }
+})
+
+test('calendar summaries resolve selected tags and keep each rule execution time, period and relation', () => {
+  const tags = [{ id: 'work', name: '工作日' }, { id: 'holiday', name: '节假日' }]
+  const timer = { trigger: 'multi' as const, mod: '', multi: { type: 'or', spec: [
+    { trigger: 'calender', scheduleTags: ['work'], mod: 'period', period: { from: '00:00:00', to: '23:59:59', every: 1, unit: 'seconds' } },
+    { trigger: 'calender', scheduleTags: ['holiday'], mod: 'once', once: { time: '08:00:00' } },
+  ] } }
+  const original = structuredClone(timer)
+  const parts = timerNodeSummaryParts(timer, tags)
+  const text = summaryPartsText(parts)
+  for (const value of ['工作日', '节假日', '00:00:00-23:59:59', '每1秒执行1次', '08:00:00', '或']) assert.ok(text.includes(value), text)
+  assert.ok(!text.includes('每天'))
+  assert.ok(!text.includes('指定时间'))
+  assert.ok(summaryPartsText(timerNodeSummaryParts({ ...timer, multi: { ...timer.multi, type: 'and' } }, tags)).includes(' 且 '))
+  const single = summaryPartsText(timerNodeSummaryParts({ ...timer, multi: { type: 'or', spec: [timer.multi.spec[0]] } }, tags))
+  assert.equal(single, '工作日 00:00:00-23:59:59 每1秒执行1次')
+  const trigger = { type: 'timer', timer }
+  assert.equal(summaryPartsText(detailedTriggerSummaryParts(trigger, {}, t, '', {}, {}, tags)), text)
+  const multi = { type: 'multi', multi: { triggers: [{ trigger }] } }
+  assert.ok(summaryPartsText(detailedTriggerSummaryParts(multi, {}, t, '', {}, {}, tags)).includes('工作日'))
+  const missing = summaryPartsText(timerNodeSummaryParts(timer))
+  assert.ok(missing.includes('日历条件'))
+  assert.ok(!missing.includes('holiday'))
+  assert.deepEqual(timer, original)
+})
+
+test('device actions enrich metadata without removing supported complex properties and functions', () => {
+  const properties = [{ id: 'speed', name: '转速', valueType: { type: 'int', unit: '转每分钟' } }, { id: 'config', name: '配置', valueType: { type: 'object' } }]
+  assert.deepEqual(toThingModelOptions(properties).map(item => item.value), ['speed'])
+  const options = toThingModelOptions(properties, 'property', true)
+  assert.deepEqual(options.map(item => item.value), ['speed', 'config'])
+  assert.equal(options[0].label, '转速')
+  assert.equal(options[0].unit, '转每分钟')
+  const functions = toThingModelOptions([{ id: 'start', name: '启动', valueType: { type: 'object' }, inputs: [{ id: 'config' }], outputs: [{ id: 'state' }] }], 'function', true)
+  assert.equal(functions[0].inputCount, 1)
+  assert.equal(functions[0].outputCount, 1)
 })

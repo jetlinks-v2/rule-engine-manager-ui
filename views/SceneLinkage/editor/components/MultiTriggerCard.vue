@@ -1,4 +1,6 @@
 <template>
+  <!-- 弹窗字段独立于多条件列表的整体校验状态。 -->
+  <a-form-item no-style>
   <SceneNodeCard class="multi-trigger-card" variant="trigger" :title="triggerNodeTitle(trigger.triggerKind, t)" :icon="icon" :number="$t('IotSceneLinkage.editor.conditionNumber', { index: index + 1 })">
     <template #actions><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button v-if="removable" type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></template>
     <SceneTriggerSummary :form="trigger" />
@@ -45,6 +47,7 @@
       </div>
     </a-modal>
   </SceneNodeCard>
+  </a-form-item>
 </template>
 
 <script setup lang="ts">

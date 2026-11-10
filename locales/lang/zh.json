@@ -2501,5 +2501,15 @@
   "alarmDashboard.handling.rate": "处理率",
   "alarmDashboard.handling.noAlarms": "暂无告警",
   "alarmDashboard.handling.noData": "暂无数据",
-  "alarmDashboard.handling.unit": "单位：条"
+  "alarmDashboard.handling.unit": "单位：条",
+	"IotSceneLinkage.collector.address": "地址",
+	"IotSceneLinkage.collector.interval": "采集频率",
+	"IotSceneLinkage.collector.mode.read": "读",
+	"IotSceneLinkage.collector.mode.write": "写",
+	"IotSceneLinkage.collector.mode.subscribe": "订阅",
+	"IotSceneLinkage.collector.subscribeDescription": "订阅所选采集器的点位上报数据",
+  "IotSceneLinkage.node.allProductTarget": "所有的 {product}",
+  "IotSceneLinkage.node.scopedProductTarget": "{scope} 所有的 {product}",
+  "IotSceneLinkage.timer.calendarCondition": "日历条件",
+  "IotSceneLinkage.timer.calendarLoadFailed": "日历标签加载失败"
 }

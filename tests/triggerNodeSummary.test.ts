@@ -8,6 +8,7 @@ const messages: Record<string, string> = {
   'IotSceneLinkage.stateCondition.any': '任意状态变化', 'IotSceneLinkage.stateCondition.online': '在线',
   'IotSceneLinkage.deviceState.online': '在线', 'IotSceneLinkage.deviceState.offline': '离线',
   'IotSceneLinkage.term.gt': '大于', 'IotSceneLinkage.term.eq': '等于',
+  'IotSceneLinkage.node.allProductTarget': '所有的 {product}', 'IotSceneLinkage.node.scopedProductTarget': '{scope} 所有的 {product}',
   'IotSceneLinkage.scope.all': '全部设备', 'IotSceneLinkage.scope.areaGroupFull': '所属空间：{names}',
 }
 const t = (key: string, params: Record<string, unknown> = {}) => (messages[key] || key).replace(/\{([^}]+)\}/g, (_, name) => String(params[name] ?? ''))
@@ -38,6 +39,6 @@ test('property and event summaries retain operators, zero and false values', () 
 })
 
 test('all-device and dynamic ranges remain identifiable instead of showing a fixed-device label', () => {
-  assert.equal(deviceTriggerNodeSummary(form({ allDevices: true }), t), 'TCP产品 · 全部设备 在线')
-  assert.equal(deviceTriggerNodeSummary(form({ dynamicScope: true, dynamicScopeType: 'space', groupIds: ['f1'], scopeOptions: { names: ['一层'] } }), t), 'TCP产品 · 所属空间：一层 在线')
+  assert.equal(deviceTriggerNodeSummary(form({ allDevices: true }), t), '所有的 TCP产品 在线')
+  assert.equal(deviceTriggerNodeSummary(form({ dynamicScope: true, dynamicScopeType: 'space', groupIds: ['f1'], scopeOptions: { names: ['一层'] } }), t), '一层 所有的 TCP产品 在线')
 })

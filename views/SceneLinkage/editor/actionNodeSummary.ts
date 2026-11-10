@@ -1,7 +1,8 @@
+import { deviceScopeSummaryParts } from './deviceScopeLabel'
 import type { SceneRuleRecord } from './editorMode'
 import { getNotificationSummary } from './notificationSummary'
 import type { SceneNotifyMethod, SceneNotifyUser } from '../../../api/scene-linkage'
-import { localizedSummaryParts, summaryField, summaryPlainText, summaryText, validSummaryParts, type SummaryPart, type SummaryTranslate } from './summaryParts'
+import { localizedSummaryParts, summaryField, summaryPlainText, summaryText, validSummaryParts, summaryPartsText, type SummaryPart, type SummaryTranslate } from './summaryParts'
 
 type SummaryContext = { users?: SceneNotifyUser[]; methods?: SceneNotifyMethod[]; providerName?: string }
 const record = (value: unknown): SceneRuleRecord => value && typeof value === 'object' && !Array.isArray(value) ? value as SceneRuleRecord : {}
@@ -9,18 +10,21 @@ const firstText = (...values: unknown[]) => values.map(summaryText).find(Boolean
 
 /** 设备范围同时兼容指令的平铺选择器和设备信息的嵌套选择器；保留变量、关系及动态范围含义。 */
 export function deviceNodeTarget(configuration: SceneRuleRecord, options: SceneRuleRecord, t: SummaryTranslate): string {
+  return summaryPartsText(deviceNodeTargetParts(configuration, options, t))
+}
+
+/** 原生选择器的名称优先来自实际选择值，旧汇总名称只用于固定设备的缺省回显。 */
+export function deviceNodeTargetParts(configuration: SceneRuleRecord, options: SceneRuleRecord, t: SummaryTranslate): SummaryPart[] {
   const scope = typeof configuration.selector === 'object' ? record(configuration.selector) : configuration
   const selector = scope.selector || 'fixed'
   const names = firstText(options.name, scope.selectorValues?.map((item: SceneRuleRecord) => item.name), scope.options?.names)
   const product = firstText(options.productName, configuration.productName)
   const fallback = t('IotSceneLinkage.detail.previewUnconfigured')
-  if (selector === 'fixed') return names || product || fallback
-  if (selector === 'context') return names || t('IotSceneLinkage.node.contextDevice')
-  if (selector === 'tag') return t('IotSceneLinkage.node.tagDevices', { product: product || fallback, tag: firstText(options.tagName, names) || fallback })
-  if (selector === 'relation') return t('IotSceneLinkage.node.relatedDevices', { device: firstText(options.triggerName, names) || fallback, relation: options.relationName || fallback, product })
-  const key = ({ all: 'IotSceneLinkage.scope.all', space: 'IotSceneLinkage.scope.areaGroupFull', 'device-group': 'IotSceneLinkage.scope.deviceGroupFull', org: 'IotSceneLinkage.node.organizationScope' } as Record<string, string>)[selector]
-  if (key) return [product, t(key, { names: names || fallback })].filter(Boolean).join(' · ')
-  return names || product || fallback
+  if (['fixed', 'space', 'device-group', 'org', 'all'].includes(selector)) return deviceScopeSummaryParts(t, scope, product, Array.isArray(options.name) ? options.name : names)
+  if (selector === 'context') return [summaryField(names || t('IotSceneLinkage.node.contextDevice'))]
+  if (selector === 'tag') return [summaryField(t('IotSceneLinkage.node.tagDevices', { product: product || fallback, tag: firstText(options.tagName, names) || fallback }))]
+  if (selector === 'relation') return [summaryField(t('IotSceneLinkage.node.relatedDevices', { device: firstText(options.triggerName, names) || fallback, relation: options.relationName || fallback, product }))]
+  return [summaryField(names || product || fallback)]
 }
 
 /** 普通值直接显示；参数引用优先展示已保存名称，避免泄露内部列结构。 */
@@ -48,27 +52,28 @@ export function actionNodeSummaryParts(action: SceneRuleRecord, t: SummaryTransl
   if (executor === 'sceneNotify') return notificationSummaryParts(getNotificationSummary(action.configuration, options, t, context.users, context.methods), t)
   if (executor === 'delay') return localizedSummaryParts(t, 'IotSceneLinkage.summary.delay', { value: action.delay?.time ?? 1, unit: t(`IotSceneLinkage.unit.${action.delay?.unit || 'seconds'}`) })
   if (executor === 'collector') return collectorNodeSummaryParts(record(action.collector || action.configuration), options, t)
-  if (executor === 'device-data') return localizedSummaryParts(t, 'IotSceneLinkage.node.deviceInfo', { target: deviceNodeTarget(record(action.configuration), options, t) })
+  if (executor === 'device-data') return localizedSummaryParts(t, 'IotSceneLinkage.node.deviceInfo', { target: '' }, { target: deviceNodeTargetParts(record(action.configuration), options, t) })
   if (executor === 'device') {
     const device = record(action.device || action.configuration)
     const message = record(device.message)
-    const target = deviceNodeTarget(device, options, t)
+    const targetParts = deviceNodeTargetParts(device, options, t)
+    const target = summaryPartsText(targetParts)
     const properties = record(message.properties)
     const propertyIds = Array.isArray(message.properties) ? message.properties : Object.keys(properties)
     const property = firstText(options.propertiesName, message.functionId, propertyIds) || fallback
-    if (message.messageType === 'READ_PROPERTY') return localizedSummaryParts(t, 'IotSceneLinkage.detail.previewRead', { target, property })
+    if (message.messageType === 'READ_PROPERTY') return localizedSummaryParts(t, 'IotSceneLinkage.detail.previewRead', { target, property }, { target: targetParts })
     if (message.messageType === 'WRITE_PROPERTY') {
       const entries = Object.entries(properties)
       // 原版支持一次写多个属性，不能只展示第一个，也不能因 0/false 被当作空值丢弃。
       const values = entries.map(([id, value]) => `${entries.length > 1 ? `${id}=` : ''}${actionValue(value, t)}`).join('、')
-      return localizedSummaryParts(t, 'IotSceneLinkage.node.deviceWrite', { target, property, value: (entries.length > 1 ? values : firstText(options.propertiesValue, values)) || fallback })
+      return localizedSummaryParts(t, 'IotSceneLinkage.node.deviceWrite', { target, property, value: (entries.length > 1 ? values : firstText(options.propertiesValue, values)) || fallback }, { target: targetParts })
     }
     if (message.messageType === 'INVOKE_FUNCTION') {
-      const parts = localizedSummaryParts(t, 'IotSceneLinkage.detail.previewInvoke', { target, function: property })
+      const parts = localizedSummaryParts(t, 'IotSceneLinkage.detail.previewInvoke', { target, function: property }, { target: targetParts })
       const inputs = (message.inputs || []).map((input: SceneRuleRecord) => `${input.name || input.id || ''}=${actionValue(input, t)}`).join('、')
       return inputs ? [...parts, summaryPlainText('（'), summaryField(firstText(options.propertiesValue, inputs)), summaryPlainText('）')] : parts
     }
-    return validSummaryParts([summaryPlainText(options.type || context.providerName || t('IotSceneLinkage.action.device')), summaryField(target), summaryField(property)])
+    return validSummaryParts([summaryPlainText(options.type || context.providerName || t('IotSceneLinkage.action.device')), ...targetParts, summaryField(property)])
   }
   if (executor === 'alarm-record-query') {
     const target = firstText(options.name, options.alarmConfigName)

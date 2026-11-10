@@ -6,10 +6,10 @@
     :source-kind="alarmDraft.sourceKind === 'visual-ai' ? 'visual-ai' : 'iot-device'"
     mode="trigger"
     v-model="alarmDraft"
-    @cancel="alarmConfigOpen = false"
+    @cancel="cancelConfig"
     @save="saveAlarm"
   />
-  <AiEventTriggerRow v-if="data.triggerType === 'ai-event'" :open="aiEventConfigOpen" :model-value="aiEvent" @confirm="confirmAiEvent" @cancel="aiEventConfigOpen = false" />
+  <AiEventTriggerRow v-if="data.triggerType === 'ai-event'" :open="aiEventConfigOpen" :model-value="aiEvent" @confirm="confirmAiEvent" @cancel="cancelConfig" />
 </template>
 
 <script setup lang="ts">
@@ -33,7 +33,7 @@ const { t } = useI18n()
 const aiEventConfigOpen = ref(false)
 const alarmConfigOpen = ref(false)
 const alarmDraft = ref<SceneAlarmTriggerConfig>({ modes: [] })
-const emit = defineEmits<{ remove: [] }>()
+const emit = defineEmits<{ remove: []; 'cancel-config': []; 'save-config': [] }>()
 
 
 const ensureFirstBranch = () => {
@@ -82,6 +82,7 @@ function openConfig() {
 function confirmAiEvent(value: SceneAiEventTriggerConfig) {
   aiEvent.value = value
   aiEventConfigOpen.value = false
+  emit('save-config')
 }
 
 const aiEvent = computed<SceneAiEventTriggerConfig>({
@@ -143,6 +144,14 @@ function saveAlarm() {
   if (message) { onlyMessage(t(message), 'warning'); return }
   alarm.value = cloneDeep(alarmDraft.value)
   alarmConfigOpen.value = false
+  emit('save-config')
+}
+
+/** 取消新建由父级撤销占位，已有触发器仅关闭弹窗。 */
+function cancelConfig() {
+  alarmConfigOpen.value = false
+  aiEventConfigOpen.value = false
+  emit('cancel-config')
 }
 
 defineExpose({ validate, openConfig })

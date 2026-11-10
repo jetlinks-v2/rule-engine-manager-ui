@@ -217,16 +217,13 @@ const onDelete = () => {
     ].key;
   EventEmitter.emit(key!, { isDelete: true }); // 发布消息
   if (props.name !== 0 && !props.parallel) {
-    // 清空上一个串行执行动作中的options.termsColumns和terms
-    _data.value.branches![props.branchesName].then[props.thenName].actions[
-      props.name - 1
-    ].options!.termsColumns = [];
-    _data.value.branches![props.branchesName].then[props.thenName].actions[
-      props.name - 1
-    ].options!.terms = [];
-    _data.value.branches![props.branchesName].then[props.thenName].actions[
-      props.name - 1
-    ].terms = [];
+    // 原生规则可能没有展示元数据，不能因清理 options 而中断动作删除。
+    const previous = _data.value.branches![props.branchesName].then[props.thenName].actions[props.name - 1];
+    if (previous.options) {
+      previous.options.termsColumns = [];
+      previous.options.terms = [];
+    }
+    previous.terms = [];
   }
 
   emit("delete");

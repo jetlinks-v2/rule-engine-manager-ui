@@ -143,17 +143,14 @@
 			</section>
 				</div>
 			</div>
-		</main>
-		<!-- 内容面板使用 backdrop-filter，会改变 fixed 子元素的定位参照；操作栏挂到 body 才能始终相对视口固定。 -->
-		<Teleport to="body">
-			<footer class="scene-editor__footer">
+			<SceneEditorFooter>
 				<a-button @click="menuStore.jumpPage(sceneRouteKey)">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
 				<j-permission-button type="primary" :hasPermission="savePermission" :loading="saving" @click="save">{{
 						$t('IotSceneLinkage.action.saveScene')
 					}}
 				</j-permission-button>
-			</footer>
-		</Teleport>
+			</SceneEditorFooter>
+		</main>
 		<TriggerPickerModal :open="triggerPickerVisible" :options="availableTriggerOptions" @cancel="cancelTriggerPicker"
 		                    @select="selectTriggerFromPicker"/>
 		<ActionPickerModal
@@ -279,6 +276,7 @@
 	</j-page-container>
 </template>
 <script setup lang="ts">
+import SceneEditorFooter from './components/SceneEditorFooter.vue'
 import SceneTriggerSummary from './components/SceneTriggerSummary.vue'
 import SceneActionSummary from './components/SceneActionSummary.vue'
 import { computed, nextTick, reactive, ref, watch } from 'vue'
@@ -295,6 +293,7 @@ import { createClearedDetailedDraft, mergeDetailedDraft, mergeQuickDraft, resolv
 import { requiresSceneNotifyTemplate, toSceneNotifyMethods } from '../../../utils/sceneNotify'
 import IotAlarmTargetSelect, { type IotAlarmTargetSelectOption, type IotAlarmTargetSelectQuery } from './alarm/IotAlarmTargetSelect.vue'
 import { getSceneCompatibility } from '../sceneCompatibility'
+import { SCENE_TRIGGER_CATEGORIES } from './triggerPickerOptions'
 import { hasUnsupportedLegacyAction, hasUnsupportedLegacyAlarmAction } from '../sceneRule'
 import ActionPickerModal from './components/ActionPickerModal.vue'
 import ConditionPickerModal from './components/ConditionPickerModal.vue'
@@ -446,14 +445,7 @@ const selectedEventOutput = computed(() => eventOutputOptions.value.find(item =>
 const eventTermOptions = computed(() => getTermTypes(selectedEventOutput.value?.valueType).map(value => ({ value, label: t(`IotSceneLinkage.term.${value}`) })))
 const scopeDialogTitle = computed(() => t('IotSceneLinkage.title.selectDevices'))
 type QuickTriggerPickerKind = SceneTriggerKind | 'iot-alarm' | 'visual-alarm'
-const quickTriggerCategories = {
-  device: { label: 'IotSceneLinkage.triggerCategory.device', description: 'IotSceneLinkage.triggerCategoryDesc.device' },
-  timer: { label: 'IotSceneLinkage.triggerCategory.timer', description: 'IotSceneLinkage.triggerCategoryDesc.timer' },
-  'iot-alarm': { label: 'IotSceneLinkage.triggerCategory.iotAlarm', description: 'IotSceneLinkage.triggerCategoryDesc.iotAlarm' },
-  'visual-alarm': { label: 'IotSceneLinkage.triggerCategory.visualAlarm', description: 'IotSceneLinkage.triggerCategoryDesc.visualAlarm' },
-  'ai-event': { label: 'IotSceneLinkage.triggerCategory.aiEvent', description: 'IotSceneLinkage.triggerCategoryDesc.aiEvent' },
-  manual: { label: 'IotSceneLinkage.triggerCategory.manual', description: 'IotSceneLinkage.triggerCategoryDesc.manual' },
-} as const
+const quickTriggerCategories = SCENE_TRIGGER_CATEGORIES
 // 快速配置的入口按用户场景排序；物联、视觉告警分别预设来源，但底层仍复用 alarm Provider。
 const triggerOptions = computed(() => [
   { value: 'property', icon: 'RiseOutlined', provider: 'device', category: 'device' },
@@ -1057,6 +1049,10 @@ async function init() {
     const response: any = await getProduct(form.productId)
     const product = response.result || response
     form.productName ||= product.name || form.productId
+    // 旧详细规则未保存产品名称时，复用本次产品查询补齐展示元数据，不解析旧汇总文案。
+    if (scene.trigger?.type === 'device' && !scene.options?.trigger?.productName) {
+      canonicalDraft.value = { ...scene, options: { ...scene.options, trigger: { ...scene.options?.trigger, productName: form.productName } } }
+    }
     await loadMetadata(true)
   }
   await nextTick()
