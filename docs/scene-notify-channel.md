@@ -30,3 +30,9 @@
 - 模块级 `vue-tsc --noEmit` 未通过，输出为工作区已有的全量类型错误（包含 `jetlinks-web-core` 和场景编辑器既有组件）；本次新增工具文件已由定向 esbuild 测试完成类型转译验证。
 
 交付信息：实现提交 `3f74778`，Pull Request <https://github.com/jetlinks-v2/rule-engine-manager-ui/pull/133>。
+
+## 待接入的场景通知 Hook
+
+`views/SceneLinkage/editor/useSceneNotification.ts` 收拢通知候选查询、模板预览刷新、失败重试及配置页导航，依赖 core 的 `hooks/useNotificationConfigNavigation.ts`。当前编辑页仍使用自身逻辑，尚未引用该 hook；本次仅将既有辅助代码和测试纳入版本管理，不改变场景保存协议或页面行为。
+
+`node --test tests/sceneNotify.test.mjs tests/sceneNotificationFlow.test.mjs` 共 7 项通过，覆盖站内信不查模板、保留接收人及业务草稿、切换渠道 / 移除行后的迟到结果、失败与重试、传递真实配置渠道。测试使用 API 和 core 导航替身，不能代替真实跨标签联调；TypeScript 语法转译及差异检查通过，未重复模块完整类型检查与构建。接入前需完成 core 导航的多语言与浏览器验证，并验证编辑页与该 hook 的事件连接。
