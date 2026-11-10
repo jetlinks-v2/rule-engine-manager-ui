@@ -1,15 +1,13 @@
 <template>
-    <div class="shakeLimit">
+    <div class="shakeLimit" :class="{ 'is-enabled': shakeLimit.enabled }">
       <a-switch
           :checkedChildren="$t('ShakeLimit.index.9093426-0')"
           :unCheckedChildren="$t('ShakeLimit.index.9093426-1')"
           v-model:checked="shakeLimit.enabled"
           style="min-width: 90px"
       />
-      <a-form-item name="shakeLimit" style="margin-bottom: 0;" :rules="{
-          validator,
-          trigger: 'change'
-        }">
+      <!-- 条件与防抖统一继承场景表单的校验时机。 -->
+      <a-form-item name="shakeLimit" style="margin-bottom: 0;" :rules="{ validator }">
         <template v-if="shakeLimit.enabled">
             <div style="display: flex;flex-wrap: wrap;gap: 8px;align-items: center;flex: 1;">
                 <a-input-number :min="1" :precision="0" size="small" v-model:value="shakeLimit.time" style="width: 38px" />
@@ -23,9 +21,12 @@
                 <a-radio-group :options="alarmFirstOptions" :disabled="shakeLimit.continuous" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.alarmFirst" size="small" @change="handleChangeAlarmFirst"/>
                 <span>{{ $t('ShakeLimit.index.9093426-10') }}</span>
                 <a-radio-group :options="outputFirstOptions" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.outputFirst" size="small" />
-                <span>{{ $t('ShakeLimit.index.9093426-11') }}</span>
-                <a-radio-group :options="rollingOptions" :disabled="!shakeLimit.alarmFirst" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.rolling" size="small" />
-                <span>{{ $t('ShakeLimit.index.9093426-12') }}</span>
+                <span>{{ $t('ShakeLimit.actionSuffix') }}</span>
+                <span class="shakeLimit__cycle">
+                    <span>{{ $t('ShakeLimit.cyclePrefix') }}</span>
+                    <a-radio-group :options="rollingOptions" :disabled="!shakeLimit.alarmFirst" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.rolling" size="small" />
+                    <span>{{ $t('ShakeLimit.index.9093426-12') }}</span>
+                </span>
             </div>
         </template>
       </a-form-item>
@@ -122,6 +123,10 @@ watch(() => shakeLimit, () => {
 </script>
 
 <style lang="less" scoped>
+.shakeLimit__cycle {
+  display: contents;
+}
+
 .shakeLimit {
   display: flex;
   gap: 16px;

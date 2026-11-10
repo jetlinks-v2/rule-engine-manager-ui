@@ -2236,5 +2236,15 @@
   "alarmDashboard.handling.rate": "対応率",
   "alarmDashboard.handling.noAlarms": "現在、警告はありません",
   "alarmDashboard.handling.noData": "データがありません",
-  "alarmDashboard.handling.unit": "単位：条"
+  "alarmDashboard.handling.unit": "単位：条",
+	"IotSceneLinkage.collector.address": "アドレス",
+	"IotSceneLinkage.collector.interval": "収集間隔",
+	"IotSceneLinkage.collector.mode.read": "読み取り",
+	"IotSceneLinkage.collector.mode.write": "書き込み",
+	"IotSceneLinkage.collector.mode.subscribe": "購読",
+	"IotSceneLinkage.collector.subscribeDescription": "選択したコレクターのポイント報告データを購読",
+  "IotSceneLinkage.node.allProductTarget": "すべての {product}",
+  "IotSceneLinkage.node.scopedProductTarget": "{scope} のすべての {product}",
+  "IotSceneLinkage.timer.calendarCondition": "カレンダー条件",
+  "IotSceneLinkage.timer.calendarLoadFailed": "カレンダータグの読み込みに失敗しました"
 }

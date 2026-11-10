@@ -354,6 +354,14 @@ const columnSelect = (option: any) => {
 
     paramsValue.value = newValue;
   }
+  // 切换枚举字段时清除不属于新字段的手动值，避免级别值被带入目标类型等条件。
+  if (dataType === 'enum' && ['manual', 'fixed'].includes(paramsValue.value.source) && !nullKeys.includes(paramsValue.termType)) {
+    const currentValue = paramsValue.value.value;
+    const values = isArray(currentValue) ? currentValue : [currentValue];
+    if (values.some(value => value != null && !option.options?.some(item => item.id === value))) {
+      paramsValue.value = { source: paramsValue.value.source, value: undefined };
+    }
+  }
   handOptionByColumn(option);
   emit("update:value", { ...paramsValue });
   nextTick(() => {
@@ -375,7 +383,7 @@ const termsTypeSelect = (e: { key: string; name: string }) => {
   const oldValue = isArray(paramsValue.value!.value)
     ? paramsValue.value!.value[0]
     : paramsValue.value!.value;
-  let value = arrayParamsKey.includes(e.key) ? showDouble.value ? [oldValue, undefined] : oldValue ? [oldValue] : [] : oldValue;
+  let value = arrayParamsKey.includes(e.key) ? showDouble.value ? [oldValue, undefined] : oldValue !== undefined && oldValue !== null ? [oldValue] : [] : oldValue;
   // 如果上次的值 在 timeTypeKeys中 则不变
   if (columnType.value === "date") {
     if (timeTypeKeys.includes(e.key)) {

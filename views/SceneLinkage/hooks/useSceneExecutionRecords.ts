@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue'
-import dayjs from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import { querySceneContextRecords, querySceneRecordsByScene } from '../../../api/scene-linkage'
 import { normalizeResult } from '../utils'
 
@@ -26,6 +26,13 @@ export interface SceneExecutionRecordState {
   detailRecords: SceneExecutionRecord[]
 }
 
+export type SceneExecutionRecordRange = [Dayjs, Dayjs]
+
+function createDefaultRange(): SceneExecutionRecordRange {
+  const now = dayjs()
+  return [now.subtract(1, 'month'), now]
+}
+
 /**
  * 管理单个场景的执行批次与节点日志。
  *
@@ -43,6 +50,7 @@ export function useSceneExecutionRecords() {
   const detailLoading = ref(false)
   const detailError = ref(false)
   const detailRecords = ref<SceneExecutionRecord[]>([])
+  const range = ref<SceneExecutionRecordRange>(createDefaultRange())
   let listRequestVersion = 0
   let detailRequestVersion = 0
   const pageSize = 10
@@ -73,6 +81,8 @@ export function useSceneExecutionRecords() {
   /** 打开指定场景的日志，并从最新执行批次重新加载。 */
   async function open(id: string) {
     sceneId.value = id
+    // 每次打开抽屉都以当前时间重新计算默认近一个月，避免复用首次打开时的过期结束时间。
+    range.value = createDefaultRange()
     reset()
     await reload()
   }
@@ -90,6 +100,11 @@ export function useSceneExecutionRecords() {
         pageIndex: pageIndex.value,
         pageSize,
         sorts: [{ name: 'createTime', order: 'desc' }],
+        // 执行记录以 timestamp 作为查询时间，和执行日志接口保持同一筛选口径。
+        terms: [
+          { column: 'timestamp', termType: 'gte', value: range.value[0].valueOf() },
+          { column: 'timestamp', termType: 'lte', value: range.value[1].valueOf() },
+        ],
       }))
       if (requestVersion !== listRequestVersion) return
       records.value = pageIndex.value ? [...records.value, ...result.data] : result.data
@@ -103,6 +118,13 @@ export function useSceneExecutionRecords() {
 
   function loadMore() {
     pageIndex.value += 1
+    void reload()
+  }
+
+  /** 切换日志时间范围后，从第一页重新查询，避免混入旧范围的分页结果。 */
+  function changeRange(value: SceneExecutionRecordRange) {
+    range.value = value
+    reset()
     void reload()
   }
 
@@ -150,15 +172,18 @@ export function useSceneExecutionRecords() {
 
   return {
     state,
+    range,
     open,
     reload,
     loadMore,
+    changeRange,
     toggleRecord,
     retryDetail,
   }
 }
 
 export function formatSceneExecutionTime(value: unknown) {
+  if (value === null || value === undefined || value === '') return '-'
   const time = Number(value)
   return Number.isFinite(time) ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : String(value || '-')
 }

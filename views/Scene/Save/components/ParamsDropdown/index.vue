@@ -83,9 +83,9 @@
                       style="width: auto;height: 350px;overflow: auto"
                       @select="treeSelect"
                     >
-                      <template #title="{ name, description }">
+                      <template #title="{ name, description, children }">
                         <a-space>
-                          <div class="no-warp">{{ name }}</div>
+                          <div :class="['no-warp', { 'scene-param-group': children?.length }]">{{ name }}</div>
                           <div
                             v-if="description"
                             class="tree-title-description no-warp"
@@ -155,7 +155,7 @@ const props = defineProps({
 
 const emit = defineEmits<Emit>();
 
-const myValue = ref<ValueType>(props.valueBackups || props.value);
+const myValue = ref<ValueType>(props.valueBackups ?? props.value);
 const mySource = ref<string>(props.source);
 const label = ref<any>(props.placeholder);
 const treeOpenKeys = ref<(string | number)[]>([]);
@@ -184,7 +184,7 @@ const itemType = (type: string) => {
 
 nextTick(() => {
   mySource.value = props.source;
-  myValue.value = props.source === "metric" ? props.metric : (props.valueBackups || props.value);
+  myValue.value = props.source === "metric" ? props.metric : (props.valueBackups ?? props.value);
 });
 
 const nodeLabelName = computed(() => mySource.value === "upper" ? props.metricName : props.labelName)
@@ -246,12 +246,12 @@ watchEffect(() => {
   const _options = ["metric", "upper"].includes(props.source)
     ? props.metricOptions
     : props.options;
-  const pValue = props.valueBackups || props.value
+  const pValue = props.valueBackups ?? props.value
   const isMetric = props.source === "metric"; // 是否为指标值
   const _value = isMetric ? props.metric : pValue;
   const _valueName = isMetric ? "id" : props.valueName;
   const option = getOption(_options, _value as string, _valueName); // 回显label值
-  myValue.value = isMetric ? props.metric : pValue || [];
+  myValue.value = isMetric ? props.metric : pValue ?? [];
   mySource.value = props.source;
 
   if (option) {
@@ -265,8 +265,9 @@ watchEffect(() => {
           ? pValue || props.placeholder
           : props.placeholder;
     } else {
-      if(props.multiple && props.source === 'fixed') {
-        label.value = props.options?.filter(item => pValue?.includes(item.value)).map(item => item[nodeLabelName.value]);
+      // 手动输入和固定值都按枚举名称回显，多选时保留数值 0。
+      if(props.multiple && !isMetric && props.source !== 'upper') {
+        label.value = props.options?.filter(item => pValue?.includes(item.value)).map(item => item[nodeLabelName.value]).join("、");
       } else {
         label.value = pValue!== undefined? pValue : props.placeholder;
       }

@@ -1,36 +1,39 @@
 <template>
-  <div :class="['notify-action-row', { 'notify-action-row--invalid': invalid }]">
-    <div class="notify-action-row__main">
-      <span class="notify-action-row__index">{{ index + 1 }}</span>
-      <span class="notify-action-row__icon"><AIcon type="NotificationOutlined" /></span>
-      <strong>{{ $t('IotSceneLinkage.action.sendNotify') }}</strong>
-      <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.send') }}</span>
-      <a-select
-        class="notify-action-row__method"
-        popup-class-name="scene-editor__compact-dropdown"
-        :dropdown-match-select-width="false"
-        :value="methodValue"
-        :loading="methodsLoading"
-        :placeholder="$t('IotSceneLinkage.placeholder.notifyMethod')"
-        :options="methodOptions"
-        @change="changeMethod"
-      />
-      <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.to') }}</span>
-      <a-select
-        class="notify-action-row__users"
-        popup-class-name="scene-editor__resource-dropdown"
-        :dropdown-match-select-width="false"
-        mode="multiple"
-        :value="recipientIds"
-        :loading="usersLoading"
-        :placeholder="$t('IotSceneLinkage.placeholder.notifyUsers')"
-        :options="userOptions"
-        @dropdownVisibleChange="loadUsers"
-        @popupScroll="handleUserPopupScroll"
-        @change="changeRecipients"
-      />
-    </div>
-    <div class="notify-action-row__content">
+  <SceneNodeCard v-if="!dialogOnly" :class="['notify-action-row', { 'notify-action-row--invalid': invalid }]" :title="$t('IotSceneLinkage.action.sendNotify')" icon="NotificationOutlined" :number="index + 1">
+    <template #actions><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></template>
+    <SceneNotifySummary :config="action.config" :options="action.options" :users="users" :methods="methods" />
+  </SceneNodeCard>
+
+  <a-modal :open="editorVisible" :title="$t('IotSceneLinkage.action.sendNotify')" :mask-closable="false" @cancel="cancelEditor" @ok="saveEditor">
+    <div class="notify-action-row__editor">
+      <div class="notify-action-row__main">
+        <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.send') }}</span>
+        <a-select
+          class="notify-action-row__method"
+          popup-class-name="scene-editor__compact-dropdown"
+          :dropdown-match-select-width="false"
+          :value="methodValue"
+          :loading="methodsLoading"
+          :placeholder="$t('IotSceneLinkage.placeholder.notifyMethod')"
+          :options="methodOptions"
+          @change="changeMethod"
+        />
+        <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.to') }}</span>
+        <a-select
+          class="notify-action-row__users"
+          popup-class-name="scene-editor__resource-dropdown"
+          :dropdown-match-select-width="false"
+          mode="multiple"
+          :value="recipientIds"
+          :loading="usersLoading"
+          :placeholder="$t('IotSceneLinkage.placeholder.notifyUsers')"
+          :options="userOptions"
+          @dropdownVisibleChange="loadUsers"
+          @popupScroll="handleUserPopupScroll"
+          @change="changeRecipients"
+        />
+      </div>
+      <div class="notify-action-row__content">
       <span class="notify-action-row__content-label">
         {{ $t('IotSceneLinkage.form.notifyContent') }}
         <a-tooltip :title="$t('IotSceneLinkage.hint.notifyContentTemplate')">
@@ -40,18 +43,22 @@
       </span>
       <span v-if="templateContent" class="notify-action-row__template">
         <template v-for="(segment, segmentIndex) in templateSegments" :key="segmentIndex">
-          <span v-if="segment.variable" class="notify-action-row__variable">{{ segment.text }}</span>
+          <span v-if="segment.variable" class="notify-action-row__variable" :title="segment.token">{{ segment.text }}</span>
           <span v-else>{{ segment.text }}</span>
         </template>
       </span>
       <span v-else class="notify-action-row__template">{{ $t('IotSceneLinkage.action.notifyTemplate') }}</span>
-      <a-button class="notify-action-row__remove" type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button>
+      </div>
     </div>
-  </div>
+  </a-modal>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import SceneNodeCard from './SceneNodeCard.vue'
+import SceneNotifySummary from './SceneNotifySummary.vue'
+import { useI18n } from 'vue-i18n'
+import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import type { SceneNotifyMethod, SceneNotifyUser } from '../../../../api/scene-linkage'
 import type { SceneActionForm } from '../../utils'
 
@@ -63,15 +70,22 @@ const props = defineProps<{
   methodsLoading?: boolean
   usersLoading?: boolean
   invalid?: boolean
+  autoOpen?: boolean
+  /** 详细模式沿用此对话框，但由原版动作卡承载列表项。 */
+  dialogOnly?: boolean
 }>()
 
 const emit = defineEmits<{
   remove: []
+  opened: []
+  'cancel-new': []
   'load-users': [reset?: boolean]
   'load-more-users': []
   'method-change': [method: SceneNotifyMethod]
   change: [action: SceneActionForm]
+  saved: [action: SceneActionForm]
 }>()
+const { t } = useI18n()
 
 const methodValue = computed(() => props.action.config?.notifyChannelIds?.[0])
 const recipientIds = computed(() => props.action.config?.userIds || [])
@@ -91,22 +105,66 @@ const templateContent = computed(() => String(
   || '',
 ))
 const templateSegments = computed(() => {
-  const segments: Array<{ text: string; variable: boolean }> = []
+  const variableNames = new Map(
+    (Array.isArray(props.action.options?.templateVariables) ? props.action.options.templateVariables : [])
+      .map((variable: any) => [String(variable?.id || ''), String(variable?.name || variable?.i18nName || '').trim()] as const)
+      .filter(([id, name]) => Boolean(id && name)),
+  )
+  const segments: Array<{ text: string; variable: boolean; token?: string }> = []
   const pattern = /\$\{[^}]+}/g
   let offset = 0
   let matched: RegExpExecArray | null
   while ((matched = pattern.exec(templateContent.value))) {
     if (matched.index > offset) segments.push({ text: templateContent.value.slice(offset, matched.index), variable: false })
-    segments.push({ text: matched[0], variable: true })
+    const variableId = matched[0].slice(2, -1).trim()
+    segments.push({ text: variableNames.get(variableId) || t('IotSceneLinkage.notify.unnamedVariable'), token: matched[0], variable: true })
     offset = matched.index + matched[0].length
   }
   if (offset < templateContent.value.length || !segments.length) segments.push({ text: templateContent.value.slice(offset), variable: false })
   return segments
 })
+const editorVisible = ref(false)
+const originalAction = ref<SceneActionForm>()
+const createdByPicker = ref(false)
+
 
 onMounted(() => {
   if (recipientIds.value.length) emit('load-users', true)
 })
+
+/** Notification configuration is committed by the dialog, so closing it restores the action snapshot. */
+function openEditor() {
+  originalAction.value = JSON.parse(JSON.stringify(props.action)) as SceneActionForm
+  editorVisible.value = true
+  emit('load-users', true)
+}
+function cancelEditor() {
+  if (createdByPicker.value) emit('cancel-new')
+  else if (originalAction.value) emit('change', originalAction.value)
+  originalAction.value = undefined
+  createdByPicker.value = false
+  editorVisible.value = false
+}
+function saveEditor() {
+  if (!methodValue.value || !recipientIds.value.length) {
+    onlyMessage(t('IotSceneLinkage.message.notifyRequired'), 'warning')
+    return
+  }
+  // 名称只写入 options 展示元数据，运行时仍使用原有渠道和用户 ID。
+  const action = {
+    ...props.action,
+    options: {
+      ...props.action.options,
+      channelName: props.methods.find(method => method.id === methodValue.value)?.name || props.action.options?.channelName,
+      users: props.users.filter(user => recipientIds.value.includes(user.id)).map(user => ({ id: user.id, name: user.name })),
+    },
+  }
+  emit('change', action)
+  emit('saved', action)
+  originalAction.value = undefined
+  createdByPicker.value = false
+  editorVisible.value = false
+}
 
 const loadUsers = (open: boolean) => {
   if (open) emit('load-users', true)
@@ -130,11 +188,21 @@ const changeRecipients = (userIds: string[]) => {
     config: { ...props.action.config, userIds },
   })
 }
+
+watch(() => props.autoOpen, value => {
+  if (!value || editorVisible.value) return
+  createdByPicker.value = true
+  openEditor()
+  emit('opened')
+}, { immediate: true })
 </script>
 
 <style scoped>
-.notify-action-row { overflow-x: auto; padding: var(--space-4, 16px); margin-bottom: var(--space-3, 12px); border: 1px solid var(--jet-theme-border-secondary); border-radius: var(--radius-jet-sm, 10px); }
+.notify-action-row { margin-bottom: var(--space-3, 12px); }
 .notify-action-row--invalid { border-color: var(--ant-color-error); }
+.notify-action-row__summary { display: grid; grid-template-columns: 22px 28px max-content minmax(0, 1fr) auto auto; gap: var(--space-3, 12px); align-items: center; min-width: 0; }
+.notify-action-row__summary-text { min-width: 0; overflow: hidden; color: var(--ant-color-text-secondary); text-overflow: ellipsis; white-space: nowrap; }
+.notify-action-row__editor { display: grid; gap: var(--space-4, 16px); }
 .notify-action-row__main { display: flex; flex-wrap: nowrap; align-items: center; min-width: max-content; gap: var(--space-3, 12px); min-height: 32px; }
 .notify-action-row__index { display: grid; place-items: center; flex: none; width: 22px; height: 22px; color: var(--ant-color-primary); background: #eef4ff; border-radius: 50%; font-size: 12px; font-weight: 600; }
 .notify-action-row__icon { display: grid; place-items: center; width: 28px; height: 28px; color: #d46b08; background: #fff7e8; border-radius: 6px; }
@@ -149,7 +217,7 @@ const changeRecipients = (userIds: string[]) => {
 	width: var(--scene-linkage-resource-select-width, 18rem);
 	min-width: var(--scene-linkage-resource-select-width, 18rem);
 }
-.notify-action-row__content { display: flex; gap: var(--space-2, 8px); align-items: flex-start; width: 100%; max-width: 100%; box-sizing: border-box; padding: var(--space-3, 12px) 0 0 calc(22px + 28px + 3.5rem + 20px); line-height: 24px; }
+.notify-action-row__content { display: flex; gap: var(--space-2, 8px); align-items: flex-start; width: 100%; max-width: 100%; box-sizing: border-box; padding-top: var(--space-3, 12px); line-height: 24px; }
 .notify-action-row__content-label { display: inline-flex; flex: none; gap: var(--space-1, 4px); align-items: center; }
 .notify-action-row__remove { flex: none; margin-left: auto; }
 .notify-action-row__help { color: var(--ant-color-text-tertiary); cursor: help; }

@@ -4,10 +4,12 @@
     :options="options"
     :placeholder="placeholder || t('IotSceneLinkage.placeholder.thingModel')"
     :allow-clear="allowClear"
+    :mode="multiple ? 'multiple' : undefined"
+    :max-tag-count="multiple ? 'responsive' : undefined"
     :disabled="disabled"
     show-search
     :filter-option="filterOption"
-    :dropdown-match-select-width="false"
+    :dropdown-match-select-width="true"
     popup-class-name="scene-editor__thing-model-dropdown"
     @change="change"
     @dropdownVisibleChange="$emit('dropdownVisibleChange', $event)"
@@ -31,18 +33,19 @@ type ThingModelOptionGroup = {
 }
 
 defineProps({
-  modelValue: { type: String, default: undefined },
+  modelValue: { type: [String, Array] as PropType<string | string[]>, default: undefined },
   options: { type: Array as PropType<Array<ThingModelOption | ThingModelOptionGroup>>, default: () => [] },
   placeholder: { type: String, default: '' },
   allowClear: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
+  multiple: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue', 'change', 'dropdownVisibleChange'])
 
 const { t } = useI18n()
 
-const change = (value: string) => {
+const change = (value: string | string[]) => {
   emit('update:modelValue', value)
   emit('change', value)
 }

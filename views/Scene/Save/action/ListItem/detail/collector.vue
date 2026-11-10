@@ -1,30 +1,9 @@
-<script setup name="Collector">
-import {useI18n} from "vue-i18n";
+<template><SceneActionSummary :action="{ ...data, executor: 'collector' }" :options="options" /></template>
 
-const props = defineProps({
-  data: {
-    type: Object,
-    default: () => ({}),
-  },
-})
-const {t: $t} = useI18n();
+<script setup lang="ts">
+import SceneActionSummary from '@rule-engine-manager-ui/views/SceneLinkage/editor/components/SceneActionSummary.vue'
+import type { SceneRuleRecord } from '@rule-engine-manager-ui/views/SceneLinkage/editor/editorMode'
+// 旧详情入口与新版节点卡片共用只读摘要，不再各自拼接图标和资源名称。
+defineOptions({ inheritAttrs: false })
+withDefaults(defineProps<{ data: SceneRuleRecord; options?: SceneRuleRecord }>(), { options: () => ({}) })
 </script>
-
-<template>
-  <a-space>
-    <span>{{data?.options?.type}}</span>
-    <span>
-                  <AIcon type="icon-mubiao" style="padding: 0 4px" />
-                  <span>{{data?.options?.triggerName}}</span>
-                </span>
-    <span>{{data?.options?.pointName}}</span>
-    <template v-if="data.collector?.handlerType === 'write'">
-      <span>为</span>
-      <span>{{data?.options?.propertiesName}}</span>
-    </template>
-  </a-space>
-</template>
-
-<style scoped lang="less">
-
-</style>
