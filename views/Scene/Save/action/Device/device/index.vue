@@ -72,7 +72,6 @@ import { useSceneStore } from "../../../../../../store/scene";
 import TopCard from "./TopCard.vue";
 import { storeToRefs } from "pinia";
 import { onlyMessage } from "@jetlinks-web/utils";
-import { getRelationUsers } from "../../../../../../api/others";
 import Device from "./Device.vue";
 import Tag from "./Tag.vue";
 import RelationSelect from "./RelationSelect.vue";
@@ -80,9 +79,9 @@ import {ACTION_DATA, getParams} from "../../../util";
 import { handleParamsData } from "../../../components/Terms/util";
 import { map } from "lodash-es";
 import { TypeMap } from "./util";
+import { selectDeviceVariables } from "../deviceVariables";
 import { useI18n } from 'vue-i18n'
 import { openKeysByTree } from "../../../../../../utils/comm";
-import { isNoCommunity } from "@jetlinks-web-core/utils";
 
 const { t: $t } = useI18n()
 const props = defineProps({
@@ -140,38 +139,6 @@ const expandedKeys = computed(() => {
   return openKeysByTree(builtInList.value, modelRef.upperKey);
 })
 
-const filterTree = (nodes: any[]) => {
-  if (!nodes?.length) {
-    return nodes;
-  }
-  // const arr = nodes.filter((it) => {
-  //     const deviceAttr = ['deviceId', 'device_id', 'device_Id']
-  //     return it.children.some((item: any) => deviceAttr.includes(item.id) && !item.id.includes('boolean'))
-  //     // if (
-  //     //     it.children.find(
-  //     //         (item: any) =>
-  //     //             item?.id?.indexOf(
-  //     //                 'deviceId' || 'device_id' || 'device_Id',
-  //     //             ) > -1,
-  //     //     ) &&
-  //     //     !it.children.find((item: any) => item?.id.indexOf('boolean') > -1)
-  //     // ) {
-  //     //     return true;
-  //     // }
-  //     // return false;
-  // });
-  return nodes.map((item) => {
-    if (item.children) {
-    }
-    return {
-      ...item,
-      title: item.name,
-      value: item.id,
-      disabled: !!item.children,
-    };
-  });
-};
-
 const tagValidator = (_: any, value: any) => {
   if (value) {
     if (!value[0]?.value?.every((item: any) => item.column)) {
@@ -208,84 +175,22 @@ const sourceChangeEvent = async () => {
   //     builtInList.value = [];
   // }
   const _data = await getParams(_params, unref(data));
-  builtInList.value = handleParamsData(filterTree(_data), "id");
+  builtInList.value = handleParamsData(selectDeviceVariables(_data, props.productDetail?.id), "id");
 
   if (props.productDetail?.id) {
     filterType(props.productDetail);
   }
 };
 
-const filterType = async (newVal: any) => {
-  // const _typeList = [
-  //   TypeMap.fixed,
-  // ]
-  let _typeList = [
+/** 关系入口已下线；变量候选由同产品的上游设备 ID 决定。 */
+const filterType = (newVal: any) => {
+  const metadata = typeof newVal?.metadata === 'string' ? JSON.parse(newVal.metadata || '{}') : newVal?.metadata || {};
+  tagList.value = metadata.tags || [];
+  list.value = [
     TypeMap.fixed,
-    TypeMap.context,
-    TypeMap.relation,
-    TypeMap.tag,
+    { ...TypeMap.context, disabled: !builtInList.value.length },
+    { ...TypeMap.tag, disabled: !tagList.value.length },
   ];
-
-  const triggerType = unref(data)?.trigger?.type;
-
-  //标签
-  const tag = JSON.parse(newVal?.metadata || "{}")?.tags;
-
-  tagList.value = tag || [];
-
-  // if (tag?.length === 0) {
-  //   _typeList[3].disabled = true;
-  // }
-  _typeList[3].disabled = !tag?.length
-
-  if (triggerType === "device") {
-    // _typeList.push(TypeMap.tag) // 设备输出一直展示标签
-    //关系
-    const res = await getRelationUsers({
-      paging: false,
-      sorts: [{ name: "createTime", order: "desc" }],
-      terms: [{ termType: "eq", column: "objectTypeName", value: $t('device.index.9667835-8') }],
-    }).catch(()=>{
-        _typeList[2].disabled = true
-    });
-    if (res.success && res.result.length === 0) {
-      // _typeList.push(TypeMap.relation)
-      // TypeMap.relation.disabled = true;
-      _typeList[2].disabled = true;
-    }
-    //变量
-
-    // if (builtInList.value.length) {
-    //     //   _typeList.push(TypeMap.context)
-    //     // TypeMap.context.disabled = true;
-    //
-    // }
-    _typeList[1].disabled = !builtInList.value.length;
-  } else {
-    // if (
-    //     // builtInList.value.length !== 0 &&
-    //     // !props.parallel &&
-    //     // props.name !== 0
-    //   builtInList.value.length
-    // ) {
-    //     //   _typeList.push(TypeMap.context)
-    //     // TypeMap.context.disabled = true;
-    //   _typeList[1].disabled = true
-    // }
-
-    if (props.name === 0) {
-      _typeList = [TypeMap.fixed, TypeMap.tag];
-    } else {
-      _typeList.splice(2, 1);
-      _typeList[1].disabled = !builtInList.value.length;
-    }
-  }
-
-  console.log(_typeList);
-  if(!isNoCommunity) {
-    _typeList.splice(2, 1)
-  }
-  list.value = _typeList;
 };
 
 const onSelectorChange = (val: string) => {

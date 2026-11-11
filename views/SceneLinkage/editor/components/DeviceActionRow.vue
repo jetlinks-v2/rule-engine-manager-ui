@@ -99,12 +99,12 @@ const writeValue = computed({
   get: () => writePropertyId.value ? config.value.message.properties?.[writePropertyId.value] ?? '' : '',
   set: value => { if (writePropertyId.value) config.value.message.properties = { [writePropertyId.value]: value }; updateConfig() },
 })
-const operationType = computed(() => ['READ_PROPERTY', 'WRITE_PROPERTY', 'INVOKE_FUNCTION'].includes(config.value.message.messageType) ? config.value.message.messageType : 'READ_PROPERTY')
+const operationType = computed(() => config.value.message.messageType)
 const operationTypeOptions = computed(() => [
   { value: 'READ_PROPERTY', icon: 'ReadOutlined', label: t('IotSceneLinkage.action.readProperty'), description: t('IotSceneLinkage.actionDescription.readProperty') },
   { value: 'WRITE_PROPERTY', icon: 'EditOutlined', label: t('IotSceneLinkage.action.writeProperty'), description: t('IotSceneLinkage.actionDescription.writeProperty') },
   { value: 'INVOKE_FUNCTION', icon: 'ApiOutlined', label: t('IotSceneLinkage.action.executeFunction'), description: t('IotSceneLinkage.actionDescription.executeFunction') },
-])
+].filter(item => ({ READ_PROPERTY: readableProperties.value.length, WRITE_PROPERTY: writableProperties.value.length, INVOKE_FUNCTION: functions.value.length } as Record<string, number>)[item.value]))
 const operationOptions = computed(() => {
   const description = operationType.value === 'WRITE_PROPERTY'
     ? t('IotSceneLinkage.actionDescription.writeProperty')
@@ -151,7 +151,12 @@ async function loadMetadata(productId = config.value.productId) {
   const response: any = await getProduct(productId)
   const product = response?.result ?? response
   const value = typeof product?.metadata === 'string' ? JSON.parse(product.metadata) : product?.metadata || {}
+  if (config.value.productId !== productId) return
   metadata.value = { properties: value.properties || [], functions: value.functions || [] }
+  // 产品切换后只保留实际可配置的指令类型，取消编辑仍不会回写原规则。
+  if (!operationTypeOptions.value.some(item => item.value === operationType.value)) {
+    changeOperationType(operationTypeOptions.value[0]?.value || '')
+  }
 }
 
 async function loadSelectedProduct(productId = config.value.productId) {
@@ -180,8 +185,8 @@ function selectDevice(device: { productId: string; productName: string }) {
 }
 
 function changeOperationType(value: unknown) {
-  if (!editingAction.value || !['READ_PROPERTY', 'WRITE_PROPERTY', 'INVOKE_FUNCTION'].includes(String(value))) return
-  const message = value === 'READ_PROPERTY' ? { messageType: value, properties: [] } : value === 'WRITE_PROPERTY' ? { messageType: value, properties: {} } : { messageType: value, functionId: '', inputs: [] }
+  if (!editingAction.value || (value !== '' && !operationTypeOptions.value.some(item => item.value === value))) return
+  const message = value === '' || value === 'READ_PROPERTY' ? { messageType: value, properties: [] } : value === 'WRITE_PROPERTY' ? { messageType: value, properties: {} } : { messageType: value, functionId: '', inputs: [] }
   editingAction.value = { ...editingAction.value, config: { ...config.value, options: { ...config.value.options, propertiesName: '' }, message } }
   restoreFunctionInputs([])
 }
@@ -205,7 +210,7 @@ function syncInputs() { config.value.message.inputs = functionInputs.value.map(i
 
 /** The shared device shell only knows the selected device; this component owns command and parameter completeness. */
 function validateAction() {
-  if (!operationValue.value) {
+  if (!operationValue.value || !operationOptions.value.some(item => item.value === operationValue.value)) {
     onlyMessage(t('IotSceneLinkage.message.deviceActionRequired'), 'warning')
     return false
   }

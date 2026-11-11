@@ -131,6 +131,7 @@ export function toSceneTemplate(scene: unknown): unknown {
     // 只裁剪场景顶层统计，保留嵌套物模型参数或扩展配置中的同名业务字段。
     delete template.executionCount
     delete template.lastExecutionTime
+    delete template.runtimeInfo
   }
   return template
 }

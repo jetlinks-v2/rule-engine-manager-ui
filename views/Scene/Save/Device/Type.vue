@@ -98,10 +98,16 @@ Object.assign(formModel, props.operator);
 const optionCache = reactive({
   action: props.options?.action || "",
 });
-const readProperties = ref<any[]>([]);
-const writeProperties = ref<any[]>([]);
-const eventOptions = ref<any[]>([]);
-const functionOptions = ref<any[]>([]);
+// 每次物模型变化都重建选项，避免切换到空物模型后沿用上一台设备的字段。
+const readProperties = computed(() => toThingModelOptions(
+  (props.metadata?.properties || []).filter(item => item.expands?.type?.includes('read')),
+));
+const writeProperties = computed(() => toThingModelOptions(
+  (props.metadata?.properties || []).filter(item => item.expands?.type?.includes('write')),
+));
+const eventOptions = computed(() => toThingModelOptions(props.metadata?.events || [], 'event'));
+// 功能参数编辑器需要原始 inputs，不能只保留下拉展示字段。
+const functionOptions = computed(() => (props.metadata?.functions || []).map(item => ({ ...item, label: item.name, value: item.id })));
 const typeForm = ref();
 const timerRef = ref();
 const writeRef = ref();
@@ -109,7 +115,7 @@ const invokeRef = ref();
 
 const topOptions = computed(() => {
   const cloneTypeEnum = cloneDeep(TypeEnum);
-  // 保留选项对象引用，使物模型判断后的解禁状态同步到下拉列表。
+  // 沿用原版触发类型及说明，只调整物模型能力的可见性。
   const baseOptions = [
     {
       label: $t('Device.Type.372529-3'),
@@ -130,62 +136,17 @@ const topOptions = computed(() => {
     Object.assign(cloneTypeEnum.invokeFunction, { icon: 'ControlOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.invokeFunction') }),
   ];
 
-  if (!props.metadata) return baseOptions;
-
-  if (props.metadata.events?.length) {
-    // baseOptions.push(TypeEnum.reportEvent)
-    cloneTypeEnum.reportEvent.disabled = false;
-    eventOptions.value = toThingModelOptions(props.metadata.events, 'event');
-  }
-
-  if (props.metadata.properties?.length) {
-    const _properties = props.metadata.properties;
-    readProperties.value = toThingModelOptions(
-      _properties.filter((item: any) => item.expands?.type?.includes("read")),
-    );
-    writeProperties.value = toThingModelOptions(
-      _properties.filter((item: any) => item.expands?.type?.includes("write")),
-    );
-    // 兼容上传的设备物模型没有type时，type值默认为上报
-    const reportProperties = _properties
-      .filter(
-        (item: any) =>
-          item.expands?.type?.includes("report") || !item.expands?.type
-      )
-      .map((item) => ({
-        ...item,
-        label: item.name,
-        value: item.id,
-      }));
-
-    if (readProperties.value.length) {
-      // baseOptions.push(TypeEnum.readProperty)
-      cloneTypeEnum.readProperty.disabled = false;
-    }
-
-    if (writeProperties.value.length) {
-      // baseOptions.push(TypeEnum.writeProperty)
-      cloneTypeEnum.writeProperty.disabled = false;
-    }
-
-    if (reportProperties.length) {
-      // baseOptions.push(TypeEnum.reportProperty)
-      cloneTypeEnum.reportProperty.disabled = false;
-    }
-  }
-
-  if (props.metadata.functions?.length) {
-    cloneTypeEnum.invokeFunction.disabled = false;
-    // baseOptions.push(TypeEnum.invokeFunction)
-    // 功能调用需要保留 inputs 等原始结构供参数编辑器使用，不能只投影为下拉展示项。
-    functionOptions.value = props.metadata.functions.map((item) => ({
-      ...item,
-      label: item.name,
-      value: item.id,
-    }));
-  }
-
-  return baseOptions;
+  const available: Record<string, boolean> = {
+    reportEvent: eventOptions.value.length > 0,
+    readProperty: readProperties.value.length > 0,
+    writeProperty: writeProperties.value.length > 0,
+    reportProperty: toThingModelOptions((props.metadata?.properties || []).filter(
+      item => item.expands?.type?.includes('report') || !item.expands?.type,
+    )).length > 0,
+    invokeFunction: functionOptions.value.length > 0,
+  };
+  // 类型只在实际存在可选物模型时展示，上下线触发始终可用。
+  return baseOptions.filter(item => !(item.value in available) || available[item.value]).map(item => ({ ...item, disabled: false }));
 });
 
 const showReadProperty = computed(() => {

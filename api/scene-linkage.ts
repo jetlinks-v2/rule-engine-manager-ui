@@ -1,10 +1,21 @@
 import { request } from '@jetlinks-web/core'
 import { IOT_DEVICE_LIST_EXCLUDED_ACCESS_PROVIDERS } from './deviceListDefaultTerms'
 
-/** 场景查询结果中的统计字段仅在运行时计算，不属于可保存的规则配置。 */
-export type SceneEntity = Record<string, any> & {
-  executionCount?: number
-  lastExecutionTime?: number | null
+export type SceneEntity = Record<string, any>
+
+export interface SceneRuntimeInfo {
+  instanceId: string
+  nodeId?: string
+  executor?: string
+  serverId?: string | null
+  executionCount: number
+  errorCount: number
+  lastExecutionTime: number
+}
+
+/** 当前存活任务的运行指标；禁用、重建或重启后清空，只读返回。 */
+export type SceneDetail = SceneEntity & {
+  runtimeInfo?: SceneRuntimeInfo | null
 }
 
 export interface SceneNotifyMethod {
@@ -116,8 +127,9 @@ const mergePendingQuery = <T>(key: string, loader: () => Promise<T>) => {
   return requestPromise
 }
 
+/** 列表详情按需返回最近执行时间；规则选择等普通查询继续使用通用查询接口。 */
 export const queryScenes = (data: Record<string, any>) =>
-  request.post('/scene/_query', data)
+  request.post('/scene/detail/_query', data)
 
 export const getSceneDetail = (id: string) =>
   request.get<SceneEntity>(`/scene/${id}`)
