@@ -128,6 +128,7 @@ import RulePreviewCard from '../components/RulePreviewCard.vue'
 import TriggerPickerModal, { type TriggerPickerOption } from '../components/TriggerPickerModal.vue'
 import { MULTI_TRIGGER_PROVIDERS, normalizeResult } from '../../utils'
 import { type SceneEditorMode, type SceneRuleRecord } from '../editorMode'
+import { findSceneCondition } from '../../sceneRule'
 import { useDetailedSceneDraft } from './useDetailedSceneDraft'
 import { SCENE_TRIGGER_CATEGORIES, SCENE_TRIGGER_CATEGORY_ORDER } from '../triggerPickerOptions'
 import { provideSceneNotifyLabels } from './useSceneNotifyLabels'
@@ -254,6 +255,12 @@ const showTriggerRuleActions = computed(() => canEditTrigger.value || canRemoveT
 /** 原版触发组件通过 trigger.type 和 triggerType 同时读取触发器类型。 */
 function changeTrigger(triggerType: string) {
   data.value.triggerType = triggerType
+  // 原版手动、定时创建时没有默认条件；隐藏的空占位组不能进入保存请求。
+  if (['manual', 'timer'].includes(triggerType)) {
+    for (const branch of data.value.branches || []) {
+      if (branch && !findSceneCondition(branch.when, term => Boolean(term.column))) branch.when = []
+    }
+  }
   data.value.trigger = triggerType === 'multi'
     ? { type: 'multi', multi: { triggers: [] } }
     : { type: triggerType }

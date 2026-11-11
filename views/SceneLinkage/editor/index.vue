@@ -328,7 +328,9 @@ const savePermission = computed(() => `${sceneRoutePermissionKey.value}:${route.
 // SaaS 只提供标准化的快速配置；详细规则仅在私有化部署中开放。
 const showEditorModeSwitch = isPrivateDeployment()
 // 新编辑路由按当前菜单分别使用 SaaS 的 add/update 与私有化菜单的 add/update 动作权限。
-const route = useRoute(); const { t } = useI18n(); const permissionKey = useScenePermission(); const menuStore = useMenuStore(); const sceneRouteKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, '')); const form = reactive<SceneLinkageForm>(defaultForm()); const properties = ref<any[]>([]); const events = ref<any[]>([]); const saving = ref(false); const triggerPickerVisible = ref(false); const actionPickerVisible = ref(false); const scopeVisible = ref(false); const conditionVisible = ref(false); const delayEditorVisible = ref(false); const delayEditingIndex = ref<number>(); const delayCreating = ref(false); const delayDraft = reactive({ time: 1, unit: 'seconds' }); const autoOpenActionIndex = ref<number>(); const autoOpenConditionIndex = ref<number>(); const notifyMethods = ref<SceneNotifyMethod[]>([]); const notifyUsers = ref<SceneNotifyUser[]>([]); const notifyMethodsLoading = ref(false); const notifyUsersLoading = ref(false); const supportedTriggers = ref<string[]>([]); const triggerProviders = ref<SceneProviderInfo[]>([]); const supportedActions = ref<string[]>([]); const validation = reactive({ field: '', message: '' }); const loadingScene = ref(Boolean(route.params.id)); const editorMode = ref<SceneEditorMode>('quick'); const originalSnapshot = ref<SceneRuleRecord>({}); const quickProjectionBase = ref<SceneRuleRecord>({}); const canonicalDraft = ref<SceneRuleRecord>({}); const quickResetFromDetailed = ref(false); const legacyAlarmActionReadOnly = ref(false)
+const route = useRoute(); const { t } = useI18n(); const permissionKey = useScenePermission(); const menuStore = useMenuStore(); const sceneRouteKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, '')); const form = reactive<SceneLinkageForm>(defaultForm()); const properties = ref<any[]>([]); const events = ref<any[]>([]); const saving = ref(false); const triggerPickerVisible = ref(false); const actionPickerVisible = ref(false); const scopeVisible = ref(false); const conditionVisible = ref(false); const delayEditorVisible = ref(false); const delayEditingIndex = ref<number>(); const delayCreating = ref(false); const delayDraft = reactive({ time: 1, unit: 'seconds' }); const autoOpenActionIndex = ref<number>(); const autoOpenConditionIndex = ref<number>(); const notifyMethods = ref<SceneNotifyMethod[]>([]); const notifyUsers = ref<SceneNotifyUser[]>([]); const notifyMethodsLoading = ref(false); const notifyUsersLoading = ref(false); const supportedTriggers = ref<string[]>([]); const triggerProviders = ref<SceneProviderInfo[]>([]); const supportedActions = ref<string[]>([]); const validation = reactive({ field: '', message: '' });
+// 新建也需等待能力清单初始化，避免用户切到详细模式后被 init 的默认值覆盖。
+const loadingScene = ref(true); const editorMode = ref<SceneEditorMode>('quick'); const originalSnapshot = ref<SceneRuleRecord>({}); const quickProjectionBase = ref<SceneRuleRecord>({}); const canonicalDraft = ref<SceneRuleRecord>({}); const quickResetFromDetailed = ref(false); const legacyAlarmActionReadOnly = ref(false)
 // 编辑态允许重配触发器的具体条件，但 Provider 必须保持为首次保存时的类型。
 const lockedTriggerProviders = computed(() => route.params.id
   ? resolveLockedTriggerProviders(originalSnapshot.value)
@@ -985,6 +987,8 @@ async function saveDetailed(scene: SceneRuleRecord) {
     await persistCanonicalDraft(request)
     onlyMessage(t('IotSceneLinkage.message.saved', { name: request.name }), 'success')
     menuStore.jumpPage(sceneRouteKey.value)
+  } catch {
+    // 请求层统一提示保存错误；保留当前草稿供重试，避免异步事件产生未处理的拒绝。
   } finally {
     saving.value = false
   }
@@ -1016,6 +1020,8 @@ async function save() {
     await persistCanonicalDraft(scene)
     onlyMessage(t('IotSceneLinkage.message.saved', { name: form.name }), 'success')
     menuStore.jumpPage(sceneRouteKey.value)
+  } catch {
+    // 请求层统一提示保存错误；保留当前草稿供重试，避免异步事件产生未处理的拒绝。
   } finally {
     saving.value = false
   }

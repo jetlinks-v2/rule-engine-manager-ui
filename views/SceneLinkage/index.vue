@@ -54,6 +54,15 @@
               <EmptyCreateButton />
             </div>
           </template>
+          <template #headerCell="{ column }">
+            {{ column.title }}
+            <a-tooltip
+              v-if="column.dataIndex === 'runtimeInfo' || column.dataIndex === 'executionCount'"
+              :title="$t(column.dataIndex === 'runtimeInfo' ? 'IotSceneLinkage.column.lastExecuteTip' : 'IotSceneLinkage.column.executionCountTip')"
+            >
+              <AIcon class="scene-list__column-help" type="QuestionCircleOutlined" />
+            </a-tooltip>
+          </template>
           <template #name="scene">
             <div class="scene-list__name-line">
               <a-tooltip :title="scene.name">
@@ -84,12 +93,12 @@
               :text="sceneStateLabel(scene)"
             />
           </template>
-          <template #lastExecutionTime="scene">
-            {{ formatSceneExecutionTime(scene.lastExecutionTime) }}
+          <template #runtimeInfo="scene">
+            {{ formatSceneExecutionTime(scene.runtimeInfo?.lastExecutionTime || null) }}
           </template>
           <template #executionCount="scene">
             <a-button type="link" class="scene-list__record-link" @click="openRecordDrawer(scene)">
-              {{ scene.executionCount ?? 0 }}
+              {{ scene.runtimeInfo?.executionCount ?? '-' }}
             </a-button>
           </template>
           <template #actions="scene">
@@ -108,6 +117,7 @@
                 <j-permission-button
                   type="text"
                   :hasPermission="scenePermission('tigger')"
+                  :disabled="stateValue(scene) !== 'started'"
                   @click="confirmExecute(scene)"
                 >
                   <template #icon><AIcon type="PlayCircleOutlined" /></template>
@@ -251,7 +261,7 @@ const filterFields = computed<ConditionFilterField[]>(() => [{ dataIndex: 'name'
 const columns = computed(() => [
   { title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 260, scopedSlots: true },
   { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule', width: 560, scopedSlots: true },
-  { title: t('IotSceneLinkage.column.lastExecute'), dataIndex: 'lastExecutionTime', width: 180, scopedSlots: true },
+  { title: t('IotSceneLinkage.column.lastExecute'), dataIndex: 'runtimeInfo', width: 180, scopedSlots: true },
   { title: t('IotSceneLinkage.column.executionCount'), dataIndex: 'executionCount', width: 140, scopedSlots: true },
   { title: t('IotSceneLinkage.column.state'), dataIndex: 'state', width: 100, scopedSlots: true },
   { title: t('IotSceneLinkage.column.action'), dataIndex: 'actions', width: 160, scopedSlots: true },
@@ -360,11 +370,14 @@ function confirmToggle(scene: any) {
   })
 }
 async function execute(scene: any) {
+  // 禁用场景不可手动执行，确认弹窗打开后也再次检查状态。
+  if (stateValue(scene) !== 'started') return
   await executeScene(scene.id)
   onlyMessage(t('IotSceneLinkage.message.executed', { name: scene.name }), 'success')
   reload()
 }
 function confirmExecute(scene: any) {
+  if (stateValue(scene) !== 'started') return
   Modal.confirm({
     title: t('IotSceneLinkage.confirm.executeTitle'),
     content: t('IotSceneLinkage.confirm.executeContent', { name: scene.name }),
@@ -448,6 +461,13 @@ const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 
 .scene-list__name:hover {
   color: var(--ant-color-primary);
+}
+
+.scene-list__column-help {
+  margin-left: var(--space-1);
+  color: var(--ant-color-text-tertiary);
+  font-size: 12px;
+  cursor: help;
 }
 
 .scene-list__record-link {
