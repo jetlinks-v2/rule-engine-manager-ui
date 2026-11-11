@@ -6,7 +6,10 @@
                 :label="$t('actions.index.9667837-0')"
                 :rules="[{ required: true, message: $t('actions.index.9667837-1') }]"
             >
-                <TopCard
+                <a-select v-if="compact" v-model:value="modelRef.message.messageType" :options="actionTypeOptions" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="false" @change="onMessageTypeChange">
+                    <template #option="option"><div class="scene-editor__device-trigger-option"><span><AIcon :type="optionValue(option).icon" /></span><div><b>{{ optionValue(option).label }}</b><small>{{ optionValue(option).description }}</small></div></div></template>
+                </a-select>
+                <TopCard v-else
                     :typeList="TypeList"
                     v-model:value="modelRef.message.messageType"
                     @change="onMessageTypeChange"
@@ -18,20 +21,10 @@
                     :label="$t('actions.index.9667837-2')"
                     :rules="[{ required: true, message: $t('actions.index.9667837-3') }]"
                 >
-                    <a-select
-                        showSearch
-                        :placeholder="$t('actions.index.9667837-3')"
-                        v-model:value="modelRef.message.functionId"
-                        @change="functionSelect"
-                    >
-                        <a-select-option
-                            v-for="item in metadata?.functions || []"
-                            :value="item?.id"
-                            :key="item?.id"
-                            :label="item?.name"
-                            >{{ item?.name }}</a-select-option
-                        >
-                    </a-select>
+                    <ThingModelSelect
+                        v-model="modelRef.message.functionId" :options="functionOptions"
+                        :placeholder="$t('actions.index.9667837-3')" @change="functionSelect"
+                    />
                 </a-form-item>
                 <EditTable
                     ref="functionRef"
@@ -47,22 +40,10 @@
                     :label="$t('actions.index.9667837-4')"
                     :rules="[{ required: true, message: $t('actions.index.9667837-5') }]"
                 >
-                    <a-select
-                        showSearch
-                        :placeholder="$t('actions.index.9667837-6')"
-                        v-model:value="modelRef.message.properties[0]"
-                        @change="propertySelect"
-                    >
-                        <a-select-option
-                            v-for="item in (metadata?.properties || []).filter(
-                                (i) => i?.expands?.type?.includes('read'),
-                            ) || []"
-                            :value="item?.id"
-                            :key="item?.id"
-                            :label="item?.name"
-                            >{{ item?.name }}</a-select-option
-                        >
-                    </a-select>
+                    <ThingModelSelect
+                        v-model="modelRef.message.properties[0]" :options="readOptions"
+                        :placeholder="$t('actions.index.9667837-6')" @change="propertySelect"
+                    />
                 </a-form-item>
             </template>
             <template v-else-if="deviceMessageType === 'WRITE_PROPERTY'">
@@ -80,48 +61,16 @@
 </template>
 
 <script lang="ts" setup name="ActionDeviceActions">
+import ThingModelSelect from '../../../../../SceneLinkage/editor/components/ThingModelSelect.vue'
 import TopCard from '../device/TopCard.vue';
-import { detail } from '@rule-engine-manager-ui/api/others';
 import EditTable from './EditTable.vue';
 import WriteProperty from './WriteProperty.vue';
-import { useSceneStore } from '@rule-engine-manager-ui/store/scene';
-import { storeToRefs } from 'pinia';
-import {ACTION_DATA, getParams} from '../../../util';
-import { sceneImages } from '@rule-engine-manager-ui/assets';
-import { useI18n } from 'vue-i18n'
-
-const { t: $t } = useI18n()
-const sceneStore = useSceneStore();
-const { data } = storeToRefs(sceneStore);
-const action_data = inject(ACTION_DATA)
-const TypeList = [
-    {
-        label: $t('actions.index.9667837-2'),
-        value: 'INVOKE_FUNCTION',
-        image: sceneImages.invokeFunction,
-        tip: '',
-        disabled: false,
-    },
-    {
-        label: $t('actions.index.9667837-4'),
-        value: 'READ_PROPERTY',
-        image: sceneImages.readProperty,
-        tip: '',
-        disabled: false,
-    },
-    {
-        label: $t('actions.index.9667837-7'),
-        value: 'WRITE_PROPERTY',
-        image: sceneImages.writeProperty,
-        tip: '',
-        disabled: false,
-    },
-];
-
+import { useDeviceActions } from './useDeviceActions'
 const props = defineProps({
+    compact: { type: Boolean, default: false },
     values: {
         type: Object,
-        default: () => {},
+        default: () => ({}),
     },
     name: {
         type: Number,
@@ -137,250 +86,14 @@ const props = defineProps({
     },
     productDetail: {
         type: Object,
-        default: () => {},
+        default: () => ({}),
     },
     columnMap: {
         type: Object,
         default: () => ({}),
     },
 });
-
 const emit = defineEmits(['change']);
-
-const formRef = ref();
-const columnMap = ref(props.columnMap || {});
-
-const modelRef = reactive({
-    message: {
-        messageType: 'INVOKE_FUNCTION',
-        functionId: undefined,
-        properties: undefined,
-        inputs: [],
-    },
-    propertiesValue: '',
-});
-
-const writeFormRef = ref();
-const functionRef = ref();
-
-const functionSelect = (val: any, options?: any) => {
-    columnMap.value = {};
-    modelRef.message.inputs = [];
-    emit('change', {
-        propertiesName: options?.label,
-        propertiesValue: modelRef.propertiesValue,
-    });
-};
-
-const propertySelect = (val: any, options?: any) => {
-    emit('change', {
-        propertiesName: options?.label,
-        propertiesValue: modelRef.propertiesValue,
-    });
-};
-
-const functionRules = [
-    {
-        validator(_: string, value: any) {
-            const arr = functions.value.filter((i: any) => {
-                return i?.expands?.required;
-            });
-            if (arr.length) {
-                if (!value?.length) {
-                    return Promise.reject($t('actions.index.9667837-8'));
-                } else {
-                    const hasValue = value?.find(
-                        (item: { name: string; value: any }) =>
-                            item.value === undefined,
-                    );
-                    if (hasValue) {
-                        const functionItem = arr?.find(
-                            (item: any) => item.id === hasValue.name,
-                        );
-                        return Promise.reject(
-                            functionItem?.name
-                                ? $t('actions.index.9667837-9', [functionItem.name])
-                                : $t('actions.index.9667837-8'),
-                        );
-                    }
-                }
-            }
-            return Promise.resolve();
-        },
-        trigger: ['change', 'blur'],
-    },
-];
-
-const metadata = ref<{
-    functions: any[];
-    properties: any[];
-}>({
-    functions: [],
-    properties: [],
-});
-
-const deviceMessageType = computed(() => {
-    return modelRef.message.messageType;
-});
-
-const builtInList = ref<any[]>([]);
-
-const functions = computed(() => {
-    const _item = (metadata.value?.functions || []).find((item: any) => {
-        return modelRef.message?.functionId === item.id;
-    });
-    return _item?.inputs || [];
-});
-
-const _property = computed(() => {
-    const _item = (metadata.value?.properties || []).find((item: any) => {
-        if (deviceMessageType.value === 'WRITE_PROPERTY') {
-            return (
-                Object.keys(modelRef.message.properties || {})?.[0] === item.id
-            );
-        }
-        return modelRef.message?.properties?.[0] === item.id;
-    });
-    return _item;
-});
-
-const _function = computed(() => {
-    const _item = (metadata.value?.functions || []).find((item: any) => {
-        return modelRef.message?.functionId === item.id;
-    });
-    return _item;
-});
-
-const queryBuiltIn = async () => {
-    // const _params = {
-    //     branch: props.branchesName,
-    //     branchGroup: props.thenName,
-    //     action: props.name - 1,
-    // };
-  const _params: Record<string, Number> = {
-    branch: (action_data?.branchIndex || 0),
-    branchGroup: props.thenName,
-    action: props.name, // action
-  }
-    const _data = await getParams(_params, unref(data));
-    builtInList.value = _data;
-};
-
-const onMessageTypeChange = (val: string) => {
-    columnMap.value = {};
-    const flag = ['WRITE_PROPERTY', 'INVOKE_FUNCTION'].includes(val);
-    modelRef.message = {
-        messageType: val,
-        functionId: undefined,
-        properties: (flag ? undefined : []) as any,
-        inputs: [],
-    };
-    if (flag) {
-        queryBuiltIn();
-    }
-};
-
-const onWriteChange = (val: string, optionColumn: string[]) => {
-    modelRef.propertiesValue = val;
-    emit(
-        'change',
-        {
-            propertiesName:
-                deviceMessageType.value === 'INVOKE_FUNCTION'
-                    ? _function.value?.name
-                    : _property.value?.name,
-            propertiesValue: modelRef.propertiesValue,
-        },
-        optionColumn,
-    );
-};
-
-const onFormSave = () => {
-    return new Promise((resolve, reject) => {
-        formRef.value
-            .validate()
-            .then(async (_data: any) => {
-                if (writeFormRef.value) {
-                    const _val = await writeFormRef.value?.onSave();
-                    if (!_val) {
-                        reject(false);
-                    }
-                }
-                if (functionRef.value) {
-                    const _val = await functionRef.value?.validate();
-                }
-                resolve({
-                    message: {
-                        ...modelRef.message,
-                        ..._data.message,
-                    },
-                });
-                // emit('change', {
-                //     propertiesName:
-                //         deviceMessageType.value === 'INVOKE_FUNCTION'
-                //             ? _function.value?.name
-                //             : _property.value?.name,
-                //     propertiesValue: modelRef.propertiesValue,
-                // });
-            })
-            .catch((err: any) => {
-                reject(err);
-            });
-    });
-};
-
-const getColumnMap = () => {
-    return columnMap.value;
-};
-
-watch(
-    () => props.productDetail,
-    (newVal) => {
-        if (newVal?.id) {
-            if (
-                props.values?.selector === 'fixed' &&
-                props.values?.selectorValues?.length === 1
-            ) {
-                const id = props.values?.selectorValues?.[0]?.value;
-                if (id) {
-                    detail(id).then((resp) => {
-                        if (resp.status === 200) {
-                            metadata.value = JSON.parse(
-                                resp.result?.metadata || '{}',
-                            );
-                        }
-                    });
-                }
-            } else {
-                metadata.value = JSON.parse(newVal?.metadata || '{}');
-            }
-        }
-    },
-    { immediate: true },
-);
-
-watch(
-    () => props.values?.message,
-    (newVal) => {
-        if (newVal?.messageType) {
-            modelRef.message = JSON.parse(JSON.stringify(newVal));
-            if (
-                ['WRITE_PROPERTY', 'INVOKE_FUNCTION'].includes(
-                    newVal.messageType,
-                )
-            ) {
-                queryBuiltIn();
-            } else {
-                if (!modelRef.message.properties) {
-                    modelRef.message = Object.assign(modelRef.message, {
-                        properties: [],
-                    });
-                }
-            }
-        }
-    },
-    { immediate: true },
-);
-
+const { formRef, modelRef, actionTypeOptions, TypeList, optionValue, onMessageTypeChange, deviceMessageType, metadata, functionOptions, readOptions, functionSelect, propertySelect, functionRef, writeFormRef, functions, builtInList, columnMap, onWriteChange, onFormSave, getColumnMap } = useDeviceActions(props, emit)
 defineExpose({ onFormSave, getColumnMap });
 </script>

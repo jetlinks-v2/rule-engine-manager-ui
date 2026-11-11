@@ -1,342 +1,100 @@
 <template>
-  <a-modal :open="open" :title="title" :width="680" :footer="null" :mask-closable="false" @cancel="$emit('cancel')">
-    <a-form layout="vertical">
-      <a-input-search v-if="scopeView === 'custom'" v-model:value="keyword" class="device-scope-modal__search" :placeholder="$t('IotSceneLinkage.placeholder.searchDevice')" :loading="deviceLoading" @search="searchDevices" />
-      <div class="device-scope-modal__toolbar">
-        <a-button-group class="device-scope-modal__tabs">
-          <a-button :type="scopeView === 'space' ? 'primary' : 'default'" @click="selectScopeView('space')">{{ $t('IotSceneLinkage.editor.areas') }}</a-button>
-          <a-button :type="scopeView === 'device-group' ? 'primary' : 'default'" @click="selectScopeView('device-group')">{{ $t('IotSceneLinkage.editor.groups') }}</a-button>
-          <a-button :type="scopeView === 'custom' ? 'primary' : 'default'" @click="selectScopeView('custom')">{{ $t('IotSceneLinkage.editor.customDevices') }}</a-button>
-          <a-button :type="scopeView === 'all' ? 'primary' : 'default'" @click="selectScopeView('all')">{{ $t('IotSceneLinkage.editor.allDevices') }}</a-button>
-        </a-button-group>
+  <component :is="embedded ? 'div' : 'a-modal'" v-bind="dialogProps" :class="{ 'device-scope-modal__embedded': embedded }" @cancel="!embedded && $emit('cancel')">
+    <header v-if="detailed" class="device-scope-modal__toolbar">
+      <div class="device-scope-modal__product-summary">
+        <strong>{{ draft.productName || productFilter || $t('IotSceneLinkage.form.product') }}</strong>
+        <small>{{ $t('IotSceneLinkage.detail.selectedProduct') }}</small>
       </div>
-      <p v-if="scopeDescription" class="device-scope-modal__description">{{ scopeDescription }}</p>
-      <template v-if="searched">
-        <a-spin :spinning="deviceLoading">
-          <a-checkbox-group v-if="fixedDeviceOptions.length" :value="fixedDeviceIds" class="device-scope-modal__device-list" @change="changeFixedDevices">
-            <a-checkbox v-for="device in fixedDeviceOptions" :key="device.value" :value="device.value"><IotAlarmTargetOption :option="device" type="device" single-line :show-description="false" /></a-checkbox>
-          </a-checkbox-group>
-          <CloudEmpty v-else-if="!deviceLoading" :description="$t('IotSceneLinkage.scope.empty')" />
-          <a-pagination v-if="fixedTotal > pageSize" class="device-scope-modal__pagination" size="small" :current="pageIndex + 1" :page-size="pageSize" :total="fixedTotal" show-less-items @change="changePage" />
-        </a-spin>
-      </template>
-      <a-tree v-else-if="visibleScopeTreeData.length" class="device-scope-modal__tree" checkable block-node :check-strictly="true" :tree-data="visibleScopeTreeData" :checked-keys="checkedKeys" :expanded-keys="expandedKeys" :loading="scopeLoading" @check="onScopeCheck" @expand="onScopeExpand">
-        <template #title="node"><span class="device-scope-modal__node"><b>{{ node.title }}</b></span></template>
-      </a-tree>
-      <CloudEmpty v-else-if="draft.selector === 'all'" :description="$t('IotSceneLinkage.scope.allHint')" />
-      <CloudEmpty v-else :description="emptyDescription" />
-    </a-form>
-    <div class="device-scope-modal__footer">
-      <a-space>
-        <span>{{ selectedText }}</span>
-        <a-button type="link" :disabled="!canSelectCurrentView" @click="selectAll">{{ $t('IotSceneLinkage.action.selectAll') }}</a-button>
-        <a-button type="link" :disabled="!draft.selectorValues.length" @click="clearSelection">{{ $t('IotSceneLinkage.action.clear') }}</a-button>
-      </a-space>
-      <a-space><a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button><a-button type="primary" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button></a-space>
+      <a-radio-group v-model:value="scopeMode" class="device-scope-modal__scope-mode" button-style="solid">
+        <a-radio-button v-for="item in availableScopeModes" :key="item.value" :value="item.value" :disabled="disabledScopeModes.includes(item.value)"><AIcon :type="item.icon" />{{ item.label }}</a-radio-button>
+      </a-radio-group>
+      <slot name="toolbar-actions" />
+    </header>
+    <div :class="['device-scope-modal__layout', { 'device-scope-modal__layout--scope': scopeMode !== 'fixed' }]">
+      <aside class="device-scope-modal__navigation">
+        <slot v-if="['tag', 'context', 'relation'].includes(scopeMode)" name="scope-editor" :mode="scopeMode" :value="selectedScopeValues" :update="updateScopeValues" :invalid="scopeError" />
+        <template v-else-if="scopeMode !== 'all'">
+          <DeviceScopeTree
+            :title="scopeMode === 'fixed' ? $t('IotSceneLinkage.editor.areas') : scopeModeLabel"
+            :hint="scopeMode === 'fixed' ? '' : scopeModeHint"
+            :nodes="navigationNodes" :counts="scopeCounts" :loading="scopeLoading"
+            :tree-error="treeError" :counts-loading="countsLoading" :counts-error="countsError" :invalid="scopeError"
+            :checkable="scopeMode !== 'fixed'" :selected-keys="[selectedSpaceId]"
+            :checked-keys="selectedScopeValues.map(item => item.value)"
+            :icon="scopeMode === 'device-group' ? 'ClusterOutlined' : scopeMode === 'org' ? 'ApartmentOutlined' : 'EnvironmentOutlined'"
+            @select="selectSpace" @check="selectScopedValues($event, navigationNodes)" @retry="refreshCounts" @retry-tree="reloadTrees"
+          />
+          <p v-if="scopeError" class="device-scope-modal__scope-error">{{ selectionHint }}</p>
+        </template>
+        <div v-else class="device-scope-modal__scope-overview"><AIcon type="AppstoreOutlined" /><strong>{{ scopeModeLabel }}</strong><span>{{ scopeModeHint }}</span></div>
+      </aside>
+      <section v-if="scopeMode === 'fixed'" class="device-scope-modal__content">
+        <div class="device-scope-modal__filters">
+          <a-input-search v-model:value="keyword" :placeholder="$t('IotSceneLinkage.placeholder.searchDevice')" :loading="deviceLoading" @search="searchDevices" />
+          <IotAlarmTargetSelect v-if="!lockProduct" v-model="productFilter" class="device-scope-modal__product-filter" :request="requestProducts" :placeholder="$t('IotSceneLinkage.placeholder.product')" @change="changeProductFilter" />
+        </div>
+        <a-table
+          class="device-scope-modal__device-table"
+          row-key="id" size="small" table-layout="fixed"
+          :columns="deviceColumns" :data-source="deviceOptions" :loading="deviceLoading"
+          :pagination="false" :row-selection="deviceRowSelection" :custom-row="deviceRow"
+          :scroll="{ y: 360 }"
+        >
+          <template #bodyCell="{ column, record }">
+            <j-badge-status v-if="column.key === 'status'" :text="record.statusText" :status="record.status" />
+          </template>
+          <template #emptyText><CloudEmpty :description="$t('IotSceneLinkage.scope.empty')" /></template>
+        </a-table>
+        <a-pagination v-if="total > pageSize" class="device-scope-modal__pagination" size="small" :current="pageIndex + 1" :page-size="pageSize" :total="total" show-less-items @change="changePage" />
+      </section>
+      <aside class="device-scope-modal__selection">
+        <template v-if="hasSelection || scopeMode !== 'fixed' || detailed">
+          <div v-if="hasSelection && !detailed" class="device-scope-modal__selected-device"><strong>{{ selectionTitle }}</strong><span>{{ selectionDescription }}</span></div>
+          <slot name="configuration" :selected-device="selectedDevice" :selected-devices="selectedDevices" :has-selection="hasSelection" :scope="scopeMode" />
+          <div v-if="hasSelection" class="device-scope-modal__preview"><slot name="preview" :selected-device="selectedDevice" :selected-devices="selectedDevices" :scope="scopeMode" /></div>
+        </template>
+        <CloudEmpty v-else :description="selectionHint" />
+      </aside>
     </div>
-  </a-modal>
+    <div class="device-scope-modal__footer"><a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button><a-tooltip :title="scopeMode === 'fixed' && !hasSelection ? selectionHint : undefined"><span><a-button type="primary" :disabled="scopeMode === 'fixed' && !hasSelection" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button></span></a-tooltip></div>
+  </component>
 </template>
-
 <script setup lang="ts">
-import { computed, reactive, ref, watch, type PropType } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { getProduct, queryDevicesPage } from '../../../../api/scene-linkage'
-import { queryDeviceGroupDetailList_api, queryProjectSpaceAreaSettings_api } from '../../../../api/scene-resources'
-import IotAlarmTargetOption from '../alarm/IotAlarmTargetOption.vue'
-
-export type DeviceScope = {
-  selector: 'fixed' | 'space' | 'device-group' | 'all'
-  selectorValues: Array<{ value: string; name?: string }>
-  options?: { view?: 'space' | 'device-group' | 'custom' | 'all' }
-}
-
+import { type PropType } from 'vue'
+import DeviceScopeTree from './DeviceScopeTree.vue'
+import { useDeviceScopeModal } from '../detail/useDeviceScopeModal'
+import type { DeviceScope, DeviceOption, ScopeMode } from '../deviceScopeTree'
+export type { DeviceScope } from '../deviceScopeTree'
+import IotAlarmTargetSelect from '../alarm/IotAlarmTargetSelect.vue'
 const props = defineProps({
   open: { type: Boolean, default: false },
+  title: { type: String, default: '' },
+  width: { type: Number, default: 1180 },
+  embedded: { type: Boolean, default: false },
+  detailed: { type: Boolean, default: false },
+  multiple: { type: Boolean, default: false },
+  lockProduct: { type: Boolean, default: false },
+  scopeModes: { type: Array as PropType<ScopeMode[]>, default: () => ['fixed', 'all', 'space', 'device-group', 'org'] },
+  disabledScopeModes: { type: Array as PropType<ScopeMode[]>, default: () => [] },
   productId: { type: String, default: '' },
   modelValue: { type: Object as PropType<DeviceScope>, required: true },
+  validate: { type: Function as PropType<(device: DeviceOption, scope?: DeviceScope) => boolean | Promise<boolean>>, default: undefined },
 })
-const emit = defineEmits<{
-  (event: 'cancel'): void
-  (event: 'save', value: DeviceScope): void
-}>()
-
-const { t } = useI18n()
-const pageSize = 20
-const productName = ref('')
-const keyword = ref('')
-const pageIndex = ref(0)
-const searched = ref(false)
-const deviceLoading = ref(false)
-const scopeLoading = ref(false)
-const fixedTotal = ref(0)
-const fixedDeviceOptions = ref<Array<{ label: string; value: string; data: Record<string, any> }>>([])
-const scopeView = ref<'space' | 'device-group' | 'custom' | 'all'>()
-const expandedKeys = ref<string[]>([])
-const scopeTreeData = ref<any[]>([])
-const scopeNodeMap = new Map<string, any>()
-let deviceSearchTimer: ReturnType<typeof setTimeout> | undefined
-let deviceSearchRequestSeq = 0
-const draft = reactive<DeviceScope>({ selector: 'fixed', selectorValues: [] })
-const dynamicScope = computed(() => ['space', 'device-group'].includes(draft.selector))
-const title = computed(() => t('IotSceneLinkage.title.selectDevicesWithProduct', { productName: productName.value || props.productId || '-' }))
-const visibleScopeTreeData = computed(() => ['space', 'device-group'].includes(scopeView.value || '') ? scopeTreeData.value.find(item => item.key === `root:${scopeView.value === 'space' ? 'space' : 'group'}`)?.children || [] : [])
-const checkedKeys = computed(() => dynamicScope.value ? { checked: getDynamicCheckedKeys(), halfChecked: getDynamicHalfCheckedKeys() } : [])
-const fixedDeviceIds = computed(() => draft.selectorValues.map(item => item.value))
-const canSelectCurrentView = computed(() => searched.value ? fixedDeviceOptions.value.length > 0 : false)
-const scopeDescription = computed(() => {
-  if (scopeView.value === 'space') return t('IotSceneLinkage.scope.areaGroupHint')
-  if (scopeView.value === 'device-group') return t('IotSceneLinkage.scope.deviceGroupHint')
-  if (scopeView.value === 'custom') return t('IotSceneLinkage.scope.customDevicesHint')
-  return ''
-})
-const selectedText = computed(() => {
-  if (draft.selector === 'all') return t('IotSceneLinkage.scope.selectedAll')
-  if (draft.selector === 'space') return t('IotSceneLinkage.scope.selectedAreaGroups', { count: draft.selectorValues.length })
-  if (draft.selector === 'device-group') return t('IotSceneLinkage.scope.selectedDeviceGroups', { count: draft.selectorValues.length })
-  return t('IotSceneLinkage.scope.selectedDevices', { count: draft.selectorValues.length })
-})
-const emptyDescription = computed(() => {
-  if (scopeView.value === 'space') return t('IotSceneLinkage.scope.emptyAreaGroups')
-  if (scopeView.value === 'device-group') return t('IotSceneLinkage.scope.emptyDeviceGroups')
-  return t('IotSceneLinkage.scope.searchHint')
-})
-
-watch(() => props.open, async open => {
-  if (!open) {
-    clearDeviceSearchTimer()
-    return
-  }
-  draft.selector = props.modelValue.selector
-  draft.selectorValues = props.modelValue.selectorValues.map(item => ({ value: String(item.value), name: item.name }))
-  scopeView.value = getInitialScopeView()
-  keyword.value = ''
-  searched.value = false
-  fixedDeviceOptions.value = []
-  await Promise.all([loadProductName(), loadScopeTree()])
-  if (scopeView.value === 'space' || scopeView.value === 'device-group') {
-    expandScopeTree(scopeView.value)
-  } else if (scopeView.value === 'custom') {
-    await searchDevices()
-  }
-})
-
-watch(keyword, () => {
-  if (!props.open || scopeView.value !== 'custom' || !searched.value) return
-  debounceSearchDevices()
-})
-
-async function loadProductName() {
-  if (!props.productId) return
-  const response: any = await getProduct(props.productId)
-  const product = response?.result ?? response
-  productName.value = product?.name || props.productId
-}
-
-async function selectScopeView(type: 'space' | 'device-group' | 'custom' | 'all') {
-  scopeView.value = type
-  if (type === 'all') {
-    draft.selector = 'all'
-    draft.selectorValues = []
-    searched.value = false
-    return
-  }
-  if (type === 'custom') {
-    draft.selector = 'fixed'
-    draft.selectorValues = []
-    await searchDevices()
-    return
-  }
-  searched.value = false
-  fixedDeviceOptions.value = []
-  fixedTotal.value = 0
-  if (draft.selector !== type) {
-    draft.selector = type
-    draft.selectorValues = []
-  }
-  if (!scopeTreeData.value.length) await loadScopeTree()
-  expandScopeTree(type)
-}
-
-function onScopeCheck(keys: any, event?: any) {
-  if (scopeView.value !== 'space' && scopeView.value !== 'device-group') return
-  if (draft.selector !== scopeView.value) {
-    draft.selector = scopeView.value
-    draft.selectorValues = []
-  }
-  const checked = Array.isArray(keys) ? keys : keys.checked || []
-  draft.selectorValues = checked
-    .map((key: string) => scopeNodeMap.get(key))
-    .filter((node: any) => node?.scopeType === draft.selector)
-    .map((node: any) => ({ value: node.scopeId, name: node.title }))
-}
-
-function onScopeExpand(keys: string[]) {
-  expandedKeys.value = keys
-}
-
-function expandScopeTree(type: 'space' | 'device-group') {
-  const nodes = getScopeNodes(scopeTreeData.value.find(item => item.key === `root:${type === 'space' ? 'space' : 'group'}`)?.children || [])
-    .filter(node => node.scopeType === type)
-  expandedKeys.value = nodes.map(node => node.key)
-}
-
-function changeFixedDevices(values: Array<string | number>) {
-  const currentPageIds = new Set(fixedDeviceOptions.value.map(item => item.value))
-  const retainedIds = fixedDeviceIds.value.filter(id => !currentPageIds.has(id))
-  const selectedIds = values.map(value => String(value))
-  draft.selectorValues = [...new Set([...retainedIds, ...selectedIds])].map(value => ({ value, name: fixedDeviceOptions.value.find(item => item.value === value)?.label || draft.selectorValues.find(item => item.value === value)?.name }))
-}
-
-function selectAll() {
-  if (!searched.value) {
-    return
-  }
-  const values = new Set([...fixedDeviceIds.value, ...fixedDeviceOptions.value.map(item => item.value)])
-  draft.selectorValues = [...values].map(value => ({ value, name: fixedDeviceOptions.value.find(item => item.value === value)?.label || draft.selectorValues.find(item => item.value === value)?.name }))
-}
-
-function clearSelection() {
-  if (draft.selector === 'all') {
-    draft.selector = 'fixed'
-    scopeView.value = 'custom'
-  }
-  draft.selectorValues = []
-}
-
-async function searchDevices() {
-  clearDeviceSearchTimer()
-  pageIndex.value = 0
-  scopeView.value = 'custom'
-  searched.value = true
-  if (draft.selector !== 'fixed') {
-    draft.selector = 'fixed'
-    draft.selectorValues = []
-  }
-  await loadDevices()
-}
-
-async function changePage(page: number) {
-  pageIndex.value = page - 1
-  await loadDevices()
-}
-
-async function loadDevices() {
-  if (!props.productId) return
-  deviceLoading.value = true
-  const requestSeq = ++deviceSearchRequestSeq
-  try {
-    const searchKeyword = keyword.value.trim()
-    const response: any = await queryDevicesPage({
-      pageIndex: pageIndex.value,
-      pageSize,
-      terms: [
-        { column: 'productId', termType: 'eq', value: props.productId },
-        ...(searchKeyword ? [{
-          terms: [
-            { column: 'name', termType: 'like', value: `%${searchKeyword}%` },
-            { column: 'id', termType: 'like', value: `%${searchKeyword}%`, type: 'or' },
-          ],
-        }] : []),
-      ],
-    })
-    if (requestSeq !== deviceSearchRequestSeq) return
-    const result = response?.result ?? response
-    const rows = result?.data || result?.records || []
-    fixedTotal.value = Number(result?.total ?? result?.totalElements ?? rows.length)
-    fixedDeviceOptions.value = rows.map((device: any) => ({
-      label: device.name || device.id,
-      value: String(device.id),
-      data: device,
-    }))
-    searched.value = true
-  } finally {
-    if (requestSeq === deviceSearchRequestSeq) {
-      deviceLoading.value = false
-    }
-  }
-}
-
-function debounceSearchDevices() {
-  clearDeviceSearchTimer()
-  deviceSearchTimer = setTimeout(() => {
-    deviceSearchTimer = undefined
-    void searchDevices()
-  }, 300)
-}
-
-function clearDeviceSearchTimer() {
-  if (!deviceSearchTimer) return
-  clearTimeout(deviceSearchTimer)
-  deviceSearchTimer = undefined
-}
-
-async function loadScopeTree() {
-  scopeLoading.value = true
-  try {
-    const [areas, groups] = await Promise.all([queryProjectSpaceAreaSettings_api(''), queryDeviceGroupDetailList_api()])
-    scopeNodeMap.clear()
-    const areaNodes = (areas?.areas || []).map((area: any) => {
-      const node = { key: `space:${area.id}`, title: area.name, scopeType: 'space', scopeId: String(area.id), isLeaf: false, children: [] as any[] }
-      scopeNodeMap.set(node.key, node)
-      return node
-    })
-    const treeMap = new Map(areaNodes.map((node: any) => [node.key, node]))
-    const areaRoots: any[] = []
-    areaNodes.forEach((node: any) => {
-      const area = (areas?.areas || []).find((item: any) => String(item.id) === node.scopeId)
-      const parent = area?.parentId ? treeMap.get(`space:${area.parentId}`) : undefined
-      if (parent) parent.children.push(node); else areaRoots.push(node)
-    })
-    const groupNodes = groups.map((group: any) => {
-      const node = { key: `device-group:${group.id}`, title: group.name, scopeType: 'device-group', scopeId: String(group.id), isLeaf: true, children: [] as any[] }
-      scopeNodeMap.set(node.key, node)
-      return node
-    })
-    scopeTreeData.value = [{ key: 'root:space', children: areaRoots }, { key: 'root:group', children: groupNodes }].filter(item => item.children.length)
-    expandedKeys.value = []
-  } finally {
-    scopeLoading.value = false
-  }
-}
-
-function save() {
-  emit('save', { selector: draft.selector, selectorValues: draft.selectorValues.map(item => ({ value: String(item.value), name: item.name })), options: { view: scopeView.value || 'space' } })
-}
-
-function getInitialScopeView(): 'space' | 'device-group' | 'custom' | 'all' {
-  if (props.modelValue.selector === 'space' || props.modelValue.selector === 'device-group' || props.modelValue.selector === 'all') return props.modelValue.selector
-  return props.modelValue.selectorValues.length ? 'custom' : 'space'
-}
-
-function getDynamicCheckedKeys(): string[] {
-  // 区域和设备分组保存用户显式勾选的维度节点，不做父子级联展开。
-  return draft.selectorValues.map(item => `${draft.selector}:${item.value}`)
-}
-
-function getDynamicHalfCheckedKeys(): string[] {
-  return []
-}
-
-function getScopeNodes(nodes: any[]): any[] {
-  return nodes.flatMap(node => [node, ...getScopeNodes(node.children || [])])
-}
+const emit = defineEmits<{ (event: 'cancel'): void; (event: 'save', value: DeviceScope): void; (event: 'select-device', value: DeviceOption): void; (event: 'select-devices', value: DeviceOption[]): void }>()
+const { dialogProps, scopeMode, draft, productFilter, availableScopeModes, scopeModeLabel, scopeModeHint,
+  navigationNodes, scopeCounts, countsLoading, countsError, refreshCounts,
+  treeError, reloadTrees, selectedSpaceId, scopeError, scopeLoading, selectedScopeValues, selectionHint, selectSpace, selectScopedValues,
+  keyword, deviceLoading, searchDevices, requestProducts, changeProductFilter, deviceOptions, deviceColumns, deviceRowSelection, deviceRow,
+  total, pageSize, pageIndex, changePage, hasSelection, selectionTitle, selectionDescription, selectedDevice, selectedDevices, save,
+} = useDeviceScopeModal(props, emit)
+/** 自定义范围编辑器直接更新同一份选择草稿，确认时仍由资源壳统一提交。 */
+function updateScopeValues(values: DeviceScope['selectorValues']) { selectedScopeValues.value = values }
 </script>
 
 <style scoped>
-.device-scope-modal__mode { display: inline-flex; gap: 8px; align-items: center; }
-.device-scope-modal__toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.device-scope-modal__tabs { display: inline-flex; }
-.device-scope-modal__tabs :deep(.ant-btn) { min-width: 112px; }
-.device-scope-modal__description { margin: -2px 0 12px; color: var(--ant-color-text-secondary); font-size: 12px; line-height: 20px; }
-.device-scope-modal__search { display: block; width: 100%; margin-bottom: 12px; }
-.device-scope-modal__device-list { display: grid; max-height: 360px; overflow: auto; padding: 4px 12px; border: 1px solid var(--ant-color-border-secondary); border-radius: 6px; background: var(--ant-color-bg-container); }
-.device-scope-modal__device-list :deep(.ant-checkbox-wrapper) { display: flex; gap: 10px; align-items: center; min-height: 48px; margin-inline-start: 0; border-bottom: 1px solid var(--ant-color-border-secondary); }
-.device-scope-modal__device-list :deep(.ant-checkbox-wrapper:last-child) { border-bottom: 0; }
-.device-scope-modal__device-list :deep(.ant-checkbox + span) { flex: 1; min-width: 0; }
-.device-scope-modal__pagination { display: flex; justify-content: flex-end; margin-top: 12px; }
-.device-scope-modal__tree { max-height: 480px; overflow: auto; padding: 8px; border: 1px solid var(--ant-color-border-secondary); border-radius: 6px; }
-.device-scope-modal__node { display: flex; gap: 12px; align-items: center; min-width: 0; }
-.device-scope-modal__tree :deep(.ant-tree-title) { display: block; min-width: 0; width: 100%; }
-.device-scope-modal__tree :deep(.ant-tree-node-content-wrapper) { flex: 1; min-width: 0; }
-.device-scope-modal__footer { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; }
+.device-scope-modal__toolbar { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 52px; padding: var(--space-3, 12px) var(--space-4, 16px); margin-bottom: var(--space-3, 12px); background: var(--ant-color-fill-quaternary); border: 1px solid var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 8px); }.device-scope-modal__product-summary { display: grid; flex: 1; gap: 2px; min-width: 0; }.device-scope-modal__product-summary strong, .device-scope-modal__product-summary small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.device-scope-modal__product-summary small { color: var(--ant-color-text-tertiary); font-size: 12px; }.device-scope-modal__layout { display: grid; grid-template-columns: 16rem minmax(22rem, 1fr) 23rem; min-height: 34rem; border: 1px solid var(--ant-color-border-secondary); border-radius: var(--radius-jet-sm, 8px); }.device-scope-modal__layout--scope { grid-template-columns: minmax(20rem, 1fr) 23rem; }
+.device-scope-modal__navigation, .device-scope-modal__selection { display: flex; flex-direction: column; gap: var(--space-2, 8px); padding: var(--space-3, 12px); background: var(--ant-color-fill-quaternary); }.device-scope-modal__navigation { border-right: 1px solid var(--ant-color-border-secondary); }.device-scope-modal__selection { border-left: 1px solid var(--ant-color-border-secondary); }
+.device-scope-modal__embedded { display: block; }.device-scope-modal__embedded .device-scope-modal__layout { min-height: 31rem; }.device-scope-modal__scope-mode { display: flex; flex-wrap: wrap; gap: 4px; }.device-scope-modal__scope-mode :deep(.ant-radio-button-wrapper) { display: inline-flex; gap: 4px; align-items: center; justify-content: center; height: 30px; padding: 0 8px; font-size: 12px; border-radius: 4px; }.device-scope-modal__scope-mode :deep(.ant-radio-button-wrapper)::before { display: none; }
+.device-scope-modal__scope-error { margin: 0; padding: 6px 8px 0; color: var(--ant-color-error); font-size: 12px; }.device-scope-modal__scope-overview { display: grid; place-content: center; gap: 8px; flex: 1; padding: 24px; color: var(--ant-color-text-secondary); text-align: center; font-size: 13px; }.device-scope-modal__scope-overview :deep(.anticon) { justify-self: center; color: var(--ant-color-primary); font-size: 20px; }.device-scope-modal__scope-overview strong { color: var(--ant-color-text); }.device-scope-modal__content { display: flex; flex-direction: column; min-width: 0; padding: var(--space-4, 16px); }.device-scope-modal__filters { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: var(--space-3, 12px); margin-bottom: 12px; }.device-scope-modal__device-table { min-height: 0; }.device-scope-modal__device-table :deep(.ant-table-row) { cursor: pointer; }.device-scope-modal__device-table :deep(.ant-table-cell) { text-align: left; }.device-scope-modal__device-table :deep(.ant-table-selection-column) { text-align: center; }.device-scope-modal__pagination { display: flex; justify-content: flex-end; margin-top: 12px; }.device-scope-modal__selected-device { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--ant-color-border-secondary); }.device-scope-modal__selected-device span { color: var(--ant-color-text-secondary); font-size: 12px; }.device-scope-modal__preview { margin-top: auto; padding-top: 12px; color: var(--ant-color-text-secondary); border-top: 1px solid var(--ant-color-border-secondary); font-size: 12px; line-height: 20px; }.device-scope-modal__footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 16px; }
+@media (max-width: 900px) { .device-scope-modal__toolbar { align-items: flex-start; flex-wrap: wrap; }.device-scope-modal__scope-mode { order: 3; width: 100%; }.device-scope-modal__layout { grid-template-columns: 11rem minmax(0, 1fr); }.device-scope-modal__selection { grid-column: 1 / -1; min-height: 12rem; border-top: 1px solid var(--ant-color-border-secondary); border-left: 0; }.device-scope-modal__filters { grid-template-columns: 1fr; } }
 </style>

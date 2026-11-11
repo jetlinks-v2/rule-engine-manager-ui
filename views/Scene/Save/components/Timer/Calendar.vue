@@ -5,6 +5,9 @@
         >{{ $t('Timer.Calendar.9093419-0') }}</a-button
       >
     </div>
+    <a-alert v-if="failed" type="error" :message="$t('IotSceneLinkage.timer.calendarLoadFailed')" show-icon>
+      <template #action><a-button type="link" size="small" @click="load">{{ $t('IotSceneLinkage.scope.retry') }}</a-button></template>
+    </a-alert>
     <div class="calendar-items">
       <j-scrollbar :maxHeight="350">
         <div class="calendar-item" v-for="(item, index) in myValue.spec">
@@ -24,6 +27,7 @@
                 style="width: calc(100% - 30px)"
                 mode="multiple"
                 :options="options"
+                :loading="loading"
                 :fieldNames="{
                   label: 'name',
                   value: 'id',
@@ -112,8 +116,7 @@
 
 <script setup name="Calendar">
 import dayjs from "dayjs";
-import { useRequest } from "@jetlinks-web/hooks";
-import { queryTags } from "@rule-engine-manager-ui/api/calendar";
+import { useTimerCalendarTags } from "./useTimerCalendarTags";
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
@@ -124,7 +127,7 @@ const props = defineProps({
   },
 });
 const emit = defineEmits(["update:value", "change"]);
-const { data: options } = useRequest(queryTags);
+const { tags: options, loading, failed, load } = useTimerCalendarTags(() => true);
 const visible = ref(false);
 
 const myValue = reactive({

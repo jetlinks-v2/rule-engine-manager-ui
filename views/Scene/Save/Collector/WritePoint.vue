@@ -1,12 +1,13 @@
 <template>
     <a-form ref='writeForm' :model='formModel' layout='vertical' :colon='false'>
         <a-row :futter='[24, 24]'>
-            <a-col :span='10'>
+            <a-col :span='compact ? 24 : 10'>
                 <a-form-item
                     name='reportKey'
                     :rules="[{ required: true, message: $t('Device.WriteProperty.372527-0-1') }]"
                 >
-                    <a-select
+                    <ThingModelSelect v-if="compact" :model-value="formModel.reportKey" :options="pointOptions" @change="selectPoint" />
+                    <a-select v-else
                         showSearch
                         style='width: 100%'
                         :placeholder='$t("Collector.actions.index-6100078-2")'
@@ -18,13 +19,16 @@
                     />
                 </a-form-item>
             </a-col>
-            <a-col :span='14'>
+            <a-col v-if='!compact' :span='14'>
         <span style='line-height: 32px;padding-left: 24px'>
           {{ $t("Collector.actions.index-6100078-18") }}
         </span>
             </a-col>
             <a-col :span='24' v-if='showTable'>
-              <FunctionCall
+              <a-form-item v-if="compact" name="reportValue" :label="$t('Collector.actions.index-6100078-5')" :rules="[{ required: true, message: $t('DeviceAccess.index.551011-12') }]">
+                <ThingModelValueInput v-model="formModel.reportValue" :value-type="selectedPoint?.dataType" @update:model-value="updateWriteValue" />
+              </a-form-item>
+              <FunctionCall v-else
                 ref="functionRef"
                 :data='callDataOptions'
                 :required="true"
@@ -37,7 +41,9 @@
 
 <script setup lang='ts' name='WriteProperties'>
 import { filterSelectNode } from '@jetlinks-web-core/utils/comm'
-import { FunctionCall } from '../components'
+import FunctionCall from '../components/FunctionCall/FunctionCall.vue'
+import ThingModelValueInput from '../../../SceneLinkage/editor/components/ThingModelValueInput.vue'
+import ThingModelSelect from '../../../SceneLinkage/editor/components/ThingModelSelect.vue'
 import type { PropType } from 'vue'
 import { defineExpose } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -48,6 +54,7 @@ type Emit = {
 }
 
 const props = defineProps({
+    compact: { type: Boolean, default: false },
     value: {
         type: Object as PropType<Record<string, any>>,
         default: () => []
@@ -65,8 +72,9 @@ const props = defineProps({
 const emit = defineEmits<Emit>()
 const { t: $t } = useI18n()
 const functionRef = ref()
-const formModel = reactive<{ reportKey: string | undefined, data: any[] }>({
+const formModel = reactive<{ reportKey: string | undefined, data: any[]; reportValue: any }>({
     reportKey: undefined,
+    reportValue: undefined,
     data: Object.keys(props.value).map(key => ({ name: key, value: props.value[key] })) || []
 })
 
@@ -122,13 +130,26 @@ const showTable = computed(() => {
     return !!formModel.reportKey
 })
 
+const pointOptions = computed(() => props.properties.map((point: any) => ({ label: point.name, value: point.id, valueType: point.dataType })))
+function selectPoint(id: string) {
+    formModel.reportKey = id
+    change(id, props.properties.find((point: any) => point.id === id))
+}
+const selectedPoint = computed(() => props.properties.find((point: any) => point.id === formModel.reportKey) as any)
+watch(() => props.value, value => {
+    formModel.reportKey = Object.keys(value)[0]
+    formModel.reportValue = value[formModel.reportKey!]
+}, { deep: true, immediate: true })
+function updateWriteValue(value: unknown) {
+    if (formModel.reportKey) emit('update:value', { [formModel.reportKey]: value })
+}
 const change = (v: string, option: any) => {
     const _data = {
         [v]: undefined
     }
     callData.value = [{ id: v, value: undefined }]
     emit('update:value', _data)
-    emit('update:action', $t('Device.WriteProperty.372527-3', [option.name]))
+    emit('update:action', $t('Device.WriteProperty.372527-3', [option?.name || v]))
 }
 
 const callDataChange = (v: any[]) => {
@@ -138,15 +159,13 @@ const callDataChange = (v: any[]) => {
 }
 
 defineExpose({
-    validateFields: () => new Promise(async (resolve)  => {
+    validateFields: async () => {
         const data = await writeForm.value?.validateFields()
+        if (props.compact) return { ...data, data: { [formModel.reportKey!]: formModel.reportValue } }
         const data2 = await functionRef.value?.validate()
         const item = data2?.[0]
-        resolve({
-          ...data,
-          data: item ? { [item.id]: item.value} : undefined
-        })
-    })
+        return { ...data, data: item ? { [item.id]: item.value } : undefined }
+    }
 })
 
 </script>

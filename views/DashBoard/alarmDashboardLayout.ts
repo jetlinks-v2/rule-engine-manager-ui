@@ -1,4 +1,4 @@
-import { typeOf, type AlarmDashboardKind } from '../../visDashboard/AlarmCenter/dashboard.types'
+import { allAlarmCapabilities, typeOf, type AlarmCapabilities, type AlarmDashboardKind } from '../../visDashboard/AlarmCenter/dashboard.types'
 import type { DashboardStoredLayoutItem } from '@jetlinks-web-core/components/DashBoardCanvas/types'
 
 export type AlarmLayoutItem = readonly [AlarmDashboardKind, number, number, number, number]
@@ -49,8 +49,33 @@ function separateLayout(mode: AlarmLayoutMode, h: number): readonly AlarmLayoutI
   ]
 }
 
-export function alarmDashboardLayout(mode: AlarmLayoutMode): readonly AlarmLayoutItem[] {
-  return separateLayout(mode, 9)
+/** 缺少来源时按实际卡片排版，完整能力保留既有默认坐标与迁移契约。 */
+export function alarmDashboardLayout(mode: AlarmLayoutMode, capabilities: Pick<AlarmCapabilities, 'events' | 'vision'> = allAlarmCapabilities): readonly AlarmLayoutItem[] {
+  if (capabilities.events && capabilities.vision) return separateLayout(mode, 9)
+  const items: AlarmLayoutItem[] = []
+  let y = 0
+  const row = (kinds: AlarmDashboardKind[], height: number) => {
+    kinds.forEach((kind, index) => items.push([kind, index * (24 / kinds.length), y, 24 / kinds.length, height]))
+    y += height
+  }
+  const alarms: AlarmDashboardKind[] = ['IotAlarms', ...(capabilities.vision ? ['VisionAlarms' as const] : [])]
+  const handling: AlarmDashboardKind[] = ['IotHandlingStatistics', ...(capabilities.vision ? ['VisionHandlingStatistics' as const] : [])]
+  const ranking: AlarmDashboardKind[] = ['IotStatistics', ...(capabilities.vision ? ['VisionStatistics' as const] : [])]
+  if (mode === 'wide') {
+    row([...(capabilities.events ? ['TodayEvents' as const] : []), ...alarms], 4)
+    row(['QuickStart', 'AlarmTrend'], 10)
+    row(handling, 9)
+    row(ranking, 13)
+  } else {
+    if (capabilities.events) row(['TodayEvents'], 4)
+    if (mode === 'medium') row(alarms, 5)
+    else alarms.forEach(kind => row([kind], 5))
+    row(['QuickStart'], mode === 'medium' ? 9 : 12)
+    row(['AlarmTrend'], 10)
+    if (mode === 'medium') { row(handling, 9); row(ranking, 13) }
+    else { handling.forEach(kind => row([kind], 9)); ranking.forEach(kind => row([kind], 13)) }
+  }
+  return items
 }
 
 function toStored(items: readonly AlarmLayoutItem[]): DashboardStoredLayoutItem[] {

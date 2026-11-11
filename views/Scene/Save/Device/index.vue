@@ -1,23 +1,25 @@
 <template>
   <div class='device'>
     <a-form-item
+      ref="triggerField"
       :rules='rules'
       :name='["trigger", "device"]'
     >
-      <template #label>
+      <template v-if="showTitle" #label>
         <TitleComponent :data="$t('Device.index.372524-0')"/>
       </template>
 
-        <AddButton
+        <DetailedTriggerNode v-if="cardLayout" :rule="data" @edit="visible = true" @remove="emit('remove')" />
+        <AddButton v-else
           style='width: 100%'
           @click='visible = true'
         >
           <Title :options='data.options.trigger' />
         </AddButton>
-        <AddModel v-if='visible' @cancel='visible = false' @save='save' :value='data.trigger.device' :options='data.options.trigger' />
         <CheckItem />
     </a-form-item>
-    <Terms ref="termsRef" />
+    <AddModel v-if='visible' @cancel='cancelConfig' @save='save' :value='data.trigger.device' :options='data.options.trigger' />
+    <Terms v-if="showTerms" ref="termsRef" />
   </div>
 </template>
 
@@ -27,6 +29,7 @@ import { useSceneStore } from '../../../../store/scene'
 import AddModel from './AddModal.vue'
 import AddButton from '../components/AddButton.vue'
 import Title from '../components/Title.vue'
+import DetailedTriggerNode from '@rule-engine-manager-ui/views/SceneLinkage/editor/detail/DetailedTriggerNode.vue'
 import Terms from '../components/Terms'
 import type { TriggerDevice } from '../../typings';
 import { EventEmitter, DeviceEmitterKey } from '../util';
@@ -38,7 +41,23 @@ const sceneStore = useSceneStore()
 const { data } = storeToRefs(sceneStore)
 
 const visible = ref(false)
+const triggerField = ref()
 const termsRef = ref()
+
+const emit = defineEmits<{ remove: []; 'cancel-config': []; 'save-config': [] }>()
+defineProps({
+  cardLayout: { type: Boolean, default: false },
+  /** 详细模式使用同一棵 Terms 树，但由页面的执行动作区统一承载。 */
+  showTerms: {
+    type: Boolean,
+    default: true,
+  },
+  /** 详细模式已经提供页面级触发规则标题，不重复展示原版设备触发器标题。 */
+  showTitle: {
+    type: Boolean,
+    default: true,
+  },
+})
 
 const rules = [{
   validator(_: any, v: any) {
@@ -65,11 +84,21 @@ const save = (device: TriggerDevice, options: Record<string, any>) => {
   data.value.trigger!.device = device
   data.value.options!.trigger = options
   visible.value = false
+  triggerField.value?.onFieldChange()
+  emit('save-config')
   EventEmitter.emit(DeviceEmitterKey, device)
 }
 
+/** 由父编辑器区分新建占位与已有节点，取消不提交弹窗草稿。 */
+function cancelConfig() {
+  visible.value = false
+  emit('cancel-config')
+}
+
 defineExpose({
-  changePaneIndex: (index: number) => termsRef.value?.changePaneIndex(index)
+  changePaneIndex: (index: number) => termsRef.value?.changePaneIndex(index),
+  /** 详细模式选择设备触发后直接打开配置弹窗，保持选择即配置的连续操作。 */
+  openConfig: () => { visible.value = true },
 })
 </script>
 

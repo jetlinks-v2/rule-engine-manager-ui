@@ -1,14 +1,35 @@
 import { randomNumber } from '@jetlinks-web/utils'
+import type { SceneEditorMode } from './editor/editorMode'
+
+export type { SceneEditorMode } from './editor/editorMode'
 
 export type SceneTriggerKind = 'manual' | 'repeat' | 'date' | 'interval' | 'property' | 'event' | 'online' | 'offline' | 'state' | 'alarm' | 'ai-event'
+
+type SceneTranslator = (key: string, values?: Record<string, unknown>) => string
+
+/**
+ * `ShakeLimit.time` 始终以秒保存；编辑器只在展示层按整分钟转换，确保下拉、说明和规则预览口径一致。
+ */
+export const formatSceneDuration = (t: SceneTranslator, seconds: number) => seconds >= 60 && seconds % 60 === 0
+  ? t('IotSceneLinkage.debounce.minutes', { value: seconds / 60 })
+  : t('IotSceneLinkage.debounce.seconds', { value: seconds })
+
+/** 与后端 MultiTrigger 约定保持一致，手动、采集及嵌套组合不参与任一触发。 */
+export const MULTI_TRIGGER_PROVIDERS = ['device', 'timer', 'alarm', 'ai-event'] as const
 
 export const AI_EVENT_RESULT_COLUMNS = ['hitResults', 'maxTargetScore', 'targetCount', 'results', 'numberResults'] as const
 
 export type AiEventResultColumn = typeof AI_EVENT_RESULT_COLUMNS[number]
 
+export type SceneAiEventRecognitionRule =
+  | { type: 'hits'; time: number; threshold: number }
+  | { type: 'missed'; time: number }
+
 export interface SceneAiEventMediaTarget {
   deviceId: string
   channelId: string
+  /** 媒体通道实体主键，仅供编辑器反查已部署的视觉算法，不写入运行时触发器配置。 */
+  entityId?: string
   /** 编辑器回填信息，不会写入触发器范围配置。 */
   name?: string
   unavailable?: boolean
@@ -26,6 +47,8 @@ export interface SceneAiEventTriggerConfig {
     termType?: string
     value?: string | number | boolean
   }
+  /** 快速配置的视觉识别规则；运行时映射为命中条件与分支级 ShakeLimit。 */
+  recognitionRule?: SceneAiEventRecognitionRule
 }
 
 export interface SceneAlarmTriggerConfig {
@@ -38,6 +61,9 @@ export interface SceneAlarmTriggerConfig {
   options?: {
     productId?: string
     deviceId?: string
+    /** 仅缓存界面展示名，告警订阅和运行仍以 ID 为准。 */
+    productName?: string
+    deviceName?: string
     alarmConfigName?: string
     sceneId?: string
     sceneName?: string
@@ -60,8 +86,16 @@ export interface SceneTimeRange {
   end: string
 }
 
+/** 快速配置的侧栏、条件卡片、编辑弹窗和规则预览统一采用同一套时段名称与时间范围。 */
+export const formatSceneTimeRange = (t: SceneTranslator, range: SceneTimeRange) => {
+  if (range.start === '08:00' && range.end === '20:00') return `${t('IotSceneLinkage.effectivePeriod.daytime')} ${range.start}–${range.end}`
+  if (range.start === '09:00' && range.end === '18:00') return `${t('IotSceneLinkage.timeTemplate.workday')} ${range.start}–${range.end}`
+  if (range.start === '20:00' && range.end === '08:00') return `${t('IotSceneLinkage.timeTemplate.evening')} ${range.start}–${range.end}`
+  return `${t('IotSceneLinkage.timeTemplate.custom')} ${range.start}–${range.end}`
+}
+
 export type SceneConditionForm =
-  | { actionId?: number; type: 'timeRange'; ranges: SceneTimeRange[] }
+  | { actionId?: number; type: 'timeRange'; ranges: SceneTimeRange[]; source?: 'effective-period' }
   | {
       actionId?: number
       type: 'deviceProperty'
@@ -81,12 +115,14 @@ export type SceneConditionForm =
 
 export interface SceneLinkageForm {
   id?: string
+  editorMode?: SceneEditorMode
   branchId?: number
   name: string
   description?: string
   summary?: string
   summaryTitle?: string
   debounceEnabled: boolean
+  debounceLimitEnabled: boolean
   debounceMode: 'continuous' | 'interval'
   debounceTime: number
   triggerKind: SceneTriggerKind
@@ -155,12 +191,16 @@ export interface SceneConditionColumns {
 }
 
 export const defaultForm = (): SceneLinkageForm => ({
+  editorMode: 'quick',
   name: '',
   summary: '',
   summaryTitle: '',
-  triggerKind: 'property',
+  // 新建规则先保持为空，由“添加条件”明确选择触发器，避免默认设备属性形成无效规则。
+  triggerKind: '' as SceneTriggerKind,
   debounceEnabled: false,
-  debounceMode: 'continuous',
+  debounceLimitEnabled: false,
+  // 新建规则默认采用执行间隔；快速配置可切换为持续满足，仍复用同一 ShakeLimit 结构。
+  debounceMode: 'interval',
   debounceTime: 60,
   productId: undefined,
   dynamicScope: false,
@@ -222,7 +262,23 @@ const aiEventConditionFromTerms = (terms: Record<string, any>[]) => {
     : undefined
 }
 
-const toAiEventMediaTargets = (configuration: Record<string, any>, mediaNames: string[] = []): SceneAiEventMediaTarget[] =>
+const aiEventRecognitionRuleFrom = (shakeLimit: any, terms: Record<string, any>[]): SceneAiEventRecognitionRule | undefined => {
+  if (!shakeLimit?.enabled || !Number(shakeLimit.time)) return undefined
+  const hitResult = terms.find(term => term?.column === 'hitResults' && term?.termType === 'eq')
+  if (hitResult?.value === 1) {
+    return { type: 'hits', time: Number(shakeLimit.time), threshold: Math.max(1, Number(shakeLimit.threshold) || 1) }
+  }
+  if (hitResult?.value === 0 && shakeLimit.continuous) {
+    return { type: 'missed', time: Number(shakeLimit.time) }
+  }
+  return undefined
+}
+
+const toAiEventMediaTargets = (
+  configuration: Record<string, any>,
+  mediaNames: string[] = [],
+  mediaEntityIds: string[] = [],
+): SceneAiEventMediaTarget[] =>
   Array.isArray(configuration?.mediaTargets)
     ? configuration.mediaTargets
       .filter((target: any) => target?.deviceId && target?.channelId)
@@ -230,6 +286,7 @@ const toAiEventMediaTargets = (configuration: Record<string, any>, mediaNames: s
         deviceId: target.deviceId,
         channelId: target.channelId,
         name: mediaNames[index],
+        entityId: mediaEntityIds[index],
       }))
     : []
 
@@ -342,9 +399,10 @@ export const toForm = (detail: any): SceneLinkageForm => {
     const toLeafForm = (item: any) => toForm({
       ...scene,
       trigger: item.trigger,
-      branches: (scene.branches || []).map((branch: any, index: number) => index
-        ? branch
-        : { ...branch, when: item.terms || [] }),
+      terms: [],
+      options: { ...scene.options, trigger: item.options || scene.options?.trigger },
+      // 叶子的识别计数与全局分支防抖独立；详细模式尚无分支时也要还原叶子条件。
+      branches: [{ ...scene.branches?.[0], when: item.terms || [], shakeLimit: item.shakeLimit }],
     })
     const first = items[0]
     if (first) {
@@ -352,6 +410,7 @@ export const toForm = (detail: any): SceneLinkageForm => {
       form.multiTriggers = items.map(toLeafForm).map(item => toMultiTriggerForm(item))
       const shakeLimit = scene.branches?.[0]?.shakeLimit || {}
       form.debounceEnabled = Boolean(shakeLimit.enabled)
+      form.debounceLimitEnabled = Boolean(shakeLimit.enabled)
       form.debounceMode = shakeLimit.continuous ? 'continuous' : 'interval'
       form.debounceTime = Number(shakeLimit.time || 60)
       return form
@@ -370,6 +429,9 @@ export const toForm = (detail: any): SceneLinkageForm => {
     || findEventTriggerTerm(scene.terms || [])
   const deviceStateTriggerTerm = findDeviceStateTriggerTerm((scene.branches || []).flatMap((branch: any) => branch.when || []))
   const aiEventTerms = (scene.branches || []).flatMap((branch: any) => branch.when || [])
+  const aiEventRecognitionRule = trigger.type === 'ai-event'
+    ? aiEventRecognitionRuleFrom(branchShakeLimit, aiEventTerms)
+    : undefined
   const selectorValues = Array.isArray(device.selectorValues) ? device.selectorValues : []
   const deviceConditionActions = sourceActions
     .filter((action: any) => action.executor === 'device-data' && action.configuration?.properties?.length && action.terms?.length)
@@ -415,6 +477,11 @@ export const toForm = (detail: any): SceneLinkageForm => {
     ...(scene.branches || []).flatMap((branch: any) => findTimeRanges(branch.when || [])),
     ...manualTimeRangeGates.flatMap((action: any) => findTimeRanges(action.terms || [])),
   ].map(range => [`${range.start}-${range.end}`, range])).values()]
+  // 保存过的快捷时间条件保留分组语义；旧规则没有该前端元数据时继续按规则树回显。
+  const savedTimeConditions = Array.isArray(scene.options?.quickTimeConditions)
+    ? scene.options.quickTimeConditions.filter((condition: any) => condition?.type === 'timeRange' && Array.isArray(condition.ranges))
+    : []
+  const savedEffectivePeriodConditions = savedTimeConditions.filter((condition: any) => condition.source === 'effective-period')
   const conditionActionSet = new Set([...deviceConditionActions, ...alarmConditionActions])
   const conditionActionMap = new Map<any, SceneConditionForm>([
     ...deviceConditionActions.map((action: any, index: number) => [action, actionConditions[index]]),
@@ -424,12 +491,15 @@ export const toForm = (detail: any): SceneLinkageForm => {
   const form = {
     ...defaultForm(),
     id: scene.id,
+    editorMode: scene.options?.editorMode === 'detail' ? 'detail' : 'quick',
     branchId: scene.branches?.[0]?.branchId,
     name: scene.name,
     description: scene.description,
     summary: scene.options?.summary || '',
     summaryTitle: scene.options?.summaryTitle || scene.options?.summary || '',
-    debounceEnabled: device.operation?.operator === 'state' ? false : Boolean(shakeLimit.enabled),
+    // 无限制的防抖不会生成 shakeLimit；只有左侧快捷时段才能使面板回显为开启，右侧独立时间条件不受影响。
+    debounceEnabled: device.operation?.operator === 'state' ? false : (!aiEventRecognitionRule && Boolean(shakeLimit.enabled)) || savedEffectivePeriodConditions.length > 0,
+    debounceLimitEnabled: !aiEventRecognitionRule && Boolean(shakeLimit.enabled),
     debounceMode: shakeLimit.continuous ? 'continuous' : 'interval',
     debounceTime: Number(shakeLimit.time || 60),
     productId: device.productId,
@@ -437,7 +507,8 @@ export const toForm = (detail: any): SceneLinkageForm => {
     allDevices: device.selector === 'all',
     dynamicScope: ['space', 'device-group'].includes(device.selector),
     dynamicScopeType: device.selector === 'space' ? 'space' : 'device-group',
-    scopeOptions: device.options || {},
+    // 原生详细规则的设备名称也可能只保存在 selectorValues，回显时保留这些显示名。
+    scopeOptions: { ...device.options, names: selectorValues.map((item: any, index: number) => item.name || device.options?.names?.[index] || String(item.value)) },
     groupIds: ['space', 'device-group'].includes(device.selector) ? selectorValues.map((item: any) => String(item.value)) : [],
     deviceIds: device.selector === 'fixed' ? selectorValues.map((item: any) => String(item.value)) : [],
     propertyId: propertyTriggerTerm?.column?.split('.')?.[1],
@@ -467,10 +538,12 @@ export const toForm = (detail: any): SceneLinkageForm => {
       mediaTargets: toAiEventMediaTargets(
         trigger.configuration || {},
         scene.options?.trigger?.aiEvent?.mediaNames || [],
+        scene.options?.trigger?.aiEvent?.mediaEntityIds || [],
       ),
       condition: trigger.type === 'ai-event' ? aiEventConditionFromTerms(aiEventTerms) : undefined,
+      recognitionRule: aiEventRecognitionRule,
     },
-    additionalConditions: [...(timeRanges.length ? [{ type: 'timeRange' as const, ranges: timeRanges }] : []), ...orderedActionConditions],
+    additionalConditions: [...(savedTimeConditions.length ? savedTimeConditions : timeRanges.length ? [{ type: 'timeRange' as const, ranges: timeRanges }] : []), ...orderedActionConditions],
     actions: sourceActions.filter((action: any) => !conditionActionSet.has(action)).flatMap((action: any) => {
       if (action.executor === 'delay') return [{ actionId: action.actionId, type: 'delay', time: action.delay?.time, unit: action.delay?.unit, options: action.options }]
       if (action.executor === 'device') return [{ actionId: action.actionId, type: 'device', config: action.device, options: action.options }]
@@ -536,6 +609,7 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
         sceneName: form.aiEvent.sceneName,
         taskTargetName: form.aiEvent.taskTargetName,
         mediaNames: form.aiEvent.mediaTargets?.map(target => target.name || `${target.deviceId}/${target.channelId}`),
+        mediaEntityIds: form.aiEvent.mediaTargets?.map(target => target.entityId),
       } : undefined,
     }
   }
@@ -595,7 +669,7 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
             }
         : { type: 'timer', timer: { trigger: 'cron', cron: timerCron(form) } }
   // 场景运行时在分支层执行防抖；触发器上的 shakeLimit 仅用于兼容旧规则。
-  const debounceShakeLimit = form.debounceEnabled && form.triggerKind !== 'state'
+  const debounceShakeLimit = form.debounceEnabled && form.debounceLimitEnabled && form.triggerKind !== 'state'
     ? {
         enabled: true,
         time: form.debounceTime,
@@ -606,6 +680,28 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
         rolling: false,
       }
     : undefined
+  const aiEventRecognitionRule = !form.multiTriggers?.length && form.triggerKind === 'ai-event' ? form.aiEvent.recognitionRule : undefined
+  const aiEventShakeLimit = aiEventRecognitionRule
+    ? aiEventRecognitionRule.type === 'hits'
+      ? {
+          enabled: true,
+          time: aiEventRecognitionRule.time,
+          threshold: aiEventRecognitionRule.threshold,
+          continuous: false,
+          alarmFirst: true,
+          outputFirst: false,
+          rolling: false,
+        }
+      : {
+          enabled: true,
+          time: aiEventRecognitionRule.time,
+          threshold: 1,
+          continuous: true,
+          alarmFirst: false,
+          outputFirst: false,
+          rolling: true,
+        }
+    : undefined
   const triggerTerms = form.triggerKind === 'property' && form.propertyId && form.termValue !== undefined && form.termValue !== ''
     ? [{ column: `properties.${form.propertyId}.current`, termType: form.termType, value: form.termValue }]
     : []
@@ -615,12 +711,16 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
   const stateTriggerTerms = form.triggerKind === 'state' && form.deviceState !== 'any'
     ? [{ column: 'deviceState', termType: 'eq', value: form.deviceState === 'online' ? '1' : '0' }]
     : []
-  const aiEventTriggerTerms = form.triggerKind === 'ai-event' && form.aiEvent.condition
-    ? [{
-        column: form.aiEvent.condition.column,
-        termType: form.aiEvent.condition.termType || 'eq',
-        value: form.aiEvent.condition.value,
-      }]
+  const aiEventTriggerTerms = form.triggerKind === 'ai-event'
+    ? aiEventRecognitionRule
+      ? [{ column: 'hitResults', termType: 'eq', value: aiEventRecognitionRule.type === 'hits' ? 1 : 0 }]
+      : form.aiEvent.condition
+        ? [{
+            column: form.aiEvent.condition.column,
+            termType: form.aiEvent.condition.termType || 'eq',
+            value: form.aiEvent.condition.value,
+          }]
+        : []
     : []
   // 视觉 AI 告警与通用告警共享配置契约；算法范围以分支条件收窄，不持久化为 Trigger 配置字段。
   const visualAiAlarmTriggerTerms = form.triggerKind === 'alarm'
@@ -654,6 +754,8 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
             index: index + 1,
             trigger: leaf.trigger,
             terms: leaf.branches?.[0]?.when || [],
+            shakeLimit: leaf.branches?.[0]?.shakeLimit,
+            options: leaf.options.trigger,
           }
         }),
       },
@@ -719,9 +821,10 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
       },
     }]
   })
-  const timeRanges = form.additionalConditions
+  // 左侧生效时段是防抖的快捷模板；右侧新增的时间条件独立生效，不能随防抖开关被移除。
+  const timeConditions = form.additionalConditions
     .filter((condition): condition is Extract<SceneConditionForm, { type: 'timeRange' }> => condition.type === 'timeRange')
-    .flatMap(condition => condition.ranges)
+    .filter(condition => condition.source !== 'effective-period' || form.debounceEnabled)
   const createTimeTerm = (start: string, end: string) => ({
     column: '_now',
     value: { source: 'manual', value: [`${start}:00`, `${end}:00`] },
@@ -730,24 +833,32 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
     options: [],
     terms: [],
   })
-  // 多个时间范围是可选时段，后续范围使用 or 与前一个范围连接。
-  const timeTerms = timeRanges.map((range, index) => range.start > range.end
-    ? {
-        type: 'or',
-        termType: 'eq',
-        options: [],
-        terms: [createTimeTerm('20:00', '23:59:59'), createTimeTerm('00:00', '08:00')],
-      }
-    : {
-        ...createTimeTerm(range.start, range.end),
-        type: index ? 'or' : 'and',
-      })
+  // 同一个时间条件内的多个时段为“或”；左侧模板和右侧多个时间条件之间保持“且”。
+  const timeConditionTerms = timeConditions.map(condition => ({
+    type: 'and',
+    termType: 'eq',
+    options: [],
+    terms: condition.ranges.map((range, index) => range.start > range.end
+      ? {
+          type: index ? 'or' : 'and',
+          termType: 'eq',
+          options: [],
+          terms: [
+            createTimeTerm('20:00', '23:59:59'),
+            { ...createTimeTerm('00:00', '08:00'), type: 'or' },
+          ],
+        }
+      : {
+          ...createTimeTerm(range.start, range.end),
+          type: index ? 'or' : 'and',
+        }),
+  }))
   // 手动触发不会为首个动作建立分支条件连线，使用零时长节点将时间条件转移到后续动作连线。
-  const manualTimeRangeGate = form.triggerKind === 'manual' && timeTerms.length
+  const manualTimeRangeGate = form.triggerKind === 'manual' && timeConditionTerms.length
     ? [{
         executor: 'delay',
         delay: { time: 0, unit: 'seconds' },
-        terms: timeTerms,
+        terms: timeConditionTerms,
         options: { [MANUAL_TIME_RANGE_GATE]: true },
       }]
     : []
@@ -769,12 +880,7 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
     ...stateTriggerTerms,
     ...aiEventTriggerTerms,
     ...visualAiAlarmTriggerTerms,
-    ...(timeTerms.length && form.triggerKind !== 'manual' ? [{
-      type: 'and',
-      termType: 'eq',
-      options: [],
-      terms: timeTerms,
-    }] : []),
+    ...(form.triggerKind !== 'manual' ? timeConditionTerms : []),
   ]
   const branchId = form.branchId || (form.branchId = createId())
   const branches = [{
@@ -783,7 +889,7 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
     branchId,
     branchName: '条件 1',
     executeAnyway: true,
-    shakeLimit: debounceShakeLimit || (form.triggerKind === 'state' && form.deviceStateTriggerMode === 'sustained' ? {
+    shakeLimit: aiEventShakeLimit || debounceShakeLimit || (!multiTriggers && form.triggerKind === 'state' && form.deviceStateTriggerMode === 'sustained' ? {
       enabled: true,
       time: form.deviceStateSustainedTime,
       threshold: 1,
@@ -811,8 +917,10 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
     name: form.name,
     description: form.description,
     options: {
+      editorMode: form.editorMode || 'quick',
       summary: form.summary,
       summaryTitle: form.summaryTitle || form.summary,
+      quickTimeConditions: timeConditions,
       trigger: buildTriggerOptions(),
       when: branchOptions,
     },

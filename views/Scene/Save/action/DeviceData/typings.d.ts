@@ -30,7 +30,7 @@ export type DeviceModelType = {
 }
 
 export type DeviceOptionType = {
-    name?: string;
+    name?: string | string[];
     productName?: string;
     propertiesValue?: string;
     propertiesName?: any;

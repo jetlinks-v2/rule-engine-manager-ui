@@ -4,9 +4,12 @@
       :name="['branches', branchesName, 'then', thenName, 'actions', name]"
       :rules="rules"
     >
-      <div class="actions-item">
+      <div :class="['actions-item', { 'actions-item--show-controls': showActionControls }]">
         <CheckItem v-bind="props" ref="checkItemRef">
+          <DetailedActionNode v-if="showActionControls" :action="data || {}" :options="options" :index="name" :read-only="isReadOnly" @edit="data?.executor ? onType(data.executor) : onAdd()" @remove="onDelete" @visible-change="changeTriggerVisible" />
+          <template v-else>
           <div class="item-options-warp">
+            <span class="item-number">{{ name + 1 }}</span>
             <div class="item-options-type" @click="onAdd">
               <AIcon
                 :type="
@@ -16,28 +19,32 @@
                 "
               />
             </div>
-            <div class="item-options-content" v-if="data?.executor" @click="onType(data?.executor)">
+          <div class="item-options-content" v-if="data?.executor" @click="onType(data?.executor)">
               <template v-if="data.executor === 'delay'">
                 {{ options?.name }}
               </template>
               <template v-else>
-                <component :is="ComponentsMap[data.executor]" :data="data" :options="options" @visibleChange="(e) => triggerVisible = e"  />
+              <component :is="ComponentsMap[data.executor]" :data="data" :options="options" :read-only="isReadOnly" @visibleChange="changeTriggerVisible"  />
               </template>
             </div>
             <a-button v-else @click="onAdd">{{ $t('ListItem.Item.637563-17') }}</a-button>
           </div>
-          <div class="item-number">{{ name + 1 }}</div>
           <ConfirmModal
+            v-if="!isReadOnly"
             :title="$t('ListItem.Item.637563-18')"
             :onConfirm="onDelete"
-            className="actions-item-delete"
+            :className="showActionControls ? 'actions-item-delete actions-item-delete--show' : 'actions-item-delete'"
           >
             <AIcon type="DeleteOutlined" />
           </ConfirmModal>
+          <a-tooltip v-if="showActionControls && !isReadOnly" :title="$t('IotSceneLinkage.action.edit')">
+            <a-button class="actions-item__edit" type="text" @click.stop="onType(data?.executor || '')"><AIcon type="EditOutlined" /></a-button>
+          </a-tooltip>
+          </template>
         </CheckItem>
       </div>
     </a-form-item>
-    <template v-if="!isLast && type === 'serial'">
+    <template v-if="!isReadOnly && !isLast && type === 'serial'">
       <div
         :class="[
           'actions-item-filter-warp',
@@ -61,6 +68,7 @@
             />
           </div>
         </template>
+        <SceneFilterAddButton v-else-if="showActionControls" @add="addFilterParams" />
         <div v-else class="filter-add-button" @click="addFilterParams">
           <AIcon type="PlusOutlined" style="padding-right: 4px" />
           <span>{{ $t('ListItem.Item.637563-20') }}</span>
@@ -111,7 +119,7 @@
 </template>
 
 <script lang="ts" setup name="ActionItem">
-import { PropType } from "vue";
+import { type Ref, PropType } from "vue";
 import { ActionsType, ParallelType } from "../../../typings";
 import EditModal from "../Modal/index.vue";
 import ActionTypeComponent from "../Modal/ActionTypeComponent.vue";
@@ -120,11 +128,14 @@ import { useSceneStore } from "@rule-engine-manager-ui/store/scene";
 import { storeToRefs } from "pinia";
 import { iconMap} from "./util";
 import FilterGroup from "./FilterGroup.vue";
+import SceneFilterAddButton from "../../components/SceneFilterAddButton.vue";
 import { randomString } from "@jetlinks-web/utils";
 import { EventEmitter, EventEmitterKeys, EventSubscribeKeys } from "../../util";
 import CheckItem from "./CheckItem.vue";
+import DetailedActionNode from "./DetailedActionNode.vue";
 import { useI18n } from 'vue-i18n'
 import ComponentsMap from './detail'
+import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -162,9 +173,15 @@ const props = defineProps({
   isLast: {
     type: Boolean,
   },
+  showActionControls: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["delete", "update"]);
+const readOnlyActionProviders = inject<Ref<string[]>>('readonly-action-providers', ref([]));
+const isReadOnly = computed(() => readOnlyActionProviders.value.includes(props.data?.executor || ''));
 const checkItemRef = ref();
 const visible = ref<boolean>(false);
 const triggerVisible = ref<boolean>(false);
@@ -200,16 +217,13 @@ const onDelete = () => {
     ].key;
   EventEmitter.emit(key!, { isDelete: true }); // 发布消息
   if (props.name !== 0 && !props.parallel) {
-    // 清空上一个串行执行动作中的options.termsColumns和terms
-    _data.value.branches![props.branchesName].then[props.thenName].actions[
-      props.name - 1
-    ].options!.termsColumns = [];
-    _data.value.branches![props.branchesName].then[props.thenName].actions[
-      props.name - 1
-    ].options!.terms = [];
-    _data.value.branches![props.branchesName].then[props.thenName].actions[
-      props.name - 1
-    ].terms = [];
+    // 原生规则可能没有展示元数据，不能因清理 options 而中断动作删除。
+    const previous = _data.value.branches![props.branchesName].then[props.thenName].actions[props.name - 1];
+    if (previous.options) {
+      previous.options.termsColumns = [];
+      previous.options.terms = [];
+    }
+    previous.terms = [];
   }
 
   emit("delete");
@@ -263,12 +277,32 @@ const addFilterParams = () => {
 };
 
 const onAdd = () => {
+  if (isReadOnly.value) {
+    onlyMessage($t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning');
+    return;
+  }
   visible.value = true;
 };
 
 const onType = (_type: string) => {
-
+  if (isReadOnly.value) {
+    onlyMessage($t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning');
+    return;
+  }
+  if (_type === 'notify') {
+    onlyMessage($t('IotSceneLinkage.message.legacyNotifyReadonly'), 'warning')
+    return
+  }
   actionType.value = _type;
+};
+
+/** 历史告警动作可查看摘要，但不能打开原版的告警绑定维护弹窗。 */
+const changeTriggerVisible = (visible: boolean) => {
+  if (isReadOnly.value) {
+    onlyMessage($t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning');
+    return;
+  }
+  triggerVisible.value = visible;
 };
 
 /**
@@ -306,7 +340,6 @@ const onSave = (data: ActionsType, options: any) => {
   );
   checkItemRef.value?.formTouchOff?.();
   visible.value = false;
-  console.log('key', key)
   EventEmitter.emit(key!, data); // 发布消息
   const onKeys =  EventSubscribeKeys({
     branch: props.branchesName,
@@ -362,67 +395,58 @@ const rules = [
 </script>
 
 <style lang="less" scoped>
-.deleteBtn() {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  display: none;
-  width: 20px;
-  height: 20px;
-  color: #999;
-  line-height: 20px;
-  text-align: center;
-  background-color: #f1f1f1;
-  border-radius: 50%;
-  cursor: pointer;
-
-  &.show {
-    display: block;
-  }
-
-  &:hover {
-    background-color: #f3f3f3;
-  }
-}
-
 .actions-item {
   position: relative;
-  //margin-bottom: 24px;
-  padding: 16px;
-  border: 1px dashed #999;
-  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+  padding: 12px 16px;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--radius-jet-sm, 8px);
+  transition: border-color .2s ease, box-shadow .2s ease;
+
+  &:hover {
+    border-color: var(--ant-color-primary);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .04);
+  }
 
   .item-options-warp {
-    display: inline-flex;
-    height: 48px;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-width: 0;
+    gap: var(--space-3, 12px);
+    padding-right: 28px;
 
     .item-options-type {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 48px;
-      background-color: #f0f0f0;
-      border-radius: 6px 0 0 6px;
+      flex: none;
+      width: 32px;
+      height: 32px;
+      color: var(--ant-color-primary);
+      background-color: var(--ant-color-primary-bg);
+      border-radius: 6px;
       cursor: pointer;
     }
 
     .item-options-content {
       display: flex;
+      flex: 1;
       align-items: center;
-      padding: 0 8px;
-      background: #fafafa;
-      border-radius: 0 6px 6px 0;
+      min-width: 0;
+      padding: 0;
+      color: var(--ant-color-text);
       cursor: pointer;
 
       div {
-        padding: 6px 10px;
-        color: #333;
+        min-width: 0;
+        padding: 0;
+        color: var(--ant-color-text);
         font-size: 14px;
         line-height: 22px;
-        background-color: #fff;
-        border-radius: 22px;
 
         .notify-text-highlight {
           margin-left: 5px;
@@ -433,29 +457,70 @@ const rules = [
           margin: 0 10px;
           color: rgba(0, 0, 0, 0.8);
         }
+
       }
     }
   }
 
   .item-number {
-    position: absolute;
-    top: 0;
-    left: 16px;
-    font-weight: 800;
-    transform: translateY(-50%);
+    flex: none;
+    order: -1;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    color: var(--ant-color-primary);
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1;
+    background: var(--ant-color-primary-bg);
+    border-radius: 50%;
+  }
+
+  &--show-controls {
+    .item-options-warp {
+      padding-right: 64px;
+    }
+
+    .actions-item__edit {
+      position: absolute;
+      top: 50%;
+      right: 40px;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      color: var(--ant-color-text-secondary);
+      transform: translateY(-50%);
+
+      &:hover {
+        color: var(--ant-color-primary);
+        background: var(--ant-color-primary-bg);
+      }
+    }
   }
 }
 
+/* 详细模式由共享节点卡承载，保留原版 CheckItem 的校验与动作编辑生命周期。 */
+.actions-item.actions-item--show-controls {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
 .actions-item-filter-warp {
   position: relative;
   margin-bottom: 24px;
   padding: 2px 0;
-  border: 1px dashed #999;
-  border-radius: 30px;
+  border: 1px dashed var(--ant-color-border);
+  border-radius: var(--radius-jet-sm, 8px);
 
   &.filter-border {
     padding: 2px 16px;
-    border-radius: 2px;
+    border-color: var(--ant-color-border-secondary);
+    border-radius: var(--radius-jet-sm, 8px);
   }
 
   .actions-item-filter-warp-tip {
@@ -463,11 +528,11 @@ const rules = [
     top: 0;
     left: 16px;
     z-index: 2;
-    color: rgba(0, 0, 0, 0.55);
-    font-weight: 800;
+    color: var(--ant-color-text-secondary);
+    font-weight: 600;
     font-size: 14px;
     line-height: 1;
-    background-color: #fff;
+    background-color: var(--ant-color-bg-container);
     transform: translateY(-50%);
   }
 
@@ -481,7 +546,7 @@ const rules = [
 
   .filter-add-button {
     width: 100%;
-    color: rgba(0, 0, 0, 0.3);
+    color: var(--ant-color-text-tertiary);
     text-align: center;
     cursor: pointer;
   }
@@ -517,21 +582,31 @@ const rules = [
 <style lang="less">
 .actions-item-delete {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 50%;
+  right: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  color: #e50012;
-  background-color: rgba(229, 0, 18, 0.1);
-  border-radius: 50%;
-  transform: translate(50%, -50%);
+  width: 28px;
+  height: 28px;
+  color: var(--ant-color-error);
+  background-color: transparent;
+  border-radius: 6px;
+  opacity: 0;
+  transform: translateY(-50%);
   cursor: pointer;
+  transition: opacity .2s ease, background-color .2s ease;
+
+  .actions-item:hover & {
+    opacity: 1;
+  }
+
+  &.actions-item-delete--show {
+    opacity: 1;
+  }
 
   &:hover {
-    background-color: rgba(#e50012, 0.2);
+    background-color: var(--ant-color-error-bg);
   }
 }
 </style>

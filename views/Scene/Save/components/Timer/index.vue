@@ -40,7 +40,7 @@
                 />
             </a-form-item>
         </template>
-        <a-space v-if="showOnce && !showMulti" style="display: flex; gap: 24px">
+        <a-space v-if="showOnce && !showMulti" class="timer__inline-fields">
             <a-form-item :name="['once', 'time']">
                 <a-time-picker
                     valueFormat="HH:mm:ss"
@@ -52,10 +52,7 @@
             </a-form-item>
             <a-form-item> {{ $t('Timer.index.9093537-2') }}</a-form-item>
         </a-space>
-        <a-space
-            v-if="showPeriod && !showMulti"
-            style="display: flex; gap: 24px"
-        >
+        <a-space v-if="showPeriod && !showMulti" class="timer__inline-fields">
             <a-form-item>
                 <a-time-range-picker
                     valueFormat="HH:mm:ss"
@@ -313,15 +310,14 @@ const periodUnitChange = (v: any) => {
 };
 
 defineExpose({
-    validateFields: () =>
-        new Promise(async (resolve) => {
-            const data = await timerForm.value?.validateFields();
-            resolve(data);
-        }),
+    // 直接返回表单 Promise，让调用方捕获校验失败；async executor 会使外层 Promise 悬空。
+    validateFields: () => timerForm.value?.validateFields(),
 });
 
 Object.assign(formModel, props.value);
 formModel.when = props.value.when || [];
+// 将界面实际显示的默认配置同步给调用方，避免概览只读取到空草稿。
+onMounted(updateValue);
 
 watchEffect(() => {
     if (props.value?.period?.unit === 'hours') {
@@ -332,4 +328,20 @@ watchEffect(() => {
 });
 </script>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+.timer__inline-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 12px) !important;
+  align-items: flex-start;
+
+  :deep(.ant-form-item) {
+    min-width: 0;
+    margin-bottom: var(--space-3, 12px);
+  }
+
+  :deep(.ant-picker) {
+    max-width: 100%;
+  }
+}
+</style>

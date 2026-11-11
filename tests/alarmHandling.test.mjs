@@ -396,3 +396,10 @@ test('only complete historical nine-card desktop defaults grow for the ring char
     assert.equal(api.addHandlingStatisticsToLayout(next, 'wide'), undefined)
   }
 })
+
+test('legacy combined handling omits the vision source and never queries it when unavailable', async () => {
+  const targets=[]
+  const result=await api.loadHandlingStatistics(aggregateApi(async target=>{targets.push(target);return ok([])}),'today',signal(),undefined,false)
+  assert.deepEqual(targets,['device','device'])
+  assert.deepEqual(Object.keys(result.handling),['iot'])
+})

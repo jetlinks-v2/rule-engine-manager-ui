@@ -13,6 +13,7 @@ const outputDirectory = await mkdtemp(path.join(tmpdir(), 'rule-editor-agent-too
 const outputFile = path.join(outputDirectory, 'toolRuntime.test.mjs')
 const catalogOutputFile = path.join(outputDirectory, 'toolRuntimeCatalog.test.mjs')
 const agentCatalogOutputFile = path.join(outputDirectory, 'agentToolCatalog.test.mjs')
+const sceneEditorModeOutputFile = path.join(outputDirectory, 'sceneEditorMode.test.mjs')
 const orchestrationOutputFile = path.join(outputDirectory, 'ruleEditorOrchestration.test.mjs')
 const bridgeOutputFile = path.join(outputDirectory, 'ruleEditorAgentBridge.test.mjs')
 const wireOutputFile = path.join(outputDirectory, 'ruleEditorClientToolWire.test.mjs')
@@ -307,6 +308,7 @@ const agentCatalogRuntime = (mountLifecycle = false) => ({
         export const onMounted = ${mountLifecycle ? '(callback) => callback()' : 'noop'}
         export const onUnmounted = noop
         export const isReactive = () => false
+        export const isVNode = () => false
         export const defineComponent = (value) => value
         export const h = noop
         export const set = noop
@@ -315,7 +317,7 @@ const agentCatalogRuntime = (mountLifecycle = false) => ({
     }))
     buildApi.onLoad({ filter: /^vueuse$/, namespace: 'rule-editor-agent-catalog' }, () => ({
       loader: 'js',
-      contents: 'export const useLocalStorage = () => ({ value: undefined })',
+      contents: 'export const useLocalStorage = () => ({ value: undefined }); export const isClient = false; export const isIOS = false;',
     }))
     buildApi.onLoad({ filter: /^hooks$/, namespace: 'rule-editor-agent-catalog' }, () => ({
       loader: 'js',
@@ -371,6 +373,7 @@ try {
     })
   }
   for (const [entryPoint, outfile, mountLifecycle] of [
+    ['tests/sceneEditorMode.test.ts', sceneEditorModeOutputFile, false],
     ['tests/agentToolCatalog.test.ts', agentCatalogOutputFile, false],
     ['tests/ruleEditorOrchestration.test.ts', orchestrationOutputFile, false],
     ['tests/ruleEditorAgentBridge.test.ts', bridgeOutputFile, true],
@@ -386,7 +389,7 @@ try {
       sourcemap: 'inline',
       logLevel: 'warning',
       banner: {
-        js: 'globalThis.window = globalThis.window || globalThis; globalThis.document = globalThis.document || { createElement() { return {} }, querySelector() { return null }, addEventListener() {} };',
+        js: 'globalThis.window = globalThis.window || globalThis; globalThis.document = globalThis.document || { createElement() { return {} }, querySelector() { return null }, addEventListener() {} }; globalThis.localStorage = globalThis.localStorage || { getItem() { return null }, setItem() {}, removeItem() {} };',
       },
       define: {
         'import.meta.env.BASE_URL': JSON.stringify('/'),
@@ -425,7 +428,7 @@ try {
     '--test',
     ...testOptions,
     ...(wireOnly ? [wireOutputFile] : [
-      ...(bridgeOnly ? [] : [catalogOutputFile, agentCatalogOutputFile, orchestrationOutputFile, wireOutputFile]),
+      ...(bridgeOnly ? [] : [catalogOutputFile, sceneEditorModeOutputFile, agentCatalogOutputFile, orchestrationOutputFile, wireOutputFile]),
       bridgeOutputFile,
       lifecycleTestFile,
     ]),

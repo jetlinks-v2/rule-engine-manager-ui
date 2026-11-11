@@ -14,6 +14,13 @@ export const isHandlingKind = (kind: AlarmDashboardKind) => kind === 'HandlingSt
 export type AlarmTimeRange = 'today' | 'yesterday' | '3d' | '7d' | '30d'
 export type AlarmDimension = 'type' | 'deviceType' | 'camera'
 export type AlarmSource = 'events' | 'iot' | 'vision'
+export interface AlarmCapabilities { ready: boolean; events: boolean; vision: boolean }
+export const allAlarmCapabilities: Readonly<AlarmCapabilities> = { ready: true, events: true, vision: true }
+/** 来源准入只看功能能力，记录为零或请求失败不能改变卡片的可见性。 */
+export const isAlarmKindAvailable = (kind: AlarmDashboardKind, capabilities: AlarmCapabilities) => capabilities.ready && (
+  kind === 'TodayEvents' ? capabilities.events
+    : ['VisionAlarms', 'VisionStatistics', 'VisionHandlingStatistics'].includes(kind) ? capabilities.vision : true
+)
 export type AlarmTarget = 'device' | 'aiTaskMediaTarget'
 export const alarmRankingLimit = 10
 export interface AlarmWidgetConfig {

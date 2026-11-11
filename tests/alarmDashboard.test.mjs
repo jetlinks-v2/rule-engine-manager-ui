@@ -19,6 +19,8 @@ const { outputFiles } = await build({
     "export * from './visDashboard/AlarmCenter/services/trends'",
     "export * from './visDashboard/AlarmCenter/services/statistics'",
     "export * from './visDashboard/AlarmCenter/hooks/useAlarmWidget'",
+    "export * from './visDashboard/AlarmCenter/hooks/useAlarmCapabilities'",
+    "export * from './views/DashBoard/alarmDashboardStorage'",
     "export * from './views/DashBoard/alarmDashboardLayout'",
   ].join(';') },
   bundle: true, write: false, platform: 'node', format: 'esm',
@@ -29,6 +31,8 @@ const { outputFiles } = await build({
       plugin.onResolve({ filter: /^(@jetlinks-web\/core|@jetlinks-web-core\/|vue-router)/ }, args => ({ path: args.path, namespace: 'fixture' }))
       plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ contents: {
         '@jetlinks-web/core': 'export const request = { post: (...args) => globalThis.alarmDashboardFixture.request(...args) }',
+        '@jetlinks-web-core/store/menu': 'export const useMenuStore = () => globalThis.alarmDashboardFixture.menu || { initialized: true, loading: false, menuResultCache: [{code: "machine-vision/VisualAlarm"}] }',
+        '@jetlinks-web-core/utils/module-registry': 'export const moduleRegistry = { hasModule: () => globalThis.alarmDashboardFixture.installed ?? true, onChange: callback => { globalThis.alarmDashboardFixture.changed = callback; return () => {} } }',
         '@jetlinks-web-core/locales': 'export default { global: { t: key => key } }',
         '@jetlinks-web-core/store/user': 'export const useUserStore = () => globalThis.alarmDashboardFixture.user',
         '@jetlinks-web-core/utils/project-runtime': 'export const getProjectCodeFromLocation = () => globalThis.alarmDashboardFixture.project',
@@ -260,4 +264,76 @@ test('two handling widgets select time independently and query only their own ta
     const iotWindow = states.IotHandlingStatistics.data.value.window
     assert.deepEqual(calls[4].data.filter.terms.find(term => term.column === 'alarmTime').value, [iotWindow.startTime, iotWindow.endTime])
   } finally { app.unmount() }
+})
+
+
+test('capabilities follow module and authorized menu readiness, including event-only access and preview', async () => {
+  const menu = reactive({initialized:false, loading:true, menuResultCache:[{code:'machine-vision/VisualAlarm'}]})
+  globalThis.alarmDashboardFixture = {menu, installed:false}
+  const preview=ref(false); let cap
+  const app=renderer.createApp(defineComponent({setup(){cap=api.useAlarmCapabilities(preview);return ()=>h('div')}}));app.mount({})
+  try {
+    assert.deepEqual(cap.value,{ready:false,vision:false,events:false})
+    menu.initialized=true;menu.loading=false;await nextTick()
+    assert.deepEqual(cap.value,{ready:true,vision:false,events:false})
+    globalThis.alarmDashboardFixture.installed=true;globalThis.alarmDashboardFixture.changed();await nextTick()
+    assert.deepEqual(cap.value,{ready:true,vision:true,events:true})
+    menu.menuResultCache=[{code:'video/event'}];await nextTick()
+    assert.deepEqual(cap.value,{ready:true,vision:false,events:true})
+    menu.menuResultCache=[];await nextTick()
+    assert.deepEqual(cap.value,{ready:true,vision:false,events:false})
+    preview.value=true;await nextTick();assert.deepEqual(cap.value,{ready:true,vision:true,events:true})
+  } finally {app.unmount()}
+})
+
+test('loading and absent sources avoid requests; capability loss aborts pending and ignores late results', async () => {
+  const menu=reactive({initialized:false,loading:true,menuResultCache:[{code:'machine-vision/VisualAlarm'}]})
+  const calls=[], pending=[]
+  globalThis.alarmDashboardFixture={menu,installed:true,user:reactive({userInfo:{id:'u'}}),route:reactive({path:'/alarms/dashboard',params:{},query:{}}),project:'p',request:(url,data,config)=>new Promise(resolve=>{calls.push({url,data,config});pending.push(resolve)})}
+  let vision, trend
+  const app=renderer.createApp(defineComponent({setup(){
+    vision=api.useAlarmWidget('VisionAlarms',ref({componentProps:{alarmCenterVisionAlarms:{refreshSeconds:0}}}),ref(false))
+    trend=api.useAlarmWidget('AlarmTrend',ref({componentProps:{alarmCenterAlarmTrend:{refreshSeconds:0}}}),ref(false))
+    return ()=>h('div')
+  }}));app.mount({})
+  try {
+    assert.equal(calls.length,0)
+    menu.initialized=true;menu.loading=false;await nextTick()
+    assert(calls.some(c=>c.url.includes('aiTaskMediaTarget')))
+    const old=calls.slice();menu.menuResultCache=[];await nextTick()
+    assert(old.every(c=>c.config.signal.aborted));assert.equal(vision.available.value,false)
+    const fresh=calls.slice(old.length);assert(fresh.length>0)
+    assert(fresh.every(c=>c.url.includes('/alarm/record/device/')))
+    for(const resolve of pending)resolve(ok(999));await flush()
+    assert.equal(vision.data.value.metric,undefined)
+    assert.deepEqual(trend.data.value.series.map(s=>s.source),['iot'])
+  } finally {app.unmount()}
+})
+
+test('restricted layouts and keys isolate personalized full layouts', () => {
+  for (const mode of ['wide','medium','compact']) for(const cap of [{events:false,vision:false},{events:true,vision:false}]) {
+    const items=api.alarmDashboardLayout(mode,cap)
+    assert(!items.some(([kind])=>kind.startsWith('Vision')))
+    assert.equal(items.some(([kind])=>kind==='TodayEvents'),cap.events)
+    assert.equal(items.find(([kind])=>kind==='IotStatistics')[3],24)
+    for(const [i,a] of items.entries()) for(const b of items.slice(i+1)) assert(!(a[1]<b[1]+b[3]&&b[1]<a[1]+a[3]&&a[2]<b[2]+b[4]&&b[2]<a[2]+a[4]))
+    const full=api.alarmDashboardStorageKeys('scope',false,mode)
+    const reduced=api.alarmDashboardStorageKeys('scope',false,mode,cap)
+    assert.notEqual(full.key,reduced.key);assert.deepEqual(reduced.legacyKeys,[])
+    assert.equal(api.alarmDashboardStorageKeys('scope',false,mode,{events:true,vision:true}).key,full.key)
+  }
+})
+
+test('module removal cancels vision widget and its scheduled refresh despite a retained menu', async () => {
+  const calls=[]
+  const menu=reactive({initialized:true,loading:false,menuResultCache:[{code:'machine-vision/VisualAlarm'}]})
+  globalThis.alarmDashboardFixture={menu,installed:true,user:reactive({userInfo:{id:'u'}}),route:reactive({path:'/alarms/dashboard',params:{},query:{}}),project:'p',request:async(url,data,config)=>{calls.push({url,config});return ok(0)}}
+  let state
+  const app=renderer.createApp(defineComponent({setup(){state=api.useAlarmWidget('VisionAlarms',ref({componentProps:{alarmCenterVisionAlarms:{refreshSeconds:1}}}),ref(false));return ()=>h('div')}}));app.mount({})
+  try {
+    await flush();assert.equal(calls.length,4);assert.equal(state.available.value,true)
+    globalThis.alarmDashboardFixture.installed=false;globalThis.alarmDashboardFixture.changed();await nextTick()
+    assert.equal(state.available.value,false);assert(calls.every(call=>call.config.signal.aborted))
+    await new Promise(resolve=>setTimeout(resolve,1100));assert.equal(calls.length,4)
+  } finally {app.unmount()}
 })

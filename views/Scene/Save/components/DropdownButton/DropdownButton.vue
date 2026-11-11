@@ -53,12 +53,12 @@
               :fieldNames="{ key: valueName }"
               @select="treeSelect"
             >
-              <template #title="{ column, name, fullName, description }">
+              <template #title="{ column, name, fullName, description, children }">
                 <template v-if="slots.includes('title')">
                   <slot name="title" :data="{column, name, fullName}"></slot>
                 </template>
                 <a-space v-else>
-                  {{ name || fullName }}
+                  <span :class="{ 'scene-param-group': children?.length }">{{ name || fullName }}</span>
                   <span v-if="description" class="tree-title-description">{{
                     description
                   }}</span>
