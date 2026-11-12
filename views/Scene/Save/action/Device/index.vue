@@ -23,10 +23,8 @@
         <div class="steps-content">
             <section v-if="isDetailedEditor && current === 0" class="detailed-device-action-modal__product">
                 <header>
-                    <div>
-                        <strong>{{ $t('Device.index.9667820-1') }}</strong>
-                        <small>{{ $t('IotSceneLinkage.detail.productFirstHint') }}</small>
-                    </div>
+                    <strong>{{ $t('Device.index.9667820-1') }}</strong>
+                    <small>{{ $t('IotSceneLinkage.detail.actionProductFirstHint') }}</small>
                 </header>
                 <Product
                     v-model:rowKey="DeviceModel.productId"
@@ -147,9 +145,12 @@ const { isResourceScope, isDetailedEditor, current, DeviceModel, DeviceOptions, 
     gap: var(--space-4, 16px);
     min-height: 0;
 
-    > header > div {
-        display: grid;
-        gap: 4px;
+    > header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--space-3, 12px);
     }
 
     strong {

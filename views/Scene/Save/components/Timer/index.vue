@@ -310,11 +310,8 @@ const periodUnitChange = (v: any) => {
 };
 
 defineExpose({
-    validateFields: () =>
-        new Promise(async (resolve) => {
-            const data = await timerForm.value?.validateFields();
-            resolve(data);
-        }),
+    // 直接返回表单 Promise，让调用方捕获校验失败；async executor 会使外层 Promise 悬空。
+    validateFields: () => timerForm.value?.validateFields(),
 });
 
 Object.assign(formModel, props.value);

@@ -17,7 +17,7 @@ export function useDeviceActions(props: DeviceActionsProps, emit: (event: 'chang
   const sceneStore = useSceneStore();
   const { data } = storeToRefs(sceneStore);
   const action_data = inject<{ branchIndex?: number }>(ACTION_DATA)
-  const TypeList = [
+  const allTypes = [
       {
           label: $t('actions.index.9667837-2'),
           value: 'INVOKE_FUNCTION',
@@ -41,11 +41,12 @@ export function useDeviceActions(props: DeviceActionsProps, emit: (event: 'chang
       },
   ];
 
-  const actionTypeOptions = computed(() => TypeList.map((item, index) => ({
+  const actionTypeOptions = computed(() => allTypes.map((item, index) => ({
       ...item,
       icon: ['AppstoreOutlined', 'SearchOutlined', 'EditOutlined'][index],
       description: $t(`IotSceneLinkage.actionDescription.${['executeFunction', 'readProperty', 'writeProperty'][index]}`),
-  })))
+  })).filter(item => availableTypes.value.includes(item.value)))
+  const TypeList = computed(() => allTypes.filter(item => availableTypes.value.includes(item.value)))
   function optionValue(option: any) { return option?.data?.value ? option.data : option }
 
   const formRef = ref();
@@ -112,6 +113,7 @@ export function useDeviceActions(props: DeviceActionsProps, emit: (event: 'chang
       },
   ];
 
+  const metadataLoaded = ref(false)
   const metadata = ref<{
       functions: any[];
       properties: any[];
@@ -123,6 +125,14 @@ export function useDeviceActions(props: DeviceActionsProps, emit: (event: 'chang
   // 动作允许复杂物模型类型；仅复用富文本展示，不套用触发条件的类型限制。
   const functionOptions = computed(() => toThingModelOptions(metadata.value?.functions || [], 'function', true))
   const readOptions = computed(() => toThingModelOptions((metadata.value?.properties || []).filter(item => item.expands?.type?.includes('read')), 'property', true))
+
+  const writeOptions = computed(() => toThingModelOptions((metadata.value?.properties || []).filter(item => item.expands?.type?.includes('write')), 'property', true))
+  // 动作类型与其字段下拉使用同一套能力判断，空物模型不展示空类型。
+  const availableTypes = computed(() => [
+    ...(functionOptions.value.length ? ['INVOKE_FUNCTION'] : []),
+    ...(readOptions.value.length ? ['READ_PROPERTY'] : []),
+    ...(writeOptions.value.length ? ['WRITE_PROPERTY'] : []),
+  ])
 
   const deviceMessageType = computed(() => {
       return modelRef.message.messageType;
@@ -245,6 +255,7 @@ export function useDeviceActions(props: DeviceActionsProps, emit: (event: 'chang
               // 详细资源弹窗的动作能力来自产品物模型，不能因设备尚未选中而隐藏可配置字段。
               if (props.compact) {
                   metadata.value = typeof newVal.metadata === 'string' ? JSON.parse(newVal.metadata || '{}') : newVal.metadata || {};
+                  metadataLoaded.value = newVal.metadata != null;
                   return;
               }
               if (
@@ -258,11 +269,13 @@ export function useDeviceActions(props: DeviceActionsProps, emit: (event: 'chang
                               metadata.value = JSON.parse(
                                   resp.result?.metadata || '{}',
                               );
+                              metadataLoaded.value = true;
                           }
                       });
                   }
               } else {
-                  metadata.value = JSON.parse(newVal?.metadata || '{}');
+                  metadata.value = typeof newVal.metadata === 'string' ? JSON.parse(newVal.metadata || '{}') : newVal.metadata || {};
+                  metadataLoaded.value = newVal.metadata != null;
               }
           }
       },
@@ -291,6 +304,10 @@ export function useDeviceActions(props: DeviceActionsProps, emit: (event: 'chang
       },
       { immediate: true },
   );
+
+  watch([availableTypes, metadataLoaded], ([types, loaded]) => {
+    if (loaded && !types.includes(modelRef.message.messageType)) onMessageTypeChange(types[0] || '')
+  }, { immediate: true, flush: 'post' })
 
   return { formRef, modelRef, actionTypeOptions, TypeList, optionValue, onMessageTypeChange, deviceMessageType, metadata, functionOptions, readOptions, functionSelect, propertySelect, functionRef, writeFormRef, functions, builtInList, columnMap, onWriteChange, onFormSave, getColumnMap }
 }

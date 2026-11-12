@@ -1,6 +1,6 @@
 import {useRulePermissionContext, useScenePermissionContext} from '@rule-engine-manager-ui/hook/usePermission'
 import {EventEmitter, DeviceEmitterKey, ACTION_DATA} from '@rule-engine-manager-ui/views/Scene/Save/util';
-import type { DataCapabilityProviderManifest } from '@jetlinks-web-core/data-capability'
+import dataCapabilityProviders from './dataCapabilities'
 import type { AgentCapabilityProviderResource } from '@jetlinks-web-core/layout/components/AiChat/routeCapabilityLoader'
 import { queryAlarmLevelOptions, normalizeAlarmLevelValue } from './api/alarmLevel'
 import { ALARM_ANALYSIS_EXTENSION_KEY } from './agentCapabilities/alarmAnalysis/constants'
@@ -71,35 +71,7 @@ export default {
         queryAlarmLevelOptions, normalizeAlarmLevelValue
     },
     homeAgentProviders,
-    dataCapabilityProviders: {
-        deviceMonitoring: {
-            capabilityIds: [
-                'alarm.device.summary',
-                'alarm.device.active.ids',
-                'alarm.device.rank',
-                'alarm.device.list',
-            ],
-            loader: () => import('./dataCapabilities/deviceAlarmProvider'),
-        },
-        visionMonitoring: {
-            capabilityIds: [
-                'alarm.vision.summary',
-                'alarm.vision.trend',
-                'alarm.vision.type.distribution',
-                'alarm.vision.level.distribution',
-                'alarm.vision.scene.distribution',
-                'alarm.vision.scene.rank',
-                'alarm.vision.list',
-                'alarm.vision.level.trend',
-                'alarm.vision.handling.trend',
-                'alarm.vision.channel.rank',
-                'alarm.vision.ai-review.summary',
-                'alarm.event.summary',
-                'alarm.event.list',
-            ],
-            loader: () => import('./dataCapabilities/visionAlarmProvider'),
-        },
-    } satisfies DataCapabilityProviderManifest,
+    dataCapabilityProviders,
     generalAgentExtensions: {
         [ALARM_ANALYSIS_EXTENSION_KEY]: () => import('./agentCapabilities/alarmAnalysis/generalAgentExtension'),
         [RULE_EDITOR_FLOWCHART_EXTENSION_KEY]: {

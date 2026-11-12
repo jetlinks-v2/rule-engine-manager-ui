@@ -60,13 +60,12 @@ try {
     'VisionAlarmDataCapability.output.count',
   )
 
-  const registerText = await readFile(
-    fileURLToPath(new URL('../register.ts', import.meta.url)),
-    'utf8',
-  )
-  for (const capabilityId of [...DEVICE_IDS, ...VISION_IDS]) {
-    assert.match(registerText, new RegExp(`['"]${escapeRegExp(capabilityId)}['"]`))
-  }
+  const manifest = await loadProvider('index.ts')
+  assert.deepEqual(Object.keys(manifest), ['deviceMonitoring', 'visionMonitoring'])
+  assert.deepEqual(manifest.deviceMonitoring.capabilityIds, DEVICE_IDS)
+  assert.deepEqual(manifest.visionMonitoring.capabilityIds, VISION_IDS)
+  assertProvider((await manifest.deviceMonitoring.loader()).default, 'alarm:device-monitoring', DEVICE_IDS)
+  assertProvider((await manifest.visionMonitoring.loader()).default, 'alarm:vision-monitoring', VISION_IDS)
 } finally {
   await rm(tempDir, { recursive: true, force: true })
 }
@@ -185,8 +184,4 @@ async function assertOutputLocales(titleKeys) {
 
 async function readJson(url) {
   return JSON.parse(await readFile(fileURLToPath(url), 'utf8'))
-}
-
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
