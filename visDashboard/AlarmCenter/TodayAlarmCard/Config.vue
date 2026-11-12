@@ -25,10 +25,12 @@
   </div>
 </template>
 
-<script lang="ts" name="TodayAlarmCard" setup>
+<script lang="ts" setup>
 import { cloneDeep } from 'lodash-es'
 import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'TodayAlarmCard' })
 
 const { t: $t } = useI18n()
 

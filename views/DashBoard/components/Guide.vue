@@ -11,7 +11,10 @@
     </div>
 </template>
 
-<script setup lang="ts" name="Guide">
+<script setup lang="ts">
+
+defineOptions({ name: 'Guide' })
+
 interface guideProps {
     title?: string;
     english?: string;

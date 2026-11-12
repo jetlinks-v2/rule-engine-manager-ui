@@ -75,9 +75,11 @@
   </j-pro-table>
 </template>
 
-<script setup lang="ts" name="Collector">
+<script setup lang="ts">
 import {queryCollector} from '@rule-engine-manager-ui/api/collector'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'Collector' })
 
 type Emit = {
   (e: "update:rowKey", data: string): void;

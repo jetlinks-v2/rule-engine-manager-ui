@@ -42,7 +42,7 @@
   </a-modal>
 </template>
 
-<script setup lang='ts' name='AddModel'>
+<script setup lang='ts'>
 import type { PropType } from 'vue'
 import { cloneDeep } from 'lodash-es'
 import type { metadataType , TriggerDevice, TriggerDeviceOptions, SelectorValuesItem } from '../../typings'
@@ -54,6 +54,8 @@ import Type from './Type.vue'
 import DeviceScopeModal, { type DeviceScope } from '../../../SceneLinkage/editor/components/DeviceScopeModal.vue'
 import { handleTimerOptions } from '../components/Timer/util'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'AddModel' })
 
 const { t: $t } = useI18n()
 type Emit = {

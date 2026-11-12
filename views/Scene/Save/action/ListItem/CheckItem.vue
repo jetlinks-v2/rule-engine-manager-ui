@@ -2,7 +2,7 @@
   <slot />
 </template>
 
-<script setup lang="ts" name="ActionCheckItem">
+<script setup lang="ts">
 import type { PlatformRelation } from "../../../typings";
 import { useSceneStore } from "../../../../../store/scene";
 import { storeToRefs } from "pinia";
@@ -30,6 +30,8 @@ import { getOption } from "../../components/DropdownButton/util";
 import { getBuildInData, getNotifyVariablesUser } from "./util";
 import { defineExpose } from "vue";
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'ActionCheckItem' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

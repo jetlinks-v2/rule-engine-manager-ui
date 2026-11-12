@@ -69,7 +69,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="Device">
+<script setup lang="ts">
 import { useSceneStore } from "../../../../../../store/scene";
 import TopCard from "./TopCard.vue";
 import { storeToRefs } from "pinia";
@@ -83,6 +83,8 @@ import { map } from "lodash-es";
 import { TypeMap } from "./util";
 import { selectDeviceVariables } from "../../Device/deviceVariables";
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'Device' })
 
 const { t: $t } = useI18n()
 const props = defineProps({

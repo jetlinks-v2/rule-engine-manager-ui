@@ -8,9 +8,11 @@
   />
 </template>
 
-<script setup lang="ts" name="TodayAlarmCard">
+<script setup lang="ts">
 import CustomChartsCard from '../../shared/CustomChartsCard.vue'
 import { dashboard } from '@rule-engine-manager-ui/api/dashboard'
+
+defineOptions({ name: 'TodayAlarmCard' })
 
 const props = defineProps({
   info: {

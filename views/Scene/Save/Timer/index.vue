@@ -43,7 +43,7 @@
     </div>
 </template>
 
-<script lang="ts" setup name='SceneSaveTimer'>
+<script lang="ts" setup>
 import { useSceneStore } from '../../../../store/scene';
 import { storeToRefs } from 'pinia';
 import Action from '../action/index.vue';
@@ -52,6 +52,8 @@ import AddButton from '../components/AddButton.vue'
 import Title from './Title.vue'
 import type { OperationTimer, BranchesThen } from '../../typings';
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'SceneSaveTimer' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

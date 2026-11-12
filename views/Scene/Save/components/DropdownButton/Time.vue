@@ -27,9 +27,11 @@
   </div>
 </template>
 
-<script setup lang='ts' name='DropdownTime'>
+<script setup lang='ts'>
 import dayjs from 'dayjs'
 import {isNumber, isString} from "lodash-es";
+
+defineOptions({ name: 'DropdownTime' })
 
 type Emit = {
   (e: 'update:value', value: string) : void

@@ -66,7 +66,7 @@
     </j-pro-table>
 </template>
 
-<script setup lang='ts' name='Product'>
+<script setup lang='ts'>
 import {
     getProviders,
     queryGatewayList,
@@ -80,6 +80,8 @@ import { sceneImages } from '@rule-engine-manager-ui/assets/index';
 import { useI18n } from 'vue-i18n'
 import { useTermOptions } from '@jetlinks-web/components/es/Search/hooks/useTermOptions'
 import { useMenuStore } from '@jetlinks-web-core/store';
+
+defineOptions({ name: 'Product' })
 
 const { t: $t } = useI18n()
 type Emit = {

@@ -92,10 +92,12 @@
   </j-pro-table>
 </template>
 
-<script setup lang="ts" name="Channel">
+<script setup lang="ts">
 import {query, getProviders} from '@rule-engine-manager-ui/api/channel'
 import {protocolList, imgMap, StatusColorEnum} from "../../Collector/data";
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'Channel' })
 
 type Emit = {
   (e: "update:rowKey", data: string): void;
