@@ -2222,7 +2222,7 @@
 	"IotSceneLinkage.aiEvent.resourceUnavailable": "摄像头范围不可用，请重新选择",
 	"IotSceneLinkage.aiEvent.cameraBindingRequired": "所选摄像头未部署可用算法，请更换通道",
 	"IotSceneLinkage.aiEvent.cameraBindingLoadFailed": "摄像头算法绑定查询失败，请重试",
-	"IotSceneLinkage.aiEvent.cameraScopeRegion": "区域",
+	"IotSceneLinkage.aiEvent.cameraScopeRegion": "空间",
 	"IotSceneLinkage.aiEvent.cameraScopeGateway": "网关",
 	"IotSceneLinkage.aiEvent.cameraScopeChannel": "通道",
 	"IotSceneLinkage.aiEvent.allChannels": "全部通道",
