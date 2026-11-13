@@ -2221,7 +2221,7 @@
 	"IotSceneLinkage.aiEvent.resourceUnavailable": "The camera scope is unavailable. Select it again.",
 	"IotSceneLinkage.aiEvent.cameraBindingRequired": "No enabled algorithm is deployed for this camera. Select another channel.",
 	"IotSceneLinkage.aiEvent.cameraBindingLoadFailed": "Unable to load the camera algorithm bindings. Try again.",
-	"IotSceneLinkage.aiEvent.cameraScopeRegion": "Area",
+	"IotSceneLinkage.aiEvent.cameraScopeRegion": "Space",
 	"IotSceneLinkage.aiEvent.cameraScopeGateway": "Gateway",
 	"IotSceneLinkage.aiEvent.cameraScopeChannel": "Channel",
 	"IotSceneLinkage.aiEvent.allChannels": "All channels",
