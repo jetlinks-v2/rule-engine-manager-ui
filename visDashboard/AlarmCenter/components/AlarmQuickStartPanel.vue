@@ -5,7 +5,7 @@
       :disabled="action.disabled" @click="$emit('open', action.key)">
       <span class="alarm-quick-icon" :class="'alarm-quick-icon-' + action.key"><AIcon :type="action.icon" /></span>
       <span class="alarm-quick-copy">
-        <strong><JEllipsis>{{ t('alarmDashboard.action.' + action.key) }}</JEllipsis><span v-if="action.unconfigured" class="alarm-quick-unconfigured">{{ t('alarmDashboard.configuration.unconfigured') }}</span></strong>
+        <strong><JEllipsis>{{ t('alarmDashboard.action.' + action.key) }}</JEllipsis></strong>
         <small><JEllipsis>{{ t('alarmDashboard.actionDescription.' + action.key) }}</JEllipsis></small>
       </span>
       <RightOutlined class="alarm-quick-arrow" />
@@ -85,7 +85,6 @@ strong {
   color: #1d2129;
   transition: color .2s;
 }
-.alarm-quick-unconfigured { flex: none; font-size: 12px; font-weight: 400; color: var(--ant-color-primary, #1677ff); }
 small {
   color: #86909c;
   font-size: 12px;
