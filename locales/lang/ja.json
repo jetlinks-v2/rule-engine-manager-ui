@@ -2249,5 +2249,6 @@
   "IotSceneLinkage.node.allProductTarget": "すべての {product}",
   "IotSceneLinkage.node.scopedProductTarget": "{scope} のすべての {product}",
   "IotSceneLinkage.timer.calendarCondition": "カレンダー条件",
-  "IotSceneLinkage.timer.calendarLoadFailed": "カレンダータグの読み込みに失敗しました"
+  "IotSceneLinkage.timer.calendarLoadFailed": "カレンダータグの読み込みに失敗しました",
+  "metric.ruleAndCalculation": "ルールと計算"
 }
