@@ -77,7 +77,7 @@ export interface AlarmQueryRange {
   interval: '1h' | '1d'
 }
 export interface AlarmQueryTerm { column: string; termType: string; value: unknown }
-export interface AlarmQuickAction { key: string; icon: string; disabled?: boolean; unconfigured?: boolean }
+export interface AlarmQuickAction { key: string; icon: string; disabled?: boolean }
 export const emptyWidgetData = (): AlarmWidgetData => ({ series: [], ranking: [] })
 export const typeOf = (kind: AlarmDashboardKind) => `alarmCenter${kind === 'AlarmTrend' ? 'Trend' : kind}`
 export const isMetricKind = (kind: AlarmDashboardKind) => ['TodayEvents', 'IotAlarms', 'VisionAlarms'].includes(kind)
