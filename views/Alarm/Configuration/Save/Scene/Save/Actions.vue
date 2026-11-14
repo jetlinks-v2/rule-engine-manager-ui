@@ -387,7 +387,7 @@
   </div>
 </template>
 
-<script setup name="Actions">
+<script setup>
 import {
   iconMap,
   itemNotifyIconMap,
@@ -396,6 +396,8 @@ import {
 import { isBoolean } from "lodash-es";
 import Terms from "./Terms/Terms.vue";
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'Actions' })
 
 const { t: $t } = useI18n();
 const props = defineProps({

@@ -1,4 +1,4 @@
-<script setup name="FulfillTerms">
+<script setup>
 import DropdownButton from "../../../components/DropdownButton";
 import {useMouseEvent, useAggOptions, useColumnOptions, useFulfillData} from "./hooks";
 import {useI18n} from "vue-i18n";
@@ -13,6 +13,8 @@ import {watch} from "vue";
 import {getOption} from "../../../components/DropdownButton/util";
 import { storeToRefs } from "pinia";
 import { useSceneStore } from "@rule-engine-manager-ui/store/scene";
+
+defineOptions({ name: 'FulfillTerms' })
 
 const props = defineProps({
   isLast: {

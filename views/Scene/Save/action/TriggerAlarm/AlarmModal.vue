@@ -91,7 +91,7 @@
   </a-modal>
 </template>
 
-<script setup name="AlarmModal">
+<script setup>
 import { queryAlarmPage } from "@rule-engine-manager-ui/api/scene";
 import { useRequest } from "@jetlinks-web/hooks";
 import { useAlarmLevel } from "@rule-engine-manager-ui/hook";
@@ -100,6 +100,8 @@ import { onlyMessage } from "@jetlinks-web/utils";
 import { ConfigurationImages } from "@rule-engine-manager-ui/assets";
 import LevelIcon from '@rule-engine-manager-ui/components/AlarmLevelIcon/index.vue'
 import { useI18n } from "vue-i18n";
+
+defineOptions({ name: 'AlarmModal' })
 
 const { t: $t } = useI18n();
 const props = defineProps({

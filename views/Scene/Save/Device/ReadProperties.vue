@@ -20,10 +20,12 @@
   </a-row>
 </template>
 
-<script setup lang='ts' name='ReadProperties'>
+<script setup lang='ts'>
 import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ThingModelSelect from '../../../SceneLinkage/editor/components/ThingModelSelect.vue'
+
+defineOptions({ name: 'ReadProperties' })
 
 const { t: $t } = useI18n()
 type Emit = {

@@ -30,10 +30,12 @@
     </div>
 </template>
 
-<script lang="ts" setup name="ParamsDropdownArrayItem">
+<script lang="ts" setup>
 import type { ValueType } from './typings';
 import { DropdownMenus, DropdownTimePicker } from '../DropdownButton';
 import { defaultSetting } from './typings';
+
+defineOptions({ name: 'ParamsDropdownArrayItem' })
 const props = defineProps({
     ...defaultSetting,
     component: {

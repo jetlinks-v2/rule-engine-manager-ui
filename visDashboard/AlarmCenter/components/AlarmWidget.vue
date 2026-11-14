@@ -13,17 +13,13 @@
       <CloudEmpty :description="t('alarmDashboard.loadError')" :image-style="{ height: '48px' }" />
     </div>
     <div v-else class="alarm-widget-content" :class="{ 'alarm-widget-quick': kind === 'QuickStart', 'alarm-widget-ranking': statistics }">
-      <AlarmMetricPanel v-if="metric" :title="title" :icon="metricIcon" :event="kind === 'TodayEvents'" :data="data.metric">
-        <template v-if="hints.length" #hint><AlarmConfigurationGuide :items="hints" mode="compact" @open="open" /></template>
-      </AlarmMetricPanel>
-      <AlarmQuickStartPanel v-else-if="kind === 'QuickStart'" :actions="quickActions" @open="open" />
+      <AlarmMetricPanel v-if="metric" :title="title" :icon="metricIcon" :event="kind === 'TodayEvents'" :data="data.metric" />
+      <AlarmQuickStartPanel v-else-if="kind === 'QuickStart'" :actions="actions" @open="open" />
+      <AlarmConfigurationGuide v-else-if="empty" :items="hints" :empty="emptyCopy" @open="open" />
       <template v-else-if="handling">
-        <AlarmConfigurationGuide v-if="hints.length" :items="hints" @open="open" />
         <AlarmHandlingPanel :value="data.handling" :range="data.window" :source="handlingSource" :vision-enabled="capabilities.vision" :is-edit="isEdit" :loading="loading" />
       </template>
-      <AlarmConfigurationGuide v-else-if="guideEmpty" :items="hints" mode="empty" @open="open" />
       <template v-else>
-        <AlarmConfigurationGuide v-if="hints.length" :items="hints" @open="open" />
         <template v-if="kind === 'AlarmTrend'">
           <div v-if="failedSeries.length" class="alarm-widget-note" role="status" :title="t('alarmDashboard.seriesFailed', { names: failedSeries.join('、') })">
             {{ t('alarmDashboard.partialFailed') }}
@@ -59,24 +55,22 @@ const AlarmTrendPanel = defineAsyncComponent(() => import('./AlarmTrendPanel.vue
 const AlarmStatisticsPanel = defineAsyncComponent(() => import('./AlarmStatisticsPanel.vue'))
 const props = defineProps<{ kind: AlarmDashboardKind; info?: AlarmWidgetInfo; isEdit: boolean }>()
 const { t } = useI18n()
-const { config, data, loading, error, timeRange, dimension, capabilities, available } = useAlarmWidget(props.kind, toRef(props, 'info'), toRef(props, 'isEdit'))
+const { config, data, loading, error, empty, timeRange, dimension, capabilities, available } = useAlarmWidget(props.kind, toRef(props, 'info'), toRef(props, 'isEdit'))
 const { actions, open } = useAlarmQuickStart(toRef(props, 'isEdit'), capabilities)
 const rankingOpen = ref(false)
 // 弹窗始终对应打开时的维度，离开页面后不保留浮层。
 watch(dimension, () => { rankingOpen.value = false })
 onDeactivated(() => { rankingOpen.value = false })
 const { state: ruleConfiguration } = useAlarmRuleConfiguration(
-  computed(() => props.isEdit || !available.value), computed(() => capabilities.value.vision))
+  computed(() => props.isEdit || !available.value || isMetricKind(props.kind) || props.kind === 'QuickStart'), computed(() => capabilities.value.vision))
 const hints = computed(() => configurationHintsFor(props.kind, ruleConfiguration.value, actions.value, capabilities.value.vision))
-// 未配置规则不能抹掉已有事件和历史告警，只在图表确实无记录时替换通用空态。
-const guideEmpty = computed(() => hints.value.length > 0 && (
-  props.kind === 'AlarmTrend' ? !data.value.series.some(item => item.points.length || item.failed) : !data.value.ranking.length
-))
-const quickActions = computed(() => actions.value.map(action => ({
-  ...action,
-  unconfigured: action.key === 'iotRules' ? ruleConfiguration.value.iot === 'missing'
-    : action.key === 'visionRules' && ruleConfiguration.value.vision === 'missing',
-})))
+const emptyCopy = computed(() => ({
+  title: hints.value.length === 1 ? t('alarmDashboard.configuration.missing.' + hints.value[0].source)
+    : hints.value.length ? t('alarmDashboard.empty.noRules')
+      : t('alarmDashboard.' + (statistics.value ? 'noStatistics' : handling.value ? 'empty.noHandling' : 'noTrend')),
+  description: t('alarmDashboard.empty.' + (hints.value.length ? 'configureDescription'
+    : statistics.value ? 'rankingDescription' : 'rangeDescription')),
+}))
 const handling = computed(() => isHandlingKind(props.kind))
 const handlingSource = computed(() => handlingSourceOf(props.kind))
 const metric = computed(() => isMetricKind(props.kind))

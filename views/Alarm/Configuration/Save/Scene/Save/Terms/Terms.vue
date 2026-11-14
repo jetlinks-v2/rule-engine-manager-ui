@@ -18,8 +18,10 @@
   </div>
 </template>
 
-<script setup name="Terms">
+<script setup>
 import WhenItem from "./WhenItem.vue";
+
+defineOptions({ name: 'Terms' })
 
 const props = defineProps({
   when: {

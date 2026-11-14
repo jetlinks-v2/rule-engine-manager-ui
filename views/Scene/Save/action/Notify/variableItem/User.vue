@@ -157,7 +157,7 @@
     </div>
 </template>
 
-<script lang="ts" setup name="NotifyUser">
+<script lang="ts" setup>
 import { storeToRefs } from 'pinia';
 import { useSceneStore } from '../../../../../../store/scene';
 import {queryDingTalkUsers , queryWechatUsers , getPlatformUsers , getRelationUsers as queryRelationUsers } from '../../../../../../api/others'
@@ -165,6 +165,8 @@ import { unionBy } from 'lodash-es';
 import { useI18n } from 'vue-i18n'
 import { isNoCommunity } from '@jetlinks-web-core/utils';
 import {moduleRegistry} from "@jetlinks-web-core/utils/module-registry";
+
+defineOptions({ name: 'NotifyUser' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

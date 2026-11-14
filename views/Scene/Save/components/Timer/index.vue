@@ -98,7 +98,7 @@
     </a-form>
 </template>
 
-<script setup lang="ts" name="Timer">
+<script setup lang="ts">
 import type { PropType } from 'vue';
 import dayjs from 'dayjs';
 import WhenOption from './WhenOption.vue';
@@ -109,6 +109,8 @@ import Calendar from './Calendar.vue';
 // import cronstrue from 'cronstrue';
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils';
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'Timer' })
 
 const { t: $t } = useI18n()
 type NameType = string[] | string;

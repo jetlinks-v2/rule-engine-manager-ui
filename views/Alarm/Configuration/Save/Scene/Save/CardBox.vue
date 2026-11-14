@@ -138,7 +138,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="SceneCardBox">
+<script setup lang="ts">
 import  colorMap ,{ getHexColor } from "@jetlinks-web/components/es/BadgeStatus/color";
 import DeviceTitle from "../../../../../Scene/Save/components/Title.vue";
 import TimerTitle from "../../../../../Scene/Save/Timer/Title.vue";
@@ -150,6 +150,8 @@ import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import Tags from "./tags.vue";
 import { useI18n } from 'vue-i18n';
 import { useTabSaveSuccess } from '@jetlinks-web-core/hooks'
+
+defineOptions({ name: 'SceneCardBox' })
 
 const { t: $t } = useI18n();
 type EmitProps = {

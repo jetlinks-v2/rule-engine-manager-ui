@@ -2,13 +2,15 @@
   <slot />
 </template>
 
-<script setup name="CheckFilterItem">
+<script setup>
 import { Form } from "ant-design-vue";
 import { queryAlarmList } from "../../../../../api/scene";
 import { defineExpose } from "vue";
 import { useSceneStore } from "../../../../../store/scene";
 import { storeToRefs } from "pinia";
 import { CHECK_FILTER_KEY } from "./util";
+
+defineOptions({ name: 'CheckFilterItem' })
 
 const props = defineProps({
   name: {

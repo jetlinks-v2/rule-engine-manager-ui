@@ -101,7 +101,7 @@ function mount(t, component) {
   app.component('a-button',{inheritAttrs:false,setup(_,ctx){return ()=>h('button',ctx.attrs,ctx.slots.default?.())}})
   app.component('a-spin',{setup(_,ctx){return ()=>h('div',ctx.slots.default?.())}})
   for(const name of ['a-badge','a-segmented','AIcon']) app.component(name,()=>null)
-  app.component('CloudEmpty',{props:['description'],setup(props){return ()=>h('div',{'data-empty':true},props.description)}})
+  app.component('CloudEmpty',{props:['description'],setup(props,ctx){return ()=>h('div',{'data-empty':true},[ctx.slots.description?.()||props.description,ctx.slots.default?.()])}})
   const container=node('root')
   app.mount(container)
   t.after(()=>app.unmount())
@@ -214,7 +214,7 @@ test('every widget maps only the relevant sources and configuration actions resp
   const actions=[{key:'iotRules',icon:''},{key:'visionRules',icon:''}]
   for(const kind of api.dashboardKinds){
     const hints=api.configurationHintsFor(kind,{iot:'missing',vision:'missing'},actions)
-    const expected=kind==='QuickStart'?[]:(kind==='AlarmTrend'||kind==='HandlingStatistics')?['iot','vision']:kind.startsWith('Iot')?['iot']:['vision']
+    const expected=kind==='QuickStart'||api.isMetricKind(kind)?[]:(kind==='AlarmTrend'||kind==='HandlingStatistics')?['iot','vision']:kind.startsWith('Iot')?['iot']:['vision']
     assert.deepEqual(hints.map(item=>item.source),expected)
     assert(hints.every(item=>item.action))
     assert(api.configurationHintsFor(kind,{iot:'missing',vision:'missing'},[]).every(item=>!item.action))
@@ -227,20 +227,84 @@ test('unconfigured statistics replace generic no-record empty state and configur
   await flush()
   assert(textOf(container).includes(messages['alarmDashboard.configuration.missing.iot']))
   assert(!textOf(container).includes(messages['alarmDashboard.noStatistics']))
-  const button=find(container,el=>el.type==='button'&&textOf(el)===messages['alarmDashboard.action.iotRules'])[0]
+  const button=find(container,el=>el.type==='button'&&textOf(el)===messages['alarmDashboard.empty.configure'])[0]
   assert(button);button.props.onClick()
   assert.deepEqual(state.navigations,['iot-user/device/alarm'])
 })
 
-test('metric guidance preserves raw event counts and cumulative historical alarm values',async t=>{
-  fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:url.endsWith('_count')?(url.includes('/ai/aggregate/')?0:24):[])))
+test('metrics preserve raw event and historical alarm counts without configuration hints or queries',async t=>{
+  const state=fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:url.endsWith('_count')?(url.includes('/ai/aggregate/')?0:24):[])))
   const events=widget(t,'TodayEvents'),alarms=widget(t,'IotAlarms')
   await flush()
   assert(textOf(events.container).includes('24'))
-  assert(textOf(events.container).includes(messages['alarmDashboard.configuration.missing.vision']))
+  assert(!textOf(events.container).includes(messages['alarmDashboard.configuration.missing.vision']))
   assert(textOf(alarms.container).includes(messages['alarmDashboard.total']))
   assert(textOf(alarms.container).includes('24'))
+  assert(!textOf(alarms.container).includes(messages['alarmDashboard.configuration.missing.iot']))
+  assert(!state.calls.some(call=>call.url.includes('device-alarm')||call.url.includes('/ai/aggregate/')))
 })
+
+test('all three metric cards display successful zero values without empty guides',async t=>{
+  fixture()
+  for(const kind of ['TodayEvents','IotAlarms','VisionAlarms']) {
+    const {container}=widget(t,kind)
+    await flush()
+    assert(textOf(container).includes('0'))
+    assert.equal(find(container,el=>el.props['data-empty']).length,0)
+    assert.equal(find(container,el=>el.type==='button').length,0)
+    assert(!textOf(container).includes(messages['alarmDashboard.configuration.missing.iot']))
+    assert(!textOf(container).includes(messages['alarmDashboard.configuration.missing.vision']))
+  }
+})
+
+test('zero-filled trend and handling series display the centered guide instead of empty charts',async t=>{
+  fixture((url,data)=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}
+    :data.groupByTime?[{time:data.groupByTime.from,count:0}]
+      :url.includes('history/aggregation')?[{time:data.from,total:0}]
+        :url.endsWith('_count')?0:[])))
+  for(const kind of ['AlarmTrend','IotHandlingStatistics','VisionHandlingStatistics','HandlingStatistics']) {
+    const {container}=widget(t,kind)
+    await flush()
+    assert.equal(find(container,el=>el.props['data-empty']).length,1,kind)
+    assert(textOf(container).includes(messages['alarmDashboard.empty.configureDescription']),kind)
+    assert.equal(find(container,el=>el.props['data-chart']).length,0,kind)
+    assert(find(container,el=>el.type==='button').length>0,kind)
+  }
+})
+
+test('trend with two missing sources shows short source-specific actions and preserves their navigation',async t=>{
+  const state=fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:url.includes('/ai/aggregate/')?0:[])))
+  const {container}=widget(t,'AlarmTrend')
+  await flush()
+  const iot=find(container,el=>el.type==='button'&&textOf(el)===messages['alarmDashboard.empty.configure.iot'])[0]
+  const vision=find(container,el=>el.type==='button'&&textOf(el)===messages['alarmDashboard.empty.configure.vision'])[0]
+  assert(iot);assert(vision)
+  iot.props.onClick();vision.props.onClick()
+  assert.deepEqual(state.navigations,['iot-user/device/alarm','machine-vision/VisualAlarm'])
+})
+
+for(const configured of ['iot','vision']) {
+  test(`trend displays a chart when only ${configured} is configured and has data`,async t=>{
+    fixture((url,data)=> {
+      if(url.includes('device-alarm')) return Promise.resolve(ok({data:configured==='iot'?[{id:'rule'}]:[],total:configured==='iot'?1:0}))
+      if(url.includes('/ai/aggregate/')) return Promise.resolve(ok(configured==='vision'?1:0))
+      if(url.includes('history/aggregation')) return Promise.resolve(ok([]))
+      const target=data.filter.terms.find(term=>term.column==='targetType')?.value
+      const hasData=target===(configured==='iot'?'device':'aiTaskMediaTarget')
+      return Promise.resolve(ok(hasData?[{time:data.groupByTime.from,count:7}]:[]))
+    })
+    const {container}=widget(t,'AlarmTrend')
+    await flush()
+    assert.equal(find(container,el=>el.props['data-empty']).length,0)
+    assert.equal(find(container,el=>el.props['data-chart']).length,1)
+    assert(textOf(container).includes('"count":7'))
+    assert(!textOf(container).includes(messages['alarmDashboard.empty.configureDescription']))
+    const missing=configured==='iot'?'vision':'iot'
+    assert(!textOf(container).includes(messages['alarmDashboard.configuration.missing.'+missing]))
+    assert(!textOf(container).includes(messages['alarmDashboard.configuration.missing.'+configured]))
+    assert.equal(find(container,el=>el.type==='button').length,0)
+  })
+}
 
 test('an unconfigured source does not remove existing ranking or other trend series',async t=>{
   fixture((url,data)=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}
@@ -251,7 +315,7 @@ test('an unconfigured source does not remove existing ranking or other trend ser
   const trend=widget(t,'AlarmTrend')
   await flush()
   assert(textOf(container).includes('Historic alarm'))
-  assert(textOf(container).includes(messages['alarmDashboard.configuration.missing.iot']))
+  assert(!textOf(container).includes(messages['alarmDashboard.configuration.missing.iot']))
   assert(textOf(trend.container).includes('\"count\":7'))
   assert(textOf(trend.container).includes('\"count\":2'))
 })
@@ -261,25 +325,28 @@ test('configuration guidance never hides an independently failed trend source',a
     :Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:url.endsWith('_count')?0:[])))
   const {container}=widget(t,'AlarmTrend')
   await flush()
-  assert(textOf(container).includes(messages['alarmDashboard.configuration.missing.iot']))
+  assert(!textOf(container).includes(messages['alarmDashboard.configuration.missing.iot']))
   assert(textOf(container).includes(messages['alarmDashboard.partialFailed']))
   assert(find(container,el=>el.props.title?.includes(messages['alarmDashboard.source.events'])).length)
   assert(find(container,el=>el.props['data-chart']).length)
   assert.equal(find(container,el=>el.type==='button'&&textOf(el)===messages['alarmDashboard.retry']).length,0)
 })
 
-test('configured but empty alarms use normal no-record state, with no onboarding prompt',async t=>{
+test('configured but empty alarms show the illustrated no-record guide without a configuration action',async t=>{
   fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[{id:'disabled',state:'disabled'}],total:1}:url.includes('/ai/aggregate/')?1:url.endsWith('_count')?0:[])))
   const {container}=widget(t,'VisionStatistics')
   await flush()
-  assert.equal(find(container,el=>el.props['data-chart']).length,1)
-  assert(textOf(container).includes('[]'))
+  assert.equal(find(container,el=>el.props['data-chart']).length,0)
+  assert.equal(find(container,el=>el.props['data-empty']).length,1)
+  assert(textOf(container).includes(messages['alarmDashboard.noStatistics']))
+  assert(textOf(container).includes(messages['alarmDashboard.empty.rankingDescription']))
   assert(!textOf(container).includes(messages['alarmDashboard.configuration.missing.vision']))
+  assert.equal(find(container,el=>el.type==='button').length,0)
 })
 
 test('forbidden configuration has no configure button and never becomes an empty-rule prompt',async t=>{
   fixture(url=>url.includes('device-alarm')?Promise.reject({response:{status:403}}):Promise.resolve(ok(url.endsWith('_count')?0:[])))
-  const {container}=widget(t,'IotAlarms')
+  const {container}=widget(t,'IotStatistics')
   await flush()
   assert(!textOf(container).includes(messages['alarmDashboard.configuration.forbidden.iot']))
   assert(!textOf(container).includes(messages['alarmDashboard.configuration.missing.iot']))
@@ -288,7 +355,7 @@ test('forbidden configuration has no configure button and never becomes an empty
 
 test('missing rules without an accessible menu show the prompt without a dead configure button',async t=>{
   const state=fixture();state.menus.clear()
-  const {container}=widget(t,'VisionAlarms')
+  const {container}=widget(t,'VisionStatistics')
   await flush()
   assert(textOf(container).includes(messages['alarmDashboard.configuration.missing.vision']))
   assert.equal(find(container,el=>el.type==='button').length,0)
@@ -296,7 +363,7 @@ test('missing rules without an accessible menu show the prompt without a dead co
 
 test('failed configuration is silent and never presents a missing-rule action',async t=>{
   fixture(url=>url.includes('/ai/aggregate/')?Promise.reject(new Error('temporary')):Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:url.endsWith('_count')?0:[])))
-  const {container}=widget(t,'VisionAlarms')
+  const {container}=widget(t,'VisionStatistics')
   await flush()
   assert(!textOf(container).includes(messages['alarmDashboard.configuration.error.vision']))
   assert(!textOf(container).includes(messages['alarmDashboard.configuration.missing.vision']))
@@ -331,11 +398,14 @@ test('trend with all sources failed displays empty error without retry or chart'
   assert.equal(find(container,el=>el.type==='button'&&textOf(el)===messages['alarmDashboard.retry']).length,0)
 })
 
-test('quick start marks only the missing source and preview widgets issue no live requests',async t=>{
-  fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:1)))
+test('quick start keeps authorized actions without configuration status queries; preview issues no live requests',async t=>{
+  const runtime=fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:1)))
   const {container}=widget(t,'QuickStart')
   await flush()
-  assert.equal(textOf(container).split(messages['alarmDashboard.configuration.unconfigured']).length-1,1)
+  assert(!textOf(container).includes('未配置'))
+  assert(textOf(container).includes(messages['alarmDashboard.action.iotRules']))
+  assert(textOf(container).includes(messages['alarmDashboard.action.visionRules']))
+  assert.equal(runtime.calls.length,0)
   const state=fixture()
   for(const kind of api.dashboardKinds) widget(t,kind,true)
   await flush()

@@ -22,7 +22,7 @@
   />
 </template>
 
-<script setup lang="ts" name="SceneDeviceProduct">
+<script setup lang="ts">
 import { ref, watch, type PropType } from 'vue'
 import type { ConditionFilterTerm } from '@jetlinks-web-core/components/ConditionFilter'
 import {
@@ -35,6 +35,8 @@ import {
 import IotAddDeviceProductStep from '@device-manager-ui/views/device/list/components/IotAddDeviceProductStep.vue'
 import type { ProductCategoryTreeNode } from '@device-manager-ui/views/device/Product/components/ProductCategoryTree.vue'
 import { collectProductCategoryScopeIds } from '@device-manager-ui/utils/deviceCreationSources'
+
+defineOptions({ name: 'SceneDeviceProduct' })
 
 type ProductQuery = { terms?: DeviceQueryTerm[]; pageIndex?: number }
 

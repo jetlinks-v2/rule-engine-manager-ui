@@ -93,12 +93,14 @@
         </template>
     </a-modal>
 </template>
-<script lang="ts" setup name="ActionDeviceModal">
+<script lang="ts" setup>
 import Product from '../../Device/Product.vue';
 import Device from './device/index.vue';
 import Action from './actions/index.vue';
 import DetailedDeviceActionScope from './DetailedDeviceActionScope.vue';
 import { useDeviceActionModal } from './useDeviceActionModal'
+
+defineOptions({ name: 'ActionDeviceModal' })
 type Emit = {
     (e: 'cancel'): void;
     (e: 'save', data: any, options: Record<string, any>): void;

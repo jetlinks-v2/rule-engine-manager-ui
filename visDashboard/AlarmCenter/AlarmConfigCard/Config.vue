@@ -6,9 +6,11 @@
   />
 </template>
 
-<script setup lang="ts" name="AlarmConfigCard">
+<script setup lang="ts">
 import CountSummaryConfig from '../components/CountSummaryConfig.vue'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'AlarmConfigCard' })
 
 const { t: $t } = useI18n()
 

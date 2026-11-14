@@ -9,10 +9,12 @@
   />
 </template>
 
-<script setup lang="ts" name="AlarmConfigCard">
+<script setup lang="ts">
 import CustomImageCard from '../../shared/CustomImageCard.vue'
 import type { Subscription } from 'rxjs'
 import { getAlarmConfigCount as getAlarmConfig } from '@rule-engine-manager-ui/api/dashboard'
+
+defineOptions({ name: 'AlarmConfigCard' })
 
 const props = defineProps({
   info: {
