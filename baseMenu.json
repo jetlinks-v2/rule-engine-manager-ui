@@ -560,6 +560,114 @@
           "space",
           "user"
         ]
+      },
+      {
+        "code": "rule-engine/Metric",
+        "id": "device-metric",
+        "name": "指标管理",
+        "i18nMessages": {
+            "name": {
+                "zh_CN": "指标管理",
+                "en_US": "Metric management",
+                "en": "Metric management",
+                "ja_JP": "指標管理",
+                "ja": "指標管理"
+            }
+        },
+        "url": "/rule-engine/metrics",
+        "icon": "DashboardOutlined",
+        "sortIndex": 30,
+        "showPage": [
+          "metric-config"
+        ],
+        "buttons": [
+          {
+            "id": "view",
+            "name": "查看",
+            "permissions": [
+              {
+                "permission": "metric-config",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "metric-template",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "save",
+            "name": "配置",
+            "permissions": [
+              {
+                "permission": "metric-config",
+                "actions": [
+                  "query",
+                  "save",
+                  "delete"
+                ]
+              },
+              {
+                "permission": "metric-template",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "rule-engine/MetricTemplate",
+        "id": "device-metric-template",
+        "name": "指标模板",
+        "i18nMessages": {
+            "name": {
+                "zh_CN": "指标模板",
+                "en_US": "Metric templates",
+                "en": "Metric templates",
+                "ja_JP": "指標テンプレート",
+                "ja": "指標テンプレート"
+            }
+        },
+        "url": "/rule-engine/metric-templates",
+        "icon": "SnippetsOutlined",
+        "sortIndex": 40,
+        "showPage": [
+          "metric-template"
+        ],
+        "buttons": [
+          {
+            "id": "view",
+            "name": "查看",
+            "permissions": [
+              {
+                "permission": "metric-template",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "save",
+            "name": "配置",
+            "permissions": [
+              {
+                "permission": "metric-template",
+                "actions": [
+                  "query",
+                  "save",
+                  "delete"
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   },
