@@ -19,7 +19,10 @@
   </div>
 </template>
 
-<script lang='ts' setup name='TriggerWay'>
+<script lang='ts' setup>
+
+defineOptions({ name: 'TriggerWay' })
+
 
 type Emit = {
   (e: 'update:modelValue', data: string): void

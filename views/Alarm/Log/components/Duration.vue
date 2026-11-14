@@ -2,8 +2,10 @@
     <div>{{ duration }}</div>
 </template>
 
-<script setup name="Duration">
+<script setup>
 import dayjs from 'dayjs';
+
+defineOptions({ name: 'Duration' })
 const props = defineProps({
     data: {
         type: Object,

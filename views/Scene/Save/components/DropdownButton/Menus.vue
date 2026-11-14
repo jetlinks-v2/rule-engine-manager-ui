@@ -10,10 +10,12 @@
   </a-menu>
 </template>
 
-<script lang='ts' setup name='DropdownMenus'>
+<script lang='ts' setup>
 import { isArray, isBoolean, isUndefined } from 'lodash-es'
 import { getOption } from '../DropdownButton/util'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'DropdownMenus' })
 
 const { t: $t } = useI18n()
 type ValueType = string| number | boolean

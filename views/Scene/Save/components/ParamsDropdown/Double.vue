@@ -28,9 +28,11 @@
   /> -->
 </template>
 
-<script lang="ts" setup name="DoubleParamsDropdown">
+<script lang="ts" setup>
 import ParamsDropdown from "./index.vue";
 import { defaultSetting, ValueType } from "./typings";
+
+defineOptions({ name: 'DoubleParamsDropdown' })
 
 type Emit = {
   (e: "update:value", data: ValueType): void;

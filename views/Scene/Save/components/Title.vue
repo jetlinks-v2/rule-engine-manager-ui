@@ -39,8 +39,10 @@
   </div>
 </template>
 
-<script setup lang='ts' name='DeviceTitle'>
+<script setup lang='ts'>
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'DeviceTitle' })
 
 const { t: $t } = useI18n()
 const props = defineProps({

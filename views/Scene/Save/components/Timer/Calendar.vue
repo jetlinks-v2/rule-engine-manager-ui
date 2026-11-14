@@ -114,10 +114,12 @@
   </div>
 </template>
 
-<script setup name="Calendar">
+<script setup>
 import dayjs from "dayjs";
 import { useTimerCalendarTags } from "./useTimerCalendarTags";
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'Calendar' })
 
 const { t: $t } = useI18n()
 const props = defineProps({

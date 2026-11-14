@@ -148,7 +148,7 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="Scene">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import SaveModal from "./Save/save.vue";
@@ -163,6 +163,8 @@ import {useRequest} from "@jetlinks-web/hooks";
 import { useScenePermission } from '@rule-engine-manager-ui/hook/usePermission'
 import { mergeObjectArrays } from '@jetlinks-web-core/utils'
 import { omit } from 'lodash-es';
+
+defineOptions({ name: 'Scene' })
 
 const images = {
   timer: 'icon-shijian2',

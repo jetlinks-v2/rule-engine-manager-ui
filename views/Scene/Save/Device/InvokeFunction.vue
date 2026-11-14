@@ -32,12 +32,14 @@
   </a-form>
 </template>
 
-<script setup lang='ts' name='InvokeFunction'>
+<script setup lang='ts'>
 import { filterSelectNode } from '../../../../utils/comm'
 import { FunctionCall } from '../components'
 import type { PropType } from 'vue'
 import { defineExpose } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'InvokeFunction' })
 
 const { t: $t } = useI18n()
 type Emit = {

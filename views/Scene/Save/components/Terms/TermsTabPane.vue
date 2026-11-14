@@ -10,7 +10,10 @@
   </div>
 </template>
 
-<script setup name="TermsTabPane">
+<script setup>
+
+defineOptions({ name: 'TermsTabPane' })
+
 
 const emit = defineEmits('close')
 

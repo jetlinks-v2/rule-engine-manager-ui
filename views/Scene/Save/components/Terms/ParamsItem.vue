@@ -106,7 +106,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="ParamsItem">
+<script setup lang="ts">
 import type { PropType } from "vue";
 import type { TermsType } from "../../../typings";
 import DropdownButton from "../DropdownButton";
@@ -127,6 +127,8 @@ import { storeToRefs } from "pinia";
 import { Form } from "ant-design-vue";
 import { isArray, isObject, isString, pick } from "lodash-es";
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'ParamsItem' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

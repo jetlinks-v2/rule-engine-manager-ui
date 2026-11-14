@@ -12,13 +12,15 @@
   </a-modal>
 </template>
 
-<script setup lang="ts" name="timerAddModel">
+<script setup lang="ts">
 import Timer from "../components/Timer";
 import type { OperationTimer } from "../../typings";
 import { PropType } from "vue";
 import { handleTimerOptions } from "../components/Timer/util";
 import { cloneDeep } from "lodash-es";
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'timerAddModel' })
 
 const { t: $t } = useI18n()
 type Emit = {

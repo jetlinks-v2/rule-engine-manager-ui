@@ -71,12 +71,14 @@
   </JProTable>
 </template>
 
-<script setup lang="ts" name="Product">
+<script setup lang="ts">
 import { query, queryNoPagingPost } from "@rule-engine-manager-ui/api/others";
 import { sceneImages } from "@rule-engine-manager-ui/assets";
 import { PropType } from "vue";
 import { cloneDeep } from "lodash-es";
 import { useI18n } from "vue-i18n";
+
+defineOptions({ name: 'Product' })
 
 const { t: $t } = useI18n();
 type Emit = {

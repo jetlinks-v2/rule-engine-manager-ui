@@ -7,8 +7,10 @@
   </div>
 </template>
 
-<script setup lang='ts' name='AddButton'>
+<script setup lang='ts'>
 import type { PropType, CSSProperties} from 'vue'
+
+defineOptions({ name: 'AddButton' })
 
 type Emit = {
   (e: 'click'): void

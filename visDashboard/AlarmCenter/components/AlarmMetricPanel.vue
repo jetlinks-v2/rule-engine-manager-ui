@@ -5,7 +5,7 @@
         <h3 class="alarm-metric-title">{{ title }}</h3>
         <div class="alarm-metric-value" :title="data?.failed.includes('today') ? t('alarmDashboard.partialFailed') : undefined">{{ format('today') }} <small>{{ t('alarmDashboard.unit') }}</small></div>
       </div>
-      <slot name="hint"><AIcon :type="icon" class="alarm-metric-icon" /></slot>
+      <AIcon :type="icon" class="alarm-metric-icon" />
     </div>
     <div class="alarm-metric-footer">
       <template v-if="event">

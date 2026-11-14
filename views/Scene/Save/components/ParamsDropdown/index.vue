@@ -128,12 +128,14 @@
   </a-dropdown>
 </template>
 
-<script lang="ts" setup name="ParamsDropdown">
+<script lang="ts" setup>
 import type { ValueType } from "./typings";
 import { defaultSetting } from "./typings";
 import { DropdownMenus, DropdownTimePicker } from "../DropdownButton";
 import { getOption } from "../DropdownButton/util";
 import { openKeysByTree } from "../../../../../utils/comm";
+
+defineOptions({ name: 'ParamsDropdown' })
 
 type Emit = {
   (e: "update:value", data: ValueType): void;

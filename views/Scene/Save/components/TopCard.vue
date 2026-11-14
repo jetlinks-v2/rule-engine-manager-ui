@@ -35,10 +35,12 @@
   </div>
 </template>
 
-<script setup lang='ts' name='TopCard'>
+<script setup lang='ts'>
 
 import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'TopCard' })
 
 const { t: $t } = useI18n()
 type optionsType = {

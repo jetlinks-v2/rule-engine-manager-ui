@@ -111,7 +111,7 @@
     />
 </template>
 
-<script setup lang="ts" name="Terms">
+<script setup lang="ts">
 import { storeToRefs } from 'pinia';
 import { useSceneStore } from '../../../../../store/scene';
 import { cloneDeep } from 'lodash-es';
@@ -130,6 +130,8 @@ import {
 } from '../../../../../api/configuration';
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'Terms' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

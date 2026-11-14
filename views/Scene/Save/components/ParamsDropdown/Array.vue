@@ -94,12 +94,14 @@
     </a-dropdown>
 </template>
 
-<script lang="ts" setup name="ArrayParamsDropdown">
+<script lang="ts" setup>
 import type { ValueType } from './typings';
 import { defaultSetting } from './typings';
 import { useI18n } from 'vue-i18n'
 import {onlyMessage} from "@jetlinks-web/utils";
 import { isNil } from "lodash-es";
+
+defineOptions({ name: 'ArrayParamsDropdown' })
 
 const { t: $t } = useI18n()
 type Emit = {
