@@ -14,7 +14,12 @@ const messages = JSON.parse(await readFile(resolve(root, 'locales/lang/zh.json')
 const stubs = {
   '@jetlinks-web/core': 'export const request={post:(...args)=>globalThis.alarmConfigurationFixture.request(...args)}',
   '@jetlinks-web-core/utils/module-registry': 'export const moduleRegistry={getResourceItem:()=>undefined,hasModule:()=>true,onChange:()=>()=>{}}',
-  '@jetlinks-web-core/locales': 'export default {global:{t:key=>key}}',
+  '@jetlinks-web-core/locales': 'export default {global:{t:key=>globalThis.alarmConfigurationFixture.messages[key]||key}}',
+  '@jetlinks-web-core/utils/documentHelpRegistry': 'export const registerDocumentHelpPoints=points=>globalThis.alarmConfigurationFixture.helpPoints.push(...points)',
+  '@jetlinks-web-core/components/DocumentHelp': `import {h} from 'vue';export default {
+    props:['code','helpKey'],setup(props){return ()=>globalThis.alarmConfigurationFixture.configuredHelp.has(props.helpKey)
+      ?h('button',{'data-help-key':props.helpKey,'data-help-code':props.code,onClick:event=>event.stopPropagation()},'?'):null}
+  }`,
   '@jetlinks-web-core/store/user': 'export const useUserStore=()=>globalThis.alarmConfigurationFixture.user',
   '@jetlinks-web-core/store/menu': `export const useMenuStore=()=>({
     initialized:true,loading:false,menuResultCache:[{code:"machine-vision/VisualAlarm"}],
@@ -25,7 +30,7 @@ const stubs = {
   '@jetlinks-web-core/utils/request-context': 'export const getRequestBaseApi=()=>"/api"',
   'vue-router': 'export const useRoute=()=>globalThis.alarmConfigurationFixture.route',
   'vue-i18n': 'export const useI18n=()=>({t:(key,args)=>{let text=globalThis.alarmConfigurationFixture.messages[key]||key;for(const [name,value] of Object.entries(args||{}))text=text.replace("{"+name+"}",value);return text},locale:{value:"zh-CN"}})',
-  '@jetlinks-web/components': 'import {h} from "vue";export const Ellipsis=(_,ctx)=>h("span",ctx.slots.default?.())',
+  '@jetlinks-web/components': 'import {h} from "vue";export const Ellipsis={props:["tooltip"],setup(props,ctx){return ()=>h("span",{"data-tooltip":props.tooltip},ctx.slots.default?.())}}',
   '@ant-design/icons-vue': 'export const RightOutlined=()=>null',
 }
 const output = await build({
@@ -34,7 +39,9 @@ const output = await build({
     export * from './visDashboard/AlarmCenter/services/configuration';
     export * from './visDashboard/AlarmCenter/hooks/useAlarmRuleConfiguration';
     export * from './visDashboard/AlarmCenter/dashboard.types';
+    export * from './documentHelpPoints';
     export {default as AlarmWidget} from './visDashboard/AlarmCenter/components/AlarmWidget.vue';
+    export {default as AlarmQuickStartPanel} from './visDashboard/AlarmCenter/components/AlarmQuickStartPanel.vue';
     export {default as AlarmMetricPanel} from './visDashboard/AlarmCenter/components/AlarmMetricPanel.vue';
     export {default as AlarmHandlingPanel} from './visDashboard/AlarmCenter/components/AlarmHandlingPanel.vue';
   ` },
@@ -69,7 +76,7 @@ function deferred() {
 }
 function fixture(request) {
   const state = {
-    calls: [], navigations: [], messages,
+    calls: [], navigations: [], messages, helpPoints: [], configuredHelp: new Set(),
     user: reactive({userInfo:{id:'user'}}),
     route: reactive({path:'/alarms/dashboard',params:{projectId:'p'},query:{}}),
     menus: reactive(new Set(['iot-user/device/alarm','machine-vision/VisualAlarm'])),
@@ -100,7 +107,10 @@ function mount(t, component) {
   const app=renderer.createApp(component)
   app.component('a-button',{inheritAttrs:false,setup(_,ctx){return ()=>h('button',ctx.attrs,ctx.slots.default?.())}})
   app.component('a-spin',{setup(_,ctx){return ()=>h('div',ctx.slots.default?.())}})
-  for(const name of ['a-badge','a-segmented','AIcon']) app.component(name,()=>null)
+  app.component('a-segmented',{props:['value','options'],emits:['update:value'],setup(props,{emit}){
+    return ()=>h('select',{'data-range':true,value:props.value,onChange:event=>emit('update:value',event.target.value)},props.options.map(option=>h('option',{value:option.value},option.label)))
+  }})
+  for(const name of ['a-badge','AIcon']) app.component(name,()=>null)
   app.component('CloudEmpty',{props:['description'],setup(props,ctx){return ()=>h('div',{'data-empty':true},[ctx.slots.description?.()||props.description,ctx.slots.default?.()])}})
   const container=node('root')
   app.mount(container)
@@ -109,6 +119,10 @@ function mount(t, component) {
 }
 const textOf = el => el.text + el.children.map(textOf).join('')
 const find = (el,predicate) => [el,...el.children.flatMap(child=>find(child,predicate))].filter(predicate)
+function click(target) {
+  const event={stopped:false,stopPropagation(){this.stopped=true}}
+  for(let current=target;current&&!event.stopped;current=current.parent) current.props.onClick?.(event)
+}
 function mountHook(t,preview=ref(false),count=1) {
   const hooks=[]
   const mounted=mount(t,defineComponent({setup(){
@@ -432,4 +446,100 @@ test('legacy combined handling panel hides the vision placeholder when unavailab
   await flush()
   assert(textOf(container).includes(messages['alarmDashboard.source.iot']))
   assert(!textOf(container).includes(messages['alarmDashboard.source.vision']))
+})
+
+test('dashboard help points register without a page visit and resolve current Chinese, English and Japanese labels', async () => {
+  const state=fixture()
+  api.registerAlarmDashboardHelpPoints()
+  assert.equal(state.helpPoints.length,7)
+  assert(state.helpPoints.every(point=>point.code==='rule-engine/DashBoard'))
+  assert.equal(new Set(state.helpPoints.map(point=>point.code+':'+point.key)).size,7)
+  assert.deepEqual(state.helpPoints.map(point=>point.key),[
+    'quickStart.iotRules','quickStart.visionRules','quickStart.templates','quickStart.channels',
+    'dashboard.alarmTrend','dashboard.iotHandling','dashboard.visionHandling',
+  ])
+  for(const language of ['zh','en','ja']) {
+    state.messages=JSON.parse(await readFile(resolve(root,`locales/lang/${language}.json`),'utf8'))
+    for(const point of state.helpPoints) {
+      assert(point.name().trim()&&!point.name().startsWith('alarmDashboard.'),`${language}: ${point.key}`)
+      assert.equal(point.page(),state.messages['DocumentHelp.alarmDashboard'])
+      assert(!point.page().startsWith('DocumentHelp.'))
+      if(point.key.startsWith('quickStart.')) assert.equal(point.location(),state.messages['alarmDashboard.QuickStart'])
+    }
+  }
+  assert.equal(state.calls.length,0)
+  assert.equal(state.navigations.length,0)
+})
+
+test('quick start keeps four navigation buttons and independent help buttons without the old ellipsis tooltip', async t => {
+  const state=fixture(),opened=[]
+  const actions=['iotRules','visionRules','templates','channels'].map(key=>({key,icon:''}))
+  actions.forEach(action=>state.configuredHelp.add(`quickStart.${action.key}`))
+  const {container}=mount(t,()=>h(api.AlarmQuickStartPanel,{actions,onOpen:key=>opened.push(key)}))
+  const cards=find(container,el=>el.props.class?.includes('alarm-quick-action'))
+  assert.equal(cards.length,4)
+  for(const [index,card] of cards.entries()) {
+    const buttons=find(card,el=>el.type==='button')
+    assert.equal(buttons.length,2)
+    assert(buttons.every(button=>find(button,el=>el.type==='button').length===1))
+    const help=buttons.find(button=>button.props['data-help-key'])
+    const navigation=buttons.find(button=>!button.props['data-help-key'])
+    assert.equal(help.props['data-help-code'],'rule-engine/DashBoard')
+    assert.equal(help.props['data-help-key'],`quickStart.${actions[index].key}`)
+    assert.equal(navigation.props['aria-label'],messages[`alarmDashboard.action.${actions[index].key}`])
+    assert(textOf(card).includes(messages[`alarmDashboard.actionDescription.${actions[index].key}`]))
+    click(help)
+    assert.equal(opened.length,index)
+    click(navigation)
+    assert.equal(opened[index],actions[index].key)
+    const helpWrapper=help.parent
+    for(const eventName of ['onPointerdown','onMousedown']) {
+      let stopped=false
+      helpWrapper.props[eventName]({stopPropagation(){stopped=true}})
+      assert(stopped,eventName)
+    }
+  }
+  const ellipses=find(container,el=>Object.hasOwn(el.props,'data-tooltip'))
+  assert.equal(ellipses.length,8)
+  assert(ellipses.every(el=>el.props['data-tooltip']===false))
+})
+
+test('quick start preserves disabled navigation while keeping configured help available', async t => {
+  const state=fixture();state.configuredHelp.add('quickStart.iotRules')
+  const opened=[]
+  const {container}=mount(t,()=>h(api.AlarmQuickStartPanel,{actions:[{key:'iotRules',icon:'',disabled:true}],onOpen:key=>opened.push(key)}))
+  const buttons=find(container,el=>el.type==='button')
+  const navigation=buttons.find(button=>!button.props['data-help-key'])
+  const help=buttons.find(button=>button.props['data-help-key'])
+  assert.equal(navigation.props.disabled,true)
+  assert(!help.props.disabled)
+  click(help)
+  assert.deepEqual(opened,[])
+})
+
+test('only the three requested chart headings show help and each time selector remains independent', async t => {
+  const state=fixture(),keys={AlarmTrend:'dashboard.alarmTrend',IotHandlingStatistics:'dashboard.iotHandling',VisionHandlingStatistics:'dashboard.visionHandling'}
+  Object.values(keys).forEach(key=>state.configuredHelp.add(key))
+  const charts=[]
+  for(const kind of api.dashboardKinds.filter(kind=>kind!=='QuickStart')) {
+    const {container}=widget(t,kind,true)
+    await flush()
+    const help=find(container,el=>el.props['data-help-key'])
+    assert.deepEqual(help.map(el=>el.props['data-help-key']),keys[kind]?[keys[kind]]:[],kind)
+    if(keys[kind]) {
+      assert.equal(help[0].parent.parent.type,'h3')
+      assert.equal(help[0].props['data-help-code'],'rule-engine/DashBoard')
+      const range=find(container,el=>el.props['data-range'])[0]
+      assert.equal(range.children.length,5)
+      assert.equal(range.props.value,'today')
+      charts.push(range)
+    }
+  }
+  charts[0].props.onChange({target:{value:'yesterday'}})
+  await flush()
+  assert.deepEqual(charts.map(range=>range.props.value),['yesterday','today','today'])
+  charts[1].props.onChange({target:{value:'7d'}})
+  await flush()
+  assert.deepEqual(charts.map(range=>range.props.value),['yesterday','7d','today'])
+  assert.equal(state.calls.length,0)
 })

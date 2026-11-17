@@ -1,7 +1,7 @@
 <template>
   <section v-if="available" class="alarm-widget" :class="{ 'alarm-widget-metric': metric }" :data-alarm-kind="kind" :aria-label="title">
     <header v-if="!metric">
-      <h3>{{ title }}</h3>
+      <h3>{{ title }}<span v-if="helpKey" class="alarm-widget-help" @pointerdown.stop @mousedown.stop><DocumentHelp code="rule-engine/DashBoard" :help-key="helpKey" /></span></h3>
       <a-segmented v-if="kind === 'AlarmTrend' || handling" v-model:value="timeRange" class="alarm-widget-switch" size="small" :options="rangeOptions" />
       <div v-else-if="statistics" class="alarm-widget-actions">
         <a-segmented v-model:value="dimension" class="alarm-widget-switch" size="small" :options="dimensionOptions" />
@@ -39,6 +39,7 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onDeactivated, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { useAlarmWidget } from '../hooks/useAlarmWidget'
 import { useAlarmQuickStart } from '../hooks/useAlarmQuickStart'
 import { useAlarmRuleConfiguration } from '../hooks/useAlarmRuleConfiguration'
@@ -78,6 +79,12 @@ const statistics = computed(() => ['IotStatistics', 'VisionStatistics'].includes
 const showMoreRanking = computed(() => statistics.value && !error.value && data.value.ranking.length > alarmRankingLimit)
 const metricIcon = computed(() => props.kind === 'TodayEvents' ? 'FundOutlined' : props.kind === 'IotAlarms' ? 'DatabaseOutlined' : 'VideoCameraOutlined')
 const title = computed(() => config.value.title || t('alarmDashboard.' + props.kind))
+const widgetHelpKeys: Partial<Record<AlarmDashboardKind, string>> = {
+  AlarmTrend: 'dashboard.alarmTrend',
+  IotHandlingStatistics: 'dashboard.iotHandling',
+  VisionHandlingStatistics: 'dashboard.visionHandling',
+}
+const helpKey = computed(() => widgetHelpKeys[props.kind])
 const rangeOptions = computed(() => timeRanges.map(value => ({ value, label: t('alarmDashboard.range.' + value) })))
 const dimensionOptions = computed(() => ['type', props.kind === 'IotStatistics' ? 'deviceType' : 'camera']
   .map(value => ({ value, label: t('alarmDashboard.dimension.' + value) })))
@@ -96,6 +103,7 @@ header { box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: ce
 .alarm-widget-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .alarm-widget-actions :deep(.ant-btn-link) { height: auto; padding: 0; font-size: 13px; }
 h3 { min-width: 0; margin: 0; font-size: 15px; font-weight: 600; line-height: 24px; color: #17243b; overflow-wrap: anywhere; }
+.alarm-widget-help { display: inline-flex; margin-inline-start: var(--space-1); vertical-align: middle; }
 .alarm-widget-switch.ant-segmented {
   max-width: 100%; overflow-x: auto; padding: 3px; border-radius: 9px;
   background: #f3f4f6; color: #4e5969;

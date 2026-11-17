@@ -1,5 +1,18 @@
 # 告警中心仪表盘组件方案
 
+## 告警中心文档帮助补点
+
+已按浏览器 9 条标注补齐 12 个可配置帮助点位，范围仅为运行时三个 owning modules：
+
+- 本模块启动登记 `rule-engine/DashBoard` 下 7 个点位：`quickStart.iotRules`、`quickStart.visionRules`、`quickStart.templates`、`quickStart.channels`、`dashboard.alarmTrend`、`dashboard.iotHandling`、`dashboard.visionHandling`。实现位于 `documentHelpPoints.ts`、`index.ts#register`、`visDashboard/AlarmCenter/components/AlarmQuickStartPanel.vue` 和 `AlarmWidget.vue`。
+- 设备模块在告警记录卡登记 `iot-user/device/alarm` 下的 `history.logs`、`history.handles`；AI 模块在视觉事件登记 `video/event` 下的 `scope.scene`、`review.noiseStats`，在选择告警事件标题登记 `machine-vision/VisualAlarm` 下的 `rule.event`。对应实现与验证记录位于设备 `views/device/alarm/README.md` 和 AI `docs/plans/video-event-result-summary.md`、`visual-alarm-preview.md`。
+
+各模块启动即登记，业务页面尚未访问也可在文档管理配置；中英日名称与正文沿用现有能力，未配置/禁用时隐藏，不预置正文。快速开始关闭 `JEllipsis` 原省略浮层并保留短描述，整卡导航与帮助为兄弟按钮；图表标题帮助隔离指针按下事件，画布内容仍在 `.no-drag` 区域。原导航、权限、五档时间筛选、日志/处理记录、场景切换及事件保存链路保留。
+
+验证：`node --test tests/alarmConfiguration.test.mjs tests/alarmDashboard.test.mjs tests/alarmHandling.test.mjs tests/alarmDashboardStorage.test.mjs tests/alarmRanking.test.mjs` 101/101 通过，覆盖 7 点位启动及三语登记、帮助不导航、无按钮嵌套、禁用导航保留帮助、原省略浮层关闭、三个图表独立时间筛选。设备工作区回归 200/200、公共帮助 16/16 通过；12 点位真实注册表去重及中英日标签解析通过。定向真实帮助组件内存检查覆盖设备两类历史事件、场景切换、统计展示、标题帮助及三语正文；未替代真实浏览器验收。变更 Vue 脚本/模板/样式、三语 JSON 与 `git diff --check` 通过。
+
+运行时三模块联合生产构建通过。完整 `vue-tsc --noEmit -p modules/rule-engine-manager-ui/tsconfig.json` 未通过（938 条诊断）；触及文件中的 4 条分别在 `index.ts` 既有路由索引和 `AlarmQuickStartPanel.vue` 既有共享组件导入，均为本次未修改行，无新增点位或帮助装配诊断。设备/AI 完整检查分别有 1741/711 条诊断，相关修改文件无命中。宿主及模块无独立 lint。真实页面位置、悬停、配置保存回读和窄屏布局仍待实景验收；构建基于当前多仓库工作区，干净检出 CI 仍需配套依赖 [Web Core #243](https://github.com/jetlinks-v2/jetlinks-web-core/pull/243) 与 [认证 #165](https://github.com/jetlinks-v2/authentication-manager-ui/pull/165)。设备/AI 延续原 Draft，本模块从 `2.20` 建立 `codex/alarm-document-help`；不提交聚合仓库子模块指针。Draft PR：pending。
+
 ## 状态与目标
 
 状态：已实施，本地定向验证完成；正式菜单入口需部署后同步并启用。“今日事件 = 视觉事件原始上报量（包含后续被拦截的事件）”按用户确认执行。任务级别 M，主要归属 `runtime-ui/modules/rule-engine-manager-ui`。
