@@ -11,7 +11,7 @@
 
 验证：`node --test tests/alarmConfiguration.test.mjs tests/alarmDashboard.test.mjs tests/alarmHandling.test.mjs tests/alarmDashboardStorage.test.mjs tests/alarmRanking.test.mjs` 101/101 通过，覆盖 7 点位启动及三语登记、帮助不导航、无按钮嵌套、禁用导航保留帮助、原省略浮层关闭、三个图表独立时间筛选。设备工作区回归 200/200、公共帮助 16/16 通过；12 点位真实注册表去重及中英日标签解析通过。定向真实帮助组件内存检查覆盖设备两类历史事件、场景切换、统计展示、标题帮助及三语正文；未替代真实浏览器验收。变更 Vue 脚本/模板/样式、三语 JSON 与 `git diff --check` 通过。
 
-运行时三模块联合生产构建通过。完整 `vue-tsc --noEmit -p modules/rule-engine-manager-ui/tsconfig.json` 未通过（938 条诊断）；触及文件中的 4 条分别在 `index.ts` 既有路由索引和 `AlarmQuickStartPanel.vue` 既有共享组件导入，均为本次未修改行，无新增点位或帮助装配诊断。设备/AI 完整检查分别有 1741/711 条诊断，相关修改文件无命中。宿主及模块无独立 lint。真实页面位置、悬停、配置保存回读和窄屏布局仍待实景验收；构建基于当前多仓库工作区，干净检出 CI 仍需配套依赖 [Web Core #243](https://github.com/jetlinks-v2/jetlinks-web-core/pull/243) 与 [认证 #165](https://github.com/jetlinks-v2/authentication-manager-ui/pull/165)。设备/AI 延续原 Draft，本模块从 `2.20` 建立 `codex/alarm-document-help`；不提交聚合仓库子模块指针。Draft PR：pending。
+运行时三模块联合生产构建通过。完整 `vue-tsc --noEmit -p modules/rule-engine-manager-ui/tsconfig.json` 未通过（938 条诊断）；触及文件中的 4 条分别在 `index.ts` 既有路由索引和 `AlarmQuickStartPanel.vue` 既有共享组件导入，均为本次未修改行，无新增点位或帮助装配诊断。设备/AI 完整检查分别有 1741/711 条诊断，相关修改文件无命中。宿主及模块无独立 lint。真实页面位置、悬停、配置保存回读和窄屏布局仍待实景验收；构建基于当前多仓库工作区，干净检出 CI 仍需配套依赖 [Web Core #243](https://github.com/jetlinks-v2/jetlinks-web-core/pull/243) 与 [认证 #165](https://github.com/jetlinks-v2/authentication-manager-ui/pull/165)。设备/AI 延续原 Draft，本模块从 `2.20` 建立 `codex/alarm-document-help`；不提交聚合仓库子模块指针。实现提交：`02fa22e`，交付至 [Draft #150](https://github.com/jetlinks-v2/rule-engine-manager-ui/pull/150)，base 为 `2.20`。
 
 ## 状态与目标
 
