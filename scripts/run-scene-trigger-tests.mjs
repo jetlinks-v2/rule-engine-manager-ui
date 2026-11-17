@@ -14,7 +14,8 @@ try {
     alias: { '@jetlinks-web/core': path.join(root, 'tests/sceneTestHttp.ts'), '@jetlinks-web-core/locales': path.join(root, 'tests/sceneTestLocale.ts'), '@jetlinks-web-core/locales/index': path.join(root, 'tests/sceneTestLocale.ts') },
     define: { 'import.meta.env': JSON.stringify({ BASE_URL: '/', MODE: 'test', DEV: false, PROD: true }) },
     banner: { js: 'globalThis.window = globalThis; globalThis.document = { createElement() { return {} }, querySelector() { return null }, addEventListener() {} }; globalThis.localStorage = { getItem() { return null }, setItem() {}, removeItem() {} };' } })
-  const result = spawnSync(process.execPath, ['--test', ...tests.map(name => path.join(directory, `${name}.test.mjs`))], { stdio: 'inherit', encoding: 'utf8' })
+  const runtimeTests = ['deviceScopeModal', 'sceneConditionColumns', 'sceneTriggerOperator'].map(name => path.join(root, `tests/${name}.test.mjs`))
+  const result = spawnSync(process.execPath, ['--test', ...tests.map(name => path.join(directory, `${name}.test.mjs`)), ...runtimeTests], { stdio: 'inherit', encoding: 'utf8' })
   process.exitCode = result.status ?? 1
 } finally {
   await rm(directory, { recursive: true, force: true })

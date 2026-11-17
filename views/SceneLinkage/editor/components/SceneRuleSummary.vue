@@ -34,7 +34,7 @@ import { formatSceneDuration, type SceneLinkageForm } from '../../utils'
 import { deviceScopeSummaryParts } from '../deviceScopeLabel'
 import { deviceTriggerTargetParts } from '../triggerNodeSummary'
 import { formatDeviceScopeText, formatDeviceScopeTitle, formatProductScopeText, type SceneDeviceScopeValue } from '../deviceScopeLabel'
-import { toThingModelOptions } from '../thingModel'
+import { getValueType, toThingModelOptions } from '../thingModel'
 
 const props = defineProps({ form: { type: Object as PropType<SceneLinkageForm>, required: true }, users: { type: Array as PropType<SceneNotifyUser[]>, default: () => [] } })
 const emit = defineEmits<{
@@ -78,8 +78,9 @@ const actionTargetName = (action: any, full = false) => {
   const scope = { selector: action.config?.selector, selectorValues: action.config?.selectorValues, options: action.config?.options } as SceneDeviceScopeValue
   return quickDeviceName(scope) || formatProductScopeText(t, productName(action.config?.productId), (full ? formatDeviceScopeTitle : formatDeviceScopeText)(t, scope))
 }
+const propertyMetadata = (productId: string | undefined, id: string | undefined) => products.value[productId || '']?.metadata?.properties?.find((item: any) => item.id === id)
 const propertyLabel = (productId: string | undefined, id: string | undefined) => {
-  const property = products.value[productId || '']?.metadata?.properties?.find((item: any) => item.id === id)
+  const property = propertyMetadata(productId, id)
   const option = toThingModelOptions(property ? [property] : [], 'property')[0]
   if (!option) return property?.name || id || ''
   return option.unit ? `${option.label}（${option.unit}）` : option.label
@@ -96,7 +97,7 @@ const conditionSummaries = computed(() => props.form.additionalConditions
   .filter(condition => condition.type !== 'timeRange' || condition.source !== 'effective-period' || props.form.debounceEnabled)
   .map(condition => {
     const parts = conditionNodeSummaryParts(condition, t, condition.type === 'deviceProperty'
-      ? { targetParts: deviceScopeSummaryParts(t, condition, productName(condition.productId)), property: propertyLabel(condition.productId, condition.propertyId) }
+      ? { targetParts: deviceScopeSummaryParts(t, condition, productName(condition.productId)), property: propertyLabel(condition.productId, condition.propertyId), valueType: getValueType(propertyMetadata(condition.productId, condition.propertyId)) }
       : condition.type === 'alarmState' ? { target: productName(condition.alarm.options?.productId), alarm: alarmName(condition.alarm) } : {})
     const value = summaryPartsText(parts)
     return { value, title: value, parts }

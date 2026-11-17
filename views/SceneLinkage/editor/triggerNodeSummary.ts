@@ -30,7 +30,7 @@ export function deviceTriggerNodeSummary(form: Omit<SceneMultiTriggerForm, 'clie
   const target = deviceTriggerTarget(form, t, scope, fallbackName)
   const hasValue = (value: unknown) => value !== undefined && value !== null && value !== ''
   const join = (...values: unknown[]) => values.filter(value => value !== undefined && value !== null && value !== '').join(' ')
-  if (form.triggerKind === 'online' || form.triggerKind === 'offline') return join(target, t(`IotSceneLinkage.deviceState.${form.triggerKind}`))
+  if (form.triggerKind === 'online' || form.triggerKind === 'offline') return join(target, t(`IotSceneLinkage.summary.${form.triggerKind}`))
   if (form.triggerKind === 'state') return join(target, t(`IotSceneLinkage.stateCondition.${form.deviceState}`))
   if (form.triggerKind === 'property') return join(target, form.propertyName || form.propertyId, !hasValue(form.termValue) ? undefined : t(`IotSceneLinkage.term.${form.termType || 'eq'}`), form.termValue)
   if (form.triggerKind === 'event') return join(target, form.eventName || form.eventId, form.eventOutputName || form.eventOutputId, !hasValue(form.eventTermValue) ? undefined : t(`IotSceneLinkage.term.${form.eventTermType || 'eq'}`), form.eventTermValue)

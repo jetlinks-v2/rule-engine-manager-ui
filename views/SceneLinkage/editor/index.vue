@@ -537,11 +537,14 @@ function changeDeviceTriggerKind(value: unknown) {
   form.triggerKind = value as SceneTriggerKind
   form.propertyId = undefined
   form.propertyName = undefined
+  // 清空物模型字段时同步重置运算符，避免旧类型的运算符不在新选项中而反显 ID。
+  form.termType = 'eq'
   form.termValue = undefined
   form.eventId = undefined
   form.eventName = undefined
   form.eventOutputId = undefined
   form.eventOutputName = undefined
+  form.eventTermType = 'eq'
   form.eventTermValue = undefined
 }
 function optionValue(option: any) { return option?.data?.value ? option.data : option }

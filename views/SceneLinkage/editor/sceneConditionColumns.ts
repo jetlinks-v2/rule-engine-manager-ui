@@ -25,16 +25,17 @@ export const resolveSceneConditionColumns = async (form: SceneLinkageForm): Prom
   const draft = buildRequest(form)
   const deviceConditions = form.additionalConditions.filter(condition => condition.type === 'deviceProperty')
   const alarmStateConditions = form.additionalConditions.filter(condition => condition.type === 'alarmState')
-  let actionIndex = 0
+  const actions = draft.branches[0].then[0].actions
+  // 手动触发的时间条件会插入前置节点，变量序号必须取自最终动作链。
   const conditionActions = form.additionalConditions.flatMap(condition => {
     if (condition.type === 'timeRange') return []
-    return [{ type: condition.type, action: actionIndex++ }]
+    return [{ type: condition.type, action: actions.findIndex(action => action !== null && typeof action === 'object' && 'actionId' in action && action.actionId === condition.actionId) }]
   })
   const [termColumnsResponse, actionVariablesResponse] = await Promise.all([
     querySceneTermColumns(draft),
     // 解析最后一个条件动作即可获得此前所有串行动作输出，避免按条件逐条请求。
     conditionActions.length
-      ? parseSceneVariables(draft, { branch: 0, branchGroup: 0, action: conditionActions.length })
+      ? parseSceneVariables(draft, { branch: 0, branchGroup: 0, action: Math.max(...conditionActions.map(item => item.action)) + 1 })
       : Promise.resolve([]),
   ])
   const availableVariables = flattenVariables(resultData(termColumnsResponse))
