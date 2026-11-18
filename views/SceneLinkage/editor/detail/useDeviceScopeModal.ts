@@ -1,9 +1,14 @@
 import { computed, reactive, ref, watch, onScopeDispose } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { queryDevicesPage, queryProducts } from '../../../../api/scene-linkage'
+import { queryDevicesPage } from '../../../../api/scene-linkage'
 import { queryDeviceGroupDetailList_api, queryProjectSpaceAreaSettings_api } from '../../../../api/scene-resources'
 import { getTreeData_api } from '../../../../api/others'
-import type { IotAlarmTargetSelectOption, IotAlarmTargetSelectQuery } from '../alarm/IotAlarmTargetSelect.vue'
+import type { ConditionFilterChangePayload, ConditionFilterTerm } from '@jetlinks-web-core/components/ConditionFilter'
+import { isPrivateDeployment } from '@jetlinks-web-core/utils/deployment'
+import { getProjectIdFromLocation } from '@jetlinks-web-core/utils/project-runtime'
+import { getDeviceListFilterFields, normalizeDeviceListSearchTerm } from '@device-manager-ui/deviceListFilter'
+import { queryDeviceLibraryProductFilterOptions_api } from '@device-manager-ui/api/device-library'
+import type { DeviceLibraryProductFilterOption, DeviceQueryTerm } from '@device-manager-ui/api/device'
 import { batchDeviceNodeSummary_api } from '@device-manager-ui/api/deviceGroup'
 import { ALL_DEVICES_COUNT_KEY, buildScopeCountRequests, type SpaceNode, type DeviceScope, type DeviceOption, type ScopeMode, type DeviceScopeModalProps, type DeviceScopeEvents, UNBOUND_SPACE_KEY } from '../deviceScopeTree'
 
@@ -11,7 +16,11 @@ import { ALL_DEVICES_COUNT_KEY, buildScopeCountRequests, type SpaceNode, type De
 export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceScopeEvents) {
   const { t } = useI18n()
   const pageSize = 20
-  const keyword = ref('')
+  const filterTerms = ref<ConditionFilterTerm[]>([])
+  const submittedTerms = ref<DeviceQueryTerm[]>([])
+  const filterProducts = ref<DeviceLibraryProductFilterOption[]>([])
+  const filterFields = computed(() => getDeviceListFilterFields([], [], filterProducts.value)
+    .filter(field => !props.lockProduct || field.dataIndex !== 'productId'))
   const productFilter = ref<string>()
   const pageIndex = ref(0)
   const total = ref(0)
@@ -30,7 +39,6 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
   const scopeError = ref(false)
   const draft = reactive({ deviceId: '', deviceName: '', productId: '', productName: '' })
   let requestSequence = 0
-  let searchTimer: ReturnType<typeof setTimeout> | undefined
   const modalTitle = computed(() => props.title || t('IotSceneLinkage.title.selectDevices'))
   const dialogProps = computed(() => props.embedded ? {} : ({ open: props.open, title: modalTitle.value, width: props.width, footer: null, maskClosable: false, wrapClassName: 'device-scope-modal' }))
   const selectedDevice = computed(() => selectedDevices.value[0])
@@ -67,9 +75,10 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
   })
 
   watch(() => props.open, async open => {
-    if (!open) { clearSearchTimer(); return }
-    keyword.value = ''; pageIndex.value = 0; selectedSpaceId.value = ''; scopeError.value = false
-    productFilter.value = props.modelValue.productId || props.productId || undefined
+    if (!open) return
+    filterTerms.value = []; submittedTerms.value = []; pageIndex.value = 0; selectedSpaceId.value = ''; scopeError.value = false
+    // 产品限定只由调用方显式锁定；选择设备回填产品时不改写用户的搜索条件。
+    productFilter.value = props.lockProduct ? props.modelValue.productId || props.productId || undefined : undefined
     scopeMode.value = props.detailed && props.modelValue.selector !== 'fixed' ? props.modelValue.selector : 'fixed'
     if (!props.scopeModes.includes(scopeMode.value)) scopeMode.value = 'fixed'
     Object.assign(draft, { deviceId: props.modelValue.selector === 'fixed' ? String(props.modelValue.selectorValues[0]?.value || '') : '', deviceName: props.modelValue.selectorValues[0]?.name || '', productId: props.modelValue.productId || props.productId || '', productName: props.modelValue.productName || '' })
@@ -78,7 +87,8 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
     selectedScopeValues.value = props.modelValue.selector === 'context'
       ? props.modelValue.upperKey ? [{ value: props.modelValue.upperKey, name: props.modelValue.options?.names?.[0] }] : []
       : props.modelValue.selector === 'fixed' ? [] : [...props.modelValue.selectorValues]
-    await reloadTrees()
+    // 筛选选项加载失败不阻断设备分页，列表仍可按名称或 ID 搜索。
+    await Promise.allSettled([reloadTrees(), loadFilterProducts()])
     if (scopeMode.value === 'fixed') await loadDevices()
   }, { immediate: true })
   watch(scopeMode, mode => {
@@ -97,27 +107,26 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
     () => props.productId,
   ], ([modelProductId, modelProductName, productId]) => {
     if (!props.open) return
-    productFilter.value = modelProductId || productId || productFilter.value
+    if (props.lockProduct) productFilter.value = modelProductId || productId || productFilter.value
     draft.productId = modelProductId || productId || draft.productId
     if (modelProductName) draft.productName = modelProductName
   })
-  watch(keyword, () => {
-    if (!props.open) return
-    clearSearchTimer()
-    searchTimer = setTimeout(() => { searchTimer = undefined; void searchDevices() }, 300)
-  })
+  async function loadFilterProducts() {
+    if (isPrivateDeployment()) return
+    filterProducts.value = await queryDeviceLibraryProductFilterOptions_api(getProjectIdFromLocation())
+  }
   /** 搜索条件变化时以序号隔离旧响应，避免快速切换空间后列表回跳。 */
   async function loadDevices() {
     const sequence = ++requestSequence
     deviceLoading.value = true
     try {
-      const terms: any[] = []
+      const terms: DeviceQueryTerm[] = []
       if (productFilter.value) terms.push({ column: 'productId', termType: 'eq', value: productFilter.value })
       const spaceIds = selectedSpaceId.value && selectedSpaceId.value !== UNBOUND_SPACE_KEY ? spaceDescendants.get(selectedSpaceId.value) || [selectedSpaceId.value] : []
       if (selectedSpaceId.value === UNBOUND_SPACE_KEY) terms.push({ column: 'id', termType: 'space-bind$any$not', value: '__any_space_binding__' })
       else if (spaceIds.length) terms.push({ column: 'id', termType: 'space-bind$device', value: spaceIds })
-      const searchText = keyword.value.trim()
-      if (searchText) terms.push({ terms: [{ column: 'name', termType: 'like', value: `%${searchText}%` }, { column: 'id', termType: 'like', value: `%${searchText}%`, type: 'or' }] })
+      // 用户条件整体分组，与空间和锁定产品取交集，避免 OR 条件越过范围限制。
+      if (submittedTerms.value.length) terms.push({ terms: submittedTerms.value })
       const response: any = await queryDevicesPage({ pageIndex: pageIndex.value, pageSize, sorts: [{ name: 'createTime', order: 'desc' }], terms })
       if (sequence !== requestSequence) return
       const result = response?.result ?? response
@@ -221,10 +230,13 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
     return roots
   }
   function selectSpace(keys: Array<string | number>) { selectedSpaceId.value = String(keys[0] || ''); void searchDevices() }
-  function changeProductFilter(_value?: string, option?: IotAlarmTargetSelectOption) { productFilter.value = option?.value; void searchDevices() }
-  function searchDevices() { clearSearchTimer(); pageIndex.value = 0; return loadDevices() }
+  function handleFilterSearch({ filter }: ConditionFilterChangePayload) {
+    if (!props.open) return
+    submittedTerms.value = filter.terms.map(normalizeDeviceListSearchTerm)
+    void searchDevices()
+  }
+  function searchDevices() { pageIndex.value = 0; return loadDevices() }
   function changePage(page: number) { pageIndex.value = page - 1; return loadDevices() }
-  function clearSearchTimer() { if (searchTimer) clearTimeout(searchTimer); searchTimer = undefined }
 
   function selectScopedValues(keys: any, nodes: SpaceNode[]) {
     const values = Array.isArray(keys) ? keys : keys.checked || []
@@ -232,12 +244,6 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
     const collect = (items: SpaceNode[]) => items.forEach(item => { names.set(item.key, item.title); if (item.children) collect(item.children) })
     collect(nodes)
     selectedScopeValues.value = values.map((value: string | number) => ({ value: String(value), name: names.get(String(value)) || String(value) }))
-  }
-  async function requestProducts(query: IotAlarmTargetSelectQuery) {
-    const value = query.keyword.trim(); const terms = value ? [{ column: 'name', termType: 'like', value: `%${value}%`, type: 'or' }, { column: 'id', termType: 'like', value: `%${value}%`, type: 'or' }] : []
-    const response: any = await queryProducts({ pageIndex: query.pageIndex, pageSize: query.pageSize, sorts: [{ name: 'createTime', order: 'desc' }], terms })
-    const result = response?.result ?? response; const data = result?.data || result?.records || []
-    return { data: data.map((item: any) => ({ label: item.name || item.id, value: String(item.id), data: item })), total: Number(result?.total ?? result?.totalElements ?? data.length) }
   }
   /** The shell owns resource selection only; the right-side business editor validates its own fields before commit. */
   async function save() {
@@ -270,14 +276,15 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
     { key: UNBOUND_SPACE_KEY, title: t('IotSceneLinkage.scope.unboundSpace'), icon: 'DisconnectOutlined' },
     ...spaceTreeData.value,
   ] : scopeMode.value === 'space' ? spaceTreeData.value : scopeTreeData.value)
-  /** 数量只统计当前产品下的可见设备，复用设备列表批量接口，不逐节点发起请求。 */
+  /** 数量沿用已提交条件与锁定产品，复用设备列表批量接口，不逐节点发起请求。 */
   async function refreshCounts() {
     const sequence = ++countSequence
     scopeCounts.value = {}; countsError.value = false
     if (!props.open || ['tag', 'context', 'relation'].includes(scopeMode.value)) { countsLoading.value = false; return }
     countsLoading.value = true
     const requests = buildScopeCountRequests(scopeMode.value, navigationNodes.value)
-    const baseTerms = productFilter.value ? [{ column: 'productId', termType: 'eq', value: productFilter.value }] : []
+    const baseTerms: DeviceQueryTerm[] = productFilter.value ? [{ column: 'productId', termType: 'eq', value: productFilter.value }] : []
+    if (submittedTerms.value.length) baseTerms.push({ terms: submittedTerms.value })
     try {
       const rows = await batchDeviceNodeSummary_api(requests, baseTerms)
       if (sequence === countSequence) scopeCounts.value = Object.fromEntries(rows.map(row => [row.id === ALL_DEVICES_COUNT_KEY ? '' : row.id, row.deviceCount]))
@@ -287,12 +294,12 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
       if (sequence === countSequence) countsLoading.value = false
     }
   }
-  watch([() => props.open, productFilter, scopeMode, navigationNodes], () => { void refreshCounts() }, { immediate: true })
-  onScopeDispose(() => { clearSearchTimer(); ++requestSequence; ++countSequence })
+  watch([() => props.open, productFilter, submittedTerms, scopeMode, navigationNodes], () => { void refreshCounts() }, { immediate: true })
+  onScopeDispose(() => { ++requestSequence; ++countSequence })
   return { modalTitle, dialogProps, scopeMode, draft, productFilter, availableScopeModes, scopeModeLabel, scopeModeHint,
     navigationNodes, scopeCounts, countsLoading, countsError, refreshCounts,
     treeError, reloadTrees, selectedSpaceId, scopeError, scopeLoading, selectedScopeValues, selectionHint, selectSpace, selectScopedValues,
-    keyword, deviceLoading, searchDevices, requestProducts, changeProductFilter, deviceOptions, deviceColumns, deviceRowSelection, deviceRow,
+    filterTerms, filterFields, handleFilterSearch, deviceLoading, searchDevices, deviceOptions, deviceColumns, deviceRowSelection, deviceRow,
     total, pageSize, pageIndex, changePage, hasSelection, selectionTitle, selectionDescription, selectedDevice, selectedDevices, save }
 
 }

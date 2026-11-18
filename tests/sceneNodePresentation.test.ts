@@ -109,6 +109,18 @@ test('condition fields and localized templates preserve values and language-spec
   assert.equal(summaryText(0), '0')
 })
 
+test('device condition previews use the same Boolean and enum names as thing-model inputs', () => {
+  const condition = { type: 'deviceProperty' as const, productId: 'p', selector: 'fixed' as const, selectorValues: [{ value: 'd', name: '传感器' }], propertyId: 'state', termType: 'eq', value: true }
+  const valueType = { type: 'boolean', trueText: '正常', falseText: '故障' }
+  const original = structuredClone(condition)
+  assert.ok(summaryPartsText(conditionNodeSummaryParts(condition, t, { valueType })).endsWith('正常'))
+  assert.ok(summaryPartsText(conditionNodeSummaryParts({ ...condition, value: false }, t, { valueType })).endsWith('故障'))
+  assert.ok(summaryPartsText(conditionNodeSummaryParts({ ...condition, value: 0 }, t, { valueType: { type: 'boolean', trueText: '正常', trueValue: 1, falseText: '故障', falseValue: 0 } })).endsWith('故障'))
+  assert.ok(summaryPartsText(conditionNodeSummaryParts({ ...condition, value: 0 }, t, { valueType: { type: 'enum', elements: [{ value: 0, text: '待机' }] } })).endsWith('待机'))
+  assert.ok(summaryPartsText(conditionNodeSummaryParts({ ...condition, value: 60 }, t, { valueType: { type: 'int' } })).endsWith('60'))
+  assert.deepEqual(condition, original)
+})
+
 
 test('detailed device triggers retain branch-based state duration and property comparisons', () => {
   const base = { ...defaultForm(), deviceIds: ['d'], scopeOptions: { names: ['TCP'] } }
@@ -198,7 +210,7 @@ test('device scopes show actual space/group/organization names with plain connec
     const options = { productName, name: '所有的蓝光照射仪' }
     const before = structuredClone(trigger)
     const parts = detailedTriggerSummaryParts(trigger, options, t)
-    assert.equal(summaryPartsText(parts), '2F 所有的 蓝光照射仪在线')
+    assert.equal(summaryPartsText(parts), '2F 所有的 蓝光照射仪上线')
     assert.deepEqual(fields(parts), ['2F', productName])
     assert.ok(parts.some(part => !part.field && part.text.includes('所有的')))
     assert.deepEqual(trigger, before)
@@ -221,7 +233,7 @@ test('device summaries truncate by count and length but retain full names for ho
     assert.equal(target.text.endsWith('…'), truncated)
     assert.equal(target.title, names.join('、'))
     assert.ok(Array.from(target.text).length <= 31)
-    assert.ok(summaryPartsText(parts).endsWith('在线'))
+    assert.ok(summaryPartsText(parts).endsWith('上线'))
     assert.deepEqual(rule, snapshot)
     const quick = quickTriggerSummaryParts({ ...defaultForm(), triggerKind: 'online', deviceIds: names.map((_, index) => String(index)), scopeOptions: { names } }, t)
     assert.equal(summaryPartsText(quick), summaryPartsText(parts))

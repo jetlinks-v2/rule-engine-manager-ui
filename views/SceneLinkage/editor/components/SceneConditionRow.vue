@@ -84,7 +84,7 @@ const conditionTitle = computed(() => {
     ? t('IotSceneLinkage.condition.visualAlarmState')
     : t('IotSceneLinkage.condition.iotAlarmState')
 })
-const conditionParts = computed(() => conditionNodeSummaryParts(props.condition, t, { property: selectedProperty.value?.label }))
+const conditionParts = computed(() => conditionNodeSummaryParts(props.condition, t, { property: selectedProperty.value?.label, valueType: selectedProperty.value?.valueType }))
 function update(value: SceneConditionForm) { emit('update', value) }
 function updateAlarm(alarm: Extract<SceneConditionForm, { type: 'alarmState' }>['alarm']) { if (props.condition.type === 'alarmState') update({ ...props.condition, alarm }) }
 function updateTimeRanges(ranges: Extract<SceneConditionForm, { type: 'timeRange' }>['ranges']) { if (props.condition.type === 'timeRange') update({ ...props.condition, ranges }) }
@@ -194,7 +194,7 @@ watch(() => props.autoOpen, value => {
 .scene-condition-row__icon--alarmState { color: #ff4d4f; background: #fff1f0; }
 .scene-condition-row__summary { display: flex; gap: var(--space-3, 12px); align-items: center; min-width: 0; }
 .scene-condition-row__summary > span { min-width: 0; overflow: hidden; color: var(--ant-color-text-secondary); text-overflow: ellipsis; white-space: nowrap; }
-.scene-condition-row__config { min-height: 100%; }
+.scene-condition-row__config { min-height: 0; }
 .scene-condition-row__config-fields { width: 100%; }
 .scene-condition-row__config-fields :deep(.ant-select), .scene-condition-row__config-fields :deep(.thing-model-select) { width: 100%; }
 .scene-condition-row__config-empty { margin: var(--space-4, 16px) 0 0; color: var(--ant-color-text-secondary); }

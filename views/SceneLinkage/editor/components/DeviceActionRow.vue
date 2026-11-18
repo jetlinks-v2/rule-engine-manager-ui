@@ -254,7 +254,7 @@ watch(() => props.autoOpen, value => {
 .device-action-row__icon { color: #1e5eff; background: #e8f0ff; }
 .device-action-row__summary { display: flex; gap: 8px; align-items: center; min-width: 0; }
 .device-action-row__summary span { overflow: hidden; color: var(--ant-color-text-secondary); text-overflow: ellipsis; white-space: nowrap; }
-.device-action-row__config { min-height: 100%; }
+.device-action-row__config { min-height: 0; }
 .device-action-row__operation-fields { width: 100%; align-items: flex-start; }
 .device-action-row__operation-select { width: var(--scene-linkage-resource-select-width, 18rem); }
 .device-action-row__operation-option { display: flex; gap: var(--space-2, 8px); align-items: center; min-width: 0; padding: var(--space-1, 4px) 0; }

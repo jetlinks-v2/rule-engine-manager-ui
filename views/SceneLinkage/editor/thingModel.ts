@@ -1,5 +1,6 @@
 import { shallowRef } from 'vue'
 import type { ProtocolUnit } from '../../../api/scene-linkage'
+import { summaryText } from './summaryParts'
 
 export type ThingModelValueType = {
   type?: string
@@ -116,4 +117,14 @@ export const getValueOptions = (
     ]
   }
   return undefined
+}
+
+/** 预览复用输入控件的物模型选项名称，只转换展示文本，保留规则中的原始值。 */
+export const formatThingModelValue = (
+  value: unknown,
+  valueType: ThingModelValueType | undefined,
+  booleanLabels: { true: string; false: string },
+): string => {
+  const option = getValueOptions(valueType, booleanLabels)?.find(item => String(item.value) === String(value))
+  return option ? option.label : summaryText(value)
 }

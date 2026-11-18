@@ -16,7 +16,7 @@ export function quickTriggerSummaryParts(form: QuickTriggerSummaryForm, t: Summa
   if (!form.triggerKind) return []
   if (form.triggerKind === 'property') return validSummaryParts([...targetParts, summaryPlainText(t('IotSceneLinkage.summary.deviceThingModelConnector')), summaryField(labels.property || form.propertyName || form.propertyId), ...term(form.termType, form.termValue)])
   if (form.triggerKind === 'event') return validSummaryParts([...targetParts, summaryPlainText(t('IotSceneLinkage.summary.report')), summaryField(labels.event || form.eventName || form.eventId), summaryField(form.eventOutputName || form.eventOutputId), ...term(form.eventTermType, form.eventTermValue)])
-  if (form.triggerKind === 'online' || form.triggerKind === 'offline') return [...targetParts, summaryPlainText(t(`IotSceneLinkage.deviceState.${form.triggerKind}`))]
+  if (form.triggerKind === 'online' || form.triggerKind === 'offline') return [...targetParts, summaryPlainText(t(`IotSceneLinkage.summary.${form.triggerKind}`))]
   if (form.triggerKind === 'state') {
     if (form.deviceState === 'any') return localizedSummaryParts(t, 'IotSceneLinkage.summary.stateAny', { product: target }, { product: targetParts })
     const state = t(`IotSceneLinkage.stateCondition.${form.deviceState}`)
