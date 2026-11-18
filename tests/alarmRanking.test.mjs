@@ -13,6 +13,7 @@ const messages=JSON.parse(await readFile(resolve(root,'locales/lang/zh.json'),'u
 const stubs={
   '@jetlinks-web/core':'export const request={post:(...args)=>globalThis.alarmRankingFixture.request(...args)}',
   '@jetlinks-web-core/locales':'export default {global:{t:key=>key}}',
+  '@jetlinks-web-core/components/DocumentHelp':'export default {render(){return null}}',
   '@jetlinks-web-core/store/user':'export const useUserStore=()=>globalThis.alarmRankingFixture.user',
   '@jetlinks-web-core/store/menu':'export const useMenuStore=()=>({initialized:true,loading:false,menuResultCache:[{code:"machine-vision/VisualAlarm"}],getMenu:()=>true,jumpPage:()=>{}})',
   '@jetlinks-web-core/utils/module-registry':'export const moduleRegistry={hasModule:()=>true,getResourceItem:()=>undefined,onChange:()=>()=>{}}',
