@@ -1,10 +1,11 @@
 <template>
   <a-row :gutter='[24]'>
-    <a-col :span='10'>
+    <a-col :span='24'>
       <a-form-item
         name='readProperties'
         :rules="[{ required: true, message: $t('Device.ReadProperties.372521-0') }]"
       >
+        <template #label>{{ $t('IotSceneLinkage.form.property') }} <a-tooltip :title="$t('Device.ReadProperties.372521-1')"><AIcon type="QuestionCircleOutlined" /></a-tooltip></template>
         <ThingModelSelect
           multiple
           :placeholder="$t('Device.ReadProperties.372521-0')"
@@ -14,9 +15,7 @@
         />
       </a-form-item>
     </a-col>
-    <a-col :span='14'>
-      <a-form-item>{{ $t('Device.ReadProperties.372521-1') }}</a-form-item>
-    </a-col>
+
   </a-row>
 </template>
 

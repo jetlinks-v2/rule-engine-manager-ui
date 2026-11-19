@@ -24,6 +24,7 @@
           popup-class-name="scene-editor__resource-dropdown"
           :dropdown-match-select-width="false"
           mode="multiple"
+          max-tag-count="responsive"
           :value="recipientIds"
           :loading="usersLoading"
           :placeholder="$t('IotSceneLinkage.placeholder.notifyUsers')"
@@ -50,16 +51,19 @@
       <span v-else class="notify-action-row__template">{{ $t('IotSceneLinkage.action.notifyTemplate') }}</span>
       </div>
     </div>
+    <SceneConfigPreview class="notify-action-row__preview" :hint="!methodValue || !recipientIds.length ? $t('IotSceneLinkage.message.notifyRequired') : undefined"><SceneNotifySummary :config="action.config" :options="action.options" :users="users" :methods="methods" /></SceneConfigPreview>
   </a-modal>
 </template>
 
 <script setup lang="ts">
+import SceneConfigPreview from './SceneConfigPreview.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import SceneNodeCard from './SceneNodeCard.vue'
 import SceneNotifySummary from './SceneNotifySummary.vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import type { SceneNotifyMethod, SceneNotifyUser } from '../../../../api/scene-linkage'
+import { formatNotificationRecipient } from '../notificationSummary'
 import type { SceneActionForm } from '../../utils'
 
 const props = defineProps<{
@@ -94,9 +98,7 @@ const methodOptions = computed(() => props.methods.map(method => ({
   value: method.id,
 })))
 const userOptions = computed(() => props.users.map(user => ({
-  label: user.email || user.telephone || user.username
-    ? `${user.name || user.username} (${user.email || user.telephone || user.username})`
-    : user.name,
+  label: formatNotificationRecipient(user),
   value: user.id,
 })))
 const templateContent = computed(() => String(
@@ -156,7 +158,7 @@ function saveEditor() {
     options: {
       ...props.action.options,
       channelName: props.methods.find(method => method.id === methodValue.value)?.name || props.action.options?.channelName,
-      users: props.users.filter(user => recipientIds.value.includes(user.id)).map(user => ({ id: user.id, name: user.name })),
+      users: props.users.filter(user => recipientIds.value.includes(user.id)).map(user => ({ id: user.id, name: user.name, username: user.username })),
     },
   }
   emit('change', action)
@@ -203,25 +205,25 @@ watch(() => props.autoOpen, value => {
 .notify-action-row__summary { display: grid; grid-template-columns: 22px 28px max-content minmax(0, 1fr) auto auto; gap: var(--space-3, 12px); align-items: center; min-width: 0; }
 .notify-action-row__summary-text { min-width: 0; overflow: hidden; color: var(--ant-color-text-secondary); text-overflow: ellipsis; white-space: nowrap; }
 .notify-action-row__editor { display: grid; gap: var(--space-4, 16px); }
-.notify-action-row__main { display: flex; flex-wrap: nowrap; align-items: center; min-width: max-content; gap: var(--space-3, 12px); min-height: 32px; }
+.notify-action-row__main { display: grid; grid-template-columns: max-content 112px max-content minmax(0, 1fr); align-items: center; min-width: 0; gap: var(--space-2, 8px); min-height: 32px; }
 .notify-action-row__index { display: grid; place-items: center; flex: none; width: 22px; height: 22px; color: var(--ant-color-primary); background: #eef4ff; border-radius: 50%; font-size: 12px; font-weight: 600; }
 .notify-action-row__icon { display: grid; place-items: center; width: 28px; height: 28px; color: #d46b08; background: #fff7e8; border-radius: 6px; }
 .notify-action-row__icon :deep(.anticon) { display: block; line-height: 1; }
 .notify-action-row__label, .notify-action-row__content { color: var(--ant-color-text-secondary); font-size: 13px; }
 .notify-action-row__method {
-	flex: 0 0 var(--scene-linkage-compact-select-width, 8rem);
-	width: var(--scene-linkage-compact-select-width, 8rem);
+    width: 100%;
+    min-width: 0;
 }
 .notify-action-row__users {
-	flex: 0 0 var(--scene-linkage-resource-select-width, 18rem);
-	width: var(--scene-linkage-resource-select-width, 18rem);
-	min-width: var(--scene-linkage-resource-select-width, 18rem);
+    width: 100%;
+    min-width: 0;
 }
 .notify-action-row__content { display: flex; gap: var(--space-2, 8px); align-items: flex-start; width: 100%; max-width: 100%; box-sizing: border-box; padding-top: var(--space-3, 12px); line-height: 24px; }
 .notify-action-row__content-label { display: inline-flex; flex: none; gap: var(--space-1, 4px); align-items: center; }
 .notify-action-row__remove { flex: none; margin-left: auto; }
-.notify-action-row__help { color: var(--ant-color-text-tertiary); cursor: help; }
+.notify-action-row__help { color: var(--ant-color-text-tertiary); cursor: pointer; }
 .notify-action-row__template { flex: 1; min-width: 0; max-width: 100%; color: var(--ant-color-text); font-weight: 500; overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap; }
 .notify-action-row__variable { display: inline-flex; align-items: center; margin: 0 2px; padding: 0 5px; color: var(--ant-color-primary); background: color-mix(in srgb, var(--ant-color-primary) 12%, var(--ant-color-bg-container)); border-radius: 4px; font-weight: 650; }
-@media (max-width: 960px) { .notify-action-row__users { min-width: 180px; } .notify-action-row__content { padding-left: 0; } }
+.notify-action-row__preview :deep(.scene-summary-parts__field) { display: inline-block; max-width: calc(100% - 4px); box-sizing: border-box; }
+@media (max-width: 480px) { .notify-action-row__main { grid-template-columns: 32px minmax(0, 1fr); }.notify-action-row__content { display: grid; gap: 4px; } }
 </style>

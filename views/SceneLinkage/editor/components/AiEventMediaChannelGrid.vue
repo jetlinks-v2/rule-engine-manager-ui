@@ -34,7 +34,7 @@
                 <button class="ai-event-media-channel-grid__content" type="button" :disabled="channel.modelConfigured !== true" @click="select(channel)">
                   <span class="ai-event-media-channel-grid__image">
                     <img v-if="channelImage(channel)" :src="channelImage(channel)" :alt="channel.name || channel.channelId">
-                    <span v-else class="ai-event-media-channel-grid__image-empty"><AIcon type="VideoCameraOutlined" /></span>
+                    <span v-else class="ai-event-media-channel-grid__image-empty"><AIcon :type="channel.mappingType ? 'PictureOutlined' : 'VideoCameraOutlined'" /></span>
                     <em
                       class="ai-event-media-channel-grid__configuration-status"
                       :data-status="channel.modelConfigured === true ? 'configured' : 'unconfigured'"
@@ -47,7 +47,7 @@
                   <button class="ai-event-media-channel-grid__title" type="button" :disabled="channel.modelConfigured !== true" @click="select(channel)">
                     <strong>{{ channel.name || channel.channelId }}</strong>
                   </button>
-                  <a-button type="link" size="small" @click.stop="preview(channel)">{{ $t('IotSceneLinkage.action.preview') }}</a-button>
+                  <a-button v-if="!channel.mappingType && channel.channelId" type="link" size="small" @click.stop="preview(channel)">{{ $t('IotSceneLinkage.action.preview') }}</a-button>
                 </div>
               </article>
             </div>
@@ -63,6 +63,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
+import { aiEventSourceKey } from '../aiEventSourceService'
 import type { AiEventMediaChannel } from '../../../../api/scene-linkage'
 
 const props = defineProps<{
@@ -96,7 +97,7 @@ const channelRows = computed(() => {
 })
 
 function channelKey(channel: AiEventMediaChannel) {
-  return `${channel.deviceId}:${channel.channelId}`
+  return aiEventSourceKey(channel)
 }
 
 function channelImage(channel: AiEventMediaChannel) {

@@ -1,13 +1,15 @@
 <template>
   <section class="collector-action-workspace">
-    <CollectorResourceWorkspace :resources="resourceView" :options="options" :selected-ids="pointId ? [pointId] : []" @select-point="pointId = $event">
+    <CollectorResourceWorkspace :resources="resourceView">
       <Action :key="collectorId" ref="actionRef" compact :values="actionValues" :selected-point-id="pointId" :point-list="points" :name="name" :then-name="thenName" :branches-name="branchesName" :column-map="options.columnMap" @change="changeOptions" @type-change="handlerType = $event" @point-change="pointId = $event" />
+      <template #preview><SceneActionSummary :action="{ executor: 'collector', collector: { handlerType, source: previewWriteValue?.source, value: previewWriteValue?.value }, options: { ...options, ...actionOptions, channelName: currentChannel?.name || options.channelName || options.productName, collectorName: currentCollector?.name || options.collectorName || options.name, pointName: points.find(point => point.id === pointId)?.name || options.pointName } }" /></template>
     </CollectorResourceWorkspace>
     <footer><a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button><a-button type="primary" :disabled="!collectorId" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button></footer>
   </section>
 </template>
 
 <script setup lang="ts">
+import SceneActionSummary from '../../../../SceneLinkage/editor/components/SceneActionSummary.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { cloneDeep } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
@@ -26,6 +28,7 @@ const { points, collectorId, channelId, pointId, currentCollector, currentChanne
 pointId.value = original.pointSelectInfos?.[0]?.pointIds?.[0] || ''
 const actionRef = ref<InstanceType<typeof Action>>()
 const actionOptions = ref<Record<string, any>>({})
+const previewWriteValue = computed(() => actionRef.value?.modelRef.message.messageType === 'write' ? Object.values(actionRef.value.modelRef.message.properties || {})[0] as { source?: string; value?: unknown } | undefined : undefined)
 const actionValues = computed(() => collectorId.value === original.pointSelectInfos?.[0]?.collectorId ? original : { handlerType: 'read', pointSelectInfos: [{ collectorId: collectorId.value, pointIds: [] }] })
 // 切换采集器会重建右侧表单，中间点位权限筛选也必须同步到它的初始动作类型。
 watch(collectorId, () => {

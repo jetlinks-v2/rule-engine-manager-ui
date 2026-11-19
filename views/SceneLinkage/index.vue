@@ -31,19 +31,18 @@
             </CloudEmpty>
           </template>
           <template #headerLeftRender>
-            <h2 class="scene-list-toolbar__title">{{ $t('IotSceneLinkage.title.list') }}</h2>
+            <ConditionFilter
+              class="scene-list-toolbar__search"
+              :fields="filterFields"
+              :common-fields="filterCommonFields"
+              :model-value="terms"
+              :placeholder="$t('IotSceneLinkage.placeholder.search')"
+              @update:model-value="terms = $event"
+              @change="reload($event)"
+            />
           </template>
           <template #headerRightRender>
             <div class="scene-list-toolbar__actions">
-              <ConditionFilter
-                class="scene-list-toolbar__search"
-                :fields="filterFields"
-                :common-fields="filterCommonFields"
-                :model-value="terms"
-                :placeholder="$t('IotSceneLinkage.placeholder.search')"
-                @update:model-value="terms = $event"
-                @change="reload($event)"
-              />
               <j-permission-button
                 :hasPermission="`${permissionKey}:add`"
                 @click="templateImportVisible = true"
@@ -260,11 +259,11 @@ const filterCommonFields: ConditionFilterCommonField[] = [{ label: t('IotSceneLi
 const filterFields = computed<ConditionFilterField[]>(() => [{ dataIndex: 'name', title: t('IotSceneLinkage.form.name'), search: { type: 'string', defaultTermType: 'like' } }, { dataIndex: 'triggerType', title: t('IotSceneLinkage.form.triggerType'), search: { type: 'select', defaultTermType: 'eq', options: triggerTypeOptions.value } }, { dataIndex: 'state', title: t('IotSceneLinkage.form.state'), search: { type: 'select', defaultTermType: 'eq', options: [{ label: t('IotSceneLinkage.state.started'), value: 'started' }, { label: t('IotSceneLinkage.state.disable'), value: 'disable' }] } }])
 const columns = computed(() => [
   { title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 260, scopedSlots: true },
-  { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule', width: 560, scopedSlots: true },
+  { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule', scopedSlots: true },
   { title: t('IotSceneLinkage.column.lastExecute'), dataIndex: 'runtimeInfo', width: 180, scopedSlots: true },
   { title: t('IotSceneLinkage.column.executionCount'), dataIndex: 'executionCount', width: 140, scopedSlots: true },
   { title: t('IotSceneLinkage.column.state'), dataIndex: 'state', width: 100, scopedSlots: true },
-  { title: t('IotSceneLinkage.column.action'), dataIndex: 'actions', width: 160, scopedSlots: true },
+  { title: t('IotSceneLinkage.column.action'), dataIndex: 'actions', width: 96, scopedSlots: true },
 ])
 const stateValue = (scene: any) => scene.state?.value || scene.state
 const sceneStateLabel = (scene: any) => scene.state?.text || t(stateValue(scene) === 'started' ? 'IotSceneLinkage.state.started' : 'IotSceneLinkage.state.disable')
@@ -406,19 +405,9 @@ const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 	height: 100%;
 }
 
-.scene-list-toolbar__title {
-  margin: 0;
-  color: rgba(0, 0, 0, 0.85);
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 32px;
-  white-space: nowrap;
-}
-
 .scene-list-toolbar__search {
-  flex: 1 1 360px;
-  min-width: 25rem;
-  max-width: 40rem;
+  width: 40rem;
+  max-width: 100%;
 }
 
 .scene-list-toolbar__actions {

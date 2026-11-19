@@ -57,14 +57,14 @@
                 <a-time-picker
                   valueFormat="HH:mm:ss"
                   v-model:value="item.once.time"
-                  style="width: 180px"
+                  style="width: 128px"
                   format="HH:mm:ss"
                   @change="updateValue"
                 />
                 <div>{{ $t('Timer.Calendar.9093419-4') }}</div>
               </template>
               <template v-if="item.mod === 'period'">
-                <a-time-range-picker
+                <a-time-range-picker style="width: 212px; max-width: 100%"
                   valueFormat="HH:mm:ss"
                   :value="[item.period.from, item.period.to]"
                   @change="
@@ -78,7 +78,7 @@
                 <span>{{ $t('Timer.Calendar.9093419-5') }}</span>
                 <a-input-number
                   :placeholder="$t('Timer.Calendar.9093419-6')"
-                  style="max-width: 170px"
+                  style="width: 104px"
                   :precision="0"
                   :min="1"
                   :max="item.period.unit === 'hours' ? 99999 : 99"
@@ -104,7 +104,7 @@
       </j-scrollbar>
     </div>
     <a-button @click="addItem" style="width: 100%"> {{ $t('Timer.Calendar.9093419-10') }} </a-button>
-    <a-modal v-model:open="visible" :width="1000" :okText="$t('Timer.Calendar.9093419-11')">
+    <a-modal :mask-closable="false" v-model:open="visible" :width="1000" :okText="$t('Timer.Calendar.9093419-11')">
       <div>{{ $t('Timer.Calendar.9093419-12') }}</div>
       <FullCalendar :preview="true" />
       <template #footer>

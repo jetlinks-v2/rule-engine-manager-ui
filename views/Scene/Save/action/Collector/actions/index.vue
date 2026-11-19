@@ -281,6 +281,7 @@ watch(() => modelRef.message.properties, value => {
 
 defineExpose({
     onFormSave,
+    modelRef,
     getColumnMap
 })
 </script>

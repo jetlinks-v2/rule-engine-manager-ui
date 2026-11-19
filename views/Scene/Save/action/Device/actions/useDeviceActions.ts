@@ -54,7 +54,7 @@ export function useDeviceActions(props: DeviceActionsProps, emit: (event: 'chang
 
   const modelRef = reactive({
       message: {
-          messageType: 'INVOKE_FUNCTION',
+          messageType: props.compact ? '' : 'INVOKE_FUNCTION',
           functionId: undefined,
           properties: undefined,
           inputs: [],
@@ -306,7 +306,8 @@ export function useDeviceActions(props: DeviceActionsProps, emit: (event: 'chang
   );
 
   watch([availableTypes, metadataLoaded], ([types, loaded]) => {
-    if (loaded && !types.includes(modelRef.message.messageType)) onMessageTypeChange(types[0] || '')
+    // 详细模式由用户明确选择指令；仅清除失效的旧类型，不自动代选第一项。
+    if (loaded && !types.includes(modelRef.message.messageType)) onMessageTypeChange(props.compact ? '' : types[0] || '')
   }, { immediate: true, flush: 'post' })
 
   return { formRef, modelRef, actionTypeOptions, TypeList, optionValue, onMessageTypeChange, deviceMessageType, metadata, functionOptions, readOptions, functionSelect, propertySelect, functionRef, writeFormRef, functions, builtInList, columnMap, onWriteChange, onFormSave, getColumnMap }

@@ -72,6 +72,7 @@
                 </template>
             </a-form>
         </div>
+        <SceneConfigPreview v-if="formModel.templateId"><SceneActionSummary :action="{ executor: 'notify', notify: formModel, options: { ...formModel.options, templateName: template?.name } }" /></SceneConfigPreview>
         <template #footer>
             <a-space>
                 <a-button v-if="current === 0" @click="onCancel">{{ $t('Notify.index.966771-7') }}</a-button>
@@ -88,6 +89,8 @@
 </template>
 
 <script lang="ts" setup>
+import SceneConfigPreview from '../../../../SceneLinkage/editor/components/SceneConfigPreview.vue'
+import SceneActionSummary from '../../../../SceneLinkage/editor/components/SceneActionSummary.vue'
 import NotifyWay from './NotifyWay.vue';
 import NotifyConfig from './NotifyConfig.vue';
 import NotifyTemplate from './NotifyTemplate.vue';

@@ -1,5 +1,5 @@
 <template>
-    <a-form ref="timerForm" :model="formModel" :colon="false" layout="vertical">
+    <a-form class="scene-operation-timer" ref="timerForm" :model="formModel" :colon="false" layout="vertical">
         <a-form-item name="trigger">
             <a-radio-group
                 v-model:value="formModel.trigger"
@@ -45,56 +45,61 @@
                 <a-time-picker
                     valueFormat="HH:mm:ss"
                     v-model:value="formModel.once.time"
-                    style="width: 100%"
+                    style="width: 128px"
                     format="HH:mm:ss"
                     @change="updateValue"
                 />
             </a-form-item>
             <a-form-item> {{ $t('Timer.index.9093537-2') }}</a-form-item>
         </a-space>
-        <a-space v-if="showPeriod && !showMulti" class="timer__inline-fields">
+        <div v-if="showPeriod && !showMulti" class="timer__period">
             <a-form-item>
                 <a-time-range-picker
                     valueFormat="HH:mm:ss"
                     :value="[formModel.period.from, formModel.period.to]"
                     @change="
                         (v) => {
-                            formModel.period.from = v[0];
-                            formModel.period.to = v[1];
+                            formModel.period.from = v?.[0];
+                            formModel.period.to = v?.[1];
                             updateValue();
                         }
                     "
                 />
             </a-form-item>
-            <a-form-item>{{ $t('Timer.index.9093537-3') }}</a-form-item>
-            <a-form-item
-                :name="['period', 'every']"
-                :rules="[{ required: true, message: $t('Timer.index.9093537-4') }]"
-            >
-                <a-input-number
-                    :placeholder="$t('Timer.index.9093537-4')"
-                    style="max-width: 170px"
-                    :precision="0"
-                    :min="1"
-                    :max="unitMax"
-                    v-model:value="formModel.period.every"
-                    @change="updateValue"
-                >
-                    <template #addonAfter>
-                        <a-select
-                            v-model:value="formModel.period.unit"
-                            :options="[
-                                { label: $t('Timer.index.9093537-5'), value: 'seconds' },
-                                { label: $t('Timer.index.9093537-6'), value: 'minutes' },
-                                { label: $t('Timer.index.9093537-7'), value: 'hours' },
-                            ]"
-                            @select="periodUnitChange"
+            <div class="timer__inline-fields">
+                <span>{{ $t('Timer.index.9093537-3') }}</span>
+                <a-space-compact class="timer__frequency-inputs">
+                    <a-form-item
+                        :name="['period', 'every']"
+                        :rules="[{ required: true, message: $t('Timer.index.9093537-4') }]"
+                    >
+                        <a-input-number
+                            :placeholder="$t('Timer.index.9093537-4')"
+                            style="width: 52px"
+                            :controls="false"
+                            :precision="0"
+                            :min="1"
+                            :max="unitMax"
+                            v-model:value="formModel.period.every"
+                            @change="updateValue"
                         />
-                    </template>
-                </a-input-number>
-            </a-form-item>
-            <a-form-item>{{ $t('Timer.index.9093537-2') }}</a-form-item>
-        </a-space>
+                    </a-form-item>
+                    <a-select
+                        style="width: 56px"
+                        :dropdown-match-select-width="false"
+                        :dropdown-style="{ minWidth: '88px' }"
+                        v-model:value="formModel.period.unit"
+                        :options="[
+                            { label: $t('Timer.index.9093537-5'), value: 'seconds' },
+                            { label: $t('Timer.index.9093537-6'), value: 'minutes' },
+                            { label: $t('Timer.index.9093537-7'), value: 'hours' },
+                        ]"
+                        @select="periodUnitChange"
+                    />
+                </a-space-compact>
+                <span>{{ $t('Timer.index.9093537-2') }}</span>
+            </div>
+        </div>
     </a-form>
 </template>
 
@@ -335,7 +340,7 @@ watchEffect(() => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3, 12px) !important;
-  align-items: flex-start;
+  align-items: center;
 
   :deep(.ant-form-item) {
     min-width: 0;
@@ -346,4 +351,22 @@ watchEffect(() => {
     max-width: 100%;
   }
 }
+.scene-operation-timer { min-width: 0; }
+.scene-operation-timer :deep(.ant-radio-group) { display: inline-flex; flex-wrap: wrap; gap: 0; }
+.scene-operation-timer :deep(.ant-radio-button-wrapper) { white-space: nowrap; padding-inline: 12px; }
+.timer__period > :deep(.ant-form-item) { margin-bottom: 12px; }
+.timer__period > :deep(.ant-form-item .ant-picker) { width: 100%; max-width: 212px; }
+.timer__period .timer__inline-fields :deep(.ant-form-item) { margin-bottom: 0; }
+.timer__period { display: grid; grid-template-columns: minmax(0, 212px) max-content; align-items: start; gap: 8px; margin-bottom: 16px; }
+.timer__period > :deep(.ant-form-item) { min-width: 0; margin-bottom: 0; }
+.timer__period .timer__inline-fields { flex-wrap: nowrap; gap: 2px !important; white-space: nowrap; }
+.timer__frequency-inputs { flex: none; }
+.timer__frequency-inputs :deep(.ant-form-item) { width: 52px; }
+.timer__frequency-inputs :deep(.ant-input-number) { width: 52px; min-width: 52px; }
+.timer__frequency-inputs :deep(.ant-select) { width: 56px; min-width: 56px; }
+.timer__frequency-inputs :deep(.ant-select-selection-item) { padding-inline-end: 12px; }
+.timer__frequency-inputs :deep(.ant-select-arrow) { inset-inline-end: 6px; }
+.timer__period :deep(.ant-input-number-input) { padding-inline: 4px; }
+.timer__period :deep(.ant-select-selector) { padding-inline: 6px !important; }
+.timer__period :deep(.ant-picker-input > input) { font-variant-numeric: tabular-nums; }
 </style>

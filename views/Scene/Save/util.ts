@@ -11,20 +11,25 @@ interface Params {
     action: number
 }
 
+type VariableTrigger = { type?: string; multi?: { triggers?: Array<{ trigger?: VariableTrigger }> } }
+
 export const ACTION_DATA = Symbol('action_data')
 
-export const getParams = (params: Params, sceneModel: FormModelType): Promise<any[]> => {
-    return new Promise(res => {
-        const data = sceneModel.branches!.filter(item => !!item)
-        queryBuiltInParams({
+export const getParams = async (params: Params, sceneModel: FormModelType): Promise<any[]> => {
+    // 空草稿和未完成的组合触发器没有可解析的上游来源，不能提交给后端解析。
+    const completeTrigger = (trigger?: VariableTrigger): boolean =>
+        Boolean(trigger?.type?.trim()) && (trigger?.type !== 'multi'
+            || Boolean(trigger.multi?.triggers?.length && trigger.multi.triggers.every(item => completeTrigger(item.trigger))))
+    if (!completeTrigger(sceneModel.trigger)) return []
+    try {
+        const resp = await queryBuiltInParams({
             ...sceneModel,
-            branches: data
-        }, params).then(resp => {
-            if (resp.success) {
-                res(resp.result as any[])
-            }
-        }).catch(() => res([]))
-    })
+            branches: sceneModel.branches?.filter(item => !!item) || [],
+        }, params)
+        return resp.success && Array.isArray(resp.result) ? resp.result : []
+    } catch {
+        return []
+    }
 }
 
 /**

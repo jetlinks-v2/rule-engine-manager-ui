@@ -101,7 +101,7 @@ const onSave = (data: any, options?: any) => {
         actionId: data.actionId,
         options: {
           ...options,
-          columns: options.otherColumns?.filter((item?: string) => item) || []
+          columns: options?.otherColumns?.filter((item?: string) => item) || []
         },
     };
     emit('add', item)

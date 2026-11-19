@@ -295,6 +295,14 @@
         ],
         "permissions": [
           {
+            "permission": "ai_trigger_task",
+            "actions": ["query"]
+          },
+          {
+            "permission": "ai_scene",
+            "actions": ["query"]
+          },
+          {
             "permission": "device-group",
             "actions": [
               "query"

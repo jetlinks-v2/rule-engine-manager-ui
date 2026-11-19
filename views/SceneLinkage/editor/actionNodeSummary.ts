@@ -50,6 +50,7 @@ export function actionNodeSummaryParts(action: SceneRuleRecord, t: SummaryTransl
   const options = record(action.options)
   const fallback = t('IotSceneLinkage.detail.previewUnconfigured')
   if (executor === 'sceneNotify') return notificationSummaryParts(getNotificationSummary(action.configuration, options, t, context.users, context.methods), t)
+  if (executor === 'delay' && action.delay?.time == null) return [summaryPlainText(t('IotSceneLinkage.detail.noDelay'))]
   if (executor === 'delay') return localizedSummaryParts(t, 'IotSceneLinkage.summary.delay', { value: action.delay?.time ?? 1, unit: t(`IotSceneLinkage.unit.${action.delay?.unit || 'seconds'}`) })
   if (executor === 'collector') return collectorNodeSummaryParts(record(action.collector || action.configuration), options, t)
   if (executor === 'device-data') return localizedSummaryParts(t, 'IotSceneLinkage.node.deviceInfo', { target: '' }, { target: deviceNodeTargetParts(record(action.configuration), options, t) })

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { getNotificationSummary } from '../views/SceneLinkage/editor/notificationSummary'
+import { getNotificationSummary, formatNotificationRecipient } from '../views/SceneLinkage/editor/notificationSummary'
 
 const t = (key: string, values?: Record<string, string | number>) => values?.count !== undefined ? `已选择 ${values.count} 位接收人` : key
 
@@ -23,4 +23,13 @@ test('cached recipient labels use identity and do not expose unresolved user IDs
 test('legacy cached string names and deleted-user fallback remain readable', () => {
   assert.deepEqual(getNotificationSummary({ userIds: ['u1'] }, { channelName: '短信', userNames: '张三' }, t), { method: '短信', recipients: ['张三'] })
   assert.deepEqual(getNotificationSummary({ userIds: ['unknown'] }, { channelName: '站内信' }, t), { method: '站内信', recipients: ['已选择 1 位接收人'] })
+})
+
+test('recipient selection includes username even when identical while summaries show names only', () => {
+  assert.equal(formatNotificationRecipient({ name: '张三', username: 'zhangsan' }), '张三（zhangsan）')
+  assert.equal(formatNotificationRecipient({ name: 'admin', username: 'admin' }), 'admin（admin）')
+  assert.equal(formatNotificationRecipient({ username: 'admin' }), 'admin')
+  assert.equal(formatNotificationRecipient({ name: '张三' }), '张三')
+  const result = getNotificationSummary({ userIds: ['u1', 'u2'] }, { users: [{ id: 'u2', name: '李四', username: 'lisi' }] }, t, [{ id: 'u1', name: '张三', username: 'zhangsan', email: 'private@example.com', telephone: '12345678' }])
+  assert.deepEqual(result.recipients, ['张三', '李四'])
 })

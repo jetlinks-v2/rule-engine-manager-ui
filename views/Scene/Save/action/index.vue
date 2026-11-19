@@ -13,9 +13,10 @@
           <template #header>
             <span>
               {{ $t('action.index.966779-1') }}
-              <span class="panel-tip">
-                {{ $t('action.index.966779-2') }}
-              </span>
+              <a-tooltip v-if="showActionControls" :title="$t('action.index.966779-2')" :trigger="['hover', 'focus']">
+                <button type="button" class="panel-help" :aria-label="$t('action.index.966779-2')" @click.stop @keydown.stop @keypress.stop @keyup.stop><AIcon type="QuestionCircleOutlined" /></button>
+              </a-tooltip>
+              <span v-else class="panel-tip">{{ $t('action.index.966779-2') }}</span>
             </span>
           </template>
           <div class="actions-list">
@@ -34,9 +35,10 @@
           <template #header>
             <span>
               {{ $t('action.index.966779-3') }}
-              <span class="panel-tip">
-                {{ $t('action.index.966779-4') }}
-              </span>
+              <a-tooltip v-if="showActionControls" :title="$t('action.index.966779-4')" :trigger="['hover', 'focus']">
+                <button type="button" class="panel-help" :aria-label="$t('action.index.966779-4')" @click.stop @keydown.stop @keypress.stop @keyup.stop><AIcon type="QuestionCircleOutlined" /></button>
+              </a-tooltip>
+              <span v-else class="panel-tip">{{ $t('action.index.966779-4') }}</span>
             </span>
           </template>
           <div class="actions-list">
@@ -281,6 +283,12 @@ const onAdd = (actionItem: any, _parallel: boolean) => {
     }
   }
 
+  .panel-help {
+    display: inline-grid; place-items: center; width: 24px; height: 24px; margin-left: 4px; padding: 0;
+    color: var(--jet-theme-text-secondary, #595959); background: transparent; border: 0; border-radius: 4px; cursor: pointer; vertical-align: middle;
+    &:hover { color: var(--jet-theme-primary, #1677ff); }
+    &:focus-visible { outline: 2px solid var(--jet-theme-primary, #1677ff); outline-offset: 2px; }
+  }
   .panel-tip {
     padding-left: 8px;
     color: var(--ant-color-text-tertiary);

@@ -1,22 +1,25 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import {
-  queryAiAggregateTasks,
   queryAiAlarmSceneTree,
   queryAiSceneTree,
   queryAiSceneTreeNoPaging,
-  type AiAggregateTaskOption,
+  type AiVisualAlarmTaskOption,
   type AiSceneTreeOption,
 } from '../../../api/scene-linkage'
 import { normalizeResult } from '../utils'
+import { loadVisualAlarmTaskPage } from './aiVisualAlarmTaskService'
 
 const SCENE_PAGE_SIZE = 30
 
 /** 为 AI 事件行加载当前用户可访问的场景、算法与摄像头范围。 */
 export const useAiEventResources = (sceneMode: 'event' | 'alarm' = 'event') => {
   const scenes = ref<AiSceneTreeOption[]>([])
-  const aggregateTasks = ref<AiAggregateTaskOption[]>([])
+  const aggregateTasks = ref<AiVisualAlarmTaskOption[]>([])
   const loadingScenes = ref(false)
   const loadingAggregateTasks = ref(false)
+  const aggregateTaskLoadFailed = ref(false)
+  const hasMoreAggregateTasks = ref(false)
+  let aggregateTaskPageIndex = -1
   const scenePageIndex = ref(-1)
   const sceneTotal = ref(0)
   const sceneKeyword = ref('')
@@ -106,23 +109,32 @@ export const useAiEventResources = (sceneMode: 'event' | 'alarm' = 'event') => {
     if (requestVersion === selectedSceneRequestVersion) selectedScene.value = page.data[0]
   }
 
-  const loadAggregateTasks = async (sceneId?: string, taskTarget?: string) => {
+  const loadAggregateTasks = async (sceneId?: string, taskTarget?: string, selectedId?: string, append = false) => {
+    if (append && (loadingAggregateTasks.value || !hasMoreAggregateTasks.value)) return
     const requestVersion = ++aggregateTaskRequestVersion
     if (!sceneId || !taskTarget) {
       aggregateTasks.value = []
+      hasMoreAggregateTasks.value = false
+      aggregateTaskLoadFailed.value = false
       loadingAggregateTasks.value = false
       return
     }
     loadingAggregateTasks.value = true
+    aggregateTaskLoadFailed.value = false
+    if (!append) { aggregateTasks.value = []; hasMoreAggregateTasks.value = false }
     try {
-      const result = normalizeResult<AiAggregateTaskOption>(await queryAiAggregateTasks({
-        pageIndex: 0,
-        pageSize: 200,
-        terms: [{ column: 'sceneId', termType: 'eq', value: sceneId }],
-      }))
+      const pageIndex = append ? aggregateTaskPageIndex + 1 : 0
+      const result = await loadVisualAlarmTaskPage(pageIndex, { sceneId, taskTarget }, selectedId)
       if (requestVersion === aggregateTaskRequestVersion) {
-        aggregateTasks.value = result.data.filter(task => task.taskTargets?.some(target => target.value === taskTarget))
+        const tasks = result.data.map(task => ({ ...task, taskTargets: task.taskTargets.map(target => ({ ...target,
+          text: taskTargets.value(sceneId).find(option => option.value === target.value)?.text || target.value,
+        })) }))
+        aggregateTasks.value = [...new Map([...(append ? aggregateTasks.value : []), ...tasks].map(task => [task.id, task])).values()]
+        aggregateTaskPageIndex = pageIndex
+        hasMoreAggregateTasks.value = result.hasMore
       }
+    } catch {
+      if (requestVersion === aggregateTaskRequestVersion) aggregateTaskLoadFailed.value = true
     } finally {
       if (requestVersion === aggregateTaskRequestVersion) loadingAggregateTasks.value = false
     }
@@ -137,6 +149,8 @@ export const useAiEventResources = (sceneMode: 'event' | 'alarm' = 'event') => {
     aggregateTasks,
     loadingScenes,
     loadingAggregateTasks,
+    aggregateTaskLoadFailed,
+    hasMoreAggregateTasks,
     hasMoreScenes,
     taskTargets,
     loadScenes,

@@ -13,7 +13,7 @@
                 <a-input-number :min="1" :precision="0" size="small" v-model:value="shakeLimit.time" style="width: 38px" />
                 <span>{{ $t('ShakeLimit.index.9093426-7') }}</span>
                 <!-- <span>{{ $t('ShakeLimit.index.9093426-2') }}</span> -->
-                <a-radio-group :options="continuousOptions" :disabled="!shakeLimit.alarmFirst" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.continuous" size="small" @change="handleChange"/>
+                <a-radio-group :options="continuousOptions" :disabled="!shakeLimit.alarmFirst" optionType="button" buttonStyle="solid" v-model:value="shakeLimit.continuous" size="small"/>
                 <span>{{ $t('ShakeLimit.index.9093426-8') }}</span>
                 <a-input-number :min="1" :max="10000" :precision="0" size="small" v-model:value="shakeLimit.threshold" style="width: 38px" />
                 <span>{{ $t('ShakeLimit.index.9093426-9') }}</span>
@@ -34,19 +34,12 @@
 </template>
 
 <script lang="ts" setup>
-import { PropType } from "vue";
+import type { PropType } from "vue";
+import { useShakeLimit, type ShakeLimitValue } from "./useShakeLimit";
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
-type ShakeLimitType = {
-    enabled?: boolean,
-    time?: number | null,
-    threshold?: number | null,
-    alarmFirst?: boolean
-    outputFirst?: boolean
-    continuous?: boolean
-    rolling?: boolean
-}
+type ShakeLimitType = ShakeLimitValue
 
 type Emit = {
   (e: 'update:value', data: ShakeLimitType): void
@@ -80,45 +73,8 @@ const props = defineProps({
 
 const emit = defineEmits<Emit>()
 
-const shakeLimit = reactive<ShakeLimitType>({
-    enabled: false,
-    time: 1,
-    threshold: 1,
-    alarmFirst: true,
-    outputFirst: false,
-    continuous: true,
-    rolling: true,
-})
-
-const validator = (rule: any, value: ShakeLimitType) => {
-  if (shakeLimit.enabled) {
-    if (!shakeLimit.time || !shakeLimit.threshold) {
-      return Promise.reject($t('ShakeLimit.index.9093426-6'))
-    } else {
-      return Promise.resolve()
-    }
-  } else {
-    return Promise.resolve()
-  }
-}
-
-Object.assign(shakeLimit, props.value)
-
-const handleChange = (e: InputEvent) => {
-  // shakeLimit.outputFirst = e.target?.value
-}
-
-const handleChangeAlarmFirst = (e: InputEvent) => {
-  if(!e.target?.value) {
-    shakeLimit.rolling = false;
-  }
-}
-
-watch(() => shakeLimit, () => {
-    emit('update:value', {...shakeLimit})
-}, {
-    deep: true
-})
+const { shakeLimit, validator, setAlarmFirst } = useShakeLimit(props.value, value => emit('update:value', value), $t)
+const handleChangeAlarmFirst = (event: { target: { value: boolean } }) => setAlarmFirst(event.target.value)
 
 </script>
 

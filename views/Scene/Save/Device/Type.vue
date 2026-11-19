@@ -1,23 +1,17 @@
 <template>
   <div class="type">
-    <div class="alert">
-      <AIcon type="InfoCircleOutlined" />
-      <span style="padding-left: 10px">{{ $t('Device.Type.372529-0') }}</span>
-    </div>
     <a-form ref="typeForm" :model="formModel" layout="vertical" :colon="false">
-      <a-form-item required :label="$t('Device.Type.372529-1')">
-        <a-select v-model:value="formModel.operator" :options="topOptions" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="false">
+      <a-form-item name="operator" :rules="[{ required: true, message: $t('IotSceneLinkage.placeholder.deviceTriggerType') }]" :label="$t('Device.Type.372529-1')">
+        <a-select v-model:value="formModel.operator" :options="topOptions" :placeholder="$t('IotSceneLinkage.placeholder.deviceTriggerType')" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="true">
           <template #option="option">
             <div class="scene-editor__device-trigger-option">
               <span><AIcon :type="optionValue(option).icon" /></span>
-              <div><b>{{ optionValue(option).label }}</b><small>{{ optionValue(option).description }}</small></div>
+              <div><b>{{ optionValue(option).label }}</b><a-tooltip :title="optionValue(option).description"><small>{{ optionValue(option).description }}</small></a-tooltip></div>
             </div>
           </template>
         </a-select>
       </a-form-item>
-      <template v-if="showTimer">
-        <Timer ref="timerRef" v-model:value="formModel.timer" />
-      </template>
+
       <ReadProperties
         v-if="showReadProperty"
         v-model:value="formModel.readProperties"
@@ -52,6 +46,9 @@
           :functions="functionOptions"
         />
       </template>
+      <template v-if="showTimer">
+        <Timer ref="timerRef" v-model:value="formModel.timer" />
+      </template>
     </a-form>
   </div>
 </template>
@@ -77,7 +74,7 @@ const props = defineProps({
     default: () => ({}),
   },
   operator: {
-    type: Object as PropType<TriggerDeviceOptions>,
+    type: Object as PropType<Partial<TriggerDeviceOptions>>,
     default: () => ({}),
   },
   options: {
@@ -86,7 +83,7 @@ const props = defineProps({
   }
 });
 const formModel = reactive({
-  operator: "online",
+  operator: undefined as TriggerDeviceOptions['operator'] | undefined,
   timer: {},
   readProperties: [],
   writeProperties: {},
@@ -166,11 +163,11 @@ const showInvokeFunction = computed(() => {
 });
 
 const showTimer = computed(() => {
-  return [
+  return Boolean(formModel.operator && [
     TypeEnum.readProperty.value,
     TypeEnum.writeProperty.value,
     TypeEnum.invokeFunction.value,
-  ].includes(formModel.operator);
+  ].includes(formModel.operator));
 });
 
 const eventSelect = (eventId: string) => {
@@ -181,72 +178,74 @@ const eventSelect = (eventId: string) => {
 const optionValue = (option: any) => option?.data?.value ? option.data : option
 
 defineExpose({
-  vail: () => {
-    return new Promise(async (resolve, reject) => {
-      const cloneModel = cloneDeep(formModel);
+  preview: computed(() => ({ operation: formModel, action: optionCache.action })),
+  vail: async () => {
+    const cloneModel = cloneDeep(formModel);
 
-      const filterKey: string[] = [];
-      const typeData = await typeForm.value?.validateFields();
+    const filterKey: string[] = [];
+    const typeData = await typeForm.value?.validateFields();
 
-      if (!typeData) return resolve(false);
+    if (!typeData) return false;
 
-      if (!showReadProperty.value) {
-        filterKey.push("readProperties");
-      }
+    if (!showReadProperty.value) {
+      filterKey.push("readProperties");
+    }
 
-      if (showInvokeFunction.value) {
-        const invokeData = await invokeRef.value?.validateFields();
-        if (!invokeData) {
-          return resolve(false);
-        } else {
-          cloneModel.functionParameters = invokeData.functionData
-        }
+    if (showInvokeFunction.value) {
+      const invokeData = await invokeRef.value?.validateFields();
+      if (!invokeData) {
+        return false;
       } else {
-        filterKey.push("functionId");
-        filterKey.push("functionParameters");
+        cloneModel.functionParameters = invokeData.functionData
       }
+    } else {
+      filterKey.push("functionId");
+      filterKey.push("functionParameters");
+    }
 
-      if (showTimer.value) {
-        const timerData = await timerRef.value?.validateFields();
-        if (!timerData) return resolve(false);
+    if (showTimer.value) {
+      const timerData = await timerRef.value?.validateFields();
+      if (!timerData) return false;
+    } else {
+      filterKey.push("timer");
+    }
+
+    if (!showReportEvent.value) {
+      filterKey.push("eventId");
+    }
+    if (showWriteProperty.value) {
+      const writeData = await writeRef.value?.validateFields();
+      if (!writeData) {
+        return false;
       } else {
-        filterKey.push("timer");
+        cloneModel.writeProperties = writeData.data
       }
+    } else {
+      filterKey.push("writeProperties");
+    }
 
-      if (!showReportEvent.value) {
-        filterKey.push("eventId");
-      }
-      if (showWriteProperty.value) {
-        const writeData = await writeRef.value?.validateFields();
-        if (!writeData) {
-          return resolve(false);
-        } else {
-          cloneModel.writeProperties = writeData.data
-        }
-      } else {
-        filterKey.push("writeProperties");
-      }
-
-      resolve({
-        data: omit(cloneModel, filterKey),
-        action: optionCache.action,
-      });
-    });
+    return {
+      data: omit(cloneModel, filterKey),
+      action: optionCache.action,
+    };
   },
 });
-watch(() => formModel.operator, (newVal, oldVal) => {
-  typeForm.value?.resetFields();
-  if(newVal === 'readProperty') {
-    formModel.writeProperties = {}
-  } else if(newVal === 'writeProperty') {
-    formModel.readProperties = []
-  }
+// 切换触发类型只清理依赖字段，不能 resetFields 把刚选中的类型恢复为空。
+watch(() => formModel.operator, () => {
+  typeForm.value?.clearValidate();
+  formModel.timer = {}
+  formModel.readProperties = []
+  formModel.writeProperties = {}
+  formModel.eventId = undefined
+  formModel.functionId = undefined
+  formModel.functionParameters = []
+  optionCache.action = ''
 })
 </script>
 
 <style scoped lang="less">
 .type {
-  margin-top: 24px;
+  margin-top: 0;
   .alert {
     height: 40px;
     padding-left: 10px;

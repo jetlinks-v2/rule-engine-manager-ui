@@ -1,13 +1,15 @@
 <template>
-  <div class='timer-when-warp'>
-    <div :class='["when-item-option", allActive ? "active" : ""]' @click='() => change(0)'>{{ $t('Timer.WhenOption.9093535-0') }}</div>
-    <div
+  <div :class="['timer-when-warp', { 'timer-when-warp--month': type === 'month' }]">
+    <button type="button" :aria-pressed="allActive" :class='["when-item-option", allActive ? "active" : ""]' @click='() => change(0)'>{{ $t('Timer.WhenOption.9093535-0') }}</button>
+    <button type="button"
       v-for='item in timeOptions'
+      :key="item.value"
+      :aria-pressed="rowKeys.includes(item.value)"
       :class='["when-item-option", rowKeys.includes(item.value) ? "active" : ""]'
       @click='() => change(item.value)'
     >
       {{ item.label }}
-    </div>
+    </button>
   </div>
 </template>
 
@@ -79,28 +81,10 @@ watch(() => props.type, () => {
 
 </script>
 
-<style scoped lang='less'>
-.timer-when-warp {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  padding: 16px;
-  background: #fafafa;
-
-  .when-item-option {
-    width: 76px;
-    padding: 6px 0;
-    text-align: center;
-    background: #fff;
-    border: 1px solid #e6e6e6;
-    border-radius: 2px;
-    cursor: pointer;
-  }
-
-  .active {
-    color: #233dd7;
-    border-color: #233dd7;
-  }
-
-}
+<style scoped>
+.timer-when-warp { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.timer-when-warp--month { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.when-item-option { min-width: 0; min-height: 32px; padding: 4px; color: var(--ant-color-text, #262626); text-align: center; background: var(--ant-color-bg-container, #fff); border: 1px solid var(--ant-color-border, #d9d9d9); border-radius: 4px; cursor: pointer; }
+.when-item-option.active { color: var(--ant-color-primary, #1677ff); border-color: var(--ant-color-primary, #1677ff); background: var(--ant-color-primary-bg, #e6f4ff); }
+.when-item-option:focus-visible { outline: 2px solid var(--ant-color-primary, #1677ff); outline-offset: 2px; }
 </style>

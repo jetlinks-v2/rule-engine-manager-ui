@@ -1,5 +1,5 @@
 <template>
-  <span class="scene-summary-parts">
+  <span class="scene-summary-parts" :title="parts.map(part => part.title || part.text).join('')">
     <span v-for="(part, index) in parts" :key="index" :class="{ 'scene-summary-parts__field': part.field }" :title="part.title || (part.field ? part.text : undefined)">{{ part.text }}</span>
   </span>
 </template>
@@ -11,6 +11,6 @@ defineProps<{ parts: SummaryPart[] }>()
 </script>
 
 <style scoped>
-.scene-summary-parts { display: inline; min-width: 0; line-height: 28px; color: var(--jet-theme-text, #1d2129); overflow-wrap: anywhere; }
-.scene-summary-parts__field { display: inline; padding: 2px 6px; margin: 0 2px; color: var(--jet-theme-primary, #1677ff); background: var(--jet-theme-primary-soft, #eef4ff); border-radius: 4px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.scene-summary-parts { display: inline; min-width: 0; line-height: 28px; color: var(--jet-theme-text, #1d2129); white-space: normal; overflow-wrap: anywhere; }
+.scene-summary-parts__field { display: inline; padding: 0 6px; margin: 0 2px; line-height: 24px; vertical-align: baseline; color: var(--jet-theme-primary, #1677ff); background: var(--jet-theme-primary-soft, #eef4ff); border-radius: 4px; overflow-wrap: anywhere; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 </style>

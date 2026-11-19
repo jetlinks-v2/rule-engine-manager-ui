@@ -1,68 +1,76 @@
 <template>
-    <div class="collector-action-workspace collector-action-workspace__layout">
-      <aside class="collector-action-workspace__tree">
-        <a-result v-if="loadError" status="error"><template #extra><a-button @click="loadResources">{{ $t('IotSceneLinkage.action.retry') }}</a-button></template></a-result>
-        <DeviceScopeTree v-else :title="$t('IotSceneLinkage.collector.channels')" :nodes="tree" :loading="loading" :selected-keys="collectorId ? [collectorId] : []" :show-counts="false" icon="DatabaseOutlined" @select="selectCollector" />
-      </aside>
-      <section class="collector-action-workspace__points">
-        <strong>{{ $t('IotSceneLinkage.collector.points') }}</strong>
-        <a-input-search v-model:value="keyword" :placeholder="$t('IotSceneLinkage.collector.searchPoints')" allow-clear />
+  <div class="collector-action-workspace collector-action-workspace__layout">
+    <aside class="collector-action-workspace__tree">
+      <a-result v-if="loadError" status="error"><template #extra><a-button @click="loadResources">{{ $t('IotSceneLinkage.action.retry') }}</a-button></template></a-result>
+      <DeviceScopeTree v-else :title="$t('IotSceneLinkage.collector.channelTitle')" :nodes="channelNodes" :loading="loading"
+        :selected-keys="[channelId ? 'channel:' + channelId : 'channel:all']" :show-counts="false" icon="ClusterOutlined" @select="selectChannel" />
+    </aside>
+    <section class="collector-action-workspace__collectors">
+      <header class="collector-action-workspace__collector-header">
+        <strong>{{ $t('IotSceneLinkage.collector.collectorList') }}</strong>
+        <a-input-search v-model:value="collectorKeyword" :placeholder="$t('IotSceneLinkage.collector.searchCollectors')" allow-clear />
+      </header>
+      <a-spin :spinning="loading">
+        <div class="collector-action-workspace__collector-list">
+          <button v-for="collector in visibleCollectors" :key="collector.id" type="button" :aria-pressed="collectorId === collector.id"
+            :class="{ 'is-selected': collectorId === collector.id }" @click="selectCollector([collector.id])">
+            <AIcon type="DatabaseOutlined" />
+            <span class="collector-action-workspace__collector-copy"><a-tooltip :title="collector.name"><strong>{{ collector.name }}</strong></a-tooltip>
+              <small>{{ channelName(collector.channelId) }}</small></span>
+            <span v-if="collector.pointNumber != null" class="collector-action-workspace__count">{{ $t('IotSceneLinkage.collector.pointCount', { count: collector.pointNumber }) }}</span>
+            <AIcon v-if="collectorId === collector.id" class="collector-action-workspace__check" type="CheckCircleFilled" />
+          </button>
+          <CloudEmpty v-if="!loading && !visibleCollectors.length" :description="$t('IotSceneLinkage.collector.emptyCollectors')" />
+        </div>
+      </a-spin>
+    </section>
+    <aside class="collector-action-workspace__configuration">
+      <header><strong>{{ $t('IotSceneLinkage.scope.configuration') }}</strong></header>
+      <template v-if="collectorId">
         <a-spin :spinning="pointsLoading">
           <a-result v-if="pointsError" status="error"><template #extra><a-button @click="loadPoints">{{ $t('IotSceneLinkage.action.retry') }}</a-button></template></a-result>
-          <div v-else class="collector-action-workspace__point-list">
-            <button v-for="point in visiblePoints" :key="point.id" type="button" :class="{ 'is-selected': selectedIds.includes(point.id) }" @click="$emit('select-point', point.id)">
-              <span class="collector-action-workspace__point-title"><b>{{ point.name }}</b><small>{{ point.dataType?.type }}</small></span>
-              <span class="collector-action-workspace__point-meta">
-                <span>{{ $t('IotSceneLinkage.collector.address') }}：{{ point.address ?? '--' }}</span>
-                <span>{{ $t('IotSceneLinkage.collector.interval') }}：{{ point.interval != null ? `${point.interval}ms` : '--' }}</span>
-              </span>
-              <span v-if="point.accessModes?.length" class="collector-action-workspace__point-modes">
-                <a-tag v-for="mode in point.accessModes" :key="typeof mode === 'string' ? mode : mode.value">{{ typeof mode === 'string' ? $t(`IotSceneLinkage.collector.mode.${mode}`) : mode.text || $t(`IotSceneLinkage.collector.mode.${mode.value}`) }}</a-tag>
-              </span>
-              <small v-if="point.description" class="collector-action-workspace__point-description">{{ point.description }}</small>
-            </button>
-            <CloudEmpty v-if="!pointsLoading && !visiblePoints.length" :description="collectorId ? $t('IotSceneLinkage.collector.emptyPoints') : $t('IotSceneLinkage.collector.select')" />
-          </div>
+          <slot v-else />
         </a-spin>
-      </section>
-      <aside class="collector-action-workspace__configuration">
-        <template v-if="collectorId">
-          <header><strong>{{ currentCollector?.name || options.name }}</strong><small>{{ currentChannel?.name || options.productName }}</small></header>
-          <slot />
-        </template>
-        <CloudEmpty v-else :description="$t('IotSceneLinkage.collector.select')" />
-      </aside>
-    </div>
+        <SceneConfigPreview v-if="!pointsLoading && !pointsError && $slots.preview"><slot name="preview" /></SceneConfigPreview>
+      </template>
+      <CloudEmpty v-else :description="$t('IotSceneLinkage.collector.select')" />
+    </aside>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { toRefs, type ShallowUnwrapRef } from 'vue'
+import { computed, toRefs, type ShallowUnwrapRef } from 'vue'
+import { useI18n } from 'vue-i18n'
+import SceneConfigPreview from '../../../../SceneLinkage/editor/components/SceneConfigPreview.vue'
 import DeviceScopeTree from '../../../../SceneLinkage/editor/components/DeviceScopeTree.vue'
 import type { useCollectorActionResources } from './useCollectorActionResources'
 
-/** 通道树、点位列表和配置区域共用布局；触发与动作分别管理自己的表单草稿。 */
-const props = defineProps<{ resources: ShallowUnwrapRef<ReturnType<typeof useCollectorActionResources>>; selectedIds: string[]; options: Record<string, any> }>()
-defineEmits<{ 'select-point': [id: string] }>()
-const { tree, visiblePoints, collectorId, keyword, loading, pointsLoading, loadError, pointsError, currentCollector, currentChannel, selectCollector, loadResources, loadPoints } = toRefs(props.resources)
+/** 触发与动作共用通道、采集器选择；具体点位仅在右侧规则中配置。 */
+const props = defineProps<{ resources: ShallowUnwrapRef<ReturnType<typeof useCollectorActionResources>> }>()
+const { t } = useI18n()
+const { tree, channels, visibleCollectors, collectorKeyword, collectorId, channelId, loading, pointsLoading, loadError, pointsError, selectChannel, selectCollector, loadResources, loadPoints } = toRefs(props.resources)
+const channelNodes = computed(() => [{ key: 'channel:all', title: t('IotSceneLinkage.collector.allChannels'), icon: 'AppstoreOutlined' }, ...tree.value])
+const channelName = (id?: string) => channels.value.find(channel => channel.id === id)?.name || ''
 </script>
 
 <style scoped>
-.collector-action-workspace__layout { display: grid; grid-template-columns: 16rem minmax(22rem, 1fr) 23rem; min-height: 31rem; border: 1px solid var(--jet-theme-border-color-1, #eceff3); border-radius: 8px; }
-.collector-action-workspace__tree, .collector-action-workspace__configuration { min-width: 0; padding: 12px; background: #fafbfc; }
+.collector-action-workspace__layout { display: grid; grid-template-columns: 13.5rem minmax(0, 1fr) 27.5rem; min-height: 31rem; border: 1px solid var(--jet-theme-border-color-1, #eceff3); border-radius: 8px; }
+.collector-action-workspace__tree, .collector-action-workspace__configuration { min-width: 0; padding: 16px; background: var(--ant-color-bg-container, #fff); }
 .collector-action-workspace__tree { border-right: 1px solid var(--jet-theme-border-color-1, #eceff3); }
 .collector-action-workspace__configuration { max-height: 36rem; overflow-y: auto; border-left: 1px solid var(--jet-theme-border-color-1, #eceff3); }
-.collector-action-workspace__configuration header { display: grid; gap: 4px; margin-bottom: 16px; }
-.collector-action-workspace__points { display: flex; min-width: 0; flex-direction: column; gap: 12px; padding: 16px; }
-.collector-action-workspace__point-list { max-height: 27rem; overflow: auto; }
-.collector-action-workspace__point-list button { display: grid; gap: 6px; width: 100%; min-height: 56px; padding: 8px 12px; text-align: left; background: #fff; border: 0; border-bottom: 1px solid var(--jet-theme-border-color-1, #eceff3); cursor: pointer; }
-.collector-action-workspace__point-title { display: flex; justify-content: space-between; align-items: baseline; min-width: 0; gap: 12px; }
-.collector-action-workspace__point-title b { overflow-wrap: anywhere; }
-.collector-action-workspace__point-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--jet-theme-text-secondary, #4e5969); font-size: 12px; overflow-wrap: anywhere; }
-.collector-action-workspace__point-modes { display: flex; flex-wrap: wrap; gap: 4px; }
-.collector-action-workspace__point-modes :deep(.ant-tag) { margin: 0; }
-.collector-action-workspace__point-description { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.collector-action-workspace__point-list button:hover, .collector-action-workspace__point-list button.is-selected { background: var(--jet-theme-primary-soft, #e6f4ff); }
-.collector-action-workspace__point-list button.is-selected { box-shadow: inset 0 0 0 1px var(--jet-theme-primary, #1677ff); }
-.collector-action-workspace small { color: var(--jet-theme-text-secondary, #4e5969); overflow-wrap: anywhere; }
+.collector-action-workspace__configuration > header { min-height: 32px; margin-bottom: 16px; display: flex; align-items: center; }
+.collector-action-workspace__collectors { display: flex; min-width: 0; flex-direction: column; gap: 12px; padding: 16px; }
+.collector-action-workspace__collector-header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.collector-action-workspace__collector-header :deep(.ant-input-search) { width: 280px; max-width: 100%; }
+.collector-action-workspace__collector-list { max-height: 27rem; overflow: auto; }
+.collector-action-workspace__collector-list > button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px; text-align: left; color: var(--jet-theme-text, #262626); background: #fff; border: 1px solid transparent; border-bottom-color: var(--jet-theme-border-color-1, #eceff3); border-radius: 4px; cursor: pointer; }
+.collector-action-workspace__collector-copy { display: grid; flex: 1; gap: 4px; min-width: 0; }
+.collector-action-workspace__collector-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collector-action-workspace__collector-copy small, .collector-action-workspace__count { color: var(--jet-theme-text-secondary, #595959); }
+.collector-action-workspace__count { flex: none; font-size: 12px; }
+.collector-action-workspace__collector-list > button:hover, .collector-action-workspace__collector-list > button.is-selected { background: var(--jet-theme-primary-soft, #e6f4ff); }
+.collector-action-workspace__collector-list > button.is-selected { border-color: var(--jet-theme-primary, #1677ff); }
+.collector-action-workspace__collector-list > button:focus-visible { outline: 2px solid var(--jet-theme-primary, #1677ff); outline-offset: -2px; }
+.collector-action-workspace__check { color: var(--jet-theme-primary, #1677ff); }
 @media (max-width: 900px) { .collector-action-workspace__layout { grid-template-columns: 12rem minmax(0, 1fr); }.collector-action-workspace__configuration { grid-column: 1 / -1; border-top: 1px solid var(--jet-theme-border-color-1, #eceff3); } }
 </style>

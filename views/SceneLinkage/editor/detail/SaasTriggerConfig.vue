@@ -20,7 +20,7 @@ import DetailedTriggerNode from './DetailedTriggerNode.vue'
 import { storeToRefs } from 'pinia'
 import { useSceneStore } from '@rule-engine-manager-ui/store/scene'
 import type { SceneAiEventTriggerConfig, SceneAlarmTriggerConfig } from '../../utils'
-import { AI_EVENT_RESULT_COLUMNS } from '../../utils'
+import { AI_EVENT_RESULT_COLUMNS, buildRequest, defaultForm, toForm } from '../../utils'
 import { findSceneCondition, replaceManagedSceneCondition } from '../../sceneRule'
 import AlarmStateConditionModal from '../components/AlarmStateConditionModal.vue'
 import AiEventTriggerRow from '../components/AiEventTriggerRow.vue'
@@ -87,35 +87,24 @@ function confirmAiEvent(value: SceneAiEventTriggerConfig) {
 
 const aiEvent = computed<SceneAiEventTriggerConfig>({
   get: () => {
-    const configuration = data.value.trigger?.configuration || {}
-    const condition = findSceneCondition(data.value.branches?.[0]?.when, term => AI_EVENT_RESULT_COLUMNS.includes(term.column))
-    return {
-      ...configuration,
-      mediaTargets: configuration.mediaTargets || [],
-      condition: condition ? { column: condition.column, termType: condition.termType, value: condition.value } : undefined,
-    }
+    return toForm(data.value).aiEvent
   },
   set: value => {
-    data.value.trigger = {
-      type: 'ai-event',
-      configuration: {
-        sceneId: value.sceneId,
-        taskTarget: value.taskTarget,
-        mediaTargets: (value.mediaTargets || []).map(target => ({ deviceId: target.deviceId, channelId: target.channelId })),
-      },
-    } as any
+    const previousRecognitionRule = aiEvent.value.recognitionRule
+    const form = defaultForm()
+    Object.assign(form, { triggerKind: 'ai-event', aiEvent: value })
+    // 与快速模式共用名称元数据、识别条件和计数编码，保留详细模式的其它分支内容。
+    const request = buildRequest(form)
+    data.value.trigger = request.trigger
     data.value.triggerType = 'ai-event'
+    data.value.options = {
+      ...data.value.options,
+      trigger: { ...data.value.options?.trigger, ...request.options.trigger },
+    }
     const branch = ensureFirstBranch()
-    // 识别结果字段只由视觉事件控件维护，其他详细条件必须原样保留。
-    branch.when = replaceManagedSceneCondition(
-      branch.when,
-      term => AI_EVENT_RESULT_COLUMNS.includes(term.column),
-      value.condition ? {
-        column: value.condition.column,
-        termType: value.condition.termType || 'eq',
-        value: value.condition.value,
-      } : undefined,
-    )
+    const nextCondition = findSceneCondition(request.branches?.[0]?.when, term => AI_EVENT_RESULT_COLUMNS.includes(term.column))
+    branch.when = replaceManagedSceneCondition(branch.when, term => AI_EVENT_RESULT_COLUMNS.includes(term.column), nextCondition)
+    if (value.recognitionRule || previousRecognitionRule) branch.shakeLimit = request.branches[0].shakeLimit
   },
 })
 

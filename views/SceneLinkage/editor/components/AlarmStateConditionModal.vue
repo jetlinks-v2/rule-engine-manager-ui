@@ -32,6 +32,7 @@
               <template #extra><a-button type="link" @click="resetAndLoad">{{ $t('IotSceneLinkage.action.retry') }}</a-button></template>
             </a-result>
             <a-empty v-else-if="!loading && !filteredRules.length" :description="$t('IotSceneLinkage.alarmCondition.empty')" />
+            <a-button v-if="sourceKind === 'visual-ai' && hasMoreVisualTasks" type="link" :loading="loadingMoreVisualTasks" @click="loadMoreVisualAlarmRules">{{ $t('IotSceneLinkage.action.loadMore') }}</a-button>
           </div>
         </a-spin>
       </aside>
@@ -63,15 +64,14 @@
                 <AIcon :type="state.icon" /><b>{{ state.label }}</b><a-tooltip :title="state.description"><AIcon type="QuestionCircleOutlined" /></a-tooltip>
               </button>
             </div>
-          </section>
+
+      </section>
         </template>
         <a-empty v-else :description="$t('IotSceneLinkage.alarmCondition.selectRule')" />
+        <SceneConfigPreview class="alarm-condition-modal__preview"><SceneSummaryParts v-if="mode === 'trigger'" :parts="triggerPreview" /><SceneSummaryParts v-else :parts="conditionPreview" /></SceneConfigPreview>
       </section>
 
-      <div class="alarm-condition-modal__preview">
-        <b>{{ previewLabel }}</b>
-        <SceneSummaryParts v-if="mode === 'trigger'" :parts="triggerPreview" /><span v-else>{{ previewText }}</span>
-      </div>
+
     </div>
     <footer class="alarm-condition-modal__footer">
       <a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
@@ -81,21 +81,23 @@
 </template>
 
 <script setup lang="ts">
+import SceneConfigPreview from './SceneConfigPreview.vue'
+import { conditionNodeSummaryParts } from '../conditionNodeSummary'
+import { localizedSummaryParts } from '../summaryParts'
 import { computed, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   getProduct,
-  queryAiAggregateTasks,
   queryAiAlarmSceneTree,
   queryDeviceAlarmPreprocesses,
   queryDevicesPage,
-  type AiAggregateTaskOption,
   type AiSceneTreeOption,
 } from '../../../../api/scene-linkage'
 import { defaultForm, normalizeResult, type SceneAlarmTriggerConfig } from '../../utils'
 import SceneSummaryParts from './SceneSummaryParts.vue'
 import { quickTriggerSummaryParts } from '../quickTriggerSummary'
 import { formatTriggerText } from '../alarm/utils'
+import { loadVisualAlarmTaskPage } from '../aiVisualAlarmTaskService'
 
 type SourceKind = 'iot-device' | 'visual-ai'
 type AlarmRule = {
@@ -124,11 +126,17 @@ const loading = ref(false)
 const loadError = ref(false)
 const keyword = ref('')
 const rules = ref<AlarmRule[]>([])
+const hasMoreVisualTasks = ref(false)
+const loadingMoreVisualTasks = ref(false)
+let visualTaskPageIndex = -1
+let visualScenes: AiSceneTreeOption[] = []
 const selectedRuleId = ref<string>()
 const draft = ref<SceneAlarmTriggerConfig>(clone(props.modelValue))
 
 const title = computed(() => props.mode === 'query'
   ? t('IotSceneLinkage.alarmCondition.queryTitle')
+  : props.mode === 'trigger'
+    ? t(props.sourceKind === 'visual-ai' ? 'IotSceneLinkage.triggerCategory.visualAlarm' : 'IotSceneLinkage.triggerCategory.iotAlarm')
   : t(props.sourceKind === 'visual-ai'
     ? 'IotSceneLinkage.condition.visualAlarmState'
     : 'IotSceneLinkage.condition.iotAlarmState'))
@@ -164,23 +172,10 @@ const states = computed(() => [
 const stateTitle = computed(() => props.mode === 'trigger'
   ? t('IotSceneLinkage.alarmCondition.triggerWhen')
   : t('IotSceneLinkage.alarmCondition.currentState'))
-const previewLabel = computed(() => t(props.mode === 'query'
-  ? 'IotSceneLinkage.summary.queryAlarmRecords'
-  : props.mode === 'trigger'
-    ? 'IotSceneLinkage.alarmCondition.triggerRule'
-    : 'IotSceneLinkage.alarmCondition.previewLabel'))
-// 与编辑页共用概览，资源、告警名称和状态都使用统一关键词样式。
 const triggerPreview = computed(() => quickTriggerSummaryParts({ ...defaultForm(), triggerKind: 'alarm', alarm: draft.value }, t))
-const previewText = computed(() => {
-  const name = selectedRule.value?.name || draft.value.options?.alarmConfigName || t('IotSceneLinkage.alarmCondition.selectRule')
-  if (props.mode === 'query') return t('IotSceneLinkage.alarmCondition.queryPreviewText', { name })
-  const state = props.mode === 'trigger'
-    ? t(`IotSceneLinkage.alarmMode.${draft.value.modes[0] || 'trigger'}`)
-    : draft.value.state === 'normal'
-      ? t('IotSceneLinkage.alarmCondition.normalState')
-      : t('IotSceneLinkage.alarmState.warning')
-  return t('IotSceneLinkage.alarmCondition.previewText', { name, state })
-})
+const conditionPreview = computed(() => props.mode === 'query'
+  ? localizedSummaryParts(t, 'IotSceneLinkage.alarmCondition.queryPreviewText', { name: selectedRule.value?.name || draft.value.options?.alarmConfigName || t('IotSceneLinkage.alarmCondition.selectRule') })
+  : conditionNodeSummaryParts({ type: 'alarmState', alarm: draft.value }, t))
 
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
 
@@ -190,6 +185,8 @@ async function resetAndLoad() {
   draft.value = clone(props.modelValue)
   selectedRuleId.value = draft.value.alarmConfigId
   rules.value = []
+  hasMoreVisualTasks.value = false
+  visualTaskPageIndex = -1
   loadError.value = false
   loading.value = true
   try {
@@ -325,34 +322,25 @@ function alarmLevelColor(level: number) {
   return 'default'
 }
 
-/** 视觉告警使用既有聚合任务列表；不把原型中的演示字段映射为新的后台字段。 */
-async function loadVisualAlarmRules(): Promise<AlarmRule[]> {
-  const scenePage = await queryAiAlarmSceneTree({
-    pageIndex: 0,
-    pageSize: 200,
-    terms: [],
-    sorts: [{ name: 'createTime', order: 'desc' }],
-  })
-  const scenes = normalizeResult<AiSceneTreeOption>(scenePage)
-  const sceneNames = Object.fromEntries(scenes.data.map(scene => [scene.id, scene.name || scene.id]))
-  // 聚合任务接口按场景查询才会返回告警任务；无筛选全量查询会漏掉当前用户可见的视觉告警配置。
-  const taskPages = await Promise.all(scenes.data.map(scene => queryAiAggregateTasks({
-    pageIndex: 0,
-    pageSize: 200,
-    terms: [{ column: 'sceneId', termType: 'eq', value: scene.id }],
-    sorts: [{ name: 'createTime', order: 'desc' }],
-  })))
-  const tasks = {
-    data: taskPages.flatMap(page => normalizeResult<AiAggregateTaskOption>(page).data),
+/** 任务直接分页查询，场景树只补展示名称；不再按场景逐个请求旧聚合任务。 */
+async function loadVisualAlarmRules(pageIndex = 0): Promise<AlarmRule[]> {
+  if (pageIndex === 0) {
+    visualScenes = normalizeResult<AiSceneTreeOption>(await queryAiAlarmSceneTree({ paging: false })).data
   }
+  const scenes = new Map(visualScenes.map(scene => [scene.id, scene]))
+  const tasks = await loadVisualAlarmTaskPage(pageIndex, {}, pageIndex === 0 ? draft.value.alarmConfigId : undefined)
+  hasMoreVisualTasks.value = tasks.hasMore
+  visualTaskPageIndex = pageIndex
   return tasks.data.flatMap(task => {
     const target = task.taskTargets?.[0]
-    const sceneName = sceneNames[task.sceneId] || task.sceneId
-    const targetName = target?.text || target?.value || '-'
-    const videoCount = task.videoCount ?? 0
+    const scene = scenes.get(task.sceneId)
+    const sceneName = scene?.name || task.sceneId
+    const targetName = scene?.children?.find(item => item.value === target?.value)?.text || target?.value || '-'
+    const videoCount = task.sourceCount ?? 0
     return [{
       id: String(task.id),
       name: task.name || task.id,
+      level: task.alarmLevel,
       lines: [
         t('IotSceneLinkage.alarmCondition.sceneLine', { value: sceneName }),
         t('IotSceneLinkage.alarmCondition.algorithmLine', { value: targetName }),
@@ -379,6 +367,16 @@ async function loadVisualAlarmRules(): Promise<AlarmRule[]> {
       },
     }]
   })
+}
+
+async function loadMoreVisualAlarmRules() {
+  if (loading.value || loadingMoreVisualTasks.value || !hasMoreVisualTasks.value) return
+  loadingMoreVisualTasks.value = true
+  try {
+    const next = await loadVisualAlarmRules(visualTaskPageIndex + 1)
+    rules.value = [...new Map([...rules.value, ...next].map(rule => [rule.id, rule])).values()]
+  } catch { loadError.value = true }
+  finally { loadingMoreVisualTasks.value = false }
 }
 
 function selectRule(rule: AlarmRule) {
@@ -422,18 +420,19 @@ watch(() => props.open, open => { if (open) void resetAndLoad() }, { immediate: 
 </script>
 
 <style scoped>
-.alarm-condition-modal { display: grid; grid-template-columns: 390px minmax(0, 1fr); min-height: 520px; border: 1px solid #eef0f3; border-radius: 8px; }
+.alarm-condition-modal { display: grid; grid-template-columns: 390px minmax(0, 1fr); min-height: 440px; border: 1px solid #eef0f3; border-radius: 8px; }
 .alarm-condition-modal__rules { display: flex; flex-direction: column; min-width: 0; padding: 16px; border-right: 1px solid #eef0f3; }
+.alarm-condition-modal__rules > .ant-input-affix-wrapper { width: 280px; max-width: 100%; }
 .alarm-condition-modal__rules-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }.alarm-condition-modal__rules-title span { color: var(--ant-color-text-tertiary); font-size: 12px; }
 .alarm-condition-modal__rule-list { display: grid; gap: 8px; max-height: 410px; margin-top: 12px; overflow: auto; padding-right: 4px; }
 .alarm-condition-modal__rule { display: grid; gap: 5px; padding: 12px; text-align: left; cursor: pointer; background: var(--ant-color-bg-container); border: 1px solid transparent; border-radius: 8px; }.alarm-condition-modal__rule:hover { background: #f7faff; border-color: #b7d2ff; }.alarm-condition-modal__rule--selected { background: #f4f8ff; border-color: var(--ant-color-primary); }
 .alarm-condition-modal__rule-head { display: flex; gap: 8px; align-items: center; min-width: 0; }.alarm-condition-modal__rule-name { flex: 1; min-width: 0; overflow: hidden; color: var(--ant-color-text); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }.alarm-condition-modal__rule-line { color: var(--ant-color-text-secondary); font-size: 12px; line-height: 18px; }
-.alarm-condition-modal__detail { display: flex; flex-direction: column; min-width: 0; padding: 24px 20px; }.alarm-condition-modal__detail > :last-child { margin-block: auto; }
+.alarm-condition-modal__detail { display: flex; flex-direction: column; min-width: 0; padding: 16px 20px; }
 .alarm-condition-modal__detail-header { display: flex; gap: 12px; align-items: center; }.alarm-condition-modal__detail-header > div { display: grid; flex: 1; gap: 2px; min-width: 0; }.alarm-condition-modal__detail-header small { color: var(--ant-color-text-tertiary); }.alarm-condition-modal__detail-header > .anticon { color: var(--ant-color-text-tertiary); }
 .alarm-condition-modal__detail-icon { display: grid; place-items: center; width: 36px; height: 36px; color: var(--ant-color-primary); background: #eef5ff; border-radius: 8px; }
-.alarm-condition-modal__detail-list { display: grid; grid-template-columns: 110px minmax(0, 1fr); margin: 20px 0 24px; border: 1px solid #f0f1f3; border-radius: 8px; overflow: hidden; }.alarm-condition-modal__detail-list dt, .alarm-condition-modal__detail-list dd { min-height: 39px; margin: 0; padding: 10px 14px; border-bottom: 1px solid #f0f1f3; }.alarm-condition-modal__detail-list dt:nth-last-of-type(1), .alarm-condition-modal__detail-list dd:last-child { border-bottom: 0; }.alarm-condition-modal__detail-list dt { color: var(--ant-color-text-tertiary); background: #fafbfc; }.alarm-condition-modal__detail-list dd { overflow: hidden; color: var(--ant-color-text); font-weight: 500; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.alarm-condition-modal__detail-list { display: grid; grid-template-columns: 110px minmax(0, 1fr); margin: 16px 0; border: 1px solid #f0f1f3; border-radius: 8px; overflow: hidden; }.alarm-condition-modal__detail-list dt, .alarm-condition-modal__detail-list dd { min-height: 39px; margin: 0; padding: 10px 14px; border-bottom: 1px solid #f0f1f3; }.alarm-condition-modal__detail-list dt:nth-last-of-type(1), .alarm-condition-modal__detail-list dd:last-child { border-bottom: 0; }.alarm-condition-modal__detail-list dt { color: var(--ant-color-text-tertiary); background: #fafbfc; }.alarm-condition-modal__detail-list dd { overflow: hidden; color: var(--ant-color-text); font-weight: 500; text-align: left; overflow-wrap: anywhere; }
 .alarm-condition-modal__state { display: grid; gap: 12px; }.alarm-condition-modal__state-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }.alarm-condition-modal__state-option { display: flex; gap: 8px; align-items: center; min-height: 56px; padding: 0 14px; color: var(--ant-color-text-secondary); cursor: pointer; background: var(--ant-color-bg-container); border: 1px solid #d9e2ef; border-radius: 8px; }.alarm-condition-modal__state-option b { color: inherit; }.alarm-condition-modal__state-option > :last-child { margin-left: auto; color: var(--ant-color-text-tertiary); }.alarm-condition-modal__state-option--selected { color: var(--ant-color-primary); background: #edf5ff; border-color: var(--ant-color-primary); }
-.alarm-condition-modal__preview { grid-column: 2; display: flex; gap: 8px; align-items: center; min-height: 42px; margin: 0 20px 20px; padding: 0 14px; color: var(--ant-color-text-secondary); background: #fbfdff; border: 1px dashed #91caff; border-radius: 8px; }.alarm-condition-modal__preview b { color: var(--ant-color-primary); }.alarm-condition-modal__preview span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alarm-condition-modal__preview { width: 100%; margin: 16px 0 0; }
 .alarm-condition-modal__footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
-@media (max-width: 760px) { .alarm-condition-modal { grid-template-columns: 1fr; }.alarm-condition-modal__rules { border-right: 0; border-bottom: 1px solid #eef0f3; }.alarm-condition-modal__preview { grid-column: 1; }.alarm-condition-modal__rule-list { max-height: 220px; } }
+@media (max-width: 760px) { .alarm-condition-modal { grid-template-columns: 1fr; }.alarm-condition-modal__rules { border-right: 0; border-bottom: 1px solid #eef0f3; }.alarm-condition-modal__rule-list { max-height: 220px; } }
 </style>

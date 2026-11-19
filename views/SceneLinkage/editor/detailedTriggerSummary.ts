@@ -36,8 +36,11 @@ export function detailedTriggerSummaryParts(trigger: SceneRuleRecord, options: S
   if (type === 'device') {
     const device = trigger.device || {}
     const operation = device.operation || {}
-    // 规则预览将分支条件单列为“且”；无条件的属性上报不能拼成残缺的“设备的”。
-    if (operation.operator === 'reportProperty' && !rule.branches?.length && !rule.terms?.length) return [...deviceNodeTargetParts(device, options, t), summaryPlainText(t('IotSceneLinkage.node.reportProperties'))]
+    // 属性上报接收任意属性；卡片与侧栏均描述事件源，具体过滤条件由分支单列。
+    if (operation.operator === 'reportProperty') {
+      const projected = toForm({ ...rule, triggerType: type, trigger, options: { ...rule.options, trigger: options } })
+      if (!projected.propertyId) return [...deviceNodeTargetParts(device, options, t), summaryPlainText(t('IotSceneLinkage.node.reportProperties'))]
+    }
 
     const property = summaryText(options.action) || summaryText(options.propertiesName) || summaryText(operation.readProperties) || summaryText(Object.keys(operation.writeProperties || {})) || operation.functionId || t('IotSceneLinkage.detail.previewUnconfigured')
     if (['readProperty', 'writeProperty', 'invokeFunction'].includes(operation.operator)) {

@@ -98,7 +98,8 @@
         <AIcon type="CloseOutlined" />
       </ConfirmModal>
     </div>
-    <div class="term-add" @click.stop="termAdd" v-if="isLast">
+    <SceneFilterAddButton v-if="isLast && isDetailedEditor" kind="term" @add="termAdd" />
+    <div class="term-add" @click.stop="termAdd" v-else-if="isLast">
       <div class="terms-content">
         <AIcon type="PlusOutlined" style="font-size: 12px" />
       </div>
@@ -110,6 +111,7 @@
 import type { PropType } from "vue";
 import type { TermsType } from "../../../typings";
 import DropdownButton from "../DropdownButton";
+import SceneFilterAddButton from '../SceneFilterAddButton.vue';
 import ParamsDropdown, {
   DoubleParamsDropdown,
   ArrayParamsDropdown,
@@ -131,6 +133,7 @@ import { useI18n } from 'vue-i18n'
 defineOptions({ name: 'ParamsItem' })
 
 const { t: $t } = useI18n()
+const isDetailedEditor = inject('scene-editor-mode', 'legacy') === 'detail'
 const sceneStore = useSceneStore();
 const { data: formModel } = storeToRefs(sceneStore);
 const formItemContext = Form.useInjectFormItemContext();

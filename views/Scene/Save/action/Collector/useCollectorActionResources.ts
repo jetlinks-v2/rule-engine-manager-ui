@@ -17,6 +17,7 @@ export function useCollectorActionResources(initialCollectorId: string, initialC
   const channelId = ref(initialChannelId)
   const pointId = ref('')
   const keyword = ref('')
+  const collectorKeyword = ref('')
   const loading = ref(false)
   const pointsLoading = ref(false)
   const loadError = ref(false)
@@ -26,8 +27,9 @@ export function useCollectorActionResources(initialCollectorId: string, initialC
   const currentChannel = computed(() => channels.value.find(item => item.id === (currentCollector.value?.channelId || channelId.value)))
   const tree = computed(() => channels.value.map(channel => ({
     key: `channel:${channel.id}`, title: channel.name, icon: 'ClusterOutlined',
-    children: collectors.value.filter(item => item.channelId === channel.id).map(item => ({ key: item.id, title: item.name, icon: 'DatabaseOutlined' })),
   })))
+  const visibleCollectors = computed(() => collectors.value.filter(item => (!channelId.value || item.channelId === channelId.value)
+    && [item.name, item.id].some(text => String(text || '').toLowerCase().includes(collectorKeyword.value.trim().toLowerCase()))))
   const availablePoints = computed(() => points.value.filter(point => (point.accessModeMask & (handlerType.value === 'write' ? 2 : handlerType.value === 'sub' ? 4 : 1)) !== 0))
   const visiblePoints = computed(() => availablePoints.value.filter(point => [point.name, point.id].some(text => String(text || '').toLowerCase().includes(keyword.value.trim().toLowerCase()))))
 
@@ -54,11 +56,19 @@ export function useCollectorActionResources(initialCollectorId: string, initialC
     } catch { if (current === sequence) pointsError.value = true }
     finally { if (current === sequence) pointsLoading.value = false }
   }
+  /** 通道筛选采集器；跨通道后清除失效选择，点位只在右侧配置。 */
+  function selectChannel(keys: Array<string | number>) {
+    const key = String(keys[0] || '')
+    const nextId = key === 'channel:all' ? '' : key.replace(/^channel:/, '')
+    if (nextId && !channels.value.some(item => item.id === nextId)) return
+    channelId.value = nextId
+    if (nextId && currentCollector.value?.channelId !== nextId) { collectorId.value = ''; pointId.value = '' }
+    collectorKeyword.value = ''
+  }
   function selectCollector(keys: Array<string | number>) {
     const selected = collectors.value.find(item => item.id === String(keys[0]))
     if (!selected || selected.id === collectorId.value) return
     collectorId.value = selected.id
-    channelId.value = selected.channelId || ''
     pointId.value = ''
     keyword.value = ''
   }
@@ -68,5 +78,5 @@ export function useCollectorActionResources(initialCollectorId: string, initialC
   })
   onScopeDispose(() => { ++sequence })
   void loadResources()
-  return { tree, points, visiblePoints, collectorId, channelId, pointId, keyword, loading, pointsLoading, loadError, pointsError, currentCollector, currentChannel, selectCollector, loadResources, loadPoints }
+  return { channels, tree, points, visiblePoints, visibleCollectors, collectorKeyword, selectChannel, collectorId, channelId, pointId, keyword, loading, pointsLoading, loadError, pointsError, currentCollector, currentChannel, selectCollector, loadResources, loadPoints }
 }

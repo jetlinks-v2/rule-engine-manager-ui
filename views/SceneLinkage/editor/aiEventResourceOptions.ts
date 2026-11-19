@@ -1,5 +1,5 @@
 import type {
-  AiAggregateTaskOption,
+  AiVisualAlarmTaskOption,
   AiSceneTreeOption,
   AiTaskTargetOption,
 } from '../../../api/scene-linkage'
@@ -33,8 +33,8 @@ export function createAiTaskTargetResourceOption(target: AiTaskTargetOption): Ai
   }
 }
 
-export function createAiAggregateTaskResourceOption(
-  task: AiAggregateTaskOption,
+export function createAiVisualAlarmTaskResourceOption(
+  task: AiVisualAlarmTaskOption,
   alarmLevels: Record<string, string>,
   t: Translate,
 ): AiEventResourceOption {
@@ -43,8 +43,8 @@ export function createAiAggregateTaskResourceOption(
     value: task.id,
     description: [
       formatAlarmLevel(task.alarmLevel, alarmLevels, t),
-      t('IotSceneLinkage.aiEvent.option.videoCount', { count: task.videoCount || 0 }),
-      formatActivePeriod(task.timeInterval, t),
+      t('IotSceneLinkage.aiEvent.option.videoCount', { count: task.sourceCount || 0 }),
+      formatActivePeriod(task.timerPeriodSpec, t),
     ].join(' · '),
     icon: 'DeploymentUnitOutlined',
   }
@@ -62,36 +62,10 @@ function formatAlarmLevel(level: unknown, alarmLevels: Record<string, string>, t
   })
 }
 
-function formatActivePeriod(timeInterval: unknown, t: Translate) {
-  const specs = getScheduleSpecs(timeInterval)
-  // 聚合任务未保存时间计划时按全天执行；这是视觉告警任务保存时的既有语义。
-  if (!specs.length || isAllDaySchedule(specs)) {
-    return t('IotSceneLinkage.aiEvent.option.activeAllDay')
-  }
-  return t('IotSceneLinkage.aiEvent.option.activeCustom')
-}
-
-function getScheduleSpecs(value: unknown): Array<Record<string, unknown>> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return []
-  const multi = (value as Record<string, unknown>).multi
-  if (!multi || typeof multi !== 'object' || Array.isArray(multi)) return []
-  const specs = (multi as Record<string, unknown>).spec
-  return Array.isArray(specs)
-    ? specs.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object' && !Array.isArray(item)))
-    : []
-}
-
-function isAllDaySchedule(specs: Array<Record<string, unknown>>) {
-  if (specs.length !== 1) return false
-  const [spec] = specs
-  const periods = Array.isArray(spec.periods) ? spec.periods : []
-  const weekdays = Array.isArray(spec.when) ? spec.when.map(Number).sort((left, right) => left - right) : []
-  const allWeekdays = JSON.stringify(weekdays) === JSON.stringify([1, 2, 3, 4, 5, 6, 7])
-    || JSON.stringify(weekdays) === JSON.stringify([0, 1, 2, 3, 4, 5, 6])
-  if (!allWeekdays || periods.length !== 1) return false
-
-  const period = periods[0]
-  if (!period || typeof period !== 'object' || Array.isArray(period)) return false
-  const { from, to } = period as Record<string, unknown>
-  return from === '00:00' && (to === '23:59' || to === '24:00')
+function formatActivePeriod(value: unknown, t: Translate) {
+  const periods = value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>).periods : undefined
+  return t(Array.isArray(periods) && periods.length
+    ? 'IotSceneLinkage.aiEvent.option.activeCustom'
+    : 'IotSceneLinkage.aiEvent.option.activeAllDay')
 }

@@ -19,6 +19,7 @@
 
 <script lang="ts" setup>
 import { type PropType, type Ref } from 'vue';
+import { useI18n } from 'vue-i18n'
 import { ActionsType } from '../../../typings';
 import ActionTypeComponent from './ActionTypeComponent.vue';
 import { randomNumber, randomString } from '@jetlinks-web/utils';
@@ -55,6 +56,7 @@ const props = defineProps({
     }
 });
 
+const { t } = useI18n()
 const emit = defineEmits(['cancel', 'save']);
 
 type ActionOption = {
@@ -88,7 +90,9 @@ const pickerActions = computed<ActionPickerItem[]>(() => actionList.value.map(it
   value: item.value,
   provider: item.value,
   icon: item.icon || actionIcons[item.value] || 'PlayCircleOutlined',
-  label: item.label || item.value,
+  label: ['device', 'delay', 'sceneNotify'].includes(item.value)
+    ? t(`IotSceneLinkage.action.${item.value === 'sceneNotify' ? 'sendNotify' : item.value}`)
+    : item.value === 'alarm-record-query' ? t('IotSceneLinkage.alarmCondition.queryTitle') : item.label || item.value,
   description: item.subLabel || item.description,
   disabled: item.disabled,
 })))

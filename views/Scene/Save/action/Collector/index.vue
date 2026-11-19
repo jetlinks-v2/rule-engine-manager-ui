@@ -3,6 +3,7 @@
       :title="$t('Manual.index.515142-2')"
       open
       :width="isDetailedEditor ? 1240 : 1000"
+      :style="isDetailedEditor ? { top: 'min(100px, max(24px, calc((100vh - 720px) / 2)))' } : undefined"
       :footer="isDetailedEditor ? null : undefined"
       @cancel="onCancel"
       @ok="save"

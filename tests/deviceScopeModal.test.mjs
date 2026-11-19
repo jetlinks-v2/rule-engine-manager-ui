@@ -97,6 +97,29 @@ test('combined conditions stay grouped inside the selected space and reset pagin
   assert.equal(f.calls.at(-1).terms.length, 1)
 })
 
+test('device pages contain twenty rows and preserve named selections across three pages', async t => {
+  const devices = Array.from({ length: 45 }, (_, i) => row(`d${i + 1}`))
+  const f = fixture(t, { props: { multiple: true }, query: params => ({ result: {
+    data: devices.slice(params.pageIndex * params.pageSize, (params.pageIndex + 1) * params.pageSize), total: devices.length,
+  } }) })
+  await settle()
+  assert.equal(f.state.pageSize, 20)
+  assert.equal(f.state.total.value, 45)
+  assert.equal(f.state.deviceOptions.value.length, 20)
+  f.state.deviceRowSelection.value.onChange(['d1'])
+  await f.state.changePage(2)
+  assert.equal(f.calls.at(-1).pageIndex, 1)
+  assert.equal(f.state.deviceOptions.value[0].id, 'd21')
+  f.state.deviceRowSelection.value.onChange(['d1', 'd21'])
+  await f.state.changePage(3)
+  assert.equal(f.state.deviceOptions.value.length, 5)
+  assert.deepEqual(copy(f.state.deviceRowSelection.value.selectedRowKeys), ['d1', 'd21'])
+  await f.state.save()
+  assert.deepEqual(f.events.find(([event]) => event === 'save')[1].selectorValues, [
+    { value: 'd1', name: '设备d1' }, { value: 'd21', name: '设备d21' },
+  ])
+})
+
 test('selecting a device updates action product without changing the search or raw ID labels', async t => {
   const f = fixture(t)
   await settle()

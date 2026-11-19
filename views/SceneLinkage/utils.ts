@@ -27,7 +27,8 @@ export type SceneAiEventRecognitionRule =
 
 export interface SceneAiEventMediaTarget {
   deviceId: string
-  channelId: string
+  /** 省略通道表示设备级映射，不表示设备下所有通道。 */
+  channelId?: string
   /** 媒体通道实体主键，仅供编辑器反查已部署的视觉算法，不写入运行时触发器配置。 */
   entityId?: string
   /** 编辑器回填信息，不会写入触发器范围配置。 */
@@ -255,16 +256,22 @@ export const enumText = (value: any, fallback = '-') => typeof value === 'object
   ? value?.text || value?.value || fallback
   : value || fallback
 
-const aiEventConditionFromTerms = (terms: Record<string, any>[]) => {
-  const condition = terms.find(term => AI_EVENT_RESULT_COLUMNS.includes(term.column as AiEventResultColumn))
-  return condition
-    ? { column: condition.column as AiEventResultColumn, termType: condition.termType || 'eq', value: condition.value }
-    : undefined
+/** 详细编辑器使用分组及固定值包装；预览和弹窗回填只读取对应的视觉结果叶子。 */
+const aiEventConditionFromTerms = (terms: Record<string, any>[]): SceneAiEventTriggerConfig['condition'] => {
+  for (const term of terms) {
+    if (AI_EVENT_RESULT_COLUMNS.includes(term.column as AiEventResultColumn)) {
+      return { column: term.column, termType: term.termType || 'eq', value: term.value?.source === 'fixed' ? term.value.value : term.value }
+    }
+    const nested = aiEventConditionFromTerms(Array.isArray(term.terms) ? term.terms : [])
+    if (nested) return nested
+  }
+  return undefined
 }
 
 const aiEventRecognitionRuleFrom = (shakeLimit: any, terms: Record<string, any>[]): SceneAiEventRecognitionRule | undefined => {
   if (!shakeLimit?.enabled || !Number(shakeLimit.time)) return undefined
-  const hitResult = terms.find(term => term?.column === 'hitResults' && term?.termType === 'eq')
+  const hitResult = aiEventConditionFromTerms(terms)
+  if (hitResult?.column !== 'hitResults' || hitResult.termType !== 'eq') return undefined
   if (hitResult?.value === 1) {
     return { type: 'hits', time: Number(shakeLimit.time), threshold: Math.max(1, Number(shakeLimit.threshold) || 1) }
   }
@@ -281,7 +288,7 @@ const toAiEventMediaTargets = (
 ): SceneAiEventMediaTarget[] =>
   Array.isArray(configuration?.mediaTargets)
     ? configuration.mediaTargets
-      .filter((target: any) => target?.deviceId && target?.channelId)
+      .filter((target: any) => target?.deviceId)
       .map((target: any, index: number) => ({
         deviceId: target.deviceId,
         channelId: target.channelId,

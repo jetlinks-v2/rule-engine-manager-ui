@@ -8,9 +8,6 @@
           </a-button>
         </ConfirmModal>
       </template>
-      <template v-if="isFirst" #extra>
-        <ShakeLimit v-model:value="FormModel.branches[name].shakeLimit" />
-      </template>
     </DetailedSceneSectionHeader>
     <div v-else class='actions-terms-title'>
       {{ isFirst ? $t('Terms.Branches.9093534-0') : $t('Terms.Branches.9093534-1') }}
@@ -24,11 +21,7 @@
     </div>
     <div :class='optionsClass'>
       <!-- 否则承载独立的条件与动作；展开后复用首分支的条件标题及防抖配置。 -->
-      <DetailedSceneSectionHeader v-if="detailCardLayout && !isFirst" kind="condition">
-        <template #extra>
-          <ShakeLimit v-model:value="FormModel.branches[name].shakeLimit" />
-        </template>
-      </DetailedSceneSectionHeader>
+      <DetailedSceneSectionHeader v-if="detailCardLayout && !isFirst" kind="condition" />
         <ConfirmModal :title="$t('Terms.Branches.9093534-2')" v-if='!isFirst && !detailCardLayout' :onConfirm="onDelete" className="terms-params-delete danger show detailed-scene-branch-delete">
           <AIcon type='DeleteOutlined' />
         </ConfirmModal>
@@ -69,6 +62,7 @@
           </div>
         </div>
       </div>
+      <DetailedShakeLimit v-if="detailCardLayout" v-model:value="FormModel.branches[name].shakeLimit" />
       <div class='actions-branches'>
         <section v-if='detailCardLayout' class='detailed-scene-action-card'>
           <DetailedSceneSectionHeader kind="action" />
@@ -105,7 +99,7 @@ import WhenItem from './WhenItem.vue'
 import { storeToRefs } from 'pinia';
 import { useSceneStore } from '@rule-engine-manager-ui/store/scene'
 import Action from '../../action/index.vue'
-import ShakeLimit from '../ShakeLimit/index.vue'
+import DetailedShakeLimit from '../ShakeLimit/DetailedShakeLimit.vue'
 import DetailedSceneSectionHeader from './DetailedSceneSectionHeader.vue'
 import SceneFilterAddButton from '../SceneFilterAddButton.vue'
 import { randomString} from '@jetlinks-web/utils'
@@ -168,7 +162,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  /** 详细模式仅切换为卡片式视觉承载，原版规则树及其操作仍由当前组件维护。 */
+  /** 详细模式仅调整规则树的视觉层级，分支和动作操作仍由当前组件维护。 */
   detailCardLayout: {
     type: Boolean,
     default: false,
@@ -299,8 +293,6 @@ const deleteGroup = () => {
 }
 
 .detailed-scene-action-card {
-  overflow: hidden;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--radius-jet-sm, 6px);
+  min-width: 0;
 }
 </style>

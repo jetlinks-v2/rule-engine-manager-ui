@@ -3,8 +3,9 @@
     <header class="scene-rule-preview__title">
       <AIcon type="EyeOutlined" />
       <span>{{ $t('IotSceneLinkage.title.rulePreview') }}</span>
+      <span class="scene-rule-preview__extra"><slot name="extra" /></span>
     </header>
-    <div class="scene-rule-preview__content">
+    <div class="scene-rule-preview__content" tabindex="0" role="region" :aria-label="$t('IotSceneLinkage.title.rulePreview')">
       <slot />
     </div>
   </section>
@@ -19,10 +20,11 @@ const { t: $t } = useI18n()
 
 <style scoped>
 .scene-rule-preview {
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  min-height: 10.5rem;
+  min-height: 0;
+  box-sizing: border-box;
   padding: var(--space-3, 12px) var(--space-4, 16px);
   /* 使用明确的浅灰底色，避免主题 fill token 与白色容器无可见差异。 */
   background: #fafbfc;
@@ -32,10 +34,11 @@ const { t: $t } = useI18n()
 
 .scene-rule-preview__title {
   display: flex;
+  flex: none;
   gap: var(--space-2, 8px);
   align-items: center;
   margin-bottom: var(--space-2, 8px);
-  color: var(--ant-color-text-secondary);
+  color: var(--jet-theme-text-secondary, #595959);
   font-size: .875rem;
   font-weight: 600;
   line-height: 1.5rem;
@@ -45,5 +48,12 @@ const { t: $t } = useI18n()
   display: grid;
   align-content: start;
   min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
+.scene-rule-preview__content:focus-visible { outline: 2px solid var(--jet-theme-primary, #1677ff); outline-offset: 2px; }
+.scene-rule-preview__extra { margin-left: auto; }
 </style>

@@ -24,7 +24,7 @@ function loadSwitch(file, binding, state) {
   const handler = source.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'changeDeviceTriggerKind')
   assert.ok(handler)
   const code = ts.transpileModule(handler.getText(source), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-  return new Function(binding, `${code}; return changeDeviceTriggerKind`)(state)
+  return new Function(binding, 'deviceTriggerChosen', `${code}; return changeDeviceTriggerKind`)(state, ref(false))
 }
 
 for (const [name, file, binding] of [['single', 'index.vue', 'form'], ['combined', 'components/MultiTriggerCard.vue', 'trigger']]) {

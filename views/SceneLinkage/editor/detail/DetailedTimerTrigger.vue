@@ -11,17 +11,14 @@
     :mask-closable="false"
     :keyboard="false"
     :footer="null"
+    wrap-class-name="detailed-timer-trigger-modal"
     @cancel="cancelConfig"
   >
-    <header class="detailed-timer-trigger__modal-header">
-      <strong>{{ $t('IotSceneLinkage.detail.timerTrigger') }}</strong>
-      <span>{{ $t('IotSceneLinkage.detail.timerTriggerHint') }}</span>
-    </header>
-    <TimerEditor ref="timerRef" v-model:value="draftTimer" type="timer" />
-    <section class="detailed-timer-trigger__preview">
-      <span>{{ $t('IotSceneLinkage.detail.currentTimerRule') }}</span>
-      <SceneSummaryParts :parts="draftSummary" />
-    </section>
+    <div class="detailed-timer-trigger__body">
+      <p class="detailed-timer-trigger__hint">{{ $t('IotSceneLinkage.detail.timerTriggerHint') }}</p>
+      <TimerEditor ref="timerRef" v-model:value="draftTimer" type="timer" />
+      <SceneConfigPreview :hint="!draftSummary.length ? $t('IotSceneLinkage.detail.timerRequired') : undefined"><SceneSummaryParts :parts="draftSummary" /></SceneConfigPreview>
+    </div>
     <footer class="detailed-timer-trigger__footer">
       <a-button @click="cancelConfig">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
       <a-button type="primary" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button>
@@ -30,6 +27,7 @@
 </template>
 
 <script setup lang="ts">
+import SceneConfigPreview from '../components/SceneConfigPreview.vue'
 import { computed, ref, type Ref } from 'vue'
 import { cloneDeep } from 'lodash-es'
 import { storeToRefs } from 'pinia'
@@ -86,11 +84,15 @@ function cancelConfig() {
 
 <style scoped>
 .detailed-timer-trigger { margin-bottom: var(--space-4, 16px); }
-.detailed-timer-trigger__card { display: flex; align-items: center; min-height: 4.125rem; padding: var(--space-3, 12px) var(--space-4, 16px); text-align: left; background: var(--ant-color-bg-container); border-color: var(--ant-color-border-secondary); }
-.detailed-timer-trigger__card:hover { border-color: var(--ant-color-primary); }
-.detailed-timer-trigger__icon { display: grid; flex: none; place-items: center; width: 2.5rem; height: 2.5rem; margin-right: var(--space-3, 12px); color: var(--ant-color-primary); background: var(--ant-color-primary-bg); border-radius: 50%; }
-.detailed-timer-trigger__content { display: grid; flex: 1; gap: 4px; min-width: 0; }.detailed-timer-trigger__content b, .detailed-timer-trigger__content small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.detailed-timer-trigger__content b { color: var(--ant-color-text); }.detailed-timer-trigger__content small { color: var(--ant-color-text-tertiary); font-size: 12px; }
-.detailed-timer-trigger__modal-header { display: grid; gap: 4px; margin-bottom: var(--space-4, 16px); }.detailed-timer-trigger__modal-header span { color: var(--ant-color-text-tertiary); font-size: 12px; }
-.detailed-timer-trigger__preview { display: grid; gap: 4px; margin-top: var(--space-4, 16px); padding: var(--space-3, 12px); background: var(--ant-color-fill-quaternary); border-radius: var(--radius-jet-sm, 8px); }.detailed-timer-trigger__preview span { color: var(--ant-color-text-secondary); font-size: 12px; }.detailed-timer-trigger__preview b { color: var(--ant-color-text); font-weight: 500; }
-.detailed-timer-trigger__footer { display: flex; justify-content: flex-end; gap: var(--space-2, 8px); padding-top: var(--space-4, 16px); margin-top: var(--space-4, 16px); border-top: 1px solid var(--ant-color-border-secondary); }
+.detailed-timer-trigger__card { display: flex; align-items: center; min-height: 4.125rem; padding: var(--space-3, 12px) var(--space-4, 16px); text-align: left; background: var(--jet-theme-bg-container, #fff); border-color: var(--jet-theme-border-color-1, #eceff3); }
+.detailed-timer-trigger__card:hover { border-color: var(--jet-theme-primary, #1677ff); }
+.detailed-timer-trigger__icon { display: grid; flex: none; place-items: center; width: 2.5rem; height: 2.5rem; margin-right: var(--space-3, 12px); color: var(--jet-theme-primary, #1677ff); background: var(--jet-theme-primary-soft, #e8f0ff); border-radius: 50%; }
+.detailed-timer-trigger__content { display: grid; flex: 1; gap: 4px; min-width: 0; }.detailed-timer-trigger__content b, .detailed-timer-trigger__content small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.detailed-timer-trigger__content b { color: var(--jet-theme-text, #1d2129); }.detailed-timer-trigger__content small { color: var(--jet-theme-text-secondary, #595959); font-size: 12px; }
+:global(.detailed-timer-trigger-modal .ant-modal) { top: 24px; padding-bottom: 24px; }
+:global(.detailed-timer-trigger-modal .ant-modal-content) { display: flex; flex-direction: column; max-height: calc(100dvh - 48px); }
+:global(.detailed-timer-trigger-modal .ant-modal-header) { flex: none; }
+:global(.detailed-timer-trigger-modal .ant-modal-body) { display: flex; flex-direction: column; max-height: calc(100dvh - 9rem); min-height: 0; overflow: hidden; }
+.detailed-timer-trigger__body { min-height: 0; overflow: auto; }
+.detailed-timer-trigger__hint { margin: 0 0 var(--space-4, 16px); color: var(--jet-theme-text-secondary, #595959); font-size: 12px; line-height: 20px; }
+.detailed-timer-trigger__footer { display: flex; flex: none; justify-content: flex-end; gap: var(--space-2, 8px); padding-top: var(--space-4, 16px); margin-top: var(--space-4, 16px); border-top: 1px solid var(--jet-theme-border-color-1, #eceff3); }
 </style>

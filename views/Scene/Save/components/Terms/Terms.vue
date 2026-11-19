@@ -56,32 +56,24 @@
                                 }"
                                 :key="index"
                             >
-                                <template v-if="detailCardLayout">
-                                    <div class="detailed-scene-branch-card__header">
-                                        <span class="detailed-scene-branch-card__icon detailed-scene-branch-card__icon--otherwise"><AIcon type="ApartmentOutlined" /></span>
-                                        <div>
-                                            <strong>{{ $t('IotSceneLinkage.detail.otherwiseTitle') }}</strong>
-                                            <small>{{ $t('IotSceneLinkage.detail.otherwiseDescription') }}</small>
-                                        </div>
+                                <a-button
+                                    v-if="detailCardLayout"
+                                    type="text"
+                                    class="detailed-scene-branch-card__add-otherwise"
+                                    :title="$t('IotSceneLinkage.detail.otherwiseDescription')"
+                                    @click="() => addBranches(b.start + b.len)"
+                                >
+                                    <template #icon><AIcon type="PlusOutlined" /></template>
+                                    {{ $t('IotSceneLinkage.detail.addOtherwise') }}
+                                </a-button>
+                                <template v-else>
+                                    <div class="actions-terms-title">
+                                        {{ $t('Terms.Terms.9093429-5') }}
+                                    </div>
+                                    <div class="actions-terms-options no-when">
+                                        <AIcon type="PlusOutlined" class="when-add-button" @click="() => addBranches(b.start + b.len)" />
                                     </div>
                                 </template>
-                                <div v-else class="actions-terms-title">
-                                    {{ $t('Terms.Terms.9093429-5') }}
-                                </div>
-                                <div class="actions-terms-options no-when">
-                                    <a-button
-                                        v-if="detailCardLayout"
-                                        type="dashed"
-                                        shape="circle"
-                                        class="detailed-scene-branch-card__add-otherwise"
-                                        :aria-label="$t('IotSceneLinkage.detail.addOtherwise')"
-                                        :title="$t('IotSceneLinkage.detail.addOtherwise')"
-                                        @click="() => addBranches(b.start + b.len)"
-                                    >
-                                        <template #icon><AIcon type="PlusOutlined" /></template>
-                                    </a-button>
-                                    <AIcon v-else type="PlusOutlined" class="when-add-button" @click="() => addBranches(b.start + b.len)" />
-                                </div>
                             </div>
                         </template>
                     </template>

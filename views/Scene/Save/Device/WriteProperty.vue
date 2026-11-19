@@ -1,11 +1,12 @@
 <template>
   <a-form ref='writeForm' :model='formModel' layout='vertical' :colon='false'>
-    <a-row :futter='[24, 24]'>
-      <a-col :span='10'>
+    <a-row :gutter='[0, 0]'>
+      <a-col :span='24'>
         <a-form-item
           name='reportKey'
           :rules="[{ required: true, message: $t('Device.WriteProperty.372527-0') }]"
         >
+          <template #label>{{ $t('IotSceneLinkage.form.property') }} <a-tooltip :title="$t('Device.WriteProperty.372527-2')"><AIcon type="QuestionCircleOutlined" /></a-tooltip></template>
           <ThingModelSelect
             :placeholder="$t('Device.WriteProperty.372527-1')"
             v-model='formModel.reportKey'
@@ -14,13 +15,9 @@
           />
         </a-form-item>
       </a-col>
-      <a-col :span='14'>
-        <span style='line-height: 32px;padding-left: 24px'>
-          {{ $t('Device.WriteProperty.372527-2') }}
-        </span>
-      </a-col>
+
       <a-col :span='24' v-if='showTable'>
-        <FunctionCall
+        <FunctionCall compact
           ref="functionRef"
           :required="true"
           :data='callDataOptions'
@@ -90,12 +87,12 @@ const callDataOptions = computed(() => {
   const _valueKeys = Object.keys(props.value)
   if (_valueKeys.length) {
     return _valueKeys.map(key => {
-      const item: any = props.properties.find((p: any) => p.id === key)
+      const item: any = props.properties.find((p: any) => (p.value || p.id) === key)
       if (item) {
         const _options = handleOptions(item, item.valueType?.type)
         return {
-          id: item.id,
-          name: item.name,
+          id: item.value || item.id,
+          name: item.label || item.name,
           type: item.valueType ? item.valueType.type : '-',
           format: item.valueType ? item.valueType.format : undefined,
           options: _options,
@@ -140,16 +137,16 @@ const callDataChange = (v: any[]) => {
 }
 
 defineExpose({
-  validateFields: () => new Promise(async (resolve)  => {
+  validateFields: async () => {
     const data = await writeForm.value?.validateFields()
     const data2 = await functionRef.value?.validate()
-    resolve({
+    return {
       ...data,
       data: {
-        [formModel.reportKey!]: data2[0]?.value
+        [formModel.reportKey!]: data2?.[0]?.value
       }
-    })
-  })
+    }
+  }
 })
 
 </script>
