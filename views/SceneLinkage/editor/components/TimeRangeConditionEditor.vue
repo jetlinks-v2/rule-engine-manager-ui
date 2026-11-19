@@ -1,5 +1,6 @@
 <template>
   <div class="time-range-condition-editor">
+    <DocumentHelp code="rule-engine/Scene" help-key="scene.effectivePeriod" />
     <template v-for="range in modelValue" :key="rangeKey(range)">
       <template v-if="editingRangeKey === rangeKey(range)">
         <a-time-range-picker v-model:value="customRange" format="HH:mm" value-format="HH:mm" />
@@ -27,6 +28,7 @@
 </template>
 
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { computed, ref, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatSceneTimeRange, type SceneTimeRange } from '../../utils'

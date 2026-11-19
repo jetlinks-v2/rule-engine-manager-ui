@@ -8,6 +8,7 @@
       <a-radio-group v-model:value="scopeMode" class="device-scope-modal__scope-mode" button-style="solid">
         <a-radio-button v-for="item in availableScopeModes" :key="item.value" :value="item.value" :disabled="disabledScopeModes.includes(item.value)"><AIcon :type="item.icon" />{{ item.label }}</a-radio-button>
       </a-radio-group>
+      <DocumentHelp code="rule-engine/Scene" help-key="scene.deviceScope" />
       <slot name="toolbar-actions" />
     </header>
     <div :class="['device-scope-modal__layout', { 'device-scope-modal__layout--scope': scopeMode !== 'fixed' }]">
@@ -59,6 +60,7 @@
   </component>
 </template>
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { type PropType } from 'vue'
 import DeviceScopeTree from './DeviceScopeTree.vue'
 import { useDeviceScopeModal } from '../detail/useDeviceScopeModal'

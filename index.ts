@@ -2,7 +2,7 @@ import i18n from "@jetlinks-web-core/locales";
 import registerSetting from './register'
 import { name } from './package.json'
 import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
-import { registerAlarmDashboardHelpPoints } from './documentHelpPoints'
+import { registerAlarmDashboardHelpPoints, registerRuleHelpPoints } from './documentHelpPoints'
 
 const routerModules = import.meta.glob('./views/**/index.vue')
 const getAsyncRoutesMap = () => {
@@ -75,6 +75,7 @@ const getExtraRoutesMap = () => {
 
 const register = () => {
     registerAlarmDashboardHelpPoints()
+    registerRuleHelpPoints()
     moduleRegistry.register(name, registerSetting)
 }
 
