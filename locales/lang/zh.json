@@ -1,4 +1,16 @@
 {
+  "RuleDocumentHelp": {
+    "rules": "规则编排",
+    "scenes": "场景联动",
+    "ruleEditor": "规则编辑器",
+    "sceneEditor": "场景编辑器",
+    "lifecycle": "规则保存与发布",
+    "transfer": "规则导入与导出",
+    "trigger": "场景触发方式",
+    "deviceScope": "设备选择范围",
+    "effectivePeriod": "条件生效时段",
+    "actions": "场景执行动作"
+  },
 	"DocumentHelp.alarmDashboard": "告警仪表盘",
 	"Save.index.551009-0": "确定",
 	"Save.index.551009-1": "取消",

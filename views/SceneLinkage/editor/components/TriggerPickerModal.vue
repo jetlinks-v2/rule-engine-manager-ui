@@ -9,7 +9,7 @@
   >
     <template #title>
       <div class="trigger-picker__title">
-        <span>{{ title || $t('IotSceneLinkage.title.triggerPicker') }}</span>
+        <span>{{ title || $t('IotSceneLinkage.title.triggerPicker') }} <DocumentHelp code="rule-engine/Scene" help-key="scene.trigger" /></span>
         <small>{{ hint || $t('IotSceneLinkage.editor.triggerPickerHint') }}</small>
       </div>
     </template>
@@ -42,6 +42,7 @@
 </template>
 
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { SCENE_TRIGGER_CATEGORY_ORDER } from '../triggerPickerOptions'

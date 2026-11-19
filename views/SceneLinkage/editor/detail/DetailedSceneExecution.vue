@@ -5,6 +5,7 @@
         <span class="detailed-scene-execution__card-icon"><AIcon type="PlayCircleOutlined" /></span>
         <div>
           <strong>{{ $t('IotSceneLinkage.detail.executeActionTitle') }}</strong>
+          <DocumentHelp code="rule-engine/Scene" help-key="scene.actions" />
           <small>{{ $t('IotSceneLinkage.detail.executeActionDescription') }}</small>
         </div>
       </header>
@@ -21,6 +22,7 @@
 </template>
 
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Action from '../../../Scene/Save/action/index.vue'

@@ -75,6 +75,7 @@
           {{ $t('RuleEditor.index.export') }}
         </a-button>
       </a-button-group>
+      <DocumentHelp code="rule-engine/Instance" help-key="rule.transfer" />
       <a-button-group class="rule-editor-shell__action-group">
         <a-button
           class="rule-editor-shell__action rule-editor-shell__action--save"
@@ -102,6 +103,7 @@
           {{ $t(actioning === 'deploy' ? 'RuleEditor.index.deploying' : 'RuleEditor.index.deploy') }}
         </a-button>
       </a-button-group>
+      <DocumentHelp code="rule-engine/Instance" help-key="rule.lifecycle" />
       <a-button class="rule-editor-shell__close" type="text" :title="$t('RuleEditor.index.close')" @click="$emit('close')">
         <template #icon>
           <AIcon type="CloseOutlined" />
@@ -129,6 +131,7 @@
 </template>
 
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp';
 import { nextTick, ref, watch, type PropType } from 'vue';
 
 const props = defineProps({

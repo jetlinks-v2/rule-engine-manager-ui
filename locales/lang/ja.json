@@ -1,4 +1,16 @@
 {
+  "RuleDocumentHelp": {
+    "rules": "ルールオーケストレーション",
+    "scenes": "シーン連動",
+    "ruleEditor": "ルールエディター",
+    "sceneEditor": "シーンエディター",
+    "lifecycle": "ルールの保存とデプロイ",
+    "transfer": "ルールのインポートとエクスポート",
+    "trigger": "シーンのトリガー方式",
+    "deviceScope": "選択対象デバイスの範囲",
+    "effectivePeriod": "条件の有効時間帯",
+    "actions": "シーンの実行アクション"
+  },
   "DocumentHelp.alarmDashboard": "アラームダッシュボード",
   "Save.index.551009-0": "OK",
   "Save.index.551009-1": "キャンセル",

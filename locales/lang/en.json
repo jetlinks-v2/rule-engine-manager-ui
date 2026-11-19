@@ -1,4 +1,16 @@
 {
+  "RuleDocumentHelp": {
+    "rules": "Rule orchestration",
+    "scenes": "Scene linkage",
+    "ruleEditor": "Rule editor",
+    "sceneEditor": "Scene editor",
+    "lifecycle": "Saving and deploying rules",
+    "transfer": "Rule import and export",
+    "trigger": "Scene trigger types",
+    "deviceScope": "Device selection scope",
+    "effectivePeriod": "Condition time ranges",
+    "actions": "Scene execution actions"
+  },
 	"DocumentHelp.alarmDashboard": "Alarm dashboard",
 	"Save.index.551009-0": "Confirm",
 	"Save.index.551009-1": "Cancel",
