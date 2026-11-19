@@ -17,11 +17,13 @@
         <a-input v-model:value="keyword" allow-clear :placeholder="searchPlaceholder">
           <template #prefix><AIcon type="SearchOutlined" /></template>
         </a-input>
+        <a-alert v-if="selectedTaskIssue" type="warning" show-icon :message="$t(`IotSceneLinkage.alarmCondition.selectedTask.${selectedTaskIssue}`)" />
         <a-spin :spinning="loading">
           <div class="alarm-condition-modal__rule-list">
             <button
               v-for="rule in filteredRules"
               :key="rule.id"
+              :disabled="rule.unavailable"
               :class="['alarm-condition-modal__rule', { 'alarm-condition-modal__rule--selected': rule.id === selectedRuleId }]"
               @click="selectRule(rule)"
             >
@@ -75,43 +77,23 @@
     </div>
     <footer class="alarm-condition-modal__footer">
       <a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
-      <a-button type="primary" :disabled="!selectedRule" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button>
+      <a-button type="primary" :disabled="!selectedRule || selectedRule.unavailable" @click="save">{{ $t('IotSceneLinkage.action.confirm') }}</a-button>
     </footer>
   </a-modal>
 </template>
 
 <script setup lang="ts">
-import SceneConfigPreview from './SceneConfigPreview.vue'
-import { conditionNodeSummaryParts } from '../conditionNodeSummary'
-import { localizedSummaryParts } from '../summaryParts'
-import { computed, ref, watch, type PropType } from 'vue'
+import { type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {
-  getProduct,
-  queryAiAlarmSceneTree,
-  queryDeviceAlarmPreprocesses,
-  queryDevicesPage,
-  type AiSceneTreeOption,
-} from '../../../../api/scene-linkage'
-import { defaultForm, normalizeResult, type SceneAlarmTriggerConfig } from '../../utils'
+import SceneConfigPreview from './SceneConfigPreview.vue'
 import SceneSummaryParts from './SceneSummaryParts.vue'
-import { quickTriggerSummaryParts } from '../quickTriggerSummary'
-import { formatTriggerText } from '../alarm/utils'
-import { loadVisualAlarmTaskPage } from '../aiVisualAlarmTaskService'
-
-type SourceKind = 'iot-device' | 'visual-ai'
-type AlarmRule = {
-  id: string
-  name: string
-  level?: number
-  lines: string[]
-  details: Array<{ label: string; value: string }>
-  value: SceneAlarmTriggerConfig
-}
+import type { SceneAlarmTriggerConfig } from '../../utils'
+import type { AlarmSourceKind } from '../alarm/alarmConditionResourceService'
+import { useAlarmConditionModel } from '../alarm/useAlarmConditionModel'
 
 const props = defineProps({
   open: Boolean,
-  sourceKind: { type: String as PropType<SourceKind>, required: true },
+  sourceKind: { type: String as PropType<AlarmSourceKind>, required: true },
   mode: { type: String as PropType<'trigger' | 'condition' | 'query'>, default: 'condition' },
   modelValue: { type: Object as PropType<SceneAlarmTriggerConfig>, required: true },
 })
@@ -120,303 +102,19 @@ const emit = defineEmits<{
   (event: 'cancel'): void
   (event: 'save'): void
 }>()
-
 const { t } = useI18n()
-const loading = ref(false)
-const loadError = ref(false)
-const keyword = ref('')
-const rules = ref<AlarmRule[]>([])
-const hasMoreVisualTasks = ref(false)
-const loadingMoreVisualTasks = ref(false)
-let visualTaskPageIndex = -1
-let visualScenes: AiSceneTreeOption[] = []
-const selectedRuleId = ref<string>()
-const draft = ref<SceneAlarmTriggerConfig>(clone(props.modelValue))
-
-const title = computed(() => props.mode === 'query'
-  ? t('IotSceneLinkage.alarmCondition.queryTitle')
-  : props.mode === 'trigger'
-    ? t(props.sourceKind === 'visual-ai' ? 'IotSceneLinkage.triggerCategory.visualAlarm' : 'IotSceneLinkage.triggerCategory.iotAlarm')
-  : t(props.sourceKind === 'visual-ai'
-    ? 'IotSceneLinkage.condition.visualAlarmState'
-    : 'IotSceneLinkage.condition.iotAlarmState'))
-const listTitle = computed(() => t(props.sourceKind === 'visual-ai'
-  ? 'IotSceneLinkage.alarmCondition.visualRuleList'
-  : 'IotSceneLinkage.alarmCondition.iotRuleList'))
-const sourceLabel = computed(() => t(props.sourceKind === 'visual-ai'
-  ? 'IotSceneLinkage.alarmSource.visualAi'
-  : 'IotSceneLinkage.alarmSource.iotDevice'))
-const searchPlaceholder = computed(() => t(props.sourceKind === 'visual-ai'
-  ? 'IotSceneLinkage.alarmCondition.searchVisual'
-  : 'IotSceneLinkage.alarmCondition.searchIot'))
-const filteredRules = computed(() => {
-  const normalized = keyword.value.trim().toLocaleLowerCase()
-  if (!normalized) return rules.value
-  return rules.value.filter(rule => [rule.name, ...rule.lines, ...rule.details.map(item => item.value)]
-    .some(value => value.toLocaleLowerCase().includes(normalized)))
-})
-const selectedRule = computed(() => rules.value.find(rule => rule.id === selectedRuleId.value))
-const states = computed(() => [
-  ...(props.mode === 'query'
-    ? []
-    : props.mode === 'trigger'
-    ? [
-        { value: 'trigger', label: t('IotSceneLinkage.alarmMode.trigger'), description: t('IotSceneLinkage.alarmMode.triggerHint'), icon: 'AlertOutlined' },
-        { value: 'relieve', label: t('IotSceneLinkage.alarmMode.relieve'), description: t('IotSceneLinkage.alarmMode.relieveHint'), icon: 'SafetyCertificateOutlined' },
-      ]
-    : [
-        { value: 'warning', label: t('IotSceneLinkage.alarmState.warning'), description: t('IotSceneLinkage.alarmCondition.detailHelp'), icon: 'AlertOutlined' },
-        { value: 'normal', label: t('IotSceneLinkage.alarmCondition.normalState'), description: t('IotSceneLinkage.alarmCondition.detailHelp'), icon: 'SafetyCertificateOutlined' },
-      ]),
-])
-const stateTitle = computed(() => props.mode === 'trigger'
-  ? t('IotSceneLinkage.alarmCondition.triggerWhen')
-  : t('IotSceneLinkage.alarmCondition.currentState'))
-const triggerPreview = computed(() => quickTriggerSummaryParts({ ...defaultForm(), triggerKind: 'alarm', alarm: draft.value }, t))
-const conditionPreview = computed(() => props.mode === 'query'
-  ? localizedSummaryParts(t, 'IotSceneLinkage.alarmCondition.queryPreviewText', { name: selectedRule.value?.name || draft.value.options?.alarmConfigName || t('IotSceneLinkage.alarmCondition.selectRule') })
-  : conditionNodeSummaryParts({ type: 'alarmState', alarm: draft.value }, t))
-
-function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
-
-/** 进入弹窗时使用草稿，取消不会让未确认的规则选择写回场景表单。 */
-async function resetAndLoad() {
-  keyword.value = ''
-  draft.value = clone(props.modelValue)
-  selectedRuleId.value = draft.value.alarmConfigId
-  rules.value = []
-  hasMoreVisualTasks.value = false
-  visualTaskPageIndex = -1
-  loadError.value = false
-  loading.value = true
-  try {
-    rules.value = props.sourceKind === 'visual-ai'
-      ? await loadVisualAlarmRules()
-      : await loadIotAlarmRules()
-    const selectedFromList = rules.value.find(rule => rule.id === selectedRuleId.value)
-    // 分页列表没有返回历史已选规则时，保留历史配置，不能因打开并保存弹窗而替换为首条规则。
-    const selected = selectedFromList || selectedRuleFromDraft() || rules.value[0]
-    if (selected && !selectedFromList && draft.value.alarmConfigId) rules.value.unshift(selected)
-    if (selected) selectRule(selected)
-  } catch {
-    // Keep a request failure distinct from a successful empty response, so users know to retry rather than recreate a rule.
-    loadError.value = true
-  } finally {
-    loading.value = false
-  }
-}
-
-function selectedRuleFromDraft(): AlarmRule | undefined {
-  const value = clone(draft.value)
-  const id = value.alarmConfigId
-  const name = value.options?.alarmConfigName || id
-  if (!id || !name) return undefined
-  if (props.sourceKind === 'visual-ai') {
-    const scene = value.options?.sceneName || value.options?.sceneId || '-'
-    const algorithm = value.options?.taskTargetName || value.options?.taskTarget || '-'
-    return {
-      id,
-      name,
-      lines: [
-        t('IotSceneLinkage.alarmCondition.sceneLine', { value: scene }),
-        t('IotSceneLinkage.alarmCondition.algorithmLine', { value: algorithm }),
-      ],
-      details: [
-        { label: t('IotSceneLinkage.alarmCondition.scene'), value: scene },
-        { label: t('IotSceneLinkage.alarmCondition.algorithm'), value: algorithm },
-      ],
-      value,
-    }
-  }
-  const product = value.options?.productId || '-'
-  const device = value.options?.deviceId || t('IotSceneLinkage.scope.all')
-  return {
-    id,
-    name,
-    lines: [
-      t('IotSceneLinkage.alarmCondition.productLine', { value: product }),
-      t('IotSceneLinkage.alarmCondition.deviceLine', { value: device }),
-    ],
-    details: [
-      { label: t('IotSceneLinkage.form.product'), value: product },
-      { label: t('IotSceneLinkage.form.device'), value: device },
-    ],
-    value,
-  }
-}
-
-/** 物联告警沿用预处理器 ID 作为 alarmConfigId，避免改变运行时规则契约。 */
-async function loadIotAlarmRules(): Promise<AlarmRule[]> {
-  const result = normalizeResult(await queryDeviceAlarmPreprocesses({
-    pageIndex: 0,
-    pageSize: 200,
-    terms: [],
-    sorts: [{ name: 'createTime', order: 'desc' }],
-  }))
-  const productIds = [...new Set(result.data.map((item: Record<string, any>) => String(item.templateId || item.alarm?.templateId || '')).filter(Boolean))]
-  const products = await Promise.all(productIds.map(async id => {
-    const response: any = await getProduct(id)
-    const product = response?.result ?? response
-    return [id, product?.name || id] as const
-  }))
-  const productNames = Object.fromEntries(products)
-  const deviceIds = [...new Set(result.data.map((item: Record<string, any>) => String(item.alarm?.thingId || '')).filter(id => id && id !== '@all'))]
-  const devices = deviceIds.length
-    ? normalizeResult(await queryDevicesPage({ pageIndex: 0, pageSize: Math.max(deviceIds.length, 20), terms: [{ column: 'id', termType: 'in', value: deviceIds }] })).data
-    : []
-  const deviceNames = Object.fromEntries(devices.map((item: Record<string, any>) => [String(item.id), item.name || item.id]))
-
-  return result.data.flatMap((item: Record<string, any>) => {
-    const alarm = item.alarm || {}
-    const processor = (alarm.configuration?.processors || []).find((entry: Record<string, any>) => entry.provider === 'device-alarm')
-    const id = String(alarm.id || '')
-    const name = processor?.configuration?.alarmName || item.propertyName || alarm.name
-    if (!id || !name) return []
-    const productId = String(item.templateId || alarm.templateId || '')
-    const deviceId = String(alarm.thingId || '')
-    const propertyName = item.propertyName || alarm.propertyName || alarm.property || ''
-    const matcher = alarm.configuration?.matcher || {}
-    const matcherConfig = matcher.configuration || {}
-    const alarmCondition = matcher.provider === 'number-range'
-      ? formatTriggerText({ propertyName, trigger: matcherConfig.not === false ? 'inside' : 'outside', limit: { lower: matcherConfig.min, upper: matcherConfig.max } })
-      : propertyName
-    const productName = productNames[productId] || productId
-    const deviceName = deviceId && deviceId !== '@all'
-      ? deviceNames[deviceId] || deviceId
-      : t('IotSceneLinkage.scope.all')
-    return [{
-      id,
-      name,
-      level: Number(processor?.configuration?.alarmLevel) || undefined,
-      lines: [
-        t('IotSceneLinkage.alarmCondition.productLine', { value: productName }),
-        t('IotSceneLinkage.alarmCondition.deviceLine', { value: deviceName }),
-        alarmCondition ? t('IotSceneLinkage.alarmCondition.triggerLine', { value: alarmCondition }) : '',
-      ].filter(Boolean),
-      details: [
-        { label: t('IotSceneLinkage.form.product'), value: productName },
-        { label: t('IotSceneLinkage.form.device'), value: deviceName },
-        { label: t('IotSceneLinkage.alarmCondition.triggerCondition'), value: alarmCondition || '-' },
-      ],
-      value: {
-        sourceKind: 'iot-device',
-        targetType: 'device',
-        modes: [],
-        state: draft.value.state || 'warning',
-        alarmConfigId: id,
-        options: { productId, productName, deviceId: deviceId === '@all' ? undefined : deviceId, deviceName, alarmConfigName: name },
-      },
-    }]
-  })
-}
-
-function alarmLevelText(level: number) {
-  const keys = ['emergency', 'urgent', 'severity', 'ordinary', 'warn']
-  return t(`DeviceAlarm.level.${keys[level - 1] || 'ordinary'}`)
-}
-
-function alarmLevelColor(level: number) {
-  if (level <= 2) return 'error'
-  if (level === 3) return 'warning'
-  if (level === 4) return 'processing'
-  return 'default'
-}
-
-/** 任务直接分页查询，场景树只补展示名称；不再按场景逐个请求旧聚合任务。 */
-async function loadVisualAlarmRules(pageIndex = 0): Promise<AlarmRule[]> {
-  if (pageIndex === 0) {
-    visualScenes = normalizeResult<AiSceneTreeOption>(await queryAiAlarmSceneTree({ paging: false })).data
-  }
-  const scenes = new Map(visualScenes.map(scene => [scene.id, scene]))
-  const tasks = await loadVisualAlarmTaskPage(pageIndex, {}, pageIndex === 0 ? draft.value.alarmConfigId : undefined)
-  hasMoreVisualTasks.value = tasks.hasMore
-  visualTaskPageIndex = pageIndex
-  return tasks.data.flatMap(task => {
-    const target = task.taskTargets?.[0]
-    const scene = scenes.get(task.sceneId)
-    const sceneName = scene?.name || task.sceneId
-    const targetName = scene?.children?.find(item => item.value === target?.value)?.text || target?.value || '-'
-    const videoCount = task.sourceCount ?? 0
-    return [{
-      id: String(task.id),
-      name: task.name || task.id,
-      level: task.alarmLevel,
-      lines: [
-        t('IotSceneLinkage.alarmCondition.sceneLine', { value: sceneName }),
-        t('IotSceneLinkage.alarmCondition.algorithmLine', { value: targetName }),
-        t('IotSceneLinkage.alarmCondition.cameraLine', { count: videoCount }),
-      ],
-      details: [
-        { label: t('IotSceneLinkage.alarmCondition.scene'), value: sceneName },
-        { label: t('IotSceneLinkage.alarmCondition.algorithm'), value: targetName },
-        { label: t('IotSceneLinkage.alarmCondition.camera'), value: t('IotSceneLinkage.aiEvent.option.videoCount', { count: videoCount }) },
-      ],
-      value: {
-        sourceKind: 'visual-ai',
-        targetType: 'aiTaskMediaTarget',
-        modes: [],
-        state: draft.value.state || 'warning',
-        alarmConfigId: String(task.id),
-        options: {
-          sceneId: task.sceneId,
-          sceneName,
-          taskTarget: target?.value,
-          taskTargetName: targetName,
-          alarmConfigName: task.name || task.id,
-        },
-      },
-    }]
-  })
-}
-
-async function loadMoreVisualAlarmRules() {
-  if (loading.value || loadingMoreVisualTasks.value || !hasMoreVisualTasks.value) return
-  loadingMoreVisualTasks.value = true
-  try {
-    const next = await loadVisualAlarmRules(visualTaskPageIndex + 1)
-    rules.value = [...new Map([...rules.value, ...next].map(rule => [rule.id, rule])).values()]
-  } catch { loadError.value = true }
-  finally { loadingMoreVisualTasks.value = false }
-}
-
-function selectRule(rule: AlarmRule) {
-  selectedRuleId.value = rule.id
-  const current = draft.value
-  // 重新打开并确认同一条历史规则时保留 options 中未被快速配置识别的字段。
-  draft.value = current.alarmConfigId === rule.id
-    ? {
-        ...rule.value,
-        ...current,
-        sourceKind: rule.value.sourceKind,
-        targetType: rule.value.targetType,
-        state: current.state || rule.value.state || 'warning',
-        options: { ...rule.value.options, ...current.options },
-      }
-    : { ...rule.value, modes: current.modes || [], state: current.state || 'warning' }
-  // 新建触发默认产生告警；切换规则、重新编辑时保留用户已选状态。
-  if (props.mode === 'trigger' && !draft.value.modes?.length) draft.value.modes = ['trigger']
-}
-
-function isStateSelected(value: string) {
-  return props.mode === 'trigger'
-    ? draft.value.modes.includes(value as 'trigger' | 'relieve')
-    : draft.value.state === value
-}
-
-/** Trigger and condition use one selection shell but persist different existing alarm fields. */
-function changeState(value: string) {
-  draft.value = props.mode === 'trigger'
-    ? { ...draft.value, modes: [value as 'trigger' | 'relieve'] }
-    : { ...draft.value, state: value as 'warning' | 'normal' }
-}
+const { loading, loadError, keyword, hasMoreVisualTasks, loadingMoreVisualTasks, selectedTaskIssue,
+  title, listTitle, sourceLabel, searchPlaceholder, filteredRules, selectedRuleId, selectedRule,
+  states, stateTitle, triggerPreview, conditionPreview, resetAndLoad, selectRule,
+  alarmLevelText, alarmLevelColor, loadMoreVisualAlarmRules, isStateSelected, changeState, getValue,
+} = useAlarmConditionModel(() => ({ open: props.open, sourceKind: props.sourceKind, mode: props.mode, modelValue: props.modelValue }), t)
 
 function save() {
-  emit('update:modelValue', clone(draft.value))
+  const value = getValue()
+  if (!value) return
+  emit('update:modelValue', value)
   emit('save')
 }
-
-// 新增附加条件时组件与打开状态会在同一渲染周期创建；立即执行才能避免首次弹窗不发查询。
-watch(() => props.open, open => { if (open) void resetAndLoad() }, { immediate: true })
 </script>
 
 <style scoped>

@@ -1,11 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { effectScope } from 'vue'
+import { effectScope, ref, nextTick } from 'vue'
+import { setImmediate } from 'node:timers/promises'
+import { readFileSync } from 'node:fs'
 import { queryAiVisualAlarmTasks, type AiVisualAlarmTask } from '../api/scene-linkage'
 import { setSceneTestRequestHandler } from './sceneTestHttp'
 import { loadVisualAlarmTaskPage, toVisualAlarmTaskOption } from '../views/SceneLinkage/editor/aiVisualAlarmTaskService'
 import { createAiVisualAlarmTaskResourceOption } from '../views/SceneLinkage/editor/aiEventResourceOptions'
 import { useAiEventResources } from '../views/SceneLinkage/editor/useAiEventResources'
+import { useAlarmConditionModel, type AlarmConditionOptions } from '../views/SceneLinkage/editor/alarm/useAlarmConditionModel'
+import { loadIotAlarmRules } from '../views/SceneLinkage/editor/alarm/alarmConditionResourceService'
 
 const task = (id: string): AiVisualAlarmTask => ({
   id, name: `Task ${id}`, type: 'visualAlarm', enabled: true,
@@ -92,4 +96,191 @@ test('business failures do not become an empty task list', async () => {
   setSceneTestRequestHandler(() => Promise.resolve({ success: false, result: [] }))
   try { await assert.rejects(loadVisualAlarmTaskPage(0)) }
   finally { setSceneTestRequestHandler() }
+})
+
+for (const status of [403, 404, 500]) {
+  test(`unreadable selected task (${status}) preserves the authorized page and reports its own issue`, async () => {
+    setSceneTestRequestHandler((_method, url) => url === '/ai/trigger/tasks/_query'
+      ? Promise.resolve({ result: { data: [task('available')], total: 31 } })
+      : Promise.reject({ response: { status } }))
+    try {
+      const page = await loadVisualAlarmTaskPage(0, {}, 'old')
+      assert.deepEqual(page.data.map(item => item.id), ['available'])
+      assert.equal(page.hasMore, true)
+      assert.equal(page.selectedTaskIssue, status === 500 ? 'loadFailed' : 'unavailable')
+    } finally { setSceneTestRequestHandler() }
+  })
+}
+
+test('selected task business failures and empty responses cannot become selectable historical options', async () => {
+  for (const selected of [{ status: 403, result: null }, { status: 200, result: null }]) {
+    setSceneTestRequestHandler((_method, url) => Promise.resolve(url === '/ai/trigger/tasks/_query'
+      ? { result: { data: [task('available')], total: 1 } } : selected))
+    try {
+      const page = await loadVisualAlarmTaskPage(0, {}, 'old')
+      assert.equal(page.selectedTaskIssue, 'unavailable')
+      assert.deepEqual(page.data.map(item => item.id), ['available'])
+    } finally { setSceneTestRequestHandler() }
+  }
+})
+
+test('task search applies name or ID inside the server scene and algorithm scope before paging', async () => {
+  setSceneTestRequestHandler((_method, url, body: any) => {
+    assert.equal(url, '/ai/trigger/tasks/_query')
+    assert.equal(body.pageIndex, 0)
+    assert.equal(body.pageSize, 30)
+    assert.equal(body.terms[1].value.path, '$.config.sceneId')
+    assert.deepEqual(body.terms.at(-1), { terms: [
+      { column: 'name', termType: 'like', value: '%target on page 2%' },
+      { column: 'id', termType: 'like', value: '%target on page 2%', type: 'or' },
+    ] })
+    return Promise.resolve({ result: { data: [task('page-2-target')], total: 1 } })
+  })
+  try {
+    const page = await loadVisualAlarmTaskPage(0, { sceneId: 'scene', taskTarget: 'PersonDetection' }, undefined, ' target on page 2 ')
+    assert.equal(page.data[0].id, 'page-2-target')
+  } finally { setSceneTestRequestHandler() }
+})
+
+test('task search debounces, resets pagination, keeps the keyword on append and ignores older responses', async context => {
+  context.mock.timers.enable({ apis: ['setTimeout'] })
+  const scope = effectScope()
+  const queries: any[] = []
+  let resolveOld: (value: unknown) => void = () => {}
+  setSceneTestRequestHandler((_method, _url, body: any) => {
+    queries.push(body)
+    const keyword = body.terms.at(-1)?.terms?.[0]?.value
+    if (keyword === '%old%') return new Promise(resolve => { resolveOld = resolve })
+    return Promise.resolve({ result: { data: [task(keyword ? `new-${body.pageIndex}` : 'initial')], total: 31 } })
+  })
+  try {
+    const resources = scope.run(() => useAiEventResources('alarm'))!
+    await resources.loadAggregateTasks('scene', 'PersonDetection')
+    resources.searchAggregateTasks('o')
+    resources.searchAggregateTasks('old')
+    context.mock.timers.tick(249)
+    assert.equal(queries.length, 1)
+    context.mock.timers.tick(1)
+    await setImmediate()
+    resources.searchAggregateTasks('new')
+    context.mock.timers.tick(250)
+    await setImmediate()
+    assert.deepEqual(resources.aggregateTasks.value.map(item => item.id), ['new-0'])
+    resolveOld({ result: { data: [task('stale')], total: 1 } })
+    await setImmediate()
+    assert.deepEqual(resources.aggregateTasks.value.map(item => item.id), ['new-0'])
+    await resources.loadAggregateTasks('scene', 'PersonDetection', undefined, true)
+    assert.equal(queries.at(-1).pageIndex, 1)
+    assert.equal(queries.at(-1).terms.at(-1).terms[0].value, '%new%')
+    assert.deepEqual(resources.aggregateTasks.value.map(item => item.id), ['new-0', 'new-1'])
+    resources.searchAggregateTasks('cancelled')
+    scope.stop()
+    context.mock.timers.tick(250)
+    assert.equal(queries.length, 4)
+  } finally { scope.stop(); setSceneTestRequestHandler() }
+})
+
+test('changing task scope cancels pending search and clears the previous keyword', async context => {
+  context.mock.timers.enable({ apis: ['setTimeout'] })
+  const scope = effectScope()
+  const queries: any[] = []
+  setSceneTestRequestHandler((_method, _url, body: any) => {
+    queries.push(body)
+    return Promise.resolve({ result: { data: [], total: 0 } })
+  })
+  try {
+    const resources = scope.run(() => useAiEventResources('alarm'))!
+    await resources.loadAggregateTasks('scene', 'PersonDetection')
+    resources.searchAggregateTasks('old search')
+    await resources.loadAggregateTasks('another-scene', 'ClutterDetection')
+    context.mock.timers.tick(250)
+    assert.equal(queries.length, 2)
+    assert.equal(queries[1].terms[1].value.value, 'another-scene')
+    assert.equal(queries[1].terms.length, 3)
+  } finally { scope.stop(); setSceneTestRequestHandler() }
+})
+
+test('invalid historical rule stays visible but cannot be saved until a readable rule is selected', async () => {
+  const scope = effectScope()
+  setSceneTestRequestHandler((_method, url) => {
+    if (url === '/ai/scene/alarm/tree/_query') return Promise.resolve({ result: [] })
+    if (url === '/ai/trigger/tasks/_query') return Promise.resolve({ result: { data: [task('replacement')], total: 1 } })
+    return Promise.reject({ status: 404 })
+  })
+  try {
+    const options = ref<AlarmConditionOptions>({ open: false, mode: 'condition', sourceKind: 'visual-ai', modelValue: {
+      sourceKind: 'visual-ai', targetType: 'aiTaskMediaTarget', alarmConfigId: 'deleted', modes: [], state: 'normal',
+      options: { alarmConfigName: 'Historical rule' },
+    } })
+    const model = scope.run(() => useAlarmConditionModel(() => options.value, key => key))!
+    await model.resetAndLoad()
+    assert.equal(model.loadError.value, false)
+    assert.equal(model.selectedTaskIssue.value, 'unavailable')
+    assert.equal(model.selectedRule.value?.name, 'Historical rule')
+    assert.equal(model.getValue(), undefined)
+    model.selectRule(model.filteredRules.value.find(rule => rule.id === 'replacement')!)
+    assert.equal(model.selectedTaskIssue.value, undefined)
+    assert.equal(model.getValue()?.alarmConfigId, 'replacement')
+    assert.equal(model.getValue()?.state, 'normal')
+    assert.equal(options.value.modelValue.alarmConfigId, 'deleted')
+  } finally { scope.stop(); setSceneTestRequestHandler() }
+})
+
+test('modal close and reopen ignore delayed responses from the previous session', async () => {
+  const scope = effectScope()
+  let resolveOld: (value: unknown) => void = () => {}
+  let pages = 0
+  setSceneTestRequestHandler((_method, url) => {
+    if (url === '/ai/scene/alarm/tree/_query') return Promise.resolve({ result: [] })
+    if (++pages === 1) return new Promise(resolve => { resolveOld = resolve })
+    return Promise.resolve({ result: { data: [task('new')], total: 1 } })
+  })
+  try {
+    const options = ref<AlarmConditionOptions>({ open: true, sourceKind: 'visual-ai', mode: 'trigger', modelValue: { modes: [], state: 'warning' } })
+    const model = scope.run(() => useAlarmConditionModel(() => options.value, key => key))!
+    await setImmediate()
+    options.value.open = false
+    await nextTick()
+    options.value.open = true
+    await nextTick()
+    await setImmediate()
+    assert.equal(model.getValue()?.alarmConfigId, 'new')
+    assert.deepEqual(model.getValue()?.modes, ['trigger'])
+    resolveOld({ result: { data: [task('stale')], total: 1 } })
+    await setImmediate()
+    assert.equal(model.getValue()?.alarmConfigId, 'new')
+  } finally { scope.stop(); setSceneTestRequestHandler() }
+})
+
+test('extracted IoT alarm loading keeps preprocessor IDs, product-wide scope and readable names', async () => {
+  setSceneTestRequestHandler((_method, url) => {
+    if (url === '/message/preprocessor/device-alarm/_query') return Promise.resolve({ result: { data: [{ templateId: 'product', propertyName: 'temperature',
+      alarm: { id: 'preprocessor', thingId: '@all', configuration: { processors: [{ provider: 'device-alarm', configuration: { alarmName: 'High temperature', alarmLevel: 3 } }] } },
+    }], total: 1 } })
+    if (url === '/device-product/product') return Promise.resolve({ result: { name: 'Product' } })
+    throw new Error(`Unexpected request ${url}`)
+  })
+  try {
+    const rules = await loadIotAlarmRules('normal', key => key)
+    assert.equal(rules[0].id, 'preprocessor')
+    assert.equal(rules[0].value.options?.productName, 'Product')
+    assert.equal(rules[0].value.options?.deviceId, undefined)
+    assert.equal(rules[0].value.state, 'normal')
+  } finally { setSceneTestRequestHandler() }
+})
+
+test('scenario menu grants only read access to mapped sources and cloud source configuration', () => {
+  type Menu = { code?: string; permissions?: Array<{ permission: string; actions: string[] }>; children?: Menu[] }
+  const find = (nodes: Menu[]): Menu | undefined => {
+    for (const node of nodes) {
+      if (node.code === 'rule-engine/Scene') return node
+      const nested = find(node.children || [])
+      if (nested) return nested
+    }
+  }
+  const menus = JSON.parse(readFileSync('baseMenu.json', 'utf8'))
+  const scene = find(Array.isArray(menus) ? menus : menus.children)!
+  for (const permission of ['ai_device_event_mapping', 'ai_cv']) {
+    assert.deepEqual(scene.permissions?.find(item => item.permission === permission)?.actions, ['query'])
+  }
 })

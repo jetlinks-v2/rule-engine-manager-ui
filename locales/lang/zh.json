@@ -1,4 +1,6 @@
 {
+	"IotSceneLinkage.alarmCondition.selectedTask.unavailable": "原选告警规则已删除或无权访问，请重新选择。",
+	"IotSceneLinkage.alarmCondition.selectedTask.loadFailed": "原选告警规则读取失败，可重试或选择其他规则。",
   "RuleDocumentHelp": {
     "rules": "规则编排",
     "scenes": "场景联动",
