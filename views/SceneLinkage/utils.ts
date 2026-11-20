@@ -716,7 +716,7 @@ export const buildRequest = (form: SceneLinkageForm, conditionColumns: SceneCond
     ? [{ column: `event.data.${form.eventOutputId}`, termType: form.eventTermType || 'eq', value: form.eventTermValue }]
     : []
   const stateTriggerTerms = form.triggerKind === 'state' && form.deviceState !== 'any'
-    ? [{ column: 'deviceState', termType: 'eq', value: form.deviceState === 'online' ? '1' : '0' }]
+    ? [{ column: 'deviceState', termType: 'eq', value: form.deviceState === 'online' ? '1' : '-1' }]
     : []
   const aiEventTriggerTerms = form.triggerKind === 'ai-event'
     ? aiEventRecognitionRule

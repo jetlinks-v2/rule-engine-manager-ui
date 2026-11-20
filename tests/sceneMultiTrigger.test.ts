@@ -4,6 +4,40 @@ import { effectScope, reactive, ref } from 'vue'
 import { useMultiSceneTrigger } from '../views/SceneLinkage/editor/useMultiSceneTrigger'
 import { buildRequest, defaultForm, defaultMultiTriggerForm, toForm } from '../views/SceneLinkage/utils'
 
+test('device state conditions use backend online and offline values in single and combined triggers', () => {
+  for (const [state, value] of [['online', '1'], ['offline', '-1'], ['any', undefined]] as const) {
+    const form = defaultForm()
+    Object.assign(form, { triggerKind: 'state', deviceState: state, productId: 'p1', deviceIds: ['d1'], deviceStateTriggerMode: 'sustained', deviceStateSustainedTime: 10 })
+    const request = buildRequest(form)
+    const terms = value === undefined ? [] : [{ column: 'deviceState', termType: 'eq', value }]
+    assert.deepEqual(request.branches[0].when, terms)
+    assert.deepEqual(request.options.when[0].terms, terms)
+    assert.equal(toForm(request).deviceState, state)
+    if (state !== 'any') {
+      assert.deepEqual(request.branches[0].shakeLimit, { enabled: true, time: 10, threshold: 1, continuous: true, alarmFirst: false, outputFirst: false, rolling: true })
+    }
+    const leaf = Object.assign(defaultMultiTriggerForm(), form)
+    form.multiTriggers = [leaf, { ...defaultMultiTriggerForm(), triggerKind: 'interval' }]
+    const combined = buildRequest(form)
+    assert.deepEqual(combined.trigger.multi.triggers[0].terms, terms)
+    assert.equal(toForm(combined).multiTriggers?.[0].deviceState, state)
+  }
+})
+
+test('resaving an existing quick offline scene corrects the legacy zero condition', () => {
+  const form = defaultForm()
+  Object.assign(form, { triggerKind: 'state', deviceState: 'offline', productId: 'p1', deviceIds: ['d1'], deviceStateTriggerMode: 'sustained', deviceStateSustainedTime: 10 })
+  const legacy = buildRequest(form)
+  legacy.branches[0].when[0].value = '0'
+  legacy.options.when[0].terms[0].value = '0'
+  const restored = toForm(legacy)
+  assert.equal(restored.deviceState, 'offline')
+  const saved = buildRequest(restored)
+  assert.equal(saved.branches[0].when[0].value, '-1')
+  assert.equal(saved.options.when[0].terms[0].value, '-1')
+  assert.deepEqual(saved.branches[0].shakeLimit, legacy.branches[0].shakeLimit)
+})
+
 const visualLeaf = () => {
   const leaf = defaultMultiTriggerForm()
   leaf.triggerKind = 'ai-event'
