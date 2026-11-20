@@ -5,7 +5,11 @@
     </span>
     <div class="detailed-scene-section-header__copy">
       <strong>{{ $t(content.title) }}</strong>
-      <small>{{ $t(content.description) }}</small>
+      <a-tooltip :title="$t(content.description)">
+        <button type="button" class="detailed-scene-section-header__help" :aria-label="$t(content.description)">
+          <AIcon type="QuestionCircleOutlined" />
+        </button>
+      </a-tooltip>
     </div>
     <span v-if="$slots.actions" class="detailed-scene-section-header__actions">
       <slot name="actions" />
@@ -34,30 +38,30 @@ const iconClass = computed(() => props.kind === 'action' ? 'detailed-scene-actio
 <style scoped>
 .detailed-scene-section-header {
   display: grid;
-  grid-template-columns: 1.75rem max-content minmax(0, 1fr) auto;
-  gap: var(--space-3, 12px);
-  align-items: flex-start;
-  padding: var(--space-3, 12px) var(--space-4, 16px);
-  background: #fafbfc;
-  border-bottom: 1px solid var(--ant-color-border-secondary);
+  grid-template-columns: 1rem max-content minmax(0, 1fr) auto;
+  column-gap: var(--space-2, 8px);
+  row-gap: var(--space-2, 8px);
+  align-items: start;
+  min-height: 2rem;
+  padding: 0;
 }
 .detailed-scene-section-header__icon {
   display: grid;
   grid-column: 1;
   grid-row: 1;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1rem;
+  height: 2rem;
   place-items: center;
-  color: var(--ant-color-primary);
-  background: var(--ant-color-primary-bg);
-  border-radius: var(--radius-jet-sm, 6px);
+  color: var(--jet-theme-text-secondary, #595959);
 }
 .detailed-scene-section-header__copy {
-  display: grid;
+  display: flex;
   grid-column: 2;
   grid-row: 1;
-  gap: 2px;
+  gap: 4px;
+  align-items: center;
   min-width: 0;
+  min-height: 2rem;
 }
 .detailed-scene-section-header__actions {
   display: flex;
@@ -67,15 +71,31 @@ const iconClass = computed(() => props.kind === 'action' ? 'detailed-scene-actio
   justify-self: end;
 }
 .detailed-scene-section-header strong {
-  color: var(--ant-color-text);
-  font-size: .875rem;
+  color: var(--jet-theme-text, #1d2129);
+  font-size: var(--fs-14, .875rem);
   font-weight: 600;
   line-height: 1.25rem;
 }
-.detailed-scene-section-header small {
-  color: var(--ant-color-text-tertiary);
-  font-size: .75rem;
-  line-height: 1.125rem;
+.detailed-scene-section-header__help {
+  display: inline-grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  place-items: center;
+  color: var(--jet-theme-text-secondary, #595959);
+  font-size: var(--fs-14, .875rem);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-jet-sm, 4px);
+  cursor: pointer;
+}
+.detailed-scene-section-header__help:hover {
+  color: var(--jet-theme-primary, #1677ff);
+  background: var(--jet-theme-primary-soft, #e8f0ff);
+}
+.detailed-scene-section-header__help:focus-visible {
+  outline: 2px solid var(--jet-theme-primary, #1677ff);
+  outline-offset: 2px;
 }
 /* 开关紧随标题区，参数在开关右侧展开；开关启闭不改变其自身位置。 */
 .detailed-scene-section-header__extra {
@@ -88,6 +108,8 @@ const iconClass = computed(() => props.kind === 'action' ? 'detailed-scene-actio
   display: flex;
   align-items: flex-start;
   width: 100%;
+  gap: var(--space-3, 12px);
+  padding-top: 5px;
 }
 .detailed-scene-section-header__extra :deep(.shakeLimit > .ant-switch) {
   flex: none;
@@ -105,5 +127,13 @@ const iconClass = computed(() => props.kind === 'action' ? 'detailed-scene-actio
   flex-wrap: wrap;
   gap: var(--space-2, 8px);
   align-items: center;
+}
+@media (max-width: 960px) {
+  .detailed-scene-section-header__extra :deep(.shakeLimit) {
+    flex-wrap: wrap;
+  }
+  .detailed-scene-section-header__extra :deep(.shakeLimit > .ant-form-item) {
+    flex-basis: 100%;
+  }
 }
 </style>

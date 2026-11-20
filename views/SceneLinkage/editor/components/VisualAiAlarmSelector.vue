@@ -41,11 +41,16 @@
       :options="visibleAggregateTaskOptions"
       :placeholder="$t('IotSceneLinkage.placeholder.aiAlarmTask')"
       show-search
-      @dropdown-visible-change="open => open && loadAggregateTasks(modelValue.options?.sceneId, modelValue.options?.taskTarget)"
+      :filter-option="false"
+      @search="searchAggregateTasks"
+      @dropdown-visible-change="open => open && loadAggregateTasks(modelValue.options?.sceneId, modelValue.options?.taskTarget, modelValue.alarmConfigId, false, '')"
+      @popup-scroll="handleTaskPopupScroll"
       @change="changeAggregateTask"
     >
       <template #option="option"><AiEventResourceOption :option="optionValue(option)" /></template>
     </a-select>
+    <a-alert v-if="aggregateTaskLoadFailed" type="warning" show-icon :message="$t('IotSceneLinkage.alarmCondition.loadFailed')" />
+    <a-alert v-else-if="selectedAggregateTaskIssue" type="warning" show-icon :message="$t(`IotSceneLinkage.alarmCondition.selectedTask.${selectedAggregateTaskIssue}`)" />
   </div>
 </template>
 
@@ -55,7 +60,7 @@ import { useI18n } from 'vue-i18n'
 import AiEventResourceOption, { type AiEventResourceOption as AiEventResourceOptionType } from './AiEventResourceOption.vue'
 import type { SceneAlarmTriggerConfig } from '../../utils'
 import { useAiEventResources } from '../useAiEventResources'
-import { createAiAggregateTaskResourceOption, createAiSceneResourceOption, createAiTaskTargetResourceOption } from '../aiEventResourceOptions'
+import { createAiVisualAlarmTaskResourceOption, createAiSceneResourceOption, createAiTaskTargetResourceOption } from '../aiEventResourceOptions'
 import { useAlarmLevel } from '../../../../hook/useAlarmLevel'
 
 const props = defineProps({
@@ -66,7 +71,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const { scenes, aggregateTasks, loadingScenes, loadingAggregateTasks, taskTargets, loadScenes, searchScenes, hasMoreScenes, loadSelectedScene, loadAggregateTasks } = useAiEventResources('alarm')
+const { scenes, aggregateTasks, loadingScenes, loadingAggregateTasks, aggregateTaskLoadFailed, selectedAggregateTaskIssue, hasMoreAggregateTasks, taskTargets, loadScenes, searchScenes, searchAggregateTasks, hasMoreScenes, loadSelectedScene, loadAggregateTasks } = useAiEventResources('alarm')
 const { levelMap } = useAlarmLevel()
 const sceneOptions = computed<AiEventResourceOptionType[]>(() => scenes.value
   .map(scene => createAiSceneResourceOption(scene, t)))
@@ -87,14 +92,14 @@ const visibleTargetOptions = computed(() => appendSelectedOption(
   'AimOutlined',
 ))
 const aggregateTaskOptions = computed<AiEventResourceOptionType[]>(() => aggregateTasks.value
-  .map(task => createAiAggregateTaskResourceOption(task, levelMap.value as Record<string, string>, t)))
+  .map(task => createAiVisualAlarmTaskResourceOption(task, levelMap.value as Record<string, string>, t)))
 const visibleAggregateTaskOptions = computed(() => appendSelectedOption(
   aggregateTaskOptions.value,
   props.modelValue.alarmConfigId,
   props.modelValue.options?.alarmConfigName,
   '',
   'DeploymentUnitOutlined',
-))
+).map(option => ({ ...option, disabled: option.value === props.modelValue.alarmConfigId && Boolean(selectedAggregateTaskIssue.value) })))
 
 function changeScene(value: unknown) {
   if (typeof value !== 'string') return
@@ -130,6 +135,13 @@ function handleScenePopupScroll(event: Event) {
   }
 }
 
+function handleTaskPopupScroll(event: Event) {
+  const target = event.target as HTMLElement
+  if (hasMoreAggregateTasks.value && target.scrollTop + target.clientHeight >= target.scrollHeight - 24) {
+    void loadAggregateTasks(props.modelValue.options?.sceneId, props.modelValue.options?.taskTarget, undefined, true)
+  }
+}
+
 function changeTarget(value: unknown) {
   if (typeof value !== 'string') return
   const target = taskTargets.value(props.modelValue.options?.sceneId).find(item => item.value === value)
@@ -159,13 +171,15 @@ function changeAggregateTask(value: unknown) {
   })
 }
 
+let resourceRequestVersion = 0
 watch(
-  () => [props.modelValue.options?.sceneId, props.modelValue.options?.taskTarget] as const,
-  async ([sceneId, taskTarget]) => {
+  () => [props.modelValue.options?.sceneId, props.modelValue.options?.taskTarget, props.modelValue.alarmConfigId] as const,
+  async ([sceneId, taskTarget, selectedId]) => {
+    const version = ++resourceRequestVersion
     await loadSelectedScene(sceneId)
-    if (!sceneId) return
-    await loadScenes()
-    if (taskTarget) await loadAggregateTasks(sceneId, taskTarget)
+    if (version !== resourceRequestVersion) return
+    if (sceneId) await loadScenes()
+    if (version === resourceRequestVersion) await loadAggregateTasks(sceneId, taskTarget, selectedId)
   },
   { immediate: true },
 )

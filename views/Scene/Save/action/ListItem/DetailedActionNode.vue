@@ -27,6 +27,7 @@ const providers = inject<Ref<SceneProviderInfo[]>>('action-options')
 const title = computed(() => {
   const type = props.action.executor
   if (type === 'sceneNotify') return t('IotSceneLinkage.action.sendNotify')
+  if (type === 'alarm-record-query') return t('IotSceneLinkage.alarmCondition.queryTitle')
   if (type === 'device' || type === 'delay') return t(`IotSceneLinkage.action.${type}`)
   return providers?.value.find(provider => provider.provider === type)?.name || props.options?.type || t('IotSceneLinkage.detail.legacyAction')
 })

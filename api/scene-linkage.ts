@@ -52,23 +52,24 @@ export interface AiSceneTreeOption {
   children: AiTaskTargetOption[]
 }
 
-export interface AiAggregateTaskOption {
+export interface AiVisualAlarmTaskOption {
   id: string
   name: string
   sceneId: string
   alarmLevel?: number
-  timeInterval?: Record<string, unknown> | null
-  videoCount?: number
+  timerPeriodSpec?: Record<string, unknown> | null
+  sourceCount?: number
   state?: string | { value?: string, text?: string }
   taskTargets: AiTaskTargetOption[]
 }
 
-export interface AiAggregateTaskVideoScope {
+export interface AiVisualAlarmTask {
   id: string
-  aggregateTaskId: string
-  deviceId: string
-  channelId: string
-  sourceName?: string
+  name: string
+  type: string
+  enabled?: boolean
+  trigger?: { type?: string; config?: { sceneId?: string; taskTarget?: string; targets?: unknown[] } }
+  actions?: Array<{ type: string; config?: { alarmLevel?: number; timerPeriodSpec?: Record<string, unknown> | null } }>
 }
 
 export interface AiEventMediaDevice {
@@ -81,7 +82,9 @@ export interface AiEventMediaDevice {
 export interface AiEventMediaChannel {
   id: string
   deviceId: string
-  channelId: string
+  channelId?: string
+  /** 设备映射来源不通过媒体播放接口预览。 */
+  mappingType?: 'event' | 'property'
   name?: string
   image?: string
   others?: { playerScreenshotCover?: string }
@@ -202,11 +205,21 @@ export const queryAiSceneTreeNoPaging = () =>
 export const queryAiAlarmSceneTree = (data: Record<string, any>) =>
   request.post('/ai/scene/alarm/tree/_query', data)
 
-export const queryAiAggregateTasks = (data: Record<string, any>) =>
-  request.post('/ai/aggregate/task/list/_query', data)
+/** JSON 标量条件交给 ORM 按数据库方言转换，分页前先限定业务类型和场景算法。 */
+export const queryAiVisualAlarmTasks = (data: Record<string, any>, scope: { sceneId?: string; taskTarget?: string } = {}) =>
+  request.post('/ai/trigger/tasks/_query', {
+    ...data,
+    terms: [
+      { column: 'type', termType: 'eq', value: 'visualAlarm' },
+      ...Object.entries(scope).filter(([, value]) => value).map(([key, value]) => ({
+        column: 'trigger', termType: 'json_value', value: { path: `$.config.${key}`, termType: 'eq', value },
+      })),
+      ...(data.terms?.length ? [{ terms: data.terms }] : []),
+    ],
+  })
 
-export const queryAiAggregateTaskVideos = (id: string) =>
-  request.get<AiAggregateTaskVideoScope[]>(`/ai/aggregate/task/${encodeURIComponent(id)}/videos/_query`)
+export const getAiVisualAlarmTask = (id: string) =>
+  request.get(`/ai/trigger/tasks/${encodeURIComponent(id)}`) as Promise<{ result: AiVisualAlarmTask }>
 
 // 区域、网关和通道接口均在服务端执行资产权限过滤；场景联动仅按来源组织展示，不能在前端补造权限条件。
 export const queryAiEventSpaceTree = () =>

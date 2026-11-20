@@ -1,9 +1,11 @@
 <template>
   <DeviceScopeModal embedded detailed multiple lock-product :open="true"
+    :configuration-placement="previewOnly ? 'bottom' : 'side'"
     :product-id="productDetail.id || scope.productId" :model-value="scope"
     :scope-modes="['fixed', 'space', 'device-group', 'tag', 'context']"
     :disabled-scope-modes="disabledModes" :validate="validateScope"
     @cancel="$emit('cancel')" @save="saveScope" @select-devices="$emit('select-devices', $event)">
+    <template #toolbar-actions><a-button type="link" @click="$emit('change-product')">{{ $t('IotSceneLinkage.action.changeProduct') }}</a-button></template>
     <template #scope-editor="{ mode, value, update, invalid }">
       <div :class="['device-action-scope__editor', { 'is-invalid': invalid || (mode === 'tag' && tagInvalid) }]">
         <template v-if="mode === 'context'">
@@ -23,9 +25,8 @@
         <p v-if="invalid || (mode === 'tag' && tagInvalid)">{{ $t(mode === 'context' ? 'device.index.9667835-6' : mode === 'relation' ? 'device.index.9667835-3' : 'device.index.9667835-4') }}</p>
       </div>
     </template>
-    <template #toolbar-actions><a-button type="link" @click="$emit('change-product')">{{ $t('IotSceneLinkage.action.changeProduct') }}</a-button></template>
     <template #configuration="configuration"><slot name="configuration" v-bind="configuration" /></template>
-    <template #preview><slot name="preview" /></template>
+    <template v-if="$slots.preview" #preview="preview"><slot name="preview" v-bind="preview" /></template>
   </DeviceScopeModal>
 </template>
 <script setup lang="ts">
@@ -36,6 +37,7 @@ import Tag from './device/Tag.vue'
 import RelationSelect from './device/RelationSelect.vue'
 import { useDeviceActionScope } from './useDeviceActionScope'
 const props = defineProps<{
+  previewOnly?: boolean
   scope: DeviceScope
   productDetail: { id?: string; metadata?: string | { tags?: unknown[] } }
   name: number

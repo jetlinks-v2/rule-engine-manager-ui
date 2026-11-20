@@ -56,7 +56,7 @@ const props = defineProps({
 
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, any>]
-  collapse: [value: { triggerType: string; trigger: Record<string, any> }]
+  collapse: [value: { triggerType: string; trigger: Record<string, any>; options?: Record<string, any> }]
 }>()
 
 const pickerVisible = ref(false)
@@ -129,7 +129,7 @@ function removeTrigger(index: number) {
   const form = defaultForm()
   Object.assign(form, cloneDeep(next[0]), { multiTriggers: undefined })
   const request = buildRequest(form)
-  emit('collapse', { triggerType: String(request.trigger?.type || next[0].triggerKind), trigger: request.trigger || {} })
+  emit('collapse', { triggerType: String(request.trigger?.type || next[0].triggerKind), trigger: request.trigger || {}, options: request.options.trigger })
 }
 
 /** 多触发器叶子由卡片编辑，不能依赖顶层 FormItem 的“非空”校验。 */
@@ -195,9 +195,11 @@ defineExpose({ validate, openPicker })
 }
 
 .detailed-multi-trigger-config__add {
-  height: 2.5rem;
+  height: 36px;
+  font-size: 14px;
   margin-top: var(--space-3, 12px);
-  color: var(--ant-color-primary);
-  border-color: var(--ant-color-primary);
+  color: var(--jet-theme-text-secondary, #595959);
+  border: 1px dashed var(--jet-theme-border, #d9d9d9);
 }
+.detailed-multi-trigger-config__add:not(:disabled):is(:hover, :focus-visible) { color: var(--jet-theme-primary, #1677ff); border-color: var(--jet-theme-primary, #1677ff); }
 </style>

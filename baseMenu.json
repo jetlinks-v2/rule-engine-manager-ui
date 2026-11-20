@@ -295,6 +295,22 @@
         ],
         "permissions": [
           {
+            "permission": "ai_trigger_task",
+            "actions": ["query"]
+          },
+          {
+            "permission": "ai_device_event_mapping",
+            "actions": ["query"]
+          },
+          {
+            "permission": "ai_cv",
+            "actions": ["query"]
+          },
+          {
+            "permission": "ai_scene",
+            "actions": ["query"]
+          },
+          {
             "permission": "device-group",
             "actions": [
               "query"

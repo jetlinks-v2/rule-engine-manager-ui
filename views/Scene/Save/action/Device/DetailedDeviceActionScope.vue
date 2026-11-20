@@ -1,9 +1,5 @@
 <template>
   <section class="detailed-device-action-scope">
-    <header>
-      <strong>{{ $t('IotSceneLinkage.detail.deviceActionScope') }}</strong><small>{{ $t('IotSceneLinkage.detail.deviceActionScopeHint') }}</small>
-
-    </header>
     <DeviceActionScope :scope="scopeDraft" :product-detail="productDetail" :name="name" :then-name="thenName"
       :validate="validateScope" @cancel="$emit('cancel')" @change-product="$emit('change-product')"
       @select-devices="syncSelectedDevices" @save="saveScope">
@@ -20,12 +16,13 @@
           @change="changeAction"
         />
       </template>
-      <template #preview><span>{{ $t('IotSceneLinkage.detail.deviceActionPreview') }}</span></template>
+      <template #preview="{ selectionScope }"><span v-if="!actionRef?.modelRef?.message?.messageType">{{ $t('IotSceneLinkage.message.completeDeviceAction') }}</span><SceneActionSummary v-else :action="{ executor: 'device', device: { ...selectionScope, message: actionRef?.modelRef?.message }, options: { ...options, ...actionOptions } }" /></template>
     </DeviceActionScope>
   </section>
 </template>
 
 <script setup lang="ts">
+import SceneActionSummary from '../../../../SceneLinkage/editor/components/SceneActionSummary.vue'
 import { reactive, ref, watch } from 'vue'
 import DeviceActionScope from './DeviceActionScope.vue'
 import { type DeviceScope } from '../../../../SceneLinkage/editor/components/DeviceScopeModal.vue'
@@ -47,7 +44,7 @@ const emit = defineEmits<{
   (event: 'cancel'): void
 }>()
 
-const actionRef = ref<{ onFormSave: () => Promise<any>; getColumnMap: () => Record<string, string> }>()
+const actionRef = ref<{ onFormSave: () => Promise<any>; getColumnMap: () => Record<string, string>; modelRef: Record<string, any> }>()
 const scopeDraft = reactive<DeviceScope>({ selector: 'fixed', selectorValues: [] })
 const actionValues = reactive<Record<string, any>>({})
 const actionOptions = ref<Record<string, any>>({})

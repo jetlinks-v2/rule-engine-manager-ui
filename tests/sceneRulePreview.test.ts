@@ -12,6 +12,15 @@ const leaf = (column: string, value: unknown, type = 'and') => ({ column, termTy
 const columns = { a: '告警目标名称', b: '告警级别', c: '告警状态', d: '温度' }
 const text = (conditions: unknown) => summaryPartsText(detailedConditionSummaryParts(conditions, t, { columns }))
 
+test('property report describes any-property source identically with and without empty branch placeholders', () => {
+  const trigger = { type: 'device', device: { productId: 'p', operation: { operator: 'reportProperty' }, selector: 'fixed', selectorValues: ['d'] } }
+  const options = { name: '测试设备', productName: '测试产品' }
+  const sidebar = detailedTriggerSummaryParts(trigger, options, t)
+  const card = detailedTriggerSummaryParts(trigger, options, t, '', { trigger, branches: [{ when: [{ terms: [{ value: { source: 'fixed' } }] }], then: [] }] })
+  assert.deepEqual(card, sidebar)
+  assert.match(summaryPartsText(card), /上报属性/)
+})
+
 test('custom conditions highlight the parameter and value using the common summary fields', () => {
   const parts = detailedConditionSummaryParts([{ ...leaf('a', 'AAA'), termType: 'like' }], t, { columns })
   assert.equal(summaryPartsText(parts), '告警目标名称 包含 AAA')

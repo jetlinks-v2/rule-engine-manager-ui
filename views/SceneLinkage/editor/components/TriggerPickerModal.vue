@@ -19,7 +19,7 @@
           <AIcon type="LeftOutlined" />{{ selectedCategory.label }}
         </button>
         <div class="trigger-picker__grid">
-          <a-tooltip v-for="item in selectedCategory.items" :key="item.value" :title="item.disabled ? $t(item.disabledReason || '') : undefined">
+          <a-tooltip overlay-class-name="scene-trigger-picker__tooltip" v-for="item in selectedCategory.items" :key="item.value" :title="item.disabled ? $t(item.disabledReason || '') : item.description">
             <button class="trigger-picker__card" type="button" :disabled="item.disabled" @click="select(item.value)">
               <span class="trigger-picker__icon"><AIcon :type="item.icon" /></span>
               <span class="trigger-picker__card-content"><b>{{ item.label }}</b><small>{{ item.description }}</small></span>
@@ -29,7 +29,7 @@
         </div>
       </div>
       <div v-else class="trigger-picker__grid">
-        <a-tooltip v-for="category in categories" :key="category.provider" :title="category.disabled ? $t(category.disabledReason) : undefined">
+        <a-tooltip overlay-class-name="scene-trigger-picker__tooltip" v-for="category in categories" :key="category.provider" :title="category.disabled ? $t(category.disabledReason) : category.description">
           <button type="button" class="trigger-picker__card" :disabled="category.disabled" @click="selectCategory(category.provider)">
             <span class="trigger-picker__icon"><AIcon :type="category.icon" /></span>
             <span class="trigger-picker__card-content"><b>{{ category.label }}</b><small>{{ category.description }}</small></span>
@@ -162,6 +162,10 @@ function close() {
 </script>
 
 <style scoped>
+/* 提示始终在弹窗上方，但不截获相邻选项的点击和悬停。 */
+:global(.scene-trigger-picker__tooltip),
+:global(.scene-trigger-picker__tooltip .ant-tooltip-inner) { pointer-events: none !important; }
+
 :global(.trigger-picker-modal .ant-modal-content) {
   padding: 1rem;
   overflow: hidden;
@@ -195,7 +199,7 @@ function close() {
 
 .trigger-picker__title small {
   overflow: hidden;
-  color: var(--ant-color-text-tertiary);
+  color: var(--jet-theme-text-secondary, #595959);
   font-size: .75rem;
   font-weight: 400;
   line-height: 1rem;
@@ -210,9 +214,9 @@ function close() {
 }
 
 .trigger-picker__body {
-  padding: var(--space-2, 8px) .875rem .75rem;
-  background: rgb(255 255 255 / 70%);
-  border: 1px solid #eceff3;
+  padding: 0;
+  background: transparent;
+  border: 0;
   border-radius: 1rem;
 }
 
@@ -220,12 +224,12 @@ function close() {
   display: grid;
   flex: none;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 28px;
+  height: 28px;
   color: #1e72f0;
-  background: linear-gradient(180deg, #f6f9fe 0%, #fefefe 100%);
-  border: 1px solid #f3f7fc;
-  border-radius: 50%;
+  background: var(--jet-theme-primary-soft, #e8f0ff);
+  border: 0;
+  border-radius: 6px;
   transition: color .2s, background-color .2s, border-color .2s;
 }
 
@@ -236,7 +240,7 @@ function close() {
   min-height: 4.125rem;
   padding: .6875rem .9375rem;
   text-align: left;
-  background: linear-gradient(123deg, #fff 0%, #f8fbff 100%);
+  background: var(--jet-theme-bg-container, #fff);
   border: 1px solid #f1f5f9;
   border-radius: .5rem;
   cursor: pointer;
@@ -261,11 +265,11 @@ function close() {
 .trigger-picker__card:disabled { cursor: not-allowed; opacity: .55; }
 .trigger-picker__card-content { display: grid; flex: 1; min-width: 0; gap: var(--space-1, 4px); }
 .trigger-picker__card-content b { overflow: hidden; color: var(--jet-theme-text); font-size: .875rem; text-overflow: ellipsis; white-space: nowrap; }
-.trigger-picker__card-content small { overflow: hidden; color: var(--ant-color-text-tertiary); font-size: .75rem; line-height: 1rem; text-overflow: ellipsis; white-space: nowrap; }
-.trigger-picker__arrow { flex: none; color: var(--ant-color-text-tertiary); transition: color .2s; }
-.trigger-picker__icon :deep(.anticon) { font-size: 1.25rem; }
+.trigger-picker__card-content small { overflow: hidden; color: var(--jet-theme-text-secondary, #595959); font-size: .75rem; line-height: 1rem; text-overflow: ellipsis; white-space: nowrap; }
+.trigger-picker__arrow { flex: none; color: var(--jet-theme-text-secondary, #595959); transition: color .2s; }
+.trigger-picker__icon :deep(.anticon) { font-size: 16px; }
 .trigger-picker__subtype-panel { display: grid; gap: var(--space-3, 12px); }
-.trigger-picker__back { display: inline-flex; gap: var(--space-1, 4px); align-items: center; width: fit-content; padding: 0; color: var(--ant-color-text-secondary); background: transparent; border: 0; cursor: pointer; }
-.trigger-picker__back:hover { color: var(--ant-color-primary); }
+.trigger-picker__back { display: inline-flex; gap: var(--space-1, 4px); align-items: center; width: fit-content; padding: 0; color: var(--jet-theme-text-secondary, #595959); background: transparent; border: 0; cursor: pointer; }
+.trigger-picker__back:hover { color: var(--jet-theme-primary, #1677ff); }
 @media (max-width: 640px) { .trigger-picker__grid { grid-template-columns: 1fr; } }
 </style>

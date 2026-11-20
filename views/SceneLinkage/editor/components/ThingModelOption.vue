@@ -68,6 +68,6 @@ const description = computed(() => {
 .thing-model-option__icon--event { color: #d02f5a; background: #ffecf0; }
 .thing-model-option__icon--function { color: #6c4fe0; background: #efebff; }
 .thing-model-option__content { display: grid; flex: 1; gap: 6px; min-width: 0; line-height: 1.35; }
-.thing-model-option__title { overflow: hidden; color: var(--ant-color-text); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.thing-model-option__title { display: -webkit-box; overflow: hidden; color: var(--ant-color-text); font-size: 14px; font-weight: 500; white-space: normal; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .thing-model-option__description { display: -webkit-box; box-sizing: border-box; width: 100%; overflow: hidden; color: var(--ant-color-text-tertiary, #86909c) !important; font-size: 12px; font-weight: 400 !important; line-height: 18px; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 </style>

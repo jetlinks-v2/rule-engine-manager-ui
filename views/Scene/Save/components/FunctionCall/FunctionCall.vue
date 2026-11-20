@@ -1,5 +1,10 @@
 <template>
-  <EditTable
+  <a-form v-if="compact" ref="compactForm" :model="dataSource" layout="vertical" class="function-call-fields">
+    <a-form-item v-for="(record, index) in dataSource" :key="record.id" :name="[index, 'value']" :label="required ? $t('IotSceneLinkage.form.propertyValue') : record.name || record.id" :rules="[{ required: record.required ?? required, message: $t('Device.WriteProperty.372527-5', [record.name || record.id]) }]">
+      <j-value-item v-model:modelValue="record.value" :itemType="itemType(record.type)" :options="record.options" :extraProps="{ style: { width: '100%' } }" />
+    </a-form-item>
+  </a-form>
+  <EditTable v-else
     ref="tableRef"
     :data-source='dataSource'
     :columns='columns'
@@ -26,7 +31,7 @@
           type="QuestionCircleOutlined"
           :style="{
                marginLeft: '5px',
-               cursor: 'help',
+               cursor: 'pointer',
             }"
         />
       </a-tooltip>
@@ -64,8 +69,10 @@ type Emit = {
 
 const emit = defineEmits<Emit>()
 const tableRef = ref()
+const compactForm = ref()
 
 const props = defineProps({
+  compact: { type: Boolean, default: false },
   value: {
     type: Array as PropType<Array<{ label: string, value: any}>>,
     default: () => []
@@ -80,7 +87,7 @@ const props = defineProps({
   }
 })
 
-const dataSource = ref([])
+const dataSource = ref<Array<{ id: string; name: string; type: string; value?: any; options?: any[]; required?: boolean }>>([])
 
 const columns = [
   {
@@ -153,6 +160,12 @@ watch(() => props.data, (v,old) => {
 
 defineExpose({
   validate: async () => {
+    // 窄配置栏使用纵向字段，仍通过同一校验和结果接口提交参数。
+    if (props.compact) {
+      await compactForm.value?.validateFields()
+      valueChange()
+      return dataSource.value
+    }
     const resp = await tableRef.value.validate()
     if (resp) {
       valueChange()
@@ -164,5 +177,7 @@ defineExpose({
 </script>
 
 <style scoped>
-
+.function-call-fields { min-width: 0; }
+.function-call-fields :deep(.ant-form-item-label > label) { height: auto; white-space: normal; overflow-wrap: anywhere; }
+.function-call-fields :deep(.ant-form-item) { margin-bottom: 16px; }
 </style>

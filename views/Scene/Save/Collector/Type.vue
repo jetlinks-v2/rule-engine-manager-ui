@@ -187,6 +187,7 @@ function selectPoint(id: string) {
 
 defineExpose({
     selectPoint,
+    preview: computed(() => formModel),
     vail: async () => {
         const typeData = await typeForm.value?.validateFields();
         if (!typeData) return false;

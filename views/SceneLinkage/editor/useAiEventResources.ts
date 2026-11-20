@@ -1,22 +1,26 @@
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onScopeDispose, ref } from 'vue'
 import {
-  queryAiAggregateTasks,
   queryAiAlarmSceneTree,
   queryAiSceneTree,
   queryAiSceneTreeNoPaging,
-  type AiAggregateTaskOption,
+  type AiVisualAlarmTaskOption,
   type AiSceneTreeOption,
 } from '../../../api/scene-linkage'
 import { normalizeResult } from '../utils'
+import { loadVisualAlarmTaskPage, type SelectedVisualAlarmTaskIssue } from './aiVisualAlarmTaskService'
 
 const SCENE_PAGE_SIZE = 30
 
 /** 为 AI 事件行加载当前用户可访问的场景、算法与摄像头范围。 */
 export const useAiEventResources = (sceneMode: 'event' | 'alarm' = 'event') => {
   const scenes = ref<AiSceneTreeOption[]>([])
-  const aggregateTasks = ref<AiAggregateTaskOption[]>([])
+  const aggregateTasks = ref<AiVisualAlarmTaskOption[]>([])
   const loadingScenes = ref(false)
   const loadingAggregateTasks = ref(false)
+  const aggregateTaskLoadFailed = ref(false)
+  const selectedAggregateTaskIssue = ref<SelectedVisualAlarmTaskIssue>()
+  const hasMoreAggregateTasks = ref(false)
+  let aggregateTaskPageIndex = -1
   const scenePageIndex = ref(-1)
   const sceneTotal = ref(0)
   const sceneKeyword = ref('')
@@ -29,6 +33,9 @@ export const useAiEventResources = (sceneMode: 'event' | 'alarm' = 'event') => {
   let selectedSceneRequestVersion = 0
   let aggregateTaskRequestVersion = 0
   let sceneSearchTimer: ReturnType<typeof setTimeout> | undefined
+  let aggregateTaskSearchTimer: ReturnType<typeof setTimeout> | undefined
+  let aggregateTaskKeyword = ''
+  let aggregateTaskContext: { sceneId?: string; taskTarget?: string; selectedId?: string } = {}
 
   const loadScenes = async (reset = false) => {
     if (!reset && (loadingScenes.value || (scenePageIndex.value >= 0 && !hasMoreScenes.value))) return
@@ -106,30 +113,69 @@ export const useAiEventResources = (sceneMode: 'event' | 'alarm' = 'event') => {
     if (requestVersion === selectedSceneRequestVersion) selectedScene.value = page.data[0]
   }
 
-  const loadAggregateTasks = async (sceneId?: string, taskTarget?: string) => {
+  /** 搜索和分页共享关键词及场景范围，切换算法时取消待执行搜索并使旧响应失效。 */
+  const loadAggregateTasks = async (sceneId?: string, taskTarget?: string, selectedId?: string, append = false, keyword = aggregateTaskKeyword) => {
+    if (append && (loadingAggregateTasks.value || !hasMoreAggregateTasks.value)) return
+    if (!append && aggregateTaskSearchTimer) {
+      clearTimeout(aggregateTaskSearchTimer)
+      aggregateTaskSearchTimer = undefined
+    }
+    if (sceneId !== aggregateTaskContext.sceneId || taskTarget !== aggregateTaskContext.taskTarget) {
+      keyword = ''
+    }
+    aggregateTaskContext = { sceneId, taskTarget, selectedId: append ? aggregateTaskContext.selectedId : selectedId }
+    aggregateTaskKeyword = keyword
     const requestVersion = ++aggregateTaskRequestVersion
     if (!sceneId || !taskTarget) {
       aggregateTasks.value = []
+      hasMoreAggregateTasks.value = false
+      aggregateTaskLoadFailed.value = false
+      selectedAggregateTaskIssue.value = undefined
       loadingAggregateTasks.value = false
       return
     }
     loadingAggregateTasks.value = true
+    aggregateTaskLoadFailed.value = false
+    if (!append) { aggregateTasks.value = []; hasMoreAggregateTasks.value = false; selectedAggregateTaskIssue.value = undefined }
     try {
-      const result = normalizeResult<AiAggregateTaskOption>(await queryAiAggregateTasks({
-        pageIndex: 0,
-        pageSize: 200,
-        terms: [{ column: 'sceneId', termType: 'eq', value: sceneId }],
-      }))
+      const pageIndex = append ? aggregateTaskPageIndex + 1 : 0
+      const result = await loadVisualAlarmTaskPage(pageIndex, { sceneId, taskTarget }, selectedId, aggregateTaskKeyword)
       if (requestVersion === aggregateTaskRequestVersion) {
-        aggregateTasks.value = result.data.filter(task => task.taskTargets?.some(target => target.value === taskTarget))
+        const tasks = result.data.map(task => ({ ...task, taskTargets: task.taskTargets.map(target => ({ ...target,
+          text: taskTargets.value(sceneId).find(option => option.value === target.value)?.text || target.value,
+        })) }))
+        aggregateTasks.value = [...new Map([...(append ? aggregateTasks.value : []), ...tasks].map(task => [task.id, task])).values()]
+        aggregateTaskPageIndex = pageIndex
+        hasMoreAggregateTasks.value = result.hasMore
+        if (!append) selectedAggregateTaskIssue.value = result.selectedTaskIssue
       }
+    } catch {
+      if (requestVersion === aggregateTaskRequestVersion) aggregateTaskLoadFailed.value = true
     } finally {
       if (requestVersion === aggregateTaskRequestVersion) loadingAggregateTasks.value = false
     }
   }
 
-  onBeforeUnmount(() => {
+  /** 防抖前立即撤下旧选项，避免搜索等待期间选择到上一关键词的结果。 */
+  const searchAggregateTasks = (keyword: string) => {
+    if (aggregateTaskSearchTimer) clearTimeout(aggregateTaskSearchTimer)
+    aggregateTaskRequestVersion += 1
+    aggregateTaskKeyword = keyword.trim()
+    aggregateTasks.value = []
+    hasMoreAggregateTasks.value = false
+    loadingAggregateTasks.value = true
+    aggregateTaskSearchTimer = setTimeout(() => {
+      const { sceneId, taskTarget, selectedId } = aggregateTaskContext
+      void loadAggregateTasks(sceneId, taskTarget, selectedId)
+    }, 250)
+  }
+
+  onScopeDispose(() => {
     if (sceneSearchTimer) clearTimeout(sceneSearchTimer)
+    if (aggregateTaskSearchTimer) clearTimeout(aggregateTaskSearchTimer)
+    sceneRequestVersion += 1
+    selectedSceneRequestVersion += 1
+    aggregateTaskRequestVersion += 1
   })
 
   return {
@@ -137,6 +183,9 @@ export const useAiEventResources = (sceneMode: 'event' | 'alarm' = 'event') => {
     aggregateTasks,
     loadingScenes,
     loadingAggregateTasks,
+    aggregateTaskLoadFailed,
+    selectedAggregateTaskIssue,
+    hasMoreAggregateTasks,
     hasMoreScenes,
     taskTargets,
     loadScenes,
@@ -144,6 +193,7 @@ export const useAiEventResources = (sceneMode: 'event' | 'alarm' = 'event') => {
     searchScenes,
     loadSelectedScene,
     loadAggregateTasks,
+    searchAggregateTasks,
   }
 }
 

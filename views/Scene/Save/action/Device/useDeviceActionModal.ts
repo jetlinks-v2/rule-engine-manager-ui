@@ -37,7 +37,7 @@ export function useDeviceActionModal(props: DeviceActionModalProps, emit: Emit) 
       upperKey: '',
       source: 'fixed',
       message: {
-          messageType: 'INVOKE_FUNCTION',
+          messageType: isDetailedEditor.value ? '' : 'INVOKE_FUNCTION',
       },
   });
   const DeviceOptions = ref<DeviceOptionType>(props.options as DeviceOptionType);
@@ -112,7 +112,7 @@ export function useDeviceActionModal(props: DeviceActionModalProps, emit: Emit) 
           );
           if (!flag) {
               DeviceModel.message = {
-                  messageType: 'INVOKE_FUNCTION',
+                  messageType: isDetailedEditor.value ? '' : 'INVOKE_FUNCTION',
               };
           }
       }

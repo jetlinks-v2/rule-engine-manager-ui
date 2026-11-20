@@ -25,7 +25,7 @@
                 type="QuestionCircleOutlined"
                 :style="{
                     marginLeft: '5px',
-                    cursor: 'help',
+                    cursor: 'pointer',
                     }"
                 />
             </a-tooltip>

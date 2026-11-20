@@ -19,13 +19,19 @@
       <div class="device-action-row__config">
         <a-form layout="vertical">
           <template v-if="hasSelection">
-            <a-form-item :label="operationName">
+            <p v-if="metadataLoading" role="status">{{ $t('IotSceneLinkage.message.metadataLoading') }}</p>
+            <p v-else-if="metadataFailed" role="alert">{{ $t('IotSceneLinkage.message.metadataLoadFailed') }} <a-button type="link" @click="loadMetadata">{{ $t('IotSceneLinkage.action.retry') }}</a-button></p>
+            <p v-else-if="!operationTypeOptions.length" class="device-action-row__config-empty">{{ $t('IotSceneLinkage.message.noDeviceOperations') }}</p>
+            <a-form-item v-if="metadataLoading || metadataFailed || operationTypeOptions.length" :label="operationName">
               <a-space direction="vertical" class="device-action-row__operation-fields">
                 <a-select
                   class="device-action-row__operation-select"
                   popup-class-name="scene-editor__thing-model-dropdown"
-                  :dropdown-match-select-width="false"
+                  :dropdown-match-select-width="true"
                   :value="operationType"
+                  :placeholder="$t('IotSceneLinkage.placeholder.deviceOperation')"
+                  :loading="metadataLoading"
+                  :disabled="metadataLoading || metadataFailed || !operationTypeOptions.length"
                   :options="operationTypeOptions"
                   @change="changeOperationType"
                 >
@@ -36,18 +42,18 @@
                       </span>
                       <span class="device-action-row__operation-option-content">
                         <b>{{ optionValue(option).label }}</b>
-                        <small>{{ optionValue(option).description }}</small>
+                        <a-tooltip :title="optionValue(option).description"><small>{{ optionValue(option).description }}</small></a-tooltip>
                       </span>
                     </div>
                   </template>
                 </a-select>
-                <ThingModelSelect class="device-action-row__operation-select" :model-value="operationValue" :options="operationOptions" :placeholder="operationPlaceholder" @change="changeOperation" />
+                <ThingModelSelect v-if="operationType" class="device-action-row__operation-select" :model-value="operationValue" :options="operationOptions" :placeholder="operationPlaceholder" @change="changeOperation" />
               </a-space>
             </a-form-item>
-            <a-form-item v-if="config.message.messageType === 'WRITE_PROPERTY'" :label="$t('IotSceneLinkage.form.propertyValue')">
+            <a-form-item v-if="operationType === 'WRITE_PROPERTY' && writePropertyId" :label="$t('IotSceneLinkage.form.propertyValue')">
               <ThingModelValueInput v-if="writePropertyId" v-model="writeValue" :value-type="getValueType(writeProperty)" :unit="writePropertyOption?.unit" :placeholder="$t('IotSceneLinkage.placeholder.propertyValue')" />
             </a-form-item>
-            <template v-else-if="config.message.messageType === 'INVOKE_FUNCTION'">
+            <template v-else-if="operationType === 'INVOKE_FUNCTION'">
               <a-form-item v-for="input in functionInputs" :key="input.id" :label="input.name || input.id">
                 <ThingModelValueInput v-model="inputValues[input.id]" :value-type="getValueType(input)" :placeholder="$t('IotSceneLinkage.placeholder.functionInput')" />
               </a-form-item>
@@ -56,7 +62,11 @@
         </a-form>
       </div>
     </template>
-    <template #preview><SceneActionSummary :action="{ executor: 'device', device: config, options: config.options }" /></template>
+    <template v-if="!metadataLoading && !metadataFailed && operationTypeOptions.length" #preview>
+      <span v-if="!operationType">{{ $t('IotSceneLinkage.message.chooseDeviceOperation') }}</span>
+      <span v-else-if="!operationValue">{{ $t('IotSceneLinkage.message.completeDeviceAction') }}</span>
+      <SceneActionSummary v-else :action="{ executor: 'device', device: config, options: config.options }" />
+    </template>
   </DeviceScopeModal>
 </template>
 
@@ -67,6 +77,7 @@ import SceneNodeCard from './SceneNodeCard.vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { getProduct } from '../../../../api/scene-linkage'
+import { useProductMetadata } from '../useProductMetadata'
 import type { IotAlarmTargetSelectOption } from '../alarm/IotAlarmTargetSelect.vue'
 import type { SceneActionForm } from '../../utils'
 import DeviceScopeModal, { type DeviceScope } from './DeviceScopeModal.vue'
@@ -81,12 +92,12 @@ const editorVisible = ref(false)
 const editingAction = ref<SceneActionForm>()
 const createdByPicker = ref(false)
 const selectedProduct = ref<IotAlarmTargetSelectOption>()
-const metadata = ref<{ properties: any[]; functions: any[] }>({ properties: [], functions: [] })
+const { metadata, loading: metadataLoading, failed: metadataFailed, load: loadMetadata } = useProductMetadata(() => config.value.productId)
 const inputValues = reactive<Record<string, unknown>>({})
 
 const config = computed(() => {
   const current = editingAction.value?.config || props.action.config || {}
-  return { productId: current.productId || '', selector: current.selector || 'fixed', selectorValues: current.selectorValues || [], options: current.options || {}, message: current.message || { messageType: 'READ_PROPERTY', properties: [] } }
+  return { productId: current.productId || '', selector: current.selector || 'fixed', selectorValues: current.selectorValues || [], options: current.options || {}, message: current.message || { messageType: '', properties: [] } }
 })
 const readableProperties = computed(() => toThingModelOptions(metadata.value.properties.filter(item => item.expands?.type?.includes('read') !== false), 'property'))
 const writableProperties = computed(() => toThingModelOptions(metadata.value.properties.filter(item => item.expands?.type?.includes('write') !== false), 'property'))
@@ -99,7 +110,7 @@ const writeValue = computed({
   get: () => writePropertyId.value ? config.value.message.properties?.[writePropertyId.value] ?? '' : '',
   set: value => { if (writePropertyId.value) config.value.message.properties = { [writePropertyId.value]: value }; updateConfig() },
 })
-const operationType = computed(() => config.value.message.messageType)
+const operationType = computed(() => !metadataLoading.value && !metadataFailed.value && operationTypeOptions.value.some(item => item.value === config.value.message.messageType) ? config.value.message.messageType : undefined)
 const operationTypeOptions = computed(() => [
   { value: 'READ_PROPERTY', icon: 'ReadOutlined', label: t('IotSceneLinkage.action.readProperty'), description: t('IotSceneLinkage.actionDescription.readProperty') },
   { value: 'WRITE_PROPERTY', icon: 'EditOutlined', label: t('IotSceneLinkage.action.writeProperty'), description: t('IotSceneLinkage.actionDescription.writeProperty') },
@@ -131,8 +142,8 @@ function openEditor() {
   editingAction.value = cloneAction(props.action)
   restoreFunctionInputs(config.value.message.inputs)
   editorVisible.value = true
-  void loadMetadata(config.value.productId)
-  void loadSelectedProduct(config.value.productId)
+  void loadMetadata()
+  void loadSelectedProduct(config.value.productId).catch(() => undefined)
 }
 
 function cancelEditor() {
@@ -146,24 +157,11 @@ function updateConfig() {
   editingAction.value = { ...editingAction.value, config: { ...config.value, message: { ...config.value.message } } }
 }
 
-async function loadMetadata(productId = config.value.productId) {
-  if (!productId) { metadata.value = { properties: [], functions: [] }; return }
-  const response: any = await getProduct(productId)
-  const product = response?.result ?? response
-  const value = typeof product?.metadata === 'string' ? JSON.parse(product.metadata) : product?.metadata || {}
-  if (config.value.productId !== productId) return
-  metadata.value = { properties: value.properties || [], functions: value.functions || [] }
-  // 产品切换后只保留实际可配置的指令类型，取消编辑仍不会回写原规则。
-  if (!operationTypeOptions.value.some(item => item.value === operationType.value)) {
-    changeOperationType(operationTypeOptions.value[0]?.value || '')
-  }
-}
-
 async function loadSelectedProduct(productId = config.value.productId) {
   if (!productId || selectedProduct.value?.value === productId) return
   const response: any = await getProduct(productId)
   const product = response?.result ?? response
-  if (!product?.id) return
+  if (!product?.id || config.value.productId !== productId || !editingAction.value) return
   selectedProduct.value = { label: product.name || product.id, value: String(product.id), data: product }
   if (editingAction.value && config.value.options.productName !== selectedProduct.value.label) {
     editingAction.value = {
@@ -177,11 +175,11 @@ async function loadSelectedProduct(productId = config.value.productId) {
 function selectDevice(device: { productId: string; productName: string }) {
   if (!editingAction.value) return
   if (config.value.productId !== device.productId) {
-    editingAction.value = { ...editingAction.value, config: { productId: device.productId, selector: 'fixed', selectorValues: [], options: { productName: device.productName }, message: { messageType: 'READ_PROPERTY', properties: [] } } }
+    editingAction.value = { ...editingAction.value, config: { productId: device.productId, selector: 'fixed', selectorValues: [], options: { productName: device.productName }, message: { messageType: '', properties: [] } } }
     restoreFunctionInputs([])
   }
   selectedProduct.value = { label: device.productName, value: device.productId, data: {} }
-  void loadMetadata(device.productId)
+  void loadMetadata()
 }
 
 function changeOperationType(value: unknown) {
@@ -210,7 +208,7 @@ function syncInputs() { config.value.message.inputs = functionInputs.value.map(i
 
 /** The shared device shell only knows the selected device; this component owns command and parameter completeness. */
 function validateAction() {
-  if (!operationValue.value || !operationOptions.value.some(item => item.value === operationValue.value)) {
+  if (metadataLoading.value || metadataFailed.value || !operationType.value || !operationValue.value || !operationOptions.value.some(item => item.value === operationValue.value)) {
     onlyMessage(t('IotSceneLinkage.message.deviceActionRequired'), 'warning')
     return false
   }

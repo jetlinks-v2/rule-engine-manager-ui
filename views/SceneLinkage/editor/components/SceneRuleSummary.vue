@@ -3,21 +3,23 @@
   <div v-else class="scene-rule-summary">
     <div v-if="triggerForms.length" class="scene-rule-summary__clause scene-rule-summary__clause--trigger">
       <span class="scene-rule-summary__keyword scene-rule-summary__keyword--trigger">{{ $t('IotSceneLinkage.rule.when') }}</span>
+      <div class="scene-rule-summary__value">
       <template v-if="triggerSummaries.length"><template v-for="(summary, index) in triggerSummaries" :key="index"><SceneSummaryParts :parts="summary.parts" /><span v-if="index < triggerSummaries.length - 1">{{ $t('IotSceneLinkage.rule.or') }}</span></template></template>
       <span v-else class="scene-rule-summary__empty">{{ $t('IotSceneLinkage.rule.previewNoTrigger') }}</span>
+      </div>
     </div>
     <div v-for="(condition, index) in conditionSummaries" :key="index" class="scene-rule-summary__clause scene-rule-summary__clause--condition">
       <span class="scene-rule-summary__keyword scene-rule-summary__keyword--condition">{{ $t('IotSceneLinkage.rule.and') }}</span>
-      <SceneSummaryParts :parts="condition.parts" />
+      <div class="scene-rule-summary__value"><SceneSummaryParts :parts="condition.parts" /></div>
     </div>
     <template v-if="actionSummaries.length">
       <div v-for="(action, index) in actionSummaries" :key="index" class="scene-rule-summary__clause scene-rule-summary__clause--action">
         <span :class="['scene-rule-summary__keyword', 'scene-rule-summary__keyword--action', { 'scene-rule-summary__keyword--continuation': index > 0 }]" :aria-hidden="index > 0">{{ $t('IotSceneLinkage.summary.then') }}</span>
-        <SceneSummaryParts :parts="action.parts" />
+        <div class="scene-rule-summary__value"><SceneSummaryParts :parts="action.parts" /></div>
       </div>
     </template>
     <div v-else class="scene-rule-summary__clause scene-rule-summary__clause--action"><span class="scene-rule-summary__keyword scene-rule-summary__keyword--action">{{ $t('IotSceneLinkage.summary.then') }}</span><span class="scene-rule-summary__empty">{{ $t('IotSceneLinkage.rule.previewNoAction') }}</span></div>
-    <div v-if="debounceSummary" class="scene-rule-summary__clause scene-rule-summary__clause--debounce"><span class="scene-rule-summary__keyword scene-rule-summary__keyword--debounce">{{ $t('IotSceneLinkage.debounce.enable') }}</span><SceneSummaryParts :parts="[summaryField(debounceSummary)]" /></div>
+    <div v-if="debounceSummary" class="scene-rule-summary__clause scene-rule-summary__clause--debounce"><span class="scene-rule-summary__keyword scene-rule-summary__keyword--debounce">{{ $t('IotSceneLinkage.debounce.settings') }}</span><SceneSummaryParts :parts="[summaryField(debounceSummary)]" /></div>
   </div>
 </template>
 
@@ -92,7 +94,7 @@ const triggerSummaries = computed(() => triggerForms.value.map(form => {
   const parts = quickTriggerSummaryParts(form, t, { targetParts: deviceTriggerTargetParts({ ...form, productName: productName(form.productId) }, t), property: propertyLabel(form.productId, form.propertyId), event: eventName(form.productId, form.eventId), alarm: alarmName(form.alarm), alarmTarget: productName(form.alarm.options?.productId) })
   return { text: summaryPartsText(parts), title: summaryPartsText(parts), parts }
 }).filter(item => item.text))
-// 仅左侧快捷时段受防抖开关影响，右侧单独添加的时间条件仍会参与规则。
+// 仅触发设置中的生效时段受开关影响，单独添加的时间条件仍参与规则。
 const conditionSummaries = computed(() => props.form.additionalConditions
   .filter(condition => condition.type !== 'timeRange' || condition.source !== 'effective-period' || props.form.debounceEnabled)
   .map(condition => {
@@ -129,13 +131,13 @@ const summaryText = computed(() => [
   `${t('IotSceneLinkage.rule.when')} ${triggerSummaries.value.length ? triggerSummaries.value.map(item => item.text).join(` ${t('IotSceneLinkage.rule.or')} `) : t('IotSceneLinkage.rule.noTrigger')}`,
   conditionSummaries.value.length ? `${t('IotSceneLinkage.rule.and')} ${conditionSummaries.value.map(conditionSummaryText).join(`，${t('IotSceneLinkage.rule.and')} `)}` : '',
   `${t('IotSceneLinkage.summary.then')} ${actionSummaries.value.length ? actionSummaries.value.map(actionSummaryText).join('，') : t('IotSceneLinkage.rule.noAction')}`,
-  debounceSummary.value ? `${t('IotSceneLinkage.debounce.enable')} ${debounceSummary.value}` : '',
+  debounceSummary.value ? `${t('IotSceneLinkage.debounce.settings')} ${debounceSummary.value}` : '',
 ].filter(Boolean).join('，'))
 const summaryTitleText = computed(() => [
   `${t('IotSceneLinkage.rule.when')} ${triggerSummaries.value.length ? triggerSummaries.value.map(item => item.title || item.text).join(` ${t('IotSceneLinkage.rule.or')} `) : t('IotSceneLinkage.rule.noTrigger')}`,
   conditionSummaries.value.length ? `${t('IotSceneLinkage.rule.and')} ${conditionSummaries.value.map(conditionSummaryTitle).join(`，${t('IotSceneLinkage.rule.and')} `)}` : '',
   `${t('IotSceneLinkage.summary.then')} ${actionSummaries.value.length ? actionSummaries.value.map(actionSummaryTitle).join('，') : t('IotSceneLinkage.rule.noAction')}`,
-  debounceSummary.value ? `${t('IotSceneLinkage.debounce.enable')} ${debounceSummary.value}` : '',
+  debounceSummary.value ? `${t('IotSceneLinkage.debounce.settings')} ${debounceSummary.value}` : '',
 ].filter(Boolean).join('，'))
 // 空规则由当前表单直接渲染；不把本组件刚写回的空摘要当作历史快照，否则会出现“当 当 … 就 就 …”。
 watch(() => props.form.summary, value => {
@@ -163,8 +165,9 @@ watch([summaryTitleText, resolved], ([value]) => { if (resolved.value || props.f
 </script>
 
 <style scoped>
-.scene-rule-summary { display: grid; gap: 8px; line-height: 28px; }.scene-rule-summary__clause { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; width: max-content; max-width: 100%; }.scene-rule-summary__clause--trigger { color: #d46b08; }.scene-rule-summary__clause--condition { color: #087443; }.scene-rule-summary__clause--action { color: var(--ant-color-primary); }.scene-rule-summary__clause--debounce { color: #6c4fe0; }
-.scene-rule-summary__keyword { padding: 0 8px; border-radius: 4px; font-weight: 600; }.scene-rule-summary__keyword--trigger { color: #d46b08; background: #fff1d6; }.scene-rule-summary__keyword--condition { color: #087443; background: #e8f7ef; }.scene-rule-summary__keyword--action { color: var(--ant-color-primary); background: #e6f0ff; }.scene-rule-summary__keyword--debounce { color: #6c4fe0; background: #efebff; }.scene-rule-summary__keyword--continuation { visibility: hidden; background: transparent; }
+.scene-rule-summary { display: grid; gap: 8px; line-height: 28px; }.scene-rule-summary__clause { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; align-items: start; min-width: 0; }.scene-rule-summary__clause--trigger { color: #d46b08; }.scene-rule-summary__clause--condition { color: #087443; }.scene-rule-summary__clause--action { color: var(--ant-color-primary); }.scene-rule-summary__clause--debounce { color: #6c4fe0; }
+.scene-rule-summary__value { min-width: 0; overflow-wrap: anywhere; color: var(--ant-color-text, #262626); }
+.scene-rule-summary__keyword { min-height: 28px; padding: 0 8px; border-radius: 4px; font-weight: 600; }.scene-rule-summary__keyword--trigger { color: #d46b08; background: #fff1d6; }.scene-rule-summary__keyword--condition { color: #087443; background: #e8f7ef; }.scene-rule-summary__keyword--action { color: var(--ant-color-primary); background: #e6f0ff; }.scene-rule-summary__keyword--debounce { color: #6c4fe0; background: #efebff; }.scene-rule-summary__keyword--continuation { visibility: hidden; background: transparent; }
 .scene-rule-summary__clause .scene-rule-summary__empty { padding: 0; color: #86909c; background: transparent; }
 .scene-rule-summary__snapshot { color: var(--ant-color-text); }
 </style>

@@ -3,11 +3,11 @@
         <a-form :layout="'vertical'" ref="formRef" :model="modelRef">
             <a-form-item
                 :name="['message', 'messageType']"
-                :label="$t('actions.index.9667837-0')"
+                :label="$t(compact ? 'IotSceneLinkage.action.issueCommand' : 'actions.index.9667837-0')"
                 :rules="[{ required: true, message: $t('actions.index.9667837-1') }]"
             >
-                <a-select v-if="compact" v-model:value="modelRef.message.messageType" :options="actionTypeOptions" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="false" @change="onMessageTypeChange">
-                    <template #option="option"><div class="scene-editor__device-trigger-option"><span><AIcon :type="optionValue(option).icon" /></span><div><b>{{ optionValue(option).label }}</b><small>{{ optionValue(option).description }}</small></div></div></template>
+                <a-select v-if="compact" :placeholder="$t('IotSceneLinkage.placeholder.deviceOperation')" :value="modelRef.message.messageType || undefined" :options="actionTypeOptions" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="true" @change="onMessageTypeChange">
+                    <template #option="option"><div class="scene-editor__device-trigger-option"><span><AIcon :type="optionValue(option).icon" /></span><div><b>{{ optionValue(option).label }}</b><a-tooltip :title="optionValue(option).description"><small>{{ optionValue(option).description }}</small></a-tooltip></div></div></template>
                 </a-select>
                 <TopCard v-else
                     :typeList="TypeList"
@@ -97,5 +97,5 @@ const props = defineProps({
 });
 const emit = defineEmits(['change']);
 const { formRef, modelRef, actionTypeOptions, TypeList, optionValue, onMessageTypeChange, deviceMessageType, metadata, functionOptions, readOptions, functionSelect, propertySelect, functionRef, writeFormRef, functions, builtInList, columnMap, onWriteChange, onFormSave, getColumnMap } = useDeviceActions(props, emit)
-defineExpose({ onFormSave, getColumnMap });
+defineExpose({ onFormSave, getColumnMap, modelRef });
 </script>

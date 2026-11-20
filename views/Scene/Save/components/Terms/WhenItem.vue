@@ -38,7 +38,8 @@
                     :data="item"
                 />
             </div>
-            <div class="terms-group-add" @click="addWhen" v-if="isLast">
+            <SceneFilterAddButton v-if="isLast && detailCardLayout" kind="group" @add="addWhen" />
+            <div class="terms-group-add" @click="addWhen" v-else-if="isLast">
                 <div class="terms-content">
                     <AIcon type="PlusOutlined" />
                     <span>{{ $t('Terms.WhenItem.9093425-3') }}</span>
@@ -51,6 +52,7 @@
 <script setup lang="ts">
 import type { PropType } from 'vue';
 import TermsItem from './TermsItem.vue';
+import SceneFilterAddButton from '../SceneFilterAddButton.vue';
 import { TermsType } from '../../../typings';
 import { useSceneStore } from '../../../../../store/scene';
 import DropdownButton from '../DropdownButton';

@@ -1,7 +1,7 @@
 <template>
   <div class="scene-condition-row-wrapper">
     <article :class="['scene-condition-row', { 'scene-condition-row--invalid': invalid }]">
-      <header><span :class="['scene-condition-row__icon', `scene-condition-row__icon--${condition.type}`]"><AIcon :type="condition.type === 'timeRange' ? 'ClockCircleOutlined' : condition.type === 'alarmState' ? 'AlertOutlined' : 'BarChartOutlined'" /></span><strong>{{ conditionTitle }}</strong><small>{{ $t('IotSceneLinkage.editor.conditionNumber', { index: index + 1 }) }}</small><span class="scene-condition-row__actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></span></header>
+      <header><span :class="['scene-condition-row__icon', `scene-condition-row__icon--${condition.type}`]"><AIcon :type="condition.type === 'timeRange' ? 'ClockCircleOutlined' : condition.type === 'alarmState' ? 'AlertOutlined' : 'BarChartOutlined'" /></span><span class="scene-condition-row__identity"><strong>{{ conditionTitle }}</strong><small>{{ $t('IotSceneLinkage.editor.conditionNumber', { index: index + 1 }) }}</small></span><span class="scene-condition-row__actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openEditor"><AIcon type="EditOutlined" /></a-button></a-tooltip><a-button type="text" danger @click="$emit('remove')"><AIcon type="DeleteOutlined" /></a-button></span></header>
       <div class="scene-condition-row__description"><SceneSummaryParts :parts="conditionParts" /></div>
     </article>
     <p v-if="invalid" class="scene-condition-row__error">{{ errorMessage }}</p>
@@ -31,7 +31,7 @@
           </a-form>
         </div>
       </template>
-      <template #preview><SceneSummaryParts :parts="conditionParts" /></template>
+      <template #preview><span v-if="!condition.propertyId || (!['isnull', 'notnull'].includes(condition.termType) && (condition.value === undefined || condition.value === ''))">{{ $t('IotSceneLinkage.message.propertyRequired') }}</span><SceneSummaryParts v-else :parts="conditionParts" /></template>
     </DeviceScopeModal>
     <AlarmStateConditionModal
       v-else-if="condition.type === 'alarmState'"
@@ -43,19 +43,22 @@
       @save="saveConditionEditor"
     />
     <a-modal v-else-if="condition.type !== 'deviceProperty'" :open="conditionEditorVisible" :title="conditionTitle" :mask-closable="false" @cancel="cancelConditionEditor" @ok="saveConditionEditor">
-      <TimeRangeConditionEditor v-if="condition.type === 'timeRange'" :model-value="condition.ranges" @update:model-value="updateTimeRanges" />
+      <TimeRangeConditionEditor v-if="condition.type === 'timeRange' && conditionEditorVisible" ref="timeRangeEditor" :model-value="condition.ranges" @update:model-value="updateTimeRanges" @draft-change="updateTimeRangeDraft" />
+      <p v-if="timeRangeInvalid" class="scene-condition-row__error" role="alert">{{ $t(timeRangeEditor?.getError() || (condition.type === 'timeRange' && condition.ranges.some(range => range.start && range.start === range.end) ? 'IotSceneLinkage.message.timeRangeInvalid' : 'IotSceneLinkage.message.timeRangeRequired')) }}</p>
+      <SceneConfigPreview :hint="previewCondition.type === 'timeRange' && !previewCondition.ranges.length ? $t('IotSceneLinkage.message.timeRangeRequired') : undefined"><SceneSummaryParts :parts="previewParts" /></SceneConfigPreview>
     </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
+import SceneConfigPreview from './SceneConfigPreview.vue'
 import SceneSummaryParts from './SceneSummaryParts.vue'
 import { conditionNodeSummaryParts } from '../conditionNodeSummary'
 import { computed, ref, watch, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { getProduct } from '../../../../api/scene-linkage'
-import { formatSceneTimeRange, type SceneConditionForm } from '../../utils'
+import { formatSceneTimeRange, type SceneConditionForm, type SceneTimeRange } from '../../utils'
 import type { IotAlarmTargetSelectOption } from '../alarm/IotAlarmTargetSelect.vue'
 import AlarmStateConditionModal from './AlarmStateConditionModal.vue'
 import DeviceScopeModal, { type DeviceScope } from './DeviceScopeModal.vue'
@@ -70,6 +73,9 @@ const emit = defineEmits<{ (event: 'update', value: SceneConditionForm): void; (
 const { t } = useI18n()
 const deviceEditorVisible = ref(false)
 const conditionEditorVisible = ref(false)
+const timeRangeInvalid = ref(false)
+const timeRangeEditor = ref<InstanceType<typeof TimeRangeConditionEditor>>()
+const timeRangeDraft = ref<SceneTimeRange[]>()
 const originalCondition = ref<SceneConditionForm>()
 const createdByPicker = ref(false)
 const selectedProduct = ref<IotAlarmTargetSelectOption>()
@@ -85,12 +91,18 @@ const conditionTitle = computed(() => {
     : t('IotSceneLinkage.condition.iotAlarmState')
 })
 const conditionParts = computed(() => conditionNodeSummaryParts(props.condition, t, { property: selectedProperty.value?.label, valueType: selectedProperty.value?.valueType }))
+const previewCondition = computed(() => props.condition.type === 'timeRange' && timeRangeDraft.value
+  ? { ...props.condition, ranges: timeRangeDraft.value } : props.condition)
+const previewParts = computed(() => conditionNodeSummaryParts(previewCondition.value, t, { property: selectedProperty.value?.label, valueType: selectedProperty.value?.valueType }))
+function updateTimeRangeDraft(ranges?: SceneTimeRange[]) { timeRangeDraft.value = ranges; timeRangeInvalid.value = false }
 function update(value: SceneConditionForm) { emit('update', value) }
 function updateAlarm(alarm: Extract<SceneConditionForm, { type: 'alarmState' }>['alarm']) { if (props.condition.type === 'alarmState') update({ ...props.condition, alarm }) }
-function updateTimeRanges(ranges: Extract<SceneConditionForm, { type: 'timeRange' }>['ranges']) { if (props.condition.type === 'timeRange') update({ ...props.condition, ranges }) }
+function updateTimeRanges(ranges: Extract<SceneConditionForm, { type: 'timeRange' }>['ranges']) { timeRangeInvalid.value = false; if (props.condition.type === 'timeRange') update({ ...props.condition, ranges }) }
 
 /** 非设备条件也在确认弹窗中编辑，取消时还原快照，和设备条件使用同一提交边界。 */
 function openEditor() {
+  timeRangeInvalid.value = false
+  timeRangeDraft.value = undefined
   if (props.condition.type === 'deviceProperty') openDeviceEditor()
   else { originalCondition.value = JSON.parse(JSON.stringify(props.condition)) as SceneConditionForm; conditionEditorVisible.value = true }
 }
@@ -100,7 +112,20 @@ function cancelConditionEditor() {
   conditionEditorVisible.value = false
   if (createdByPicker.value) emit('cancel-new')
 }
-function saveConditionEditor() { originalCondition.value = undefined; conditionEditorVisible.value = false; createdByPicker.value = false }
+function saveConditionEditor() {
+  // 时间范围允许跨夜；缺少任何完整时段时留在当前弹窗，不能推迟到整页保存才校验。
+  if (props.condition.type === 'timeRange') {
+    const ranges = timeRangeEditor.value ? timeRangeEditor.value.getRanges() : props.condition.ranges
+    if (!ranges?.length || ranges.some(range => !range.start || !range.end || range.start === range.end)) {
+      timeRangeInvalid.value = true
+      return
+    }
+    updateTimeRanges(ranges)
+  }
+  originalCondition.value = undefined
+  conditionEditorVisible.value = false
+  createdByPicker.value = false
+}
 
 /** 设备附加条件与设备触发保持相同的确认边界，取消不保留临时产品或物模型选择。 */
 function openDeviceEditor() {
@@ -182,6 +207,7 @@ watch(() => props.autoOpen, value => {
 </script>
 
 <style scoped>
+.scene-condition-row__identity { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
 .scene-condition-row-wrapper { margin-bottom: var(--space-3, 12px); }
 .scene-condition-row { overflow: hidden; width: 100%; border: 1px solid #eceff3; border-radius: var(--radius-jet-sm, 10px); background: var(--jet-theme-bg-container); }.scene-condition-row > header { display: flex; gap: var(--space-3, 12px); align-items: center; min-height: 48px; padding: 0 var(--space-4, 16px); background: #fafbfc; }.scene-condition-row > header small { color: var(--ant-color-text-tertiary); }.scene-condition-row__actions { display: inline-flex; gap: 2px; margin-left: auto; }.scene-condition-row__description { padding: var(--space-4, 16px); overflow-wrap: anywhere; }
 .scene-condition-row--invalid { border-color: var(--ant-color-error); box-shadow: 0 0 0 2px rgba(245, 34, 45, .08); }

@@ -1,9 +1,13 @@
 <template>
 	<j-page-container>
+        <!-- 场景配置弹层高于平台悬浮助手（1101），避免确认和下一步被遮挡。 -->
+        <a-config-provider :theme="{ token: { zIndexPopupBase: 1200 } }">
 		<a-spin v-if="loadingScene" class="scene-editor__loading" />
 		<DetailedSceneEditor
+            ref="detailedEditor"
 			v-else-if="editorMode === 'detail'"
 			:rule="canonicalDraft"
+            @dirty-change="detailDirty = $event"
 			:show-mode-switch="showEditorModeSwitch"
 			:supported-triggers="supportedTriggers"
 			:trigger-providers="triggerProviders"
@@ -16,95 +20,49 @@
 			@switch-mode="switchFromDetailed"
 		/>
 		<main v-else class="scene-editor">
-			<PageHeader
-				show-back
-					class="scene-editor__page-header"
-					:title="$t('IotSceneLinkage.action.backToSceneList')"
-					@back="menuStore.jumpPage(sceneRouteKey)"
-			>
-				<template #actions>
-					<div v-if="showEditorModeSwitch" class="scene-editor__header-actions">
-						<a-radio-group :value="editorMode" button-style="solid" @change="switchFromQuick">
-							<a-radio-button value="quick">{{ $t('IotSceneLinkage.editor.quickMode') }}</a-radio-button>
-							<a-radio-button value="detail">{{ $t('IotSceneLinkage.editor.detailMode') }}</a-radio-button>
-						</a-radio-group>
-					</div>
-				</template>
-			</PageHeader>
-			<div class="scene-editor__workspace">
-				<aside class="scene-editor__sidebar">
-					<section class="scene-editor__sidebar-section scene-editor__scene-meta">
-						<label class="scene-editor__sidebar-label"><span class="scene-editor__required">*</span>{{ $t('IotSceneLinkage.form.sceneName') }}</label>
-						<a-input v-model:value="form.name"
-						         :class="['scene-editor__name', { 'scene-editor__invalid': hasError('name') }]"
-						         :placeholder="$t('IotSceneLinkage.placeholder.editorName')"/>
-						<span v-if="hasError('name')" class="scene-editor__name-error">{{ errorMessage('name') }}</span>
-						<div class="scene-editor__scene-meta-description">
-							<label class="scene-editor__sidebar-label">{{ $t('IotSceneLinkage.form.description') }}</label>
-							<a-textarea v-model:value="form.description" :auto-size="{ minRows: 2, maxRows: 3 }" :placeholder="$t('IotSceneLinkage.placeholder.description')"/>
-						</div>
-					</section>
-					<section v-if="isMulti || form.triggerKind !== 'state'" class="scene-editor__sidebar-section scene-editor__debounce-panel">
-						<div class="scene-editor__sidebar-title">
-							<span>{{ $t('IotSceneLinkage.debounce.enable') }} <a-tooltip :title="$t('IotSceneLinkage.debounce.hint')"><AIcon class="scene-editor__debounce-help" type="QuestionCircleOutlined"/></a-tooltip></span>
-							<a-switch v-model:checked="form.debounceEnabled"/>
-						</div>
-						<a-alert v-if="hasAiEventRecognitionRule" class="scene-editor__debounce-conflict" type="error" show-icon :message="$t('IotSceneLinkage.debounce.aiEventConflict')" />
-						<template v-if="form.debounceEnabled">
-							<div class="scene-editor__sidebar-field">
-								<label>{{ $t('IotSceneLinkage.debounce.effectivePeriod') }}</label>
-								<EffectivePeriodSelect v-model="timeRangeCondition"/>
-								<small>{{ effectivePeriodHint }}</small>
-							</div>
-							<div class="scene-editor__sidebar-field">
-								<label>{{ $t('IotSceneLinkage.debounce.frequency') }}</label>
-								<a-select v-model:value="debounceIntervalPreset" :disabled="hasAiEventRecognitionRule" :options="debouncePresetOptions"/>
-								<small :class="{ 'scene-editor__field-warning': hasAiEventRecognitionRule }">{{ hasAiEventRecognitionRule ? $t('IotSceneLinkage.debounce.aiEventConflict') : debounceFrequencyHint }}</small>
-							</div>
-							<div class="scene-editor__sidebar-field">
-								<label>{{ $t('IotSceneLinkage.debounce.continuous') }}</label>
-								<a-select v-model:value="debounceContinuousPreset" :disabled="hasAiEventRecognitionRule" :options="debouncePresetOptions"/>
-								<small :class="{ 'scene-editor__field-warning': hasAiEventRecognitionRule }">{{ hasAiEventRecognitionRule ? $t('IotSceneLinkage.debounce.aiEventConflict') : debounceContinuousHint }}</small>
-							</div>
-						</template>
-					</section>
-				</aside>
-				<div class="scene-editor__content">
-					<RulePreviewCard>
-						<SceneRuleSummary :form="form" :users="notifyUsers" @change="form.summary = $event" @title-change="form.summaryTitle = $event"/>
-					</RulePreviewCard>
+			<SceneEditorWorkspace mode="quick" :show-mode-switch="showEditorModeSwitch" :saving="saving" v-model:description="form.description" @back="menuStore.jumpPage(sceneRouteKey)" @switch-mode="switchFromQuick">
+                <template #name>
+                    <div class="scene-editor__name-field">
+                        <label for="quick-scene-name"><span class="scene-editor__required">*</span>{{ $t('IotSceneLinkage.form.sceneName') }}</label>
+                        <div><a-input id="quick-scene-name" v-model:value="form.name" :class="['scene-editor__name', { 'scene-editor__invalid': hasError('name') }]" :placeholder="$t('IotSceneLinkage.placeholder.editorName')" :status="hasError('name') ? 'error' : undefined" />
+                        <span v-if="hasError('name')" class="scene-editor__name-error">{{ errorMessage('name') }}</span></div>
+                    </div>
+                </template>
+                <template #preview><SceneRuleSummary :form="form" :users="notifyUsers" @change="form.summary = $event" @title-change="form.summaryTitle = $event" /></template>
 			<section :class="['scene-editor__section scene-editor__rule-group scene-editor__rule-group--trigger', { 'scene-editor__multi-trigger': isMulti }]">
-				<header class="scene-editor__rule-group-header"><span class="scene-editor__rule-group-icon"><AIcon type="ThunderboltOutlined"/></span><div><h3>{{ $t('IotSceneLinkage.editor.triggerSectionTitle') }}</h3><p>{{ $t('IotSceneLinkage.editor.triggerGroupDescription') }}</p></div></header>
+				<header class="scene-editor__rule-group-header"><AIcon class="scene-editor__section-symbol" type="ThunderboltOutlined" aria-hidden="true" /><h3>{{ $t('IotSceneLinkage.editor.triggerSectionTitle') }}</h3><a-tooltip :title="$t('IotSceneLinkage.editor.triggerGroupDescription')"><a-button type="text" size="small" :aria-label="$t('IotSceneLinkage.editor.triggerGroupDescription')"><AIcon type="QuestionCircleOutlined" /></a-button></a-tooltip></header>
 				<div class="scene-editor__rule-group-body">
+					<p v-if="!hasTrigger" class="scene-editor__empty-hint">{{ $t('IotSceneLinkage.editor.triggerEmptyHint') }}</p>
 					<template v-if="isMulti"><MultiTriggerCard v-for="(item, index) in form.multiTriggers" :key="item.clientId" :trigger="item" :index="index" :removable="isEditing || form.multiTriggers.length > 1" :auto-open="pendingMultiTriggerClientId === item.clientId" @opened="pendingMultiTriggerClientId = undefined" @cancel-new="removeMultiTrigger(index)" @remove="removeMultiTrigger(index)"/></template>
 					<SceneNodeCard v-else-if="hasTrigger" :class="{ 'scene-editor__invalid': hasError('trigger') }" variant="trigger" :title="triggerNodeTitle(form.triggerKind, t)" :number="$t('IotSceneLinkage.editor.conditionNumber', { index: 1 })">
 						<template #icon><span class="scene-editor__trigger-icon" :style="{ color: form.triggerKind === 'ai-event' ? '#1E5EFF' : triggerIcon.color, background: form.triggerKind === 'ai-event' ? '#E8F0FF' : triggerIcon.background }"><svg v-if="triggerIcon.path" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path :d="triggerIcon.path"/></svg><AIcon v-else :type="form.triggerKind === 'ai-event' ? 'RadarChartOutlined' : triggerIcon.type"/></span></template>
-						<template #actions><span class="scene-editor__rule-card-actions"><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button v-if="isDevice || form.triggerKind !== 'manual'" type="text" @click="isDevice ? openScope() : openTriggerEditor()"><AIcon type="EditOutlined"/></a-button></a-tooltip><a-button type="text" danger @click="clearTrigger"><AIcon type="DeleteOutlined"/></a-button></span></template>
+						<template #actions><a-tooltip :title="$t('IotSceneLinkage.action.edit')"><a-button v-if="isDevice || form.triggerKind !== 'manual'" type="text" :aria-label="$t('IotSceneLinkage.action.edit')" @click="isDevice ? openScope() : openTriggerEditor()"><AIcon type="EditOutlined"/></a-button></a-tooltip><a-button type="text" danger :aria-label="$t('IotSceneLinkage.action.delete')" :title="$t('IotSceneLinkage.action.delete')" @click="clearTrigger"><AIcon type="DeleteOutlined"/></a-button></template>
 						<SceneTriggerSummary :form="form" />
 					</SceneNodeCard>
-					<a-tooltip v-if="showMultiTriggerControl" :title="multiTriggerDisabledReason ? $t(multiTriggerDisabledReason) : undefined"><span class="scene-editor__multi-trigger-add"><a-button block class="scene-editor__add" :disabled="!canAddMultiTrigger" @click="addMultiTrigger"><AIcon type="PlusOutlined"/>{{ $t('IotSceneLinkage.editor.addAnotherTrigger') }}</a-button></span></a-tooltip>
+					<a-tooltip v-if="showMultiTriggerControl" :title="multiTriggerDisabledReason ? $t(multiTriggerDisabledReason) : undefined"><span class="scene-editor__multi-trigger-add"><a-button block class="scene-editor__add scene-editor__add--secondary" :disabled="!canAddMultiTrigger" @click="addMultiTrigger"><AIcon type="PlusOutlined"/>{{ $t('IotSceneLinkage.editor.addAnotherTrigger') }}</a-button></span></a-tooltip>
 					<a-button v-else-if="!hasTrigger" block :class="['scene-editor__add', { 'scene-editor__invalid': hasError('trigger') }]" @click="triggerPickerVisible = true"><AIcon type="PlusOutlined"/>{{ $t('IotSceneLinkage.editor.addTrigger') }}</a-button>
 					<p v-if="hasError('trigger')" class="scene-editor__error-message">{{ errorMessage('trigger') }}</p>
 				</div>
 			</section>
 			<section class="scene-editor__section scene-editor__rule-group scene-editor__rule-group--condition">
-				<header class="scene-editor__rule-group-header"><span class="scene-editor__rule-group-icon"><AIcon type="FilterOutlined"/></span><div><h3>{{ $t('IotSceneLinkage.editor.conditionSectionTitle') }}</h3><p>{{ $t('IotSceneLinkage.editor.conditionGroupDescription') }}</p></div></header>
+				<header class="scene-editor__rule-group-header"><AIcon class="scene-editor__section-symbol" type="FilterOutlined" aria-hidden="true" /><h3>{{ $t('IotSceneLinkage.editor.conditionSectionTitle') }}</h3><span class="scene-editor__optional">{{ $t('IotSceneLinkage.editor.optional') }}</span><a-tooltip :title="$t('IotSceneLinkage.editor.conditionGroupDescription')"><a-button type="text" size="small" :aria-label="$t('IotSceneLinkage.editor.conditionGroupDescription')"><AIcon type="QuestionCircleOutlined" /></a-button></a-tooltip></header>
 				<div class="scene-editor__rule-group-body">
 				<SceneConditionRow v-for="item in quickConditions" :key="item.index" :condition="item.condition" :auto-open="autoOpenConditionIndex === item.index"
 					                   :index="item.index"
 					                   :invalid="hasError('condition')"
 					                   :error-message="errorMessage('condition')" @update="updateCondition(item.index, $event)"
 					                   @opened="autoOpenConditionIndex = undefined" @cancel-new="form.additionalConditions.splice(item.index, 1)" @remove="form.additionalConditions.splice(item.index, 1)"/>
-				<a-button block class="scene-editor__add scene-editor__extra-condition-add" @click="conditionVisible = true">
+				<a-button block :class="['scene-editor__add scene-editor__extra-condition-add', { 'scene-editor__add--secondary': quickConditions.length }]" @click="conditionVisible = true">
 					<AIcon type="PlusOutlined"/>
 					{{ $t('IotSceneLinkage.editor.addCondition') }}
 				</a-button>
 				</div>
 			</section>
 			<section :class="['scene-editor__section scene-editor__rule-group scene-editor__rule-group--action', { 'scene-editor__invalid': hasError('action') || hasError('notify') }]">
-				<header class="scene-editor__rule-group-header"><span class="scene-editor__rule-group-icon"><AIcon type="PlayCircleOutlined"/></span><div><h3>{{ $t('IotSceneLinkage.editor.actionSectionTitle') }}</h3><p>{{ $t('IotSceneLinkage.editor.actionGroupDescription') }}</p></div></header>
+				<header class="scene-editor__rule-group-header"><AIcon class="scene-editor__section-symbol" type="PlayCircleOutlined" aria-hidden="true" /><h3>{{ $t('IotSceneLinkage.editor.actionSectionTitle') }}</h3><a-tooltip :title="$t('IotSceneLinkage.editor.actionGroupDescription')"><a-button type="text" size="small" :aria-label="$t('IotSceneLinkage.editor.actionGroupDescription')"><AIcon type="QuestionCircleOutlined" /></a-button></a-tooltip></header>
 				<div class="scene-editor__rule-group-body">
-				<template v-for="(action, index) in form.actions" :key="index">
+					<p v-if="!form.actions.length && !legacyAlarmActionReadOnly" class="scene-editor__empty-hint">{{ $t('IotSceneLinkage.editor.actionEmptyHint') }}</p>
+					<template v-for="(action, index) in form.actions" :key="index">
 					<NotifyActionRow
 						v-if="action.type === 'sceneNotify'"
 						:action="action"
@@ -126,13 +84,13 @@
 					<DeviceActionRow v-else-if="action.type === 'device'" :action="action" :index="index" :auto-open="autoOpenActionIndex === index"
 					                 @opened="autoOpenActionIndex = undefined" @cancel-new="form.actions.splice(index, 1)" @update="updateAction(index, $event)" @remove="form.actions.splice(index, 1)"/>
 					<SceneNodeCard v-else :title="$t(`IotSceneLinkage.action.${action.type}`)" :icon="actionIcon(action.type)" :number="index + 1">
-						<template #actions><span class="scene-editor__rule-card-actions"><a-tooltip v-if="action.type === 'delay'" :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" @click="openDelayEditor(index)"><AIcon type="EditOutlined"/></a-button></a-tooltip><a-button type="text" danger @click="form.actions.splice(index, 1)"><AIcon type="DeleteOutlined"/></a-button></span></template>
+						<template #actions><a-tooltip v-if="action.type === 'delay'" :title="$t('IotSceneLinkage.action.edit')"><a-button type="text" :aria-label="$t('IotSceneLinkage.action.edit')" @click="openDelayEditor(index)"><AIcon type="EditOutlined"/></a-button></a-tooltip><a-button type="text" danger :aria-label="$t('IotSceneLinkage.action.delete')" :title="$t('IotSceneLinkage.action.delete')" @click="form.actions.splice(index, 1)"><AIcon type="DeleteOutlined"/></a-button></template>
 						<SceneActionSummary v-if="action.type === 'delay'" :action="{ executor: 'delay', delay: action }" />
 					</SceneNodeCard>
 				</template>
 					<article v-if="legacyAlarmActionReadOnly" class="scene-editor__rule-card scene-editor__rule-card--action scene-editor__action-row--readonly"><header><span class="scene-editor__action-icon"><AIcon type="AlertOutlined"/></span><strong>{{ $t('IotSceneLinkage.summary.legacyAlarmAction') }}</strong></header><div class="scene-editor__rule-card-description">{{ $t('IotSceneLinkage.message.legacyConfigurationUnsupported') }}</div></article>
 				<a-button block
-				          :class="['scene-editor__add', { 'scene-editor__invalid': hasError('action') || hasError('notify') }]"
+				          :class="['scene-editor__add', { 'scene-editor__invalid': hasError('action') || hasError('notify'), 'scene-editor__add--secondary': form.actions.length || legacyAlarmActionReadOnly }]"
 				          @click="actionPickerVisible = true">
 					<AIcon type="PlusOutlined"/>
 					{{ $t('IotSceneLinkage.editor.addAction') }}
@@ -141,8 +99,31 @@
 					{{ errorMessage(validation.field) }}</p>
 				</div>
 			</section>
-				</div>
-			</div>
+					<section v-if="isMulti || form.triggerKind !== 'state'" class="scene-editor__sidebar-section scene-editor__debounce-panel">
+						<div class="scene-editor__sidebar-title"><AIcon class="scene-editor__section-symbol" type="SettingOutlined" aria-hidden="true" />
+							<span>{{ $t('IotSceneLinkage.debounce.settings') }} <a-tooltip :title="$t('IotSceneLinkage.debounce.hint')"><a-button type="text" size="small" :aria-label="$t('IotSceneLinkage.debounce.hint')"><AIcon type="QuestionCircleOutlined"/></a-button></a-tooltip></span>
+							<a-switch v-model:checked="form.debounceEnabled" :aria-label="$t('IotSceneLinkage.debounce.settings')"/>
+						</div>
+						<a-alert v-if="hasAiEventRecognitionRule" class="scene-editor__debounce-conflict" type="error" show-icon :message="$t('IotSceneLinkage.debounce.aiEventConflict')" />
+						<div v-if="form.debounceEnabled" class="scene-editor__trigger-settings-fields">
+							<div class="scene-editor__sidebar-field">
+								<label>{{ $t('IotSceneLinkage.debounce.effectivePeriod') }}</label>
+								<EffectivePeriodSelect v-model="timeRangeCondition"/>
+								<small>{{ effectivePeriodHint }}</small>
+							</div>
+							<div class="scene-editor__sidebar-field">
+								<label>{{ $t('IotSceneLinkage.debounce.frequency') }}</label>
+								<a-select v-model:value="debounceIntervalPreset" :disabled="hasAiEventRecognitionRule" :options="debouncePresetOptions"/>
+								<small :class="{ 'scene-editor__field-warning': hasAiEventRecognitionRule }">{{ hasAiEventRecognitionRule ? $t('IotSceneLinkage.debounce.aiEventConflict') : debounceFrequencyHint }}</small>
+							</div>
+							<div class="scene-editor__sidebar-field">
+								<label>{{ $t('IotSceneLinkage.debounce.continuous') }}</label>
+								<a-select v-model:value="debounceContinuousPreset" :disabled="hasAiEventRecognitionRule" :options="debouncePresetOptions"/>
+								<small :class="{ 'scene-editor__field-warning': hasAiEventRecognitionRule }">{{ hasAiEventRecognitionRule ? $t('IotSceneLinkage.debounce.aiEventConflict') : debounceContinuousHint }}</small>
+							</div>
+						</div>
+					</section>
+			</SceneEditorWorkspace>
 			<SceneEditorFooter>
 				<a-button @click="menuStore.jumpPage(sceneRouteKey)">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
 				<j-permission-button type="primary" :hasPermission="savePermission" :loading="saving" @click="save">{{
@@ -168,22 +149,24 @@
 			<template #configuration="{ hasSelection }">
 				<div class="scene-editor__device-trigger-config">
 					<a-form layout="vertical">
+            <p v-if="hasSelection && metadataLoading" role="status">{{ $t('IotSceneLinkage.message.metadataLoading') }}</p>
+            <p v-else-if="hasSelection && metadataFailed" role="alert">{{ $t('IotSceneLinkage.message.metadataLoadFailed') }} <a-button type="link" @click="reloadMetadata">{{ $t('IotSceneLinkage.action.retry') }}</a-button></p>
 						<template v-if="hasSelection">
 							<a-form-item :label="$t('IotSceneLinkage.form.triggerType')">
-								<a-select class="scene-editor__device-trigger-type" :value="form.triggerKind" :options="deviceTriggerKinds" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="false" @change="changeDeviceTriggerKind">
-									<template #option="option"><div class="scene-editor__device-trigger-option"><span><AIcon :type="optionValue(option).icon" /></span><div><b>{{ optionValue(option).label }}</b><small>{{ optionValue(option).description }}</small></div></div></template>
+								<a-select class="scene-editor__device-trigger-type" :value="selectedDeviceTriggerKind" :options="deviceTriggerKinds" :loading="metadataLoading" :disabled="metadataLoading || metadataFailed" :placeholder="$t('IotSceneLinkage.placeholder.triggerType')" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="true" @change="changeDeviceTriggerKind">
+									<template #option="option"><div class="scene-editor__device-trigger-option"><span><AIcon :type="optionValue(option).icon" /></span><div><b>{{ optionValue(option).label }}</b><a-tooltip :title="optionValue(option).description"><small>{{ optionValue(option).description }}</small></a-tooltip></div></div></template>
 								</a-select>
 							</a-form-item>
-							<a-form-item v-if="form.triggerKind === 'property'" :label="$t('IotSceneLinkage.condition.current')">
+							<a-form-item v-if="selectedDeviceTriggerKind === 'property'" :label="$t('IotSceneLinkage.condition.current')">
 								<a-space direction="vertical" class="scene-editor__device-trigger-fields">
-									<ThingModelSelect v-model="form.propertyId" :options="propertyOptions" :placeholder="$t('IotSceneLinkage.placeholder.property')" @change="updateTriggerProperty" @dropdownVisibleChange="loadMetadata"/>
+									<ThingModelSelect v-model="form.propertyId" :options="propertyOptions" :placeholder="$t('IotSceneLinkage.placeholder.property')" @change="updateTriggerProperty"/>
 									<a-select v-model:value="form.termType" :options="termOptions"/>
 									<ThingModelValueInput v-model="form.termValue" :value-type="selectedProperty?.valueType" :unit="selectedProperty?.unit"/>
 								</a-space>
 							</a-form-item>
-							<a-form-item v-else-if="form.triggerKind === 'event'" :label="$t('IotSceneLinkage.form.event')">
+							<a-form-item v-else-if="selectedDeviceTriggerKind === 'event'" :label="$t('IotSceneLinkage.form.event')">
 								<a-space direction="vertical" class="scene-editor__device-trigger-fields">
-									<ThingModelSelect v-model="form.eventId" :options="eventOptions" :placeholder="$t('IotSceneLinkage.placeholder.event')" @change="updateTriggerEvent" @dropdownVisibleChange="loadMetadata"/>
+									<ThingModelSelect v-model="form.eventId" :options="eventOptions" :placeholder="$t('IotSceneLinkage.placeholder.event')" @change="updateTriggerEvent"/>
 									<template v-if="form.eventId">
 										<ThingModelSelect v-model="form.eventOutputId" :options="eventOutputOptions" :placeholder="$t('IotSceneLinkage.placeholder.eventOutput')" @change="updateTriggerEventOutput"/>
 										<a-select v-model:value="form.eventTermType" :options="eventTermOptions"/>
@@ -191,7 +174,7 @@
 									</template>
 								</a-space>
 							</a-form-item>
-							<a-form-item v-else-if="form.triggerKind === 'state'" :label="$t('IotSceneLinkage.stateCondition.label')">
+							<a-form-item v-else-if="selectedDeviceTriggerKind === 'state'" :label="$t('IotSceneLinkage.stateCondition.label')">
 								<DeviceStateTriggerRow v-model:state="form.deviceState" v-model:mode="form.deviceStateTriggerMode"
 								                       v-model:sustained-time="form.deviceStateSustainedTime" :removable="false"/>
 							</a-form-item>
@@ -199,7 +182,7 @@
 					</a-form>
 				</div>
 			</template>
-			<template #preview><SceneTriggerSummary :form="form" /></template>
+			<template v-if="selectedDeviceTriggerKind" #preview><span v-if="(form.triggerKind === 'property' && (!form.propertyId || form.termValue === undefined || form.termValue === '')) || (form.triggerKind === 'event' && !form.eventId)">{{ $t('IotSceneLinkage.message.completeDeviceTrigger') }}</span><SceneTriggerSummary v-else :form="form" /></template>
 		</DeviceScopeModal>
 		<AlarmStateConditionModal
 			v-if="form.triggerKind === 'alarm'"
@@ -218,17 +201,21 @@
 			@confirm="confirmAiEventTrigger"
 			@cancel="cancelTriggerEditor"
 		/>
-		<a-modal v-else :open="triggerEditorVisible" :width="isTimerTrigger ? 640 : 720" :mask-closable="false" @cancel="cancelTriggerEditor" @ok="saveTriggerEditor">
+		<a-modal v-else :open="triggerEditorVisible" :width="720" :mask-closable="false" @cancel="cancelTriggerEditor" @ok="saveTriggerEditor">
 			<template #title>
 				<div v-if="isTimerTrigger" class="scene-editor__timer-modal-title"><strong>{{ $t('IotSceneLinkage.triggerCategory.timer') }}</strong><small>{{ $t('IotSceneLinkage.triggerCategoryDesc.timer') }}</small></div>
 				<span v-else>{{ triggerText }}</span>
 			</template>
-			<div class="scene-editor__trigger-editor">
+			<p v-if="triggerEditorError" class="scene-editor__error-message" role="alert">{{ $t(triggerEditorError) }}</p>
+            <div class="scene-editor__trigger-editor">
 				<template v-if="isTimerTrigger">
 					<section class="scene-editor__timer-methods">
 						<label>{{ $t('IotSceneLinkage.timer.executionMethod') }}</label>
 						<div class="scene-editor__timer-method-list">
-							<button v-for="item in timerMethodOptions" :key="item.value" type="button" :class="['scene-editor__timer-method', { 'is-selected': form.triggerKind === item.value }]" @click="changeTimerTriggerKindValue(item.value)"><span><AIcon :type="item.icon" /></span><b>{{ item.label }}</b><small>{{ item.description }}</small><AIcon v-if="form.triggerKind === item.value" class="scene-editor__timer-method-check" type="CheckCircleFilled" /></button>
+                            <div v-for="item in timerMethodOptions" :key="item.value" :class="['scene-editor__timer-method', { 'is-selected': form.triggerKind === item.value }]">
+                              <a-button type="text" :aria-pressed="form.triggerKind === item.value" @click="changeTimerTriggerKindValue(item.value)"><AIcon :type="item.icon" /><b>{{ item.label }}</b></a-button>
+                              <a-tooltip :title="item.description"><a-button type="text" size="small" :aria-label="item.description"><AIcon type="QuestionCircleOutlined" /></a-button></a-tooltip>
+                            </div>
 						</div>
 					</section>
 					<section class="scene-editor__timer-fields">
@@ -240,7 +227,7 @@
 						<a-radio-button value="weekends">{{ $t('IotSceneLinkage.repeat.weekends') }}</a-radio-button>
 						<a-radio-button value="custom">{{ $t('IotSceneLinkage.repeat.custom') }}</a-radio-button>
 					</a-radio-group>
-					<a-time-picker v-model:value="repeatTime" :class="{ 'scene-editor__invalid': hasError('repeat') }" format="HH:mm" value-format="HH:mm"/>
+					<a-time-picker style="width: 128px; max-width: 100%" v-model:value="repeatTime" :class="{ 'scene-editor__invalid': hasError('repeat') }" format="HH:mm" value-format="HH:mm"/>
 						<small>{{ $t('IotSceneLinkage.timer.repeatTimeHint') }}</small>
 					<div v-if="form.repeatMode === 'custom'" :class="['scene-editor__custom-repeat', { 'scene-editor__invalid': hasError('repeat') }]">
 						<a-radio-group v-model:value="form.repeatCustomMode" @change="changeRepeatCustomMode">
@@ -253,7 +240,7 @@
 					</template>
 					<template v-else-if="form.triggerKind === 'date'">
 						<label>{{ $t('IotSceneLinkage.timer.executionTime') }}</label>
-					<a-date-picker v-model:value="form.dateTime" :class="{ 'scene-editor__invalid': hasError('date') }" show-time value-format="YYYY-MM-DD HH:mm:ss"/>
+					<a-date-picker style="width: 240px; max-width: 100%" v-model:value="form.dateTime" :class="{ 'scene-editor__invalid': hasError('date') }" show-time value-format="YYYY-MM-DD HH:mm:ss"/>
 					<small>{{ $t('IotSceneLinkage.editor.dateExecutionHint') }}</small>
 					</template>
 					<template v-else>
@@ -262,22 +249,26 @@
 					<small>{{ $t('IotSceneLinkage.timer.intervalDescription') }}</small>
 					</template>
 					</section>
-					<div class="scene-editor__timer-preview">
-						<span>{{ $t('IotSceneLinkage.timer.triggerRule') }}</span>
-						<strong>{{ timerEditorSummary }}</strong>
-					</div>
+					<SceneConfigPreview><SceneTriggerSummary :form="form" /></SceneConfigPreview>
 				</template>
 			</div>
 		</a-modal>
 		<ConditionPickerModal :open="conditionVisible" @cancel="conditionVisible = false" @select="addCondition" @select-alarm-source="addAlarmCondition"/>
-		<a-modal :open="delayEditorVisible" :title="$t('IotSceneLinkage.action.delay')" :mask-closable="false" @cancel="cancelDelayEditor" @ok="saveDelayEditor">
-			<a-space><span>{{ $t('IotSceneLinkage.action.wait') }}</span><a-input-number v-model:value="delayDraft.time" :min="1"/><a-select v-model:value="delayDraft.unit" :options="units"/></a-space>
+		<a-modal :open="delayEditorVisible" :title="$t('IotSceneLinkage.action.delay')" :width="480" :mask-closable="false" @cancel="cancelDelayEditor" @ok="saveDelayEditor">
+      <a-form layout="vertical"><DelayDurationField v-model:time="delayDraft.time" v-model:unit="delayDraft.unit" :submitted="delaySubmitted" /></a-form>
+      <SceneConfigPreview><SceneActionSummary :action="{ executor: 'delay', delay: delayDraft }" /></SceneConfigPreview>
 		</a-modal>
+        </a-config-provider>
 	</j-page-container>
 </template>
 <script setup lang="ts">
+import SceneConfigPreview from './components/SceneConfigPreview.vue'
 import SceneEditorFooter from './components/SceneEditorFooter.vue'
+import DelayDurationField from './components/DelayDurationField.vue'
 import SceneTriggerSummary from './components/SceneTriggerSummary.vue'
+import { useProductMetadata } from './useProductMetadata'
+import { quickTimerValidation } from './quickTimerValidation'
+import { useSceneDraftChanges, useSceneLeaveGuard } from './useSceneLeaveGuard'
 import SceneActionSummary from './components/SceneActionSummary.vue'
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -307,7 +298,7 @@ import SceneConditionRow from './components/SceneConditionRow.vue'
 import AlarmStateConditionModal from './components/AlarmStateConditionModal.vue'
 import AiEventTriggerRow from './components/AiEventTriggerRow.vue'
 import NotifyActionRow from './components/NotifyActionRow.vue'
-import RulePreviewCard from './components/RulePreviewCard.vue'
+import SceneEditorWorkspace from './components/SceneEditorWorkspace.vue'
 import SceneRuleSummary from './components/SceneRuleSummary.vue'
 import EffectivePeriodSelect from './components/EffectivePeriodSelect.vue'
 import ThingModelSelect from './components/ThingModelSelect.vue'
@@ -317,7 +308,6 @@ import { formatDeviceScopeText, formatDeviceScopeTitle, formatProductScopeText, 
 import { resolveSceneConditionColumns } from './sceneConditionColumns'
 import { getTermTypes, setThingModelUnitNames, toThingModelOptions } from './thingModel'
 import { useMultiSceneTrigger } from './useMultiSceneTrigger'
-import { PageHeader } from '@jetlinks-web-core/components'
 import { useScenePermission } from '@rule-engine-manager-ui/hook/usePermission'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 const notifyUsersPageIndex = ref(-1)
@@ -328,9 +318,24 @@ const savePermission = computed(() => `${sceneRoutePermissionKey.value}:${route.
 // SaaS 只提供标准化的快速配置；详细规则仅在私有化部署中开放。
 const showEditorModeSwitch = isPrivateDeployment()
 // 新编辑路由按当前菜单分别使用 SaaS 的 add/update 与私有化菜单的 add/update 动作权限。
-const route = useRoute(); const { t } = useI18n(); const permissionKey = useScenePermission(); const menuStore = useMenuStore(); const sceneRouteKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, '')); const form = reactive<SceneLinkageForm>(defaultForm()); const properties = ref<any[]>([]); const events = ref<any[]>([]); const saving = ref(false); const triggerPickerVisible = ref(false); const actionPickerVisible = ref(false); const scopeVisible = ref(false); const conditionVisible = ref(false); const delayEditorVisible = ref(false); const delayEditingIndex = ref<number>(); const delayCreating = ref(false); const delayDraft = reactive({ time: 1, unit: 'seconds' }); const autoOpenActionIndex = ref<number>(); const autoOpenConditionIndex = ref<number>(); const notifyMethods = ref<SceneNotifyMethod[]>([]); const notifyUsers = ref<SceneNotifyUser[]>([]); const notifyMethodsLoading = ref(false); const notifyUsersLoading = ref(false); const supportedTriggers = ref<string[]>([]); const triggerProviders = ref<SceneProviderInfo[]>([]); const supportedActions = ref<string[]>([]); const validation = reactive({ field: '', message: '' });
+const route = useRoute(); const { t } = useI18n(); const permissionKey = useScenePermission(); const menuStore = useMenuStore(); const sceneRouteKey = computed(() => String(route.name || permissionKey).replace(/\/Editor$/, '')); const form = reactive<SceneLinkageForm>(defaultForm()); const { metadata: productMetadata, loading: metadataLoading, failed: metadataFailed, load: reloadMetadata } = useProductMetadata(() => form.productId); const properties = computed(() => productMetadata.value.properties); const events = computed(() => productMetadata.value.events); const saving = ref(false); const triggerPickerVisible = ref(false); const actionPickerVisible = ref(false); const scopeVisible = ref(false); const conditionVisible = ref(false); const delayEditorVisible = ref(false); const delayEditingIndex = ref<number>(); const delayCreating = ref(false); const delayDraft = reactive<{ time: number | null; unit: 'seconds' | 'minutes' | 'hours' }>({ time: 1, unit: 'seconds' }); const autoOpenActionIndex = ref<number>(); const autoOpenConditionIndex = ref<number>(); const notifyMethods = ref<SceneNotifyMethod[]>([]); const notifyUsers = ref<SceneNotifyUser[]>([]); const notifyMethodsLoading = ref(false); const notifyUsersLoading = ref(false); const supportedTriggers = ref<string[]>([]); const triggerProviders = ref<SceneProviderInfo[]>([]); const supportedActions = ref<string[]>([]); const validation = reactive({ field: '', message: '' });
 // 新建也需等待能力清单初始化，避免用户切到详细模式后被 init 的默认值覆盖。
 const loadingScene = ref(true); const editorMode = ref<SceneEditorMode>('quick'); const originalSnapshot = ref<SceneRuleRecord>({}); const quickProjectionBase = ref<SceneRuleRecord>({}); const canonicalDraft = ref<SceneRuleRecord>({}); const quickResetFromDetailed = ref(false); const legacyAlarmActionReadOnly = ref(false)
+const quickChanges = useSceneDraftChanges(() => form)
+const detailDirty = ref(false)
+// 确认切换模式会清空配置，仍属于尚未保存的修改，不能被目标模式的新基线抹去。
+const modeResetDirty = ref(false)
+const hasUnsavedChanges = computed(() => !loadingScene.value && (modeResetDirty.value || (editorMode.value === 'detail' ? detailDirty.value : quickChanges.dirty.value)))
+const detailedEditor = ref<InstanceType<typeof DetailedSceneEditor>>()
+const delaySubmitted = ref(false)
+const triggerEditorError = ref<string>()
+const leaveGuard = useSceneLeaveGuard(() => hasUnsavedChanges.value, () => saving.value, t, async () => {
+  if (editorMode.value === 'detail') {
+    const draft = await detailedEditor.value?.validateDraft()
+    return draft ? saveDetailed(draft, false) : false
+  }
+  return Boolean(await save(false))
+})
 // 编辑态允许重配触发器的具体条件，但 Provider 必须保持为首次保存时的类型。
 const lockedTriggerProviders = computed(() => route.params.id
   ? resolveLockedTriggerProviders(originalSnapshot.value)
@@ -338,7 +343,7 @@ const lockedTriggerProviders = computed(() => route.params.id
 const lockedTriggerRoot = computed(() => route.params.id
   ? String(originalSnapshot.value.triggerType || originalSnapshot.value.trigger?.type || '')
   : '')
-// 左侧快捷时段使用独立标记，避免覆盖用户从右侧添加的时间额外条件。
+// 触发设置中的生效时段使用独立标记，避免覆盖用户添加的其他时间条件。
 const timeRangeCondition = computed<SceneTimeRange[]>({
   get: () => form.additionalConditions.find((condition): condition is Extract<SceneConditionForm, { type: 'timeRange' }> => condition.type === 'timeRange' && condition.source === 'effective-period')?.ranges || [],
   set: (ranges) => {
@@ -415,22 +420,11 @@ const timerMethodOptions = computed(() => [
   { value: 'interval', icon: 'SyncOutlined', label: t('IotSceneLinkage.timer.interval'), description: t('IotSceneLinkage.timer.intervalDescription') },
   { value: 'date', icon: 'ClockCircleOutlined', label: t('IotSceneLinkage.timer.once'), description: t('IotSceneLinkage.timer.onceDescription') },
 ])
-const timerEditorSummary = computed(() => {
-  if (form.triggerKind === 'date') return form.dateTime || t('IotSceneLinkage.editor.dateExecutionHint')
-  if (form.triggerKind === 'interval') return t('IotSceneLinkage.summary.interval', {
-    time: form.interval,
-    unit: t(`IotSceneLinkage.unit.${form.intervalUnit}`),
-  })
-  const repeat = form.repeatMode === 'custom'
-    ? `${t(`IotSceneLinkage.repeat.${form.repeatCustomMode}`)} ${(
-      form.repeatCustomMode === 'weekly' ? form.repeatWeekdays : form.repeatMonthDays
-    ).join('、')}`
-    : t(`IotSceneLinkage.repeat.${form.repeatMode}`)
-  return [repeat, form.repeatTime].filter(Boolean).join(' ')
-})
 const deviceTriggerKinds = computed(() => [
   ['property', 'RiseOutlined'], ['event', 'NotificationOutlined'], ['online', 'LoginOutlined'], ['offline', 'LogoutOutlined'], ['state', 'SyncOutlined'],
-].map(([value, icon]) => ({ value, icon, label: t(`IotSceneLinkage.trigger.${value}`), description: t(`IotSceneLinkage.triggerDesc.${value}`) })))
+].filter(([value]) => value === 'property' ? propertyOptions.value.length : value === 'event' ? eventOptions.value.length : true).map(([value, icon]) => ({ value, icon, label: t(`IotSceneLinkage.trigger.${value}`), description: t(`IotSceneLinkage.triggerDesc.${value}`) })))
+const deviceTriggerChosen = ref(true)
+const selectedDeviceTriggerKind = computed(() => !metadataLoading.value && !metadataFailed.value && deviceTriggerChosen.value && deviceTriggerKinds.value.some(item => item.value === form.triggerKind) ? form.triggerKind : undefined)
 const deviceTriggerSnapshot = ref<SceneLinkageForm>()
 const deviceTriggerWasNew = ref(false)
 const pendingMultiTriggerClientId = ref<string>()
@@ -488,11 +482,11 @@ const isActionSupported = (provider: string) => supportedActions.value.includes(
 const actionIcon = (type: string) => type === 'delay' ? 'ClockCircleOutlined' : 'ControlOutlined'
 async function loadSceneProviders() { const [triggers, actions] = await Promise.all([querySceneSupportedTriggers(), querySceneSupportedActions()]); triggerProviders.value = normalizeResult(triggers).data; supportedTriggers.value = triggerProviders.value.map(item => item.provider); supportedActions.value = normalizeResult(actions).data.map((item: SceneProviderInfo) => item.provider) }
 async function loadThingModelUnits() { const response: any = await queryProtocolUnits(); const units = Array.isArray(response) ? response : response?.result; if (Array.isArray(units)) setThingModelUnitNames(units) }
-async function loadMetadata(open: boolean) { if (!open) return; if (!form.productId) { properties.value = []; events.value = []; return }; const response: any = await getProduct(form.productId); const metadata = typeof (response.result || response).metadata === 'string' ? JSON.parse((response.result || response).metadata) : (response.result || response).metadata || {}; properties.value = metadata.properties || []; events.value = metadata.events || [] }
+async function loadMetadata(open: boolean) { if (open) await reloadMetadata() }
 function addMultiTrigger() { beginMultiTrigger(); if (addingMultiTrigger.value) triggerPickerVisible.value = true }
 function cancelTriggerPicker() { resetMultiTriggerPicker(); triggerPickerVisible.value = false }
 /** 设备触发在统一配置弹窗中编辑；取消时还原打开前的快速表单草稿。 */
-function openScope(isNew = false) { deviceTriggerWasNew.value = isNew; deviceTriggerSnapshot.value = JSON.parse(JSON.stringify(form)); scopeVisible.value = true }
+function openScope(isNew = false) { deviceTriggerWasNew.value = isNew; deviceTriggerSnapshot.value = JSON.parse(JSON.stringify(form)); deviceTriggerChosen.value = !isNew; scopeVisible.value = true; void loadMetadata(true) }
 function cancelTriggerScope() {
   if (deviceTriggerWasNew.value) clearTrigger()
   else if (deviceTriggerSnapshot.value) Object.assign(form, deviceTriggerSnapshot.value)
@@ -505,6 +499,7 @@ function cancelTriggerScope() {
 }
 /** Non-device triggers share the same modal commit boundary as device triggers. */
 function openTriggerEditor(isNew = false) {
+  triggerEditorError.value = undefined
   triggerEditorWasNew.value = isNew
   triggerEditorSnapshot.value = JSON.parse(JSON.stringify(form)) as SceneLinkageForm
   triggerEditorVisible.value = true
@@ -517,6 +512,8 @@ function cancelTriggerEditor() {
   triggerEditorVisible.value = false
 }
 function saveTriggerEditor() {
+  triggerEditorError.value = quickTimerValidation(form)
+  if (triggerEditorError.value) return
   triggerEditorSnapshot.value = undefined
   triggerEditorWasNew.value = false
   triggerEditorVisible.value = false
@@ -526,6 +523,7 @@ function selectTriggerDevice(device: { productId: string; productName: string })
   if (form.productId !== device.productId) {
     form.productId = device.productId
     form.productName = device.productName
+    deviceTriggerChosen.value = false
     clearScope()
   }
   void loadMetadata(true)
@@ -533,6 +531,7 @@ function selectTriggerDevice(device: { productId: string; productName: string })
 /** Switching a device trigger type preserves the selected device but discards incompatible thing-model fields. */
 function changeDeviceTriggerKind(value: unknown) {
   if (!['property', 'event', 'online', 'offline', 'state'].includes(String(value))) return
+  deviceTriggerChosen.value = true
   if (form.triggerKind === value) return
   form.triggerKind = value as SceneTriggerKind
   form.propertyId = undefined
@@ -570,11 +569,15 @@ function saveTriggerScope(scope: DeviceScope) {
 }
 /** Keep incomplete thing-model selections inside the device shell instead of creating an invalid rule card. */
 function validateDeviceTrigger() {
-  if (form.triggerKind === 'property' && (!form.propertyId || form.termValue === undefined || form.termValue === '')) {
+  if (!selectedDeviceTriggerKind.value) {
+    onlyMessage(t('IotSceneLinkage.message.chooseDeviceTrigger'), 'warning')
+    return false
+  }
+  if (form.triggerKind === 'property' && (!propertyOptions.value.some(item => item.value === form.propertyId) || form.termValue === undefined || form.termValue === '')) {
     onlyMessage(t('IotSceneLinkage.message.propertyRequired'), 'warning')
     return false
   }
-  if (form.triggerKind === 'event' && !form.eventId) {
+  if (form.triggerKind === 'event' && !eventOptions.value.some(item => item.value === form.eventId)) {
     onlyMessage(t('IotSceneLinkage.message.eventRequired'), 'warning')
     return false
   }
@@ -633,19 +636,20 @@ function confirmAiEventTrigger(value: SceneLinkageForm['aiEvent']) {
   form.aiEvent = value
   saveTriggerEditor()
 }
-function clearTrigger() { form.multiTriggers = undefined; form.triggerKind = '' as SceneTriggerKind; form.productId = undefined; form.productName = undefined; form.deviceIds = []; form.groupIds = []; form.propertyId = undefined; form.eventId = undefined; form.eventOutputId = undefined; form.eventOutputName = undefined; form.eventTermValue = undefined; form.termValue = undefined; form.alarm = { modes: [] }; form.aiEvent = defaultForm().aiEvent; properties.value = []; events.value = []; validation.field = '' }
+function clearTrigger() { form.multiTriggers = undefined; form.triggerKind = '' as SceneTriggerKind; form.productId = undefined; form.productName = undefined; form.deviceIds = []; form.groupIds = []; form.propertyId = undefined; form.eventId = undefined; form.eventOutputId = undefined; form.eventOutputName = undefined; form.eventTermValue = undefined; form.termValue = undefined; form.alarm = { modes: [] }; form.aiEvent = defaultForm().aiEvent; productMetadata.value = { properties: [], functions: [], events: [] }; validation.field = '' }
 function resetRepeatSelections() { form.repeatWeekdays = []; form.repeatMonthDays = [] }
 function changeRepeatCustomMode() { resetRepeatSelections() }
 function updateTriggerProperty(value: string) { const property = propertyOptions.value.find(item => item.value === value); const termTypes = getTermTypes(property?.valueType); form.propertyName = property?.label || value; form.termType = termTypes.includes(form.termType) ? form.termType : termTypes[0]; form.termValue = undefined; if (value && hasError('property')) { validation.field = ''; validation.message = '' } }
 function updateTriggerEvent(value: string) { form.eventName = eventOptions.value.find(item => item.value === value)?.label || value; form.eventOutputId = undefined; form.eventOutputName = undefined; form.eventTermType = 'eq'; form.eventTermValue = undefined }
 function updateTriggerEventOutput(value: string) { const output = eventOutputOptions.value.find(item => item.value === value); const termTypes = getTermTypes(output?.valueType); form.eventOutputName = output?.label || value; form.eventTermType = termTypes.includes(form.eventTermType || '') ? form.eventTermType : termTypes[0]; form.eventTermValue = undefined }
-function clearScope() { form.deviceIds = []; form.groupIds = []; form.propertyId = undefined; form.eventId = undefined; form.eventOutputId = undefined; form.eventOutputName = undefined; form.eventTermValue = undefined; properties.value = []; events.value = [] }
+function clearScope() { form.propertyName = undefined; form.eventName = undefined; form.termValue = undefined; form.termType = 'eq'; form.deviceIds = []; form.groupIds = []; form.propertyId = undefined; form.eventId = undefined; form.eventOutputId = undefined; form.eventOutputName = undefined; form.eventTermValue = undefined; productMetadata.value = { properties: [], functions: [], events: [] } }
 function addCondition(type: Exclude<SceneConditionForm['type'], 'alarmState'>) { if (type === 'timeRange') form.additionalConditions.push({ type, ranges: [{ start: '09:00', end: '18:00' }] }); else form.additionalConditions.push({ type, productId: '', selector: 'fixed', selectorValues: [], propertyId: '', termType: 'eq', value: '' }); autoOpenConditionIndex.value = form.additionalConditions.length - 1; conditionVisible.value = false }
 function addAlarmCondition(sourceKind: 'iot-device' | 'visual-ai') { form.additionalConditions.push({ type: 'alarmState', alarm: { sourceKind, targetType: sourceKind === 'visual-ai' ? 'aiTaskMediaTarget' : undefined, modes: [], state: 'warning', options: {} } }); autoOpenConditionIndex.value = form.additionalConditions.length - 1; conditionVisible.value = false }
 function updateCondition(index: number, condition: SceneConditionForm) { form.additionalConditions[index] = condition }
 async function addNotifyAction() { await loadNotifyMethods(true); await loadNotifyUsers(true); form.actions.push({ type: 'sceneNotify', config: { userIds: [], notifyChannelIds: [] } }); autoOpenActionIndex.value = form.actions.length - 1; actionPickerVisible.value = false; clearActionValidationIfResolved() }
 /** A new delay stays outside the form until its configuration is explicitly confirmed. */
 function addDelay() {
+  delaySubmitted.value = false
   delayCreating.value = true
   delayEditingIndex.value = undefined
   delayDraft.time = 1
@@ -655,6 +659,7 @@ function addDelay() {
 }
 /** Keeps delay editing isolated until the dialog is explicitly confirmed. */
 function openDelayEditor(index: number) {
+  delaySubmitted.value = false
   const action = form.actions[index]
   if (action?.type !== 'delay') return
   delayEditingIndex.value = index
@@ -669,6 +674,8 @@ function cancelDelayEditor() {
   delayCreating.value = false
 }
 function saveDelayEditor() {
+  delaySubmitted.value = true
+  if (delayDraft.time == null || !Number.isInteger(delayDraft.time) || delayDraft.time < 1 || delayDraft.time > 65535) return
   const index = delayEditingIndex.value
   if (delayCreating.value) {
     form.actions.push({ type: 'delay', time: delayDraft.time, unit: delayDraft.unit })
@@ -682,7 +689,7 @@ function saveDelayEditor() {
   clearActionValidationIfResolved()
   cancelDelayEditor()
 }
-function openAction(type: 'device') { actionPickerVisible.value = false; form.actions.push({ type, config: { productId: '', selector: 'fixed', selectorValues: [], message: { messageType: 'READ_PROPERTY', properties: [] } } }); autoOpenActionIndex.value = form.actions.length - 1; clearActionValidationIfResolved() }
+function openAction(type: 'device') { actionPickerVisible.value = false; form.actions.push({ type, config: { productId: '', selector: 'fixed', selectorValues: [], message: { messageType: '', properties: [] } } }); autoOpenActionIndex.value = form.actions.length - 1; clearActionValidationIfResolved() }
 function updateAction(index: number, action: any) { form.actions[index] = action; clearActionValidationIfResolved() }
 function clearValidationField(field: string) { if (hasError(field)) { validation.field = ''; validation.message = '' } }
 function hasIncompleteDeviceAction(action: any) {
@@ -836,6 +843,8 @@ async function validate() {
     return false
   }
   if (!form.name?.trim()) return invalid('name', 'IotSceneLinkage.message.nameRequired')
+  const timerError = quickTimerValidation(form)
+  if (timerError) return invalid('repeat', timerError)
   if (!hasTrigger.value) return invalid('trigger', 'IotSceneLinkage.message.triggerRequired')
   for (const trigger of form.multiTriggers || []) {
     const isDeviceTrigger = ['property', 'event', 'online', 'offline', 'state'].includes(trigger.triggerKind)
@@ -899,6 +908,9 @@ function switchFromQuick(value: unknown) {
   }
   Modal.confirm({
     title: t('IotSceneLinkage.confirm.resetQuickTitle'),
+    closable: true,
+    maskClosable: false,
+    zIndex: 1300,
     content: t('IotSceneLinkage.confirm.resetQuickContent'),
     okText: t('IotSceneLinkage.action.confirm'),
     cancelText: t('IotSceneLinkage.action.cancel'),
@@ -914,6 +926,9 @@ function switchFromDetailed(mode: SceneEditorMode, detailedDraft: SceneRuleRecor
   }
   Modal.confirm({
     title: t('IotSceneLinkage.confirm.resetQuickTitle'),
+    closable: true,
+    maskClosable: false,
+    zIndex: 1300,
     content: t('IotSceneLinkage.confirm.resetQuickContent'),
     okText: t('IotSceneLinkage.action.confirm'),
     cancelText: t('IotSceneLinkage.action.cancel'),
@@ -938,6 +953,7 @@ function hasDetailedConfiguration(draft: SceneRuleRecord) {
 
 /** 清空目标详细草稿；编辑态的 Provider 锁保留在加载快照中而非草稿内。 */
 function resetDetailedDraft() {
+  modeResetDirty.value ||= hasUnsavedChanges.value || hasQuickConfiguration()
   canonicalDraft.value = createClearedDetailedDraft({
     id: form.id,
     name: form.name,
@@ -949,6 +965,7 @@ function resetDetailedDraft() {
 
 /** 清空目标快速草稿而非投影详细规则，防止已确认清除的分支在保存时回流。 */
 function resetQuickDraft(detailedDraft: SceneRuleRecord) {
+  modeResetDirty.value ||= hasUnsavedChanges.value || hasDetailedConfiguration(detailedDraft)
   const next = defaultForm()
   next.id = detailedDraft.id || form.id
   next.name = detailedDraft.name || form.name
@@ -966,6 +983,7 @@ function resetQuickDraft(detailedDraft: SceneRuleRecord) {
   canonicalDraft.value = quickProjectionBase.value
   quickResetFromDetailed.value = true
   editorMode.value = 'quick'
+  quickChanges.markClean()
 }
 
 /** 快速和详细模式最终都只提交统一规则树。 */
@@ -977,27 +995,30 @@ async function persistCanonicalDraft(scene: SceneRuleRecord) {
   await createSceneLinkage(scene)
 }
 
-async function saveDetailed(scene: SceneRuleRecord) {
+async function saveDetailed(scene: SceneRuleRecord, navigate = true) {
   if (hasUnsupportedLegacyAction(scene)) {
     onlyMessage(t('IotSceneLinkage.message.legacyConfigurationUnsupported'), 'warning')
-    return
+    return false
   }
   saving.value = true
   try {
     const request = mergeDetailedDraft(originalSnapshot.value, scene)
     request.id = form.id || request.id
-    canonicalDraft.value = request
     await persistCanonicalDraft(request)
+    canonicalDraft.value = request
+    leaveGuard.markSaved()
     onlyMessage(t('IotSceneLinkage.message.saved', { name: request.name }), 'success')
-    menuStore.jumpPage(sceneRouteKey.value)
+    if (navigate) menuStore.jumpPage(sceneRouteKey.value)
+    return true
   } catch {
     // 请求层统一提示保存错误；保留当前草稿供重试，避免异步事件产生未处理的拒绝。
+    return false
   } finally {
     saving.value = false
   }
 }
 
-async function save() {
+async function save(navigate: boolean | Event = true) {
   if (form.id && !quickResetFromDetailed.value && !await ensureSceneCompatible(form.id)) return
   if (form.additionalConditions.some(condition => condition.type === 'alarmState' && !hasValidAlarmStateCondition(condition.alarm))) {
     validation.field = 'condition'
@@ -1021,8 +1042,10 @@ async function save() {
     const scene = mergeQuickDraft(quickProjectionBase.value, buildRequest(form, conditionColumns))
     canonicalDraft.value = scene
     await persistCanonicalDraft(scene)
+    leaveGuard.markSaved()
     onlyMessage(t('IotSceneLinkage.message.saved', { name: form.name }), 'success')
-    menuStore.jumpPage(sceneRouteKey.value)
+    if (navigate) menuStore.jumpPage(sceneRouteKey.value)
+    return true
   } catch {
     // 请求层统一提示保存错误；保留当前草稿供重试，避免异步事件产生未处理的拒绝。
   } finally {
@@ -1043,6 +1066,8 @@ async function init() {
     editorMode.value = 'quick'
     canonicalDraft.value = { name: form.name, description: form.description, options: {} }
     quickProjectionBase.value = {}
+    await nextTick()
+    quickChanges.markClean()
     loadingScene.value = false
     return
   }
@@ -1065,7 +1090,6 @@ async function init() {
     await loadMetadata(true)
   }
   await nextTick()
-  loadingScene.value = false
   if (form.actions.some(action => action.type === 'sceneNotify')) {
     await loadNotifyMethods()
     await loadNotifyUsers()
@@ -1074,6 +1098,9 @@ async function init() {
       return method ? refreshNotifyTemplate(index, method) : undefined
     }))
   }
+  await nextTick()
+  quickChanges.markClean()
+  loadingScene.value = false
 }
 init()
 </script>

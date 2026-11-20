@@ -1,32 +1,14 @@
 <template>
   <main class="detailed-scene-editor">
-    <PageHeader
-      show-back
-      class="scene-editor__page-header detailed-scene-editor__page-header"
-      :title="$t('IotSceneLinkage.action.backToSceneList')"
-      @back="$emit('cancel')"
-    >
-      <template #actions>
-        <div v-if="showModeSwitch" class="scene-editor__header-actions">
-          <a-radio-group :value="'detail'" button-style="solid" @change="switchToQuick">
-            <a-radio-button value="quick">{{ $t('IotSceneLinkage.editor.quickMode') }}</a-radio-button>
-            <a-radio-button value="detail">{{ $t('IotSceneLinkage.editor.detailMode') }}</a-radio-button>
-          </a-radio-group>
-        </div>
-      </template>
-    </PageHeader>
     <!-- 原版动作会主动通知 change，显式使用 submit，让保存时的 validate() 统一执行校验。 -->
     <a-form ref="sceneForm" :model="data" validate-trigger="submit" :validate-on-rule-change="false" :colon="false" layout="vertical" class="detailed-scene-editor__form">
-      <section class="detailed-scene-editor__overview">
-        <section class="scene-editor__scene-meta">
+      <SceneEditorWorkspace mode="detail" :show-mode-switch="showModeSwitch" :saving="saving" v-model:description="data.description" @back="$emit('cancel')" @switch-mode="switchToQuick">
+        <template #name>
           <a-form-item class="detailed-scene-editor__name-field" :label="$t('IotSceneLinkage.form.sceneName')" name="name" :rules="nameRules">
             <a-input v-model:value="data.name" class="scene-editor__name" :placeholder="$t('IotSceneLinkage.placeholder.editorName')" />
           </a-form-item>
-          <a-form-item class="detailed-scene-editor__description-field" :label="$t('IotSceneLinkage.form.description')" name="description">
-            <a-textarea v-model:value="data.description" :auto-size="{ minRows: 2, maxRows: 3 }" :placeholder="$t('IotSceneLinkage.placeholder.description')" />
-          </a-form-item>
-        </section>
-        <RulePreviewCard>
+        </template>
+        <template #preview>
           <DetailedSceneRuleSummary
             :rule="data"
             :trigger-providers="triggerProviders"
@@ -35,16 +17,13 @@
             @change="updateSummary"
             @title-change="updateSummaryTitle"
           />
-        </RulePreviewCard>
-      </section>
+        </template>
       <section class="detailed-scene-editor__section">
-        <header class="detailed-scene-editor__section-header">
-          <span class="detailed-scene-editor__section-icon"><AIcon type="ThunderboltOutlined" /></span>
-          <div><h2>{{ $t('IotSceneLinkage.detail.triggerRule') }}</h2><p>{{ $t('IotSceneLinkage.detail.triggerRuleHint') }}</p></div>
-        </header>
+        <DetailedEditorSectionHeader kind="trigger" />
         <div class="detailed-scene-editor__section-body">
           <div class="detailed-scene-editor__configuration-panel detailed-scene-editor__configuration-panel--triggers">
             <a-form-item v-if="!data.triggerType" name="triggerType" :rules="triggerRules">
+              <p class="scene-editor__empty-hint detailed-scene-editor__trigger-hint">{{ $t('IotSceneLinkage.editor.triggerEmptyHint') }}</p>
               <a-button block class="detailed-scene-editor__trigger-add" @click="triggerPickerVisible = true">
                 <AIcon type="PlusOutlined" />{{ $t('IotSceneLinkage.detail.addTriggerRule') }}
               </a-button>
@@ -52,19 +31,19 @@
             <template v-else>
               <DetailedTriggerNode v-if="data.triggerType === 'manual'" :rule="data" @remove="removeTrigger" />
               <DetailedTimerTrigger v-else-if="data.triggerType === 'timer'" ref="timerTriggerRef" @cancel-config="cancelNewTrigger" @save-config="triggerPending = false" @remove="removeTrigger" />
-              <Device v-else-if="data.triggerType === 'device'" ref="deviceRef" :show-terms="false" :show-title="false" card-layout @cancel-config="cancelNewTrigger" @save-config="triggerPending = false" @remove="removeTrigger" />
-              <Collector v-else-if="data.triggerType === 'collector'" ref="collectorRef" :show-terms="false" :show-title="false" @cancel-config="cancelNewTrigger" @save-config="triggerPending = false" card-layout @remove="removeTrigger" />
+              <Device v-else-if="data.triggerType === 'device'" ref="deviceRef" :show-terms="false" :show-title="false" card-layout @cancel-config="cancelNewTrigger" @save-config="completeTriggerConfig" @remove="removeTrigger" />
+              <Collector v-else-if="data.triggerType === 'collector'" ref="collectorRef" :show-terms="false" :show-title="false" @cancel-config="cancelNewTrigger" @save-config="completeTriggerConfig" card-layout @remove="removeTrigger" />
               <DetailedMultiTriggerConfig v-else-if="data.triggerType === 'multi'" ref="multiTriggerRef" v-model="data.trigger" :trigger-options="multiTriggerOptions" :collapse-to-single="lockedTriggerRoot !== 'multi'" @collapse="restoreSingleTrigger" />
-              <SaasTriggerConfig ref="saasTriggerRef" v-else-if="['alarm', 'ai-event'].includes(data.triggerType)" @cancel-config="cancelNewTrigger" @save-config="triggerPending = false" @remove="removeTrigger" />
+              <SaasTriggerConfig ref="saasTriggerRef" v-else-if="['alarm', 'ai-event'].includes(data.triggerType)" @cancel-config="cancelNewTrigger" @save-config="completeTriggerConfig" @remove="removeTrigger" />
               <section v-else-if="data.triggerType" class="detailed-scene-editor__provider-placeholder">
                 <a-empty :description="$t('IotSceneLinkage.message.detailProviderPending', { provider: data.triggerType })" />
               </section>
               <div v-if="showTriggerRuleActions && !['manual', 'device', 'timer', 'collector', 'alarm', 'ai-event'].includes(data.triggerType)" class="detailed-scene-editor__trigger-rule-actions">
                 <a-tooltip v-if="canEditTrigger" :title="$t('IotSceneLinkage.action.edit')">
-                  <a-button type="text" @click="editCurrentTrigger"><AIcon type="EditOutlined" /></a-button>
+                  <a-button type="text" :aria-label="$t('IotSceneLinkage.action.edit')" @click="editCurrentTrigger"><AIcon type="EditOutlined" /></a-button>
                 </a-tooltip>
                 <a-tooltip v-if="canRemoveTrigger" :title="$t('IotSceneLinkage.action.delete')">
-                  <a-button type="text" danger @click="removeTrigger"><AIcon type="DeleteOutlined" /></a-button>
+                  <a-button type="text" danger :aria-label="$t('IotSceneLinkage.action.delete')" @click="removeTrigger"><AIcon type="DeleteOutlined" /></a-button>
                 </a-tooltip>
               </div>
               <a-button
@@ -80,16 +59,14 @@
         </div>
       </section>
       <section class="detailed-scene-editor__section detailed-scene-editor__execution-section">
-        <header class="detailed-scene-editor__section-header">
-          <span class="detailed-scene-editor__section-icon"><AIcon type="PlayCircleOutlined" /></span>
-          <div><h2>{{ $t('IotSceneLinkage.detail.executionRule') }}</h2><p>{{ $t('IotSceneLinkage.detail.executionRuleHint') }}</p></div>
-        </header>
+        <DetailedEditorSectionHeader kind="action" />
         <div class="detailed-scene-editor__section-body">
           <div class="detailed-scene-editor__configuration-panel">
-            <DetailedSceneExecution :rule="data" :trigger-type="data.triggerType" />
+            <DetailedSceneExecution :rule="data" :trigger-type="data.triggerType" :trigger-ready="Boolean(data.triggerType) && !triggerPending" />
           </div>
         </div>
       </section>
+      </SceneEditorWorkspace>
     </a-form>
     <SceneEditorFooter>
       <a-button @click="$emit('cancel')">{{ $t('IotSceneLinkage.action.cancel') }}</a-button>
@@ -107,12 +84,13 @@
   </main>
 </template>
 <script setup lang="ts">
+import DetailedEditorSectionHeader from './DetailedEditorSectionHeader.vue'
 import SceneEditorFooter from '../components/SceneEditorFooter.vue'
+import { useSceneDraftChanges } from '../useSceneLeaveGuard'
 import type { PreviewColumns } from './detailedRuleSummaryParts'
 import { computed, nextTick, onMounted, provide, ref, watch, type PropType } from 'vue'
 import { cloneDeep } from 'lodash-es'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
-import { PageHeader } from '@jetlinks-web-core/components'
 import { useI18n } from 'vue-i18n'
 import { querySceneSupportedActions, type SceneProviderInfo } from '../../../../api/scene-linkage'
 import { useSceneTermColumns } from '../../../Scene/Save/components/Terms/useSceneTermColumns'
@@ -124,12 +102,13 @@ import DetailedMultiTriggerConfig from './DetailedMultiTriggerConfig.vue'
 import DetailedSceneRuleSummary from './DetailedSceneRuleSummary.vue'
 import DetailedSceneExecution from './DetailedSceneExecution.vue'
 import DetailedTimerTrigger from './DetailedTimerTrigger.vue'
-import RulePreviewCard from '../components/RulePreviewCard.vue'
+import SceneEditorWorkspace from '../components/SceneEditorWorkspace.vue'
 import TriggerPickerModal, { type TriggerPickerOption } from '../components/TriggerPickerModal.vue'
 import { MULTI_TRIGGER_PROVIDERS, normalizeResult } from '../../utils'
 import { type SceneEditorMode, type SceneRuleRecord } from '../editorMode'
 import { findSceneCondition } from '../../sceneRule'
 import { useDetailedSceneDraft } from './useDetailedSceneDraft'
+import { assignmentKey, defaultBranches } from '@rule-engine-manager-ui/store/scene'
 import { SCENE_TRIGGER_CATEGORIES, SCENE_TRIGGER_CATEGORY_ORDER } from '../triggerPickerOptions'
 import { provideSceneNotifyLabels } from './useSceneNotifyLabels'
 const props = defineProps({
@@ -168,6 +147,7 @@ const props = defineProps({
 })
 const emit = defineEmits<{
   cancel: []
+  'dirty-change': [dirty: boolean]
   save: [rule: SceneRuleRecord]
   'switch-mode': [mode: SceneEditorMode, draft: SceneRuleRecord]
 }>()
@@ -184,6 +164,8 @@ const { queryTermColumns } = useSceneTermColumns()
 const readOnlyActionProviders = ref(['alarm', 'notify'])
 const triggerPickerVisible = ref(false)
 const { data, load, getDraft } = useDetailedSceneDraft()
+const draftChanges = useSceneDraftChanges(() => data.value)
+watch(draftChanges.dirty, dirty => emit('dirty-change', dirty), { immediate: true, flush: 'sync' })
 provideSceneNotifyLabels(data)
 const nameRules = [{ required: true, message: t('IotSceneLinkage.message.nameRequired') }]
 const triggerRules = [{ required: true, message: t('IotSceneLinkage.message.triggerRequired') }]
@@ -267,6 +249,19 @@ function changeTrigger(triggerType: string) {
 }
 
 const triggerPending = ref(false)
+let pendingTriggerSnapshot: SceneRuleRecord | undefined
+
+/** 确认触发规则后展开首分支的条件输入，已有过滤条件和动作保持原值。 */
+function completeTriggerConfig() {
+  triggerPending.value = false
+  pendingTriggerSnapshot = undefined
+  const branch = data.value.branches?.[0]
+  if (!branch || branch.when?.length) return
+  branch.when = assignmentKey(cloneDeep(defaultBranches[0].when))
+  const option = data.value.options?.when?.[0]
+  if (option) option.terms = [{ terms: [['', 'eq', '', 'and']] }]
+}
+
 async function selectTriggerFromPicker(pickerType: string) {
   triggerPickerVisible.value = false
   const triggerType = alarmPickerKinds.has(pickerType) ? 'alarm' : pickerType
@@ -275,6 +270,7 @@ async function selectTriggerFromPicker(pickerType: string) {
   // 重选当前触发方式不能清空已经填写的原版触发器配置。
   if (data.value.triggerType === triggerType) return
   triggerPending.value = triggerType !== 'manual'
+  pendingTriggerSnapshot = triggerPending.value ? getDraft() : undefined
   changeTrigger(triggerType)
   if (triggerType === 'alarm') {
     data.value.trigger = { type: 'alarm', configuration: { sourceKind: pickerType === 'visual-alarm' ? 'visual-ai' : 'iot-device' } }
@@ -304,13 +300,19 @@ function removeTrigger() {
 
 /** 与快速模式一致：取消新建会撤销占位节点；取消编辑只丢弃弹窗草稿。 */
 function cancelNewTrigger() {
-  if (triggerPending.value) removeTrigger()
+  if (!triggerPending.value) return
+  // 选择类型会整理空条件；取消时恢复打开前的完整草稿，避免无修改也被判为未保存。
+  if (pendingTriggerSnapshot) data.value = pendingTriggerSnapshot
+  else removeTrigger()
+  pendingTriggerSnapshot = undefined
+  triggerPending.value = false
 }
 
 /** 多条件删除至一条时回到普通触发器，避免把单条规则误展示为组合规则。 */
-function restoreSingleTrigger(value: { triggerType: string; trigger: Record<string, any> }) {
+function restoreSingleTrigger(value: { triggerType: string; trigger: Record<string, any>; options?: Record<string, any> }) {
   data.value.triggerType = value.triggerType
   data.value.trigger = value.trigger
+  if (value.options) data.value.options = { ...data.value.options, trigger: value.options }
 }
 
 /**
@@ -318,9 +320,16 @@ function restoreSingleTrigger(value: { triggerType: string; trigger: Record<stri
  * 只替换触发根节点，不触碰详细分支、条件和执行动作。
  */
 async function convertTriggerToMulti() {
+  // 连续点击或旧渲染事件只能打开现有 multi，不能再次把整棵 multi 包装为叶子。
+  if (data.value.trigger?.type === 'multi') {
+    data.value.triggerType = 'multi'
+    await nextTick()
+    multiTriggerRef.value?.openPicker()
+    return
+  }
   const trigger = cloneDeep(data.value.trigger || { type: data.value.triggerType })
   data.value.triggerType = 'multi'
-  data.value.trigger = { type: 'multi', multi: { triggers: [{ index: 1, trigger, terms: [] }] } }
+  data.value.trigger = { type: 'multi', multi: { triggers: [{ index: 1, trigger, terms: [], options: cloneDeep(data.value.options?.trigger || {}) }] } }
   // multi 容器在切换类型后才挂载，等待渲染完成再打开新增叶子的选择器。
   await nextTick()
   multiTriggerRef.value?.openPicker()
@@ -376,6 +385,10 @@ function createTermColumnsDraft(): SceneRuleRecord | undefined {
   const trigger = asRuleRecord(draft.trigger)
   // 未选触发器、或只有编辑器占位条件时没有可解析上下文，不发起接口请求。
   if (!trigger.type) return undefined
+  // multi 的占位叶子还没有 Provider，保留原始索引，等所有叶子具备类型后再解析字段。
+  const completeTrigger = (node: SceneRuleRecord): boolean => Boolean(node.type) && (node.type !== 'multi'
+    || Boolean(node.multi?.triggers?.length && node.multi.triggers.every((item: SceneRuleRecord) => completeTrigger(asRuleRecord(item.trigger)))))
+  if (!completeTrigger(trigger)) return undefined
 
   const branches = (Array.isArray(draft.branches) ? draft.branches : []).flatMap((item): SceneRuleRecord[] => {
     const branch = asRuleRecord(item)
@@ -424,7 +437,7 @@ function updateSummaryTitle(value: string) {
 }
 
 /** 保存前由原版表单校验必填项，再把当前会话数据交给上层统一规则树。 */
-async function save() {
+async function validateDraft() {
   const result = await sceneForm.value?.validate().catch(() => undefined)
   if (!result) {
     onlyMessage(t('IotSceneLinkage.message.detailIncomplete'), 'warning')
@@ -439,14 +452,29 @@ async function save() {
     onlyMessage(t(validationMessage), 'warning')
     return
   }
-  emit('save', getDraft())
+  return getDraft()
 }
+
+async function save() {
+  const draft = await validateDraft()
+  if (draft) emit('save', draft)
+}
+
+defineExpose({ validateDraft })
 
 function switchToQuick() {
   emit('switch-mode', 'quick', getDraft())
 }
 
-watch(() => props.rule, rule => { triggerPending.value = false; load(rule) }, { immediate: true, deep: true })
+let draftLoadVersion = 0
+watch(() => props.rule, async rule => {
+  const version = ++draftLoadVersion
+  pendingTriggerSnapshot = undefined
+  triggerPending.value = false
+  load(rule)
+  await nextTick()
+  if (version === draftLoadVersion) draftChanges.markClean()
+}, { immediate: true, deep: true })
 // 字段名称只依赖触发器与条件树；不要监听完整草稿，以免名称、说明等编辑触发无关请求。
 watch(() => ({ trigger: data.value.trigger, branches: data.value.branches }), loadTermColumns, { deep: true, immediate: true })
 onMounted(() => void loadActionOptions())

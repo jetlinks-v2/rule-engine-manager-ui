@@ -40,7 +40,15 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
   const draft = reactive({ deviceId: '', deviceName: '', productId: '', productName: '' })
   let requestSequence = 0
   const modalTitle = computed(() => props.title || t('IotSceneLinkage.title.selectDevices'))
-  const dialogProps = computed(() => props.embedded ? {} : ({ open: props.open, title: modalTitle.value, width: props.width, footer: null, maskClosable: false, wrapClassName: 'device-scope-modal' }))
+  const dialogProps = computed(() => props.embedded ? {} : ({
+    open: props.open,
+    title: modalTitle.value,
+    width: props.width,
+    footer: null,
+    maskClosable: false,
+    wrapClassName: 'device-scope-modal',
+    bodyStyle: { display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  }))
   const selectedDevice = computed(() => selectedDevices.value[0])
   const scopeTreeData = computed(() => scopeMode.value === 'device-group' ? groupTreeData.value : orgTreeData.value)
   const availableScopeModes = computed(() => ([
@@ -144,8 +152,8 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
     return { id: String(device.id), name: device.name || device.id, productId: String(device.productId || device.product?.id || ''), productName: device.productName || device.product?.name || device.productId || '-', spaceName: device.area || device.spaceName || device.others?.spaceName, online, statusText: status || (online ? t('IotSceneLinkage.deviceState.online') : t('IotSceneLinkage.deviceState.offline')), status: statusTone }
   }
   const deviceColumns = computed(() => [
-    { title: t('IotSceneLinkage.form.device'), dataIndex: 'name', key: 'name', ellipsis: true },
-    { title: t('IotSceneLinkage.form.product'), dataIndex: 'productName', key: 'productName', ellipsis: true },
+    { title: t('IotSceneLinkage.form.device'), dataIndex: 'name', key: 'name', ellipsis: { showTitle: false } },
+    { title: t('IotSceneLinkage.form.product'), dataIndex: 'productName', key: 'productName', ellipsis: { showTitle: false } },
     { title: t('IotSceneLinkage.device.status'), key: 'status', width: 90 },
   ])
   // 与设备列表使用同一套 Table 勾选列；跨页选择以已有草稿和当前页记录共同解析。

@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
+import { onBeforeUnmount } from "vue";
 import { useSceneStore } from "@rule-engine-manager-ui/store/scene";
 import { Form } from "ant-design-vue";
 import {
@@ -21,6 +22,10 @@ const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
 const formItemContext = Form.useInjectFormItemContext();
 
+// 校验请求可能晚于触发节点删除或切换完成，旧结果不能回写新的触发器。
+let mounted = true;
+onBeforeUnmount(() => { mounted = false });
+
 const formTouchOff = () => {
   formItemContext.onFieldChange();
 };
@@ -33,8 +38,9 @@ const check = async (): Promise<boolean> => {
   const proResp = await queryProductList({
     terms: [{ terms: [{ column: "id", termType: "eq", value: productId }] }],
   });
+  if (!mounted || data.value.trigger?.device !== deviceTrigger) return true;
   if (proResp.success && (proResp.result as any)?.total === 0) {
-    data.value.trigger!.device!.productId = "";
+    deviceTrigger.productId = "";
     return false;
   }
 
@@ -67,16 +73,18 @@ const check = async (): Promise<boolean> => {
       paging: false,
     });
 
+    if (!mounted || data.value.trigger?.device !== deviceTrigger) return true;
     if (
       deviceResp.success &&
       deviceResp.result.length !== selectorValues!.length
     ) {
-      data.value.trigger!.device!.selectorValues = undefined;
+      deviceTrigger.selectorValues = undefined;
       return false;
     }
 
     if (selectorValues!.length === 1) {
       const deviceDetailResp = await deviceDetailQuery(selectorValues![0]);
+      if (!mounted || data.value.trigger?.device !== deviceTrigger) return true;
       const deviceDetail = deviceDetailResp?.result;
       // const deviceDetail = deviceResp.result[0]
       metadata = JSON.parse(deviceDetail?.metadata || "{}"); // 只选中一个设备，以设备物模型为准
@@ -88,11 +96,12 @@ const check = async (): Promise<boolean> => {
       terms: [{ column: "id", termType: "eq", value: selectorValues![0] }],
     });
 
+    if (!mounted || data.value.trigger?.device !== deviceTrigger) return true;
     if (
       orgResp.success &&
       (orgResp.result as any[]).length !== selectorValues!.length
     ) {
-      data.value.trigger!.device!.selectorValues = undefined;
+      deviceTrigger.selectorValues = undefined;
       return false;
     }
   }
@@ -136,7 +145,7 @@ const check = async (): Promise<boolean> => {
 
   if (deviceTrigger.operation?.operator === "invokeFunction") {
     let hasProperties = false;
-    if (metadata.functions.length) {
+    if (metadata.functions?.length) {
       const functionId = deviceTrigger.operation?.functionId;
       hasProperties = metadata.functions.some(
         (item: any) => functionId === item.id
@@ -152,7 +161,7 @@ const check = async (): Promise<boolean> => {
 
   if (deviceTrigger.operation?.operator === "reportEvent") {
     let hasProperties = false;
-    if (metadata.events.length) {
+    if (metadata.events?.length) {
       const eventId = deviceTrigger.operation.eventId;
       hasProperties = metadata.events.some((item: any) => eventId === item.id);
     }
@@ -214,12 +223,12 @@ const checkInit = async () => {
     checkStatus = await checkCollector();
   }
   console.log('checkStatus', checkStatus)
-  if (!checkStatus) {
+  if (mounted && !checkStatus) {
     formTouchOff();
   }
 };
 
-checkInit();
+void checkInit().catch(() => { /* 请求层已提示错误，保留草稿供重试。 */ });
 </script>
 
 <style scoped></style>

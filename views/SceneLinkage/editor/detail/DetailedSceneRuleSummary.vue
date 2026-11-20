@@ -101,7 +101,8 @@ const previewLines = computed<PreviewLine[]>(() => {
 
   branches.forEach((branch, branchIndex) => {
     const conditionParts = detailedConditionSummaryParts(branch.when, t, { columns: props.termColumns, options: asRecords(ruleOptions.when)[branchIndex] })
-    const isOtherwise = branchIndex > 0 && Boolean(branch.executeAnyway)
+    // executeAnyway=true 开始独立分支；false/缺省是上一条件不满足时继续判断的“否则”。
+    const isOtherwise = branchIndex > 0 && !branch.executeAnyway
     // 普通分支独立判断，重复“当”以免把下一分支的条件误读为上一分支的追加门槛。
     if (branchIndex > 0 && !isOtherwise) {
       lines.push({ ...triggerLine, key: `trigger-${branchIndex}` })

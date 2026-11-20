@@ -1,6 +1,5 @@
 <template>
     <a-modal
-        :title="$t('Device.index.9667820-0')"
         open
         :width="isDetailedEditor ? 1180 : 860"
         :footer="isDetailedEditor ? null : undefined"
@@ -8,6 +7,7 @@
         @ok="save"
         :maskClosable="false"
     >
+        <template #title><div class="scene-device-dialog-title"><span>{{ $t(isDetailedEditor && current === 0 ? 'Device.index.9667820-1' : 'Device.index.9667820-0') }}</span></div></template>
         <a-steps v-if="!isDetailedEditor" :current="current" @change="stepChange">
             <a-step>
                 <template #title>{{ $t('Device.index.9667820-1') }}</template>
@@ -23,10 +23,10 @@
                 <footer><a-button @click="onCancel">{{ $t('IotSceneLinkage.action.cancel') }}</a-button><a-button type="primary" :loading="productDetailLoading" @click="saveClick">{{ $t('IotSceneLinkage.action.next') }}</a-button></footer>
             </section>
             <DeviceActionScope
-                v-else-if="isDetailedEditor" :scope="scopeDraft" :product-detail="productDetail" :name="name" :then-name="thenName"
+                v-else-if="isDetailedEditor" preview-only :scope="scopeDraft" :product-detail="productDetail" :name="name" :then-name="thenName"
                 @save="saveResourceScope" @cancel="onCancel" @change-product="current = 0"
             >
-                <template #configuration><strong>{{ $t('IotSceneLinkage.detail.deviceInfoTitle') }}</strong><p>{{ $t('IotSceneLinkage.detail.deviceInfoDescription') }}</p></template>
+                <template #preview="{ selectionScope }"><SceneActionSummary :action="{ executor: 'device-data', configuration: selectionScope, options: { productName: productDetail.name } }" /></template>
             </DeviceActionScope>
             <LegacyProduct
                 v-else-if="current === 0"
@@ -62,6 +62,7 @@
 </template>
 
 <script lang="ts" setup>
+import SceneActionSummary from '../../../../SceneLinkage/editor/components/SceneActionSummary.vue'
 import Product from '../../Device/Product.vue';
 import LegacyProduct from './Product.vue';
 import DeviceActionScope from '../Device/DeviceActionScope.vue'
@@ -121,4 +122,8 @@ const { isDetailedEditor, current, DeviceModel, productDetail, productDetailLoad
 <style scoped>
 .detailed-device-data__product { display: grid; gap: 16px; }
 .detailed-device-data__product footer { display: flex; justify-content: flex-end; gap: 8px; }
+</style>
+
+<style scoped>
+.scene-device-dialog-title { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-right: 32px; }
 </style>

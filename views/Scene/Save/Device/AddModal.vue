@@ -1,14 +1,13 @@
 <template>
   <a-modal
-    :title="$t('Device.AddModal.3725211-0')"
     open
     :width="1240"
     :footer="null"
     @cancel='cancel'
     :maskClosable="false"
   >
+    <template #title><div class="scene-device-dialog-title"><span>{{ $t(selectingScope ? 'Device.AddModal.3725211-0' : 'Device.AddModal.3725211-1') }}</span></div></template>
     <section v-if="!selectingScope" class="detailed-device-trigger-modal__product">
-      <header><strong>{{ $t('Device.AddModal.3725211-1') }}</strong><small>{{ $t('IotSceneLinkage.detail.productFirstHint') }}</small></header>
       <div class="detailed-device-trigger-modal__product-content">
         <Product
           v-model:rowKey='addModel.productId'
@@ -33,10 +32,11 @@
         @save="saveScope"
       >
         <template #toolbar-actions><a-button type="link" @click="selectingScope = false">{{ $t('IotSceneLinkage.action.changeProduct') }}</a-button></template>
+        <template #configuration-help><a-tooltip :title="$t('Device.Type.372529-0')"><AIcon type="QuestionCircleOutlined" tabindex="0" /></a-tooltip></template>
         <template #configuration>
           <Type ref="typeRef" :metadata="addModel.metadata" :operator="addModel.operator" :options="optionsCache" />
         </template>
-        <template #preview><span>{{ $t('IotSceneLinkage.detail.deviceTriggerPreview') }}</span></template>
+        <template #preview="{ selectionScope }"><SceneTriggerSummary v-if="typeRef?.preview?.operation?.operator" :rule="{ triggerType: 'device', trigger: { device: { ...selectionScope, operation: typeRef.preview.operation } }, options: { trigger: { ...handleOptions(typeRef.preview.operation), action: typeRef.preview.action } } }" /></template>
       </DeviceScopeModal>
     </section>
   </a-modal>
@@ -50,6 +50,7 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { detail as deviceDetail } from '../../../../api/others'
 import { getProduct } from '../../../../api/scene-linkage'
 import Product from './Product.vue'
+import SceneTriggerSummary from '../../../SceneLinkage/editor/components/SceneTriggerSummary.vue'
 import Type from './Type.vue'
 import DeviceScopeModal, { type DeviceScope } from '../../../SceneLinkage/editor/components/DeviceScopeModal.vue'
 import { handleTimerOptions } from '../components/Timer/util'
@@ -71,7 +72,7 @@ interface AddModelType extends Omit<TriggerDevice, 'selectorValues'> {
   productDetail: any
   selectorValues: SelectorValuesItem[]
   metadata: metadataType,
-  operator: TriggerDeviceOptions
+  operator: Partial<TriggerDeviceOptions>
 }
 
 const emit = defineEmits<Emit>()
@@ -102,7 +103,7 @@ const addModel = reactive<AddModelType>(cloneDeep({
   productDetail: {},
   metadata: {},
   operator: props.value.operation || {
-    operator: 'online'
+    operator: undefined
   }
 }))
 
@@ -214,7 +215,7 @@ const productChange = (product: { id: string }) => {
   addModel.orgId = []
   addModel.selector = 'fixed'
   addModel.operator = {
-    operator: 'online'
+    operator: undefined
   }
   addModel.selectorValues = []
   productDetailLoading.value = true
@@ -256,10 +257,15 @@ async function handleSelectedDevices(devices: Array<{ id: string }>) {
 
 /** 保存前由右侧触发规则表单校验；范围本身由 DeviceScopeModal 校验并原样保存。 */
 async function validateScope() {
-  const result = await typeRef.value?.vail()
-  if (!result) return false
-  scopeValidation.value = result
-  return true
+  try {
+    const result = await typeRef.value?.vail()
+    if (!result) return false
+    scopeValidation.value = result
+    return true
+  } catch {
+    // 必填项由原表单标记，校验未通过时保持弹窗打开，允许继续选择。
+    return false
+  }
 }
 
 function saveScope(scope: DeviceScope) {
@@ -312,4 +318,8 @@ nextTick(() => {
 
 <style scoped>
 .detailed-device-trigger-modal__product, .detailed-device-trigger-modal__scope { display: grid; gap: var(--space-4, 16px); min-height: 0; }.detailed-device-trigger-modal__product > header, .detailed-device-trigger-modal__scope-header { display: flex; justify-content: space-between; gap: var(--space-3, 12px); align-items: center; }.detailed-device-trigger-modal__product > header > *, .detailed-device-trigger-modal__scope-header > div { display: grid; gap: 4px; }.detailed-device-trigger-modal__product header strong, .detailed-device-trigger-modal__scope-header strong { color: var(--ant-color-text); }.detailed-device-trigger-modal__product header small, .detailed-device-trigger-modal__scope-header small { color: var(--ant-color-text-tertiary); font-size: 12px; }.detailed-device-trigger-modal__product-content { min-height: 0; overflow: auto; }.detailed-device-trigger-modal__product > footer { display: flex; justify-content: flex-end; gap: var(--space-2, 8px); padding-top: var(--space-3, 12px); border-top: 1px solid var(--ant-color-border-secondary); }.detailed-device-trigger-modal__scope :deep(.device-scope-modal__selection) { min-width: 19rem; }.detailed-device-trigger-modal__scope :deep(.type) { margin-top: 0; }
+</style>
+
+<style scoped>
+.scene-device-dialog-title { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-right: 32px; }
 </style>

@@ -23,7 +23,7 @@
           @click="select(item.value)"
         >
           <span class="action-picker__icon"><AIcon :type="item.icon" /></span>
-          <span class="action-picker__content"><b>{{ item.label }}</b><small>{{ item.description }}</small></span>
+          <span class="action-picker__content"><b>{{ item.label }}</b><a-tooltip :title="item.description"><small>{{ item.description }}</small></a-tooltip></span>
           <AIcon class="action-picker__arrow" type="RightOutlined" />
         </button>
       </div>
@@ -79,7 +79,7 @@ const defaultActions = computed<ActionPickerItem[]>(() => [
     value: 'sceneNotify' as const,
     provider: 'sceneNotify',
     icon: 'NotificationOutlined',
-    label: t('IotSceneLinkage.action.notify'),
+    label: t('IotSceneLinkage.action.sendNotify'),
     description: t('IotSceneLinkage.actionDesc.notify'),
   },
 ].filter(item => props.supportedActions.includes(item.provider || item.value)))
@@ -129,7 +129,7 @@ function select(type: ActionType) {
 
 .action-picker__title small {
 	overflow: hidden;
-	color: var(--ant-color-text-tertiary);
+	color: var(--jet-theme-text-secondary, #595959);
 	font-size: .75rem;
 	font-weight: 400;
 	line-height: 1rem;
@@ -144,9 +144,9 @@ function select(type: ActionType) {
 }
 
 .action-picker__body {
-	padding: var(--space-2, 8px) .875rem .75rem;
-	background: rgb(255 255 255 / 70%);
-	border: 1px solid #eceff3;
+	padding: 0;
+	background: transparent;
+	border: 0;
 	border-radius: 1rem;
 }
 
@@ -158,7 +158,7 @@ function select(type: ActionType) {
 	gap: var(--space-3, 12px);
 	padding: .6875rem .9375rem;
 	text-align: left;
-	background: linear-gradient(123deg, #fff 0%, #f8fbff 100%);
+	background: var(--jet-theme-bg-container, #fff);
 	border: 1px solid #f1f5f9;
 	border-radius: .5rem;
 	cursor: pointer;
@@ -183,6 +183,7 @@ function select(type: ActionType) {
 .action-picker__item:disabled { cursor: not-allowed; opacity: .45; }
 
 .action-picker__content {
+	min-width: 0;
 	display: grid;
 	flex: 1;
 	gap: var(--space-1, 4px);
@@ -209,17 +210,17 @@ function select(type: ActionType) {
 	display: grid;
 	flex: none;
 	place-items: center;
-	width: 2.5rem;
-	height: 2.5rem;
+	width: 28px;
+	height: 28px;
 	color: #1e72f0;
-	background: linear-gradient(180deg, #f6f9fe 0%, #fefefe 100%);
-	border: 1px solid #f3f7fc;
-	border-radius: 50%;
+	background: var(--jet-theme-primary-soft, #e8f0ff);
+	border: 0;
+	border-radius: 6px;
 	transition: color .2s, background-color .2s, border-color .2s;
 }
 
-.action-picker__icon :deep(.anticon) { font-size: 1.25rem; }
-.action-picker__arrow { flex: none; color: var(--ant-color-text-tertiary); transition: color .2s; }
+.action-picker__icon :deep(.anticon) { font-size: 16px; }
+.action-picker__arrow { flex: none; color: var(--jet-theme-text-secondary, #595959); transition: color .2s; }
 
 @media (max-width: 640px) { .action-picker__items { grid-template-columns: 1fr; } }
 </style>

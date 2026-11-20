@@ -23,7 +23,7 @@
           <IotTreeNodeRow :count="showCounts ? countsLoading ? '…' : counts[node.key] ?? '—' : ''"
             :count-tooltip="!showCounts || counts[node.key] === undefined ? '' : $t('IotSceneLinkage.scope.deviceCount', { count: counts[node.key] })">
             <template #icon><AIcon :type="node.icon || icon" /></template>
-            <template #label>{{ node.title }}</template>
+            <template #label><a-tooltip :title="node.title"><span class="device-scope-tree__label">{{ node.title }}</span></a-tooltip></template>
           </IotTreeNodeRow>
         </template>
       </a-tree>
@@ -66,13 +66,19 @@ function check(_keys: unknown, info: { node: { key: string | number }; checked: 
 </script>
 
 <style scoped>
-.device-scope-tree { display: flex; flex: 1; flex-direction: column; gap: var(--space-4, 16px); min-height: 0; }
-.device-scope-tree header strong { color: var(--jet-theme-text-title); font-size: var(--fs-18, 18px); font-weight: 600; line-height: var(--lh-24, 24px); }
-.device-scope-tree__hint { margin: 0; color: var(--ant-color-text-tertiary); font-size: 12px; line-height: 1.5; }
+.device-scope-tree { display: flex; flex: 1; flex-direction: column; gap: var(--space-3, 12px); min-height: 0; }
+.device-scope-tree header { flex: none; min-height: 22px; }
+.device-scope-tree header strong { color: var(--jet-theme-text, #1d2129); font-size: 14px; font-weight: 600; line-height: 22px; }
+.device-scope-tree > :deep(.ant-input-affix-wrapper) { flex: none; min-height: 32px; }
+.device-scope-tree__hint { flex: none; margin: 0; color: var(--jet-theme-text-secondary, #595959); font-size: 12px; line-height: 1.5; }
 .device-scope-tree__body { flex: 1; min-height: 0; overflow: auto; }
+.device-scope-tree__label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .device-scope-tree :deep(.ant-tree-title) { display: block; flex: 1; min-width: 0; width: 100%; }
 .device-scope-tree :deep(.ant-tree-node-content-wrapper) { text-align: left; }
 .device-scope-tree :deep(.ant-tree) { margin-top: var(--space-1, 4px); background: transparent; }
-.device-scope-tree.is-error { outline: 1px solid var(--ant-color-error); border-radius: var(--radius-jet-sm, 8px); }
-.device-scope-tree__error { display: flex; gap: 4px; align-items: center; color: var(--ant-color-error); font-size: 12px; }
+.device-scope-tree.is-error { outline: 1px solid var(--jet-theme-error, #ff4d4f); border-radius: var(--radius-jet-sm, 8px); }
+.device-scope-tree__error { display: flex; gap: 4px; align-items: center; color: var(--jet-theme-error, #ff4d4f); font-size: 12px; }
+.device-scope-tree :deep(.ant-tree-treenode) { width: 100%; border-radius: 4px; }
+.device-scope-tree :deep(.ant-tree-treenode:has(.ant-tree-node-selected)) { background: var(--ant-color-primary-bg, #e6f4ff); }
+.device-scope-tree :deep(.ant-tree-node-content-wrapper.ant-tree-node-selected) { background: transparent; }
 </style>

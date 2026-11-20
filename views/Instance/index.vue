@@ -32,23 +32,16 @@
 	                      <EmptyCreateButton />
 	                    </CloudEmpty>
 	                  </template>
-		                <template #headerLeftRender>
-			                <div class="rule-instance-toolbar">
-				                <h2 class="rule-instance-toolbar__title">
-					                {{ $t('Instance.index.title') }}
-				                </h2>
-			                </div>
-		                </template>
-		                <template #headerRightRender>
-			                <a-flex :gap="16" align="center">
-				                <ConditionFilter
-				                  class="rule-instance-toolbar__search"
-				                  :fields="filterFields"
-				                  @change="handleSearch"
-				                />
-				                <EmptyCreateButton />
-			                </a-flex>
-		                </template>
+                        <template #headerLeftRender>
+                            <ConditionFilter
+                              class="rule-instance-toolbar__search"
+                              :fields="filterFields"
+                              @change="handleSearch"
+                            />
+                        </template>
+                        <template #headerRightRender>
+                            <EmptyCreateButton />
+                        </template>
 		                <template #card="slotProps">
 			                <CardBox
 			                  :value="slotProps"
@@ -462,28 +455,9 @@ onMounted(() => {
 const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style scoped>
-.rule-instance-toolbar {
-    display: flex;
-    flex: 1;
-    flex-wrap: wrap;
-    gap: var(--space-4);
-    align-items: center;
-    min-width: 0;
-}
-
-.rule-instance-toolbar__title {
-    margin: 0;
-    color: rgba(0, 0, 0, 0.85);
-    font-size: 20px;
-    font-weight: 600;
-    line-height: 32px;
-    white-space: nowrap;
-}
-
 .rule-instance-toolbar__search {
-    flex: 1;
-    min-width: 400px;
-    max-width: 640px;
+    width: 40rem;
+    max-width: 100%;
 }
 
 .rule-instance-thumbnail-frame {

@@ -1,6 +1,5 @@
 <template>
     <a-modal
-        :title="$t('Device.index.9667820-0')"
         open
         :width="isResourceScope || isDetailedEditor ? 1240 : 860"
         :footer="isResourceScope || isDetailedEditor ? null : undefined"
@@ -8,6 +7,7 @@
         @ok="() => save()"
         :maskClosable="false"
     >
+        <template #title><div class="scene-device-dialog-title"><span>{{ $t(isDetailedEditor ? current === 0 ? 'Device.index.9667820-1' : 'IotSceneLinkage.action.device' : 'Device.index.9667820-0') }}</span></div></template>
         <a-steps v-if="!isResourceScope && !isDetailedEditor" :current="current" @change="stepChange">
             <a-step>
                 <template #title>{{ $t('Device.index.9667820-1') }}</template>
@@ -22,10 +22,6 @@
         <a-divider v-if="!isResourceScope && !isDetailedEditor" style="margin-bottom: 10px" />
         <div class="steps-content">
             <section v-if="isDetailedEditor && current === 0" class="detailed-device-action-modal__product">
-                <header>
-                    <strong>{{ $t('Device.index.9667820-1') }}</strong>
-                    <small>{{ $t('IotSceneLinkage.detail.actionProductFirstHint') }}</small>
-                </header>
                 <Product
                     v-model:rowKey="DeviceModel.productId"
                     v-model:detail="productDetail"
@@ -172,4 +168,8 @@ const { isResourceScope, isDetailedEditor, current, DeviceModel, DeviceOptions, 
         border-top: 1px solid var(--ant-color-border-secondary);
     }
 }
+</style>
+
+<style scoped>
+.scene-device-dialog-title { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-right: 32px; }
 </style>

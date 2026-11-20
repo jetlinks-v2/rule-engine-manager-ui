@@ -2,7 +2,7 @@
   <div class="effective-period-select">
     <a-select :value="selectedPeriod" :options="options" @change="changePeriod" />
     <a-modal v-model:open="customVisible" :title="$t('IotSceneLinkage.effectivePeriod.custom')" :mask-closable="false" @ok="saveCustomRange">
-      <a-form layout="vertical"><a-form-item :label="$t('IotSceneLinkage.condition.timeRange')"><a-time-range-picker v-model:value="customRange" format="HH:mm" value-format="HH:mm" /></a-form-item></a-form>
+      <a-form layout="vertical"><a-form-item :label="$t('IotSceneLinkage.condition.timeRange')"><a-time-range-picker style="width: 212px; max-width: 100%" v-model:value="customRange" format="HH:mm" value-format="HH:mm" /></a-form-item></a-form>
     </a-modal>
   </div>
 </template>
