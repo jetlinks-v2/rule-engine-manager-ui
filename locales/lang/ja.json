@@ -1,4 +1,6 @@
 {
+  "IotSceneLinkage.alarmTriggerText.in": "{propertyName}は [{values}] のいずれか",
+  "IotSceneLinkage.alarmTriggerText.nin": "{propertyName}は [{values}] のいずれでもない",
   "IotSceneLinkage.alarmCondition.selectedTask.unavailable": "選択済みのアラームルールは削除されたか、アクセスできません。別のルールを選択してください。",
   "IotSceneLinkage.alarmCondition.selectedTask.loadFailed": "選択済みのアラームルールを読み込めません。再試行するか、別のルールを選択してください。",
   "RuleDocumentHelp": {

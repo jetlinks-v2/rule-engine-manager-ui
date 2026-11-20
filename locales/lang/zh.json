@@ -1,4 +1,6 @@
 {
+  "IotSceneLinkage.alarmTriggerText.in": "{propertyName}属于 [{values}]",
+  "IotSceneLinkage.alarmTriggerText.nin": "{propertyName}不属于 [{values}]",
 	"IotSceneLinkage.alarmCondition.selectedTask.unavailable": "原选告警规则已删除或无权访问，请重新选择。",
 	"IotSceneLinkage.alarmCondition.selectedTask.loadFailed": "原选告警规则读取失败，可重试或选择其他规则。",
   "RuleDocumentHelp": {

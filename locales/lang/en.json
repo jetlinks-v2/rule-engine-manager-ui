@@ -1,4 +1,6 @@
 {
+  "IotSceneLinkage.alarmTriggerText.in": "{propertyName} is one of [{values}]",
+  "IotSceneLinkage.alarmTriggerText.nin": "{propertyName} is not one of [{values}]",
 	"IotSceneLinkage.alarmCondition.selectedTask.unavailable": "The selected alarm rule was deleted or is no longer accessible. Select another rule.",
 	"IotSceneLinkage.alarmCondition.selectedTask.loadFailed": "Unable to read the selected alarm rule. Retry or select another rule.",
   "RuleDocumentHelp": {

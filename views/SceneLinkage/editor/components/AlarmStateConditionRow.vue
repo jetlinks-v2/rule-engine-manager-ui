@@ -59,7 +59,7 @@ import { getProduct, queryDeviceAlarmPreprocesses, queryDevicesPage, queryProduc
 import IotAlarmTargetSelect, { type IotAlarmTargetSelectOption, type IotAlarmTargetSelectQuery } from '../alarm/IotAlarmTargetSelect.vue'
 import IotAlarmTargetOption from '../alarm/IotAlarmTargetOption.vue'
 import VisualAiAlarmSelector from './VisualAiAlarmSelector.vue'
-import { formatTriggerText } from '../alarm/utils'
+import { iotAlarmSummary } from '../alarm/utils'
 import { normalizeResult, type SceneAlarmTriggerConfig } from '../../utils'
 import { enrichDeviceOptionData } from '../deviceOptionData'
 
@@ -96,18 +96,7 @@ function changeSource(event: { target?: { value?: unknown } }) {
 
 function toOption(item: Record<string, any>): AlarmConfigOption | undefined {
   const alarm = item.alarm || {}
-  const processor = (alarm.configuration?.processors || []).find((item: Record<string, any>) => item.provider === 'device-alarm')
-  const name = processor?.configuration?.alarmName || item.propertyName || alarm.name
-  const propertyName = item.propertyName || alarm.propertyName || alarm.property || ''
-  const matcher = alarm.configuration?.matcher || {}
-  const matcherConfig = matcher.configuration || {}
-  const triggerText = matcher.provider === 'number-range'
-    ? formatTriggerText({
-        propertyName,
-        trigger: matcherConfig.not === false ? 'inside' : 'outside',
-        limit: { lower: matcherConfig.min, upper: matcherConfig.max },
-      })
-    : propertyName
+  const { name, condition: triggerText } = iotAlarmSummary(item)
   if (!alarm.id || !name) return undefined
   const detail = triggerText ? t('IotDeviceDetail.overview.alarmTrigger', { value: triggerText }) : ''
   return {

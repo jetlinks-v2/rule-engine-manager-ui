@@ -188,7 +188,7 @@ export function useAlarmConditionModel(getOptions: () => AlarmConditionOptions, 
     if (!rule.unavailable) selectedTaskIssue.value = undefined
     selectedRuleId.value = rule.id
     const current = draft.value
-    // 重新打开并确认同一条历史规则时保留 options 中未被快速配置识别的字段。
+    // 保留历史扩展字段，同时用查询到的最新名称刷新旧的属性名回显。
     draft.value = current.alarmConfigId === rule.id
       ? {
           ...rule.value,
@@ -196,7 +196,7 @@ export function useAlarmConditionModel(getOptions: () => AlarmConditionOptions, 
           sourceKind: rule.value.sourceKind,
           targetType: rule.value.targetType,
           state: current.state || rule.value.state || 'warning',
-          options: { ...rule.value.options, ...current.options },
+          options: { ...current.options, ...rule.value.options },
         }
       : { ...rule.value, modes: current.modes || [], state: current.state || 'warning' }
     // 新建触发默认产生告警；切换规则、重新编辑时保留用户已选状态。
