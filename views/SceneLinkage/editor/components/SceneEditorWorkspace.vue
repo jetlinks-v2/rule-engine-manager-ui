@@ -67,9 +67,9 @@ const panel = computed(() => workspace.value?.closest<HTMLElement>('.content-pan
 const { top: panelTop } = useElementBounding(panel)
 const { height: viewportHeight } = useWindowSize()
 // 面板可能随内容增高并交由整页滚动；以未移动的侧栏为锚点，兼容两种滚动方式。
-// 预览只在编辑区内跟随，顶部避开导航，底部预留保存栏和间距。
+// 预览只在编辑区内跟随，顶部避开导航，底部保留间距。
 const previewTop = computed(() => Math.max(64, panelTop.value + 16))
-const previewMaxHeight = computed(() => Math.max(0, viewportHeight.value - Math.max(previewTop.value, railTop.value) - 80))
+const previewMaxHeight = computed(() => Math.max(0, viewportHeight.value - Math.max(previewTop.value, railTop.value) - 16))
 const previewOffset = computed(() => Math.max(0, Math.min(previewTop.value - railTop.value, bodyBottom.value - railTop.value - previewHeight.value)))
 const wide = computed(() => width.value >= 1200)
 const collapsed = ref(false)
