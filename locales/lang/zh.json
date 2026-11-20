@@ -2139,7 +2139,7 @@
 	"IotSceneLinkage.alarmLevel.5": "五级",
 	"IotSceneLinkage.state.started": "运行中",
 	"IotSceneLinkage.state.disable": "已禁用",
-	"IotSceneLinkage.column.scene": "场景",
+	"IotSceneLinkage.column.scene": "场景名称",
 	"IotSceneLinkage.column.target": "目标",
 	"IotSceneLinkage.column.trigger": "触发方式",
 	"IotSceneLinkage.column.rule": "场景规则",

@@ -2138,7 +2138,7 @@
 	"IotSceneLinkage.alarmLevel.5": "Level 5",
 	"IotSceneLinkage.state.started": "Running",
 	"IotSceneLinkage.state.disable": "Disabled",
-	"IotSceneLinkage.column.scene": "Scene",
+	"IotSceneLinkage.column.scene": "Scene name",
 	"IotSceneLinkage.column.target": "Target",
 	"IotSceneLinkage.column.trigger": "Trigger",
 	"IotSceneLinkage.column.rule": "Scene rule",

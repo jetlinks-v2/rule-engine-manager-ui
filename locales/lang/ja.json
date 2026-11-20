@@ -1961,7 +1961,7 @@
   "IotSceneLinkage.alarmLevel.5": "レベル5",
   "IotSceneLinkage.state.started": "稼働中",
   "IotSceneLinkage.state.disable": "無効",
-  "IotSceneLinkage.column.scene": "シーン",
+  "IotSceneLinkage.column.scene": "シーン名",
   "IotSceneLinkage.column.target": "対象",
   "IotSceneLinkage.column.trigger": "トリガー方式",
   "IotSceneLinkage.column.rule": "シナリオルール",

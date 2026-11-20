@@ -72,6 +72,11 @@
                 </span>
               </a-tooltip>
               <a-tag class="scene-list__trigger-tag">{{ triggerLabel(scene) }}</a-tag>
+              <a-tooltip v-if="showEditorMode" :title="editorModeLabel(scene)" :trigger="['hover', 'focus']">
+                <span :class="['scene-list__mode-icon', `scene-list__mode-icon--${resolveInitialEditorMode(scene)}`]" tabindex="0" role="img" :aria-label="editorModeLabel(scene)">
+                  <AIcon :type="resolveInitialEditorMode(scene) === 'quick' ? 'ThunderboltOutlined' : 'BranchesOutlined'" aria-hidden="true" />
+                </span>
+              </a-tooltip>
             </div>
           </template>
           <template #rule="scene">
@@ -207,6 +212,7 @@ import ConditionFilter, { type ConditionFilterChangePayload, type ConditionFilte
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { useAuthStore } from '@jetlinks-web-core/store/auth'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { isPrivateDeployment } from '@jetlinks-web-core/utils/deployment'
 import { useScenePermission } from '@rule-engine-manager-ui/hook/usePermission'
 import { deleteScene, disableScene, enableScene, executeScene, getSceneDetail, queryScenes } from '../../api/scene-linkage'
 import SceneRecordTimeline from './components/SceneRecordTimeline.vue'
@@ -215,6 +221,7 @@ import { formatSceneExecutionTime, useSceneExecutionRecords } from './hooks/useS
 import { formatDeviceScopeText, formatDeviceScopeTitle, formatProductScopeText, type SceneDeviceScopeValue } from './editor/deviceScopeLabel'
 import { toSceneTemplate } from './sceneCompatibility'
 import { formatSceneSummaryClauses, splitSceneSummaryParts } from './sceneSummary'
+import { resolveInitialEditorMode } from './editor/editorMode'
 
 interface SceneRecordTarget {
   id: string
@@ -222,6 +229,11 @@ interface SceneRecordTarget {
 }
 
 const { t } = useI18n()
+const showEditorMode = isPrivateDeployment()
+// 与编辑入口共用模式判定，未标记模式的历史场景按详细配置展示。
+const editorModeLabel = (scene: unknown) => t(resolveInitialEditorMode(scene) === 'quick'
+  ? 'IotSceneLinkage.editor.quickMode'
+  : 'IotSceneLinkage.editor.detailMode')
 const authStore = useAuthStore()
 const menuStore = useMenuStore()
 const route = useRoute()
@@ -258,7 +270,7 @@ const triggerTypeOptions = computed(() => ['manual', 'timer', 'device', 'alarm',
 const filterCommonFields: ConditionFilterCommonField[] = [{ label: t('IotSceneLinkage.form.name'), value: 'name' }, { label: t('IotSceneLinkage.form.triggerType'), value: 'triggerType' }, { label: t('IotSceneLinkage.form.state'), value: 'state' }]
 const filterFields = computed<ConditionFilterField[]>(() => [{ dataIndex: 'name', title: t('IotSceneLinkage.form.name'), search: { type: 'string', defaultTermType: 'like' } }, { dataIndex: 'triggerType', title: t('IotSceneLinkage.form.triggerType'), search: { type: 'select', defaultTermType: 'eq', options: triggerTypeOptions.value } }, { dataIndex: 'state', title: t('IotSceneLinkage.form.state'), search: { type: 'select', defaultTermType: 'eq', options: [{ label: t('IotSceneLinkage.state.started'), value: 'started' }, { label: t('IotSceneLinkage.state.disable'), value: 'disable' }] } }])
 const columns = computed(() => [
-  { title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 260, scopedSlots: true },
+  { title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 320, scopedSlots: true },
   { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule', scopedSlots: true },
   { title: t('IotSceneLinkage.column.lastExecute'), dataIndex: 'runtimeInfo', width: 180, scopedSlots: true },
   { title: t('IotSceneLinkage.column.executionCount'), dataIndex: 'executionCount', width: 140, scopedSlots: true },
@@ -432,6 +444,33 @@ const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
   align-items: center;
   gap: var(--space-2);
   min-width: 0;
+}
+
+.scene-list__mode-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: help;
+}
+
+.scene-list__mode-icon--quick {
+  color: #447960;
+  background: #edf5f1;
+}
+
+.scene-list__mode-icon--detail {
+  color: #78618e;
+  background: #f2eff7;
+}
+
+.scene-list__mode-icon:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .scene-list__name {

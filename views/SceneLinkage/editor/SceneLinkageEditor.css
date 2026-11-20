@@ -728,7 +728,6 @@
 .detailed-scene-editor__multi-trigger-add { margin-top: 8px; }
 .detailed-scene-editor__trigger-rule-actions { position: absolute; top: 8px; right: 8px; display: inline-flex; gap: 2px; }
 .detailed-scene-editor__provider-placeholder { padding: 16px; }
-.scene-editor, .detailed-scene-editor { padding-bottom: 5.5rem; }
 @media (max-width: 640px) { .scene-editor__timer-method-list { grid-template-columns: 1fr; } }
 
 .scene-editor__section-symbol { flex: none; font-size: 16px; color: var(--jet-theme-primary, #1677ff); }
