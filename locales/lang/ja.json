@@ -1882,6 +1882,8 @@
   "IotSceneLinkage.triggerType.ai-event": "ビジョンイベント",
   "IotSceneLinkage.triggerType.multi": "複数条件トリガー",
   "IotSceneLinkage.form.ruleVariable": "ルールコンテキストパラメータ",
+  "IotSceneLinkage.form.notifyMethod": "通知方法",
+  "IotSceneLinkage.form.notifyRecipients": "通知先",
   "IotSceneLinkage.form.notifyContent": "通知内容",
   "IotSceneLinkage.optionDetail.manufacturer": "メーカー：{value}",
   "IotSceneLinkage.optionDetail.model": "型番：{value}",

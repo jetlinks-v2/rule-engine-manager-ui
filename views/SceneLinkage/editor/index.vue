@@ -276,12 +276,12 @@ import { useI18n } from 'vue-i18n'
 import { Modal } from 'ant-design-vue'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { isPrivateDeployment } from '@jetlinks-web-core/utils/deployment'
-import { createSceneLinkage, getProduct, getSceneDetail, queryCurrentSceneNotifyUser, queryProtocolUnits, querySceneNotifyChannelTemplates, querySceneNotifyChannels, querySceneNotifyUsers, querySceneSupportedActions, querySceneSupportedTriggers, updateSceneLinkage, type SceneNotifyMethod, type SceneNotifyUser, type SceneProviderInfo } from '../../../api/scene-linkage'
+import { createSceneLinkage, getProduct, getSceneDetail, queryCurrentSceneNotifyUser, queryProtocolUnits, querySceneNotifyChannels, querySceneNotifyUsers, querySceneSupportedActions, querySceneSupportedTriggers, updateSceneLinkage, type SceneNotifyMethod, type SceneNotifyUser, type SceneProviderInfo } from '../../../api/scene-linkage'
 import { canReceiveProfileBackedNotification, mergeNotifyUsersById } from '../../../utils/notifyUser'
 import { applyMultiTriggerForm, buildRequest, defaultForm, formatSceneDuration, MULTI_TRIGGER_PROVIDERS, normalizeResult, toForm, type SceneConditionForm, type SceneEditorMode, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTimeRange, type SceneTriggerKind } from '../utils'
 import DetailedSceneEditor from './detail/DetailedSceneEditor.vue'
 import { createClearedDetailedDraft, mergeDetailedDraft, mergeQuickDraft, resolveInitialEditorMode, resolveLockedTriggerProviders, type SceneRuleRecord } from './editorMode'
-import { requiresSceneNotifyTemplate, toSceneNotifyMethods } from '../../../utils/sceneNotify'
+import { toSceneNotifyMethods } from '../../../utils/sceneNotify'
 import IotAlarmTargetSelect, { type IotAlarmTargetSelectOption, type IotAlarmTargetSelectQuery } from './alarm/IotAlarmTargetSelect.vue'
 import { getSceneCompatibility } from '../sceneCompatibility'
 import { SCENE_TRIGGER_CATEGORIES } from './triggerPickerOptions'
@@ -719,44 +719,13 @@ function clearActionValidationIfResolved() {
   }
   if (hasError('notify') && !form.actions.some(hasIncompleteNotifyAction)) clearValidationField('notify')
 }
-async function changeNotifyMethod(index: number, method: SceneNotifyMethod) { await refreshNotifyTemplate(index, method, true) }
-async function refreshNotifyTemplate(index: number, method: SceneNotifyMethod, changed = false) {
-  let template: any
-  if (requiresSceneNotifyTemplate(method.channelProvider)) {
-    const response: any = await querySceneNotifyChannelTemplates(method.providerId)
-    const detail = response?.result ?? response
-    template = detail?.channels?.find((channel: any) => channel.channel?.id === method.id)?.template
-  }
+/** 通知动作仅配置渠道和收信人，正文由消息模板统一维护。 */
+function changeNotifyMethod(index: number, method: SceneNotifyMethod) {
   form.actions[index] = {
     ...form.actions[index],
-    config: { ...form.actions[index].config, ...(changed ? { notifyChannelIds: [method.id] } : {}) },
-    // 通知动作只缓存展示需要的模板信息，变量名称来自通知模板本身，避免把变量 ID 暴露到快速配置中。
-    options: {
-      ...form.actions[index].options,
-      channelName: method.name,
-      templateContent: getTemplateContent(template),
-      templateVariables: getTemplateVariables(template),
-    },
+    config: { ...form.actions[index].config, notifyChannelIds: [method.id] },
+    options: { ...form.actions[index].options, channelName: method.name },
   }
-}
-
-function getTemplateContent(template: any) {
-  const content = template?.template || {}
-  const getByPath = (source: any, path: string[]) => path.reduce((target, key) => target && typeof target === 'object' && !Array.isArray(target) ? target[key] : undefined, source)
-  const asText = (value: unknown) => typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : ''
-  const firstText = (...values: unknown[]) => values.map(asText).find(Boolean) || ''
-  return firstText(
-    getByPath(content, ['message']), getByPath(content, ['ttsmessage']), getByPath(content, ['body']),
-    getByPath(content, ['text', 'content']), getByPath(content, ['markdown', 'text']),
-    getByPath(content, ['link', 'text']), getByPath(content, ['text']),
-  )
-}
-
-function getTemplateVariables(template: any) {
-  const variables = Array.isArray(template?.variableDefinitions) ? template.variableDefinitions : []
-  return variables
-    .filter((variable: any) => variable?.id)
-    .map((variable: any) => ({ id: String(variable.id), name: variable.name, i18nName: variable.i18nName }))
 }
 async function loadNotifyMethods(force = false) { if ((!force && notifyMethods.value.length) || notifyMethodsLoading.value) return; notifyMethodsLoading.value = true; try { const providers: any[] = normalizeResult(await querySceneNotifyChannels()).data; notifyMethods.value = toSceneNotifyMethods(providers); } finally { notifyMethodsLoading.value = false } }
 const selectedNotifyUserIds = () => [...new Set(form.actions
@@ -1093,10 +1062,10 @@ async function init() {
   if (form.actions.some(action => action.type === 'sceneNotify')) {
     await loadNotifyMethods()
     await loadNotifyUsers()
-    await Promise.all(form.actions.map((action, index) => {
+    form.actions.forEach(action => {
       const method = action.type === 'sceneNotify' ? notifyMethods.value.find(item => item.id === action.config?.notifyChannelIds?.[0]) : undefined
-      return method ? refreshNotifyTemplate(index, method) : undefined
-    }))
+      if (method) action.options = { ...action.options, channelName: method.name }
+    })
   }
   await nextTick()
   quickChanges.markClean()

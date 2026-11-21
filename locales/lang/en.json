@@ -2055,6 +2055,8 @@
 	"IotSceneLinkage.triggerCategory.manual": "Manual execution trigger",
 	"IotSceneLinkage.triggerCategoryDesc.manual": "When the Run button in the list is clicked",
 	"IotSceneLinkage.form.ruleVariable": "Rule context variable",
+	"IotSceneLinkage.form.notifyMethod": "Notification method",
+	"IotSceneLinkage.form.notifyRecipients": "Recipients",
 	"IotSceneLinkage.form.notifyContent": "Notification content",
 	"IotSceneLinkage.optionDetail.manufacturer": "Manufacturer: {value}",
 	"IotSceneLinkage.optionDetail.model": "Model: {value}",

@@ -2056,6 +2056,8 @@
 	"IotSceneLinkage.triggerCategory.manual": "手动执行触发",
 	"IotSceneLinkage.triggerCategoryDesc.manual": "点击列表中的“执行”按钮时",
 	"IotSceneLinkage.form.ruleVariable": "规则上下文参数",
+	"IotSceneLinkage.form.notifyMethod": "通知方式",
+	"IotSceneLinkage.form.notifyRecipients": "接收人",
 	"IotSceneLinkage.form.notifyContent": "通知内容",
 	"IotSceneLinkage.optionDetail.manufacturer": "厂商：{value}",
 	"IotSceneLinkage.optionDetail.model": "型号：{value}",
