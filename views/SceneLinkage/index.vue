@@ -477,7 +477,6 @@ const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
   display: block;
   min-width: 0;
   overflow: hidden;
-  color: var(--ant-color-text);
   font-weight: 600;
 }
 
@@ -485,10 +484,6 @@ const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
   flex: 0 1 auto;
   min-width: 0;
   max-width: calc(100% - 72px);
-}
-
-.scene-list__name:hover {
-  color: var(--ant-color-primary);
 }
 
 .scene-list__column-help {
