@@ -1,4 +1,6 @@
 {
+  "IotSceneLinkage.alarmTriggerText.in": "{propertyName} is one of [{values}]",
+  "IotSceneLinkage.alarmTriggerText.nin": "{propertyName} is not one of [{values}]",
 	"IotSceneLinkage.alarmCondition.selectedTask.unavailable": "The selected alarm rule was deleted or is no longer accessible. Select another rule.",
 	"IotSceneLinkage.alarmCondition.selectedTask.loadFailed": "Unable to read the selected alarm rule. Retry or select another rule.",
   "RuleDocumentHelp": {
@@ -2053,6 +2055,8 @@
 	"IotSceneLinkage.triggerCategory.manual": "Manual execution trigger",
 	"IotSceneLinkage.triggerCategoryDesc.manual": "When the Run button in the list is clicked",
 	"IotSceneLinkage.form.ruleVariable": "Rule context variable",
+	"IotSceneLinkage.form.notifyMethod": "Notification method",
+	"IotSceneLinkage.form.notifyRecipients": "Recipients",
 	"IotSceneLinkage.form.notifyContent": "Notification content",
 	"IotSceneLinkage.optionDetail.manufacturer": "Manufacturer: {value}",
 	"IotSceneLinkage.optionDetail.model": "Model: {value}",

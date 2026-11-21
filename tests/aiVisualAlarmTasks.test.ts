@@ -9,6 +9,7 @@ import { loadVisualAlarmTaskPage, toVisualAlarmTaskOption } from '../views/Scene
 import { createAiVisualAlarmTaskResourceOption } from '../views/SceneLinkage/editor/aiEventResourceOptions'
 import { useAiEventResources } from '../views/SceneLinkage/editor/useAiEventResources'
 import { useAlarmConditionModel, type AlarmConditionOptions } from '../views/SceneLinkage/editor/alarm/useAlarmConditionModel'
+import { iotAlarmSummary } from '../views/SceneLinkage/editor/alarm/utils'
 import { loadIotAlarmRules } from '../views/SceneLinkage/editor/alarm/alarmConditionResourceService'
 
 const task = (id: string): AiVisualAlarmTask => ({
@@ -257,7 +258,7 @@ test('extracted IoT alarm loading keeps preprocessor IDs, product-wide scope and
     if (url === '/message/preprocessor/device-alarm/_query') return Promise.resolve({ result: { data: [{ templateId: 'product', propertyName: 'temperature',
       alarm: { id: 'preprocessor', thingId: '@all', configuration: { processors: [{ provider: 'device-alarm', configuration: { alarmName: 'High temperature', alarmLevel: 3 } }] } },
     }], total: 1 } })
-    if (url === '/device-product/product') return Promise.resolve({ result: { name: 'Product' } })
+    if (url === '/device/product/_query') return Promise.resolve({ result: { data: [{ id: 'product', name: 'Product' }] } })
     throw new Error(`Unexpected request ${url}`)
   })
   try {
@@ -266,6 +267,89 @@ test('extracted IoT alarm loading keeps preprocessor IDs, product-wide scope and
     assert.equal(rules[0].value.options?.productName, 'Product')
     assert.equal(rules[0].value.options?.deviceId, undefined)
     assert.equal(rules[0].value.state, 'normal')
+    const scope = effectScope()
+    try {
+      const options: AlarmConditionOptions = { open: false, sourceKind: 'iot-device', mode: 'trigger', modelValue: {
+        alarmConfigId: 'preprocessor', modes: ['relieve'], state: 'normal', options: { alarmConfigName: 'temperature' },
+      } }
+      const model = scope.run(() => useAlarmConditionModel(() => options, key => key))!
+      await model.resetAndLoad()
+      assert.equal(model.selectedRule.value?.name, 'High temperature')
+      assert.equal(model.getValue()?.options?.alarmConfigName, 'High temperature')
+      assert.deepEqual(model.getValue()?.modes, ['relieve'])
+      assert.equal(model.getValue()?.state, 'normal')
+      assert.equal(options.modelValue.options?.alarmConfigName, 'temperature')
+    } finally { scope.stop() }
+  } finally { setSceneTestRequestHandler() }
+})
+
+test('empty IoT alarms do not issue product or device lookups', async () => {
+  let calls = 0
+  setSceneTestRequestHandler((_method, url) => {
+    calls += 1
+    assert.equal(url, '/message/preprocessor/device-alarm/_query')
+    return Promise.resolve({ result: { data: [], total: 0 } })
+  })
+  try {
+    assert.deepEqual(await loadIotAlarmRules('warning', key => key), [])
+    assert.equal(calls, 1)
+  } finally { setSceneTestRequestHandler() }
+})
+
+test('IoT composite alarms display the alarm branch name, level and comparison, ignoring recovery', () => {
+  const summary = iotAlarmSummary({ propertyName: '电压', alarm: { provider: 'composite', configuration: { processors: [
+    { provider: 'simple', configuration: { matcher: { provider: 'number-compare', configuration: { operator: 'lte', value: 0 } },
+      processors: [{ provider: 'device-alarm-relieve', configuration: { alarmName: '恢复', alarmLevel: 5 } }] } },
+    { provider: 'simple', configuration: { matcher: { provider: 'number-compare', configuration: { operator: 'gt', value: 0 } },
+      processors: [{ provider: 'notify' }, { provider: 'device-alarm', configuration: { alarmName: '电压过高', alarmLevel: 2 } }] } },
+  ] } } })
+  assert.deepEqual(summary, { name: '电压过高', level: 2, condition: '电压 > 0' })
+})
+
+test('IoT matcher readback covers numeric comparisons, default range, string sets and false', () => {
+  const condition = (provider: string, configuration: object) => iotAlarmSummary({ propertyName: '属性', alarm: {
+    configuration: { matcher: { provider, configuration }, processors: [{ provider: 'device-alarm' }] },
+  } }).condition
+  for (const [operator, symbol] of Object.entries({ gt: '>', gte: '≥', lt: '<', lte: '≤', eq: '=', neq: '≠' })) {
+    assert.equal(condition('number-compare', { operator, value: -1.5 }), `属性 ${symbol} -1.5`)
+  }
+  assert.equal(condition('number-range', { min: 0, max: 60 }), '属性在 [0, 60] 之间')
+  assert.equal(condition('number-range', { min: 30, max: 60, not: true }), '属性不在 [30, 60] 之间')
+  assert.equal(condition('value-set', { values: [false] }), '属性 = false')
+  assert.equal(condition('value-set', { values: [0], not: true }), '属性 ≠ 0')
+  assert.equal(condition('value-set', { values: ['on', 'off'] }), '属性属于 ["on"、"off"]')
+  assert.equal(condition('value-set', { values: ['on', 'off'], not: true }), '属性不属于 ["on"、"off"]')
+  assert.equal(condition('unknown', {}), '属性')
+})
+
+test('IoT rule names use two deduplicated ID batch queries with no per-product requests', async () => {
+  const calls: string[] = []
+  setSceneTestRequestHandler((_method, url, body: any) => {
+    calls.push(String(url))
+    if (url === '/message/preprocessor/device-alarm/_query') return Promise.resolve({ result: { data: Array.from({ length: 200 }, (_, i) => ({
+      templateId: `p${i % 2}`, propertyName: `property${i}`, alarm: { id: `alarm${i}`, thingId: i % 2 ? 'd' : '@all', provider: 'composite', configuration: { processors: [
+        { provider: 'simple', configuration: { matcher: { provider: 'value-set', configuration: { values: [false] } },
+          processors: [{ provider: 'device-alarm', configuration: { alarmName: `name${i}`, alarmLevel: 3 } }] } },
+      ] } },
+    })), total: 200 } })
+    if (url === '/device/product/_query') {
+      assert.deepEqual(body.terms.find((term: any) => term.column === 'id'), { column: 'id', termType: 'in', value: ['p0', 'p1'] })
+      assert.equal(body.pageSize, 2)
+      return Promise.resolve({ result: { data: [{ id: 'p0', name: 'Product 0' }] } })
+    }
+    assert.equal(url, '/device-instance/_query')
+    assert.deepEqual(body.terms, [{ column: 'id', termType: 'in', value: ['d'] }])
+    return Promise.resolve({ result: { data: [{ id: 'd', name: 'Device' }] } })
+  })
+  try {
+    const rules = await loadIotAlarmRules('warning', key => key)
+    assert.equal(calls.length, 3)
+    assert.equal(rules.length, 200)
+    assert.equal(rules[0].name, 'name0')
+    assert.equal(rules[0].value.options?.alarmConfigName, 'name0')
+    assert.equal(rules[0].value.options?.productName, 'Product 0')
+    assert.equal(rules[1].value.options?.productName, 'p1')
+    assert.equal(rules[1].value.options?.deviceName, 'Device')
   } finally { setSceneTestRequestHandler() }
 })
 

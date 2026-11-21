@@ -5,9 +5,8 @@
   </SceneNodeCard>
 
   <a-modal :open="editorVisible" :title="$t('IotSceneLinkage.action.sendNotify')" :mask-closable="false" @cancel="cancelEditor" @ok="saveEditor">
-    <div class="notify-action-row__editor">
-      <div class="notify-action-row__main">
-        <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.send') }}</span>
+    <a-form class="notify-action-row__editor" layout="vertical">
+      <a-form-item :label="$t('IotSceneLinkage.form.notifyMethod')" required>
         <a-select
           class="notify-action-row__method"
           popup-class-name="scene-editor__compact-dropdown"
@@ -15,10 +14,12 @@
           :value="methodValue"
           :loading="methodsLoading"
           :placeholder="$t('IotSceneLinkage.placeholder.notifyMethod')"
+          :aria-label="$t('IotSceneLinkage.form.notifyMethod')"
           :options="methodOptions"
           @change="changeMethod"
         />
-        <span class="notify-action-row__label">{{ $t('IotSceneLinkage.action.to') }}</span>
+      </a-form-item>
+      <a-form-item :label="$t('IotSceneLinkage.form.notifyRecipients')" required>
         <a-select
           class="notify-action-row__users"
           popup-class-name="scene-editor__resource-dropdown"
@@ -28,29 +29,15 @@
           :value="recipientIds"
           :loading="usersLoading"
           :placeholder="$t('IotSceneLinkage.placeholder.notifyUsers')"
+          :aria-label="$t('IotSceneLinkage.form.notifyRecipients')"
           :options="userOptions"
           @dropdownVisibleChange="loadUsers"
           @popupScroll="handleUserPopupScroll"
           @change="changeRecipients"
         />
-      </div>
-      <div class="notify-action-row__content">
-      <span class="notify-action-row__content-label">
-        {{ $t('IotSceneLinkage.form.notifyContent') }}
-        <a-tooltip :title="$t('IotSceneLinkage.hint.notifyContentTemplate')">
-          <AIcon class="notify-action-row__help" type="QuestionCircleOutlined" />
-        </a-tooltip>
-        ：
-      </span>
-      <span v-if="templateContent" class="notify-action-row__template">
-        <template v-for="(segment, segmentIndex) in templateSegments" :key="segmentIndex">
-          <span v-if="segment.variable" class="notify-action-row__variable" :title="segment.token">{{ segment.text }}</span>
-          <span v-else>{{ segment.text }}</span>
-        </template>
-      </span>
-      <span v-else class="notify-action-row__template">{{ $t('IotSceneLinkage.action.notifyTemplate') }}</span>
-      </div>
-    </div>
+      </a-form-item>
+      <p class="notify-action-row__hint">{{ $t('IotSceneLinkage.hint.notifyContentTemplate') }}</p>
+    </a-form>
     <SceneConfigPreview class="notify-action-row__preview" :hint="!methodValue || !recipientIds.length ? $t('IotSceneLinkage.message.notifyRequired') : undefined"><SceneNotifySummary :config="action.config" :options="action.options" :users="users" :methods="methods" /></SceneConfigPreview>
   </a-modal>
 </template>
@@ -101,30 +88,6 @@ const userOptions = computed(() => props.users.map(user => ({
   label: formatNotificationRecipient(user),
   value: user.id,
 })))
-const templateContent = computed(() => String(
-  props.action.options?.templateContent
-  || props.action.options?.channelName
-  || '',
-))
-const templateSegments = computed(() => {
-  const variableNames = new Map(
-    (Array.isArray(props.action.options?.templateVariables) ? props.action.options.templateVariables : [])
-      .map((variable: any) => [String(variable?.id || ''), String(variable?.name || variable?.i18nName || '').trim()] as const)
-      .filter(([id, name]) => Boolean(id && name)),
-  )
-  const segments: Array<{ text: string; variable: boolean; token?: string }> = []
-  const pattern = /\$\{[^}]+}/g
-  let offset = 0
-  let matched: RegExpExecArray | null
-  while ((matched = pattern.exec(templateContent.value))) {
-    if (matched.index > offset) segments.push({ text: templateContent.value.slice(offset, matched.index), variable: false })
-    const variableId = matched[0].slice(2, -1).trim()
-    segments.push({ text: variableNames.get(variableId) || t('IotSceneLinkage.notify.unnamedVariable'), token: matched[0], variable: true })
-    offset = matched.index + matched[0].length
-  }
-  if (offset < templateContent.value.length || !segments.length) segments.push({ text: templateContent.value.slice(offset), variable: false })
-  return segments
-})
 const editorVisible = ref(false)
 const originalAction = ref<SceneActionForm>()
 const createdByPicker = ref(false)
@@ -202,28 +165,9 @@ watch(() => props.autoOpen, value => {
 <style scoped>
 .notify-action-row { margin-bottom: var(--space-3, 12px); }
 .notify-action-row--invalid { border-color: var(--ant-color-error); }
-.notify-action-row__summary { display: grid; grid-template-columns: 22px 28px max-content minmax(0, 1fr) auto auto; gap: var(--space-3, 12px); align-items: center; min-width: 0; }
-.notify-action-row__summary-text { min-width: 0; overflow: hidden; color: var(--ant-color-text-secondary); text-overflow: ellipsis; white-space: nowrap; }
-.notify-action-row__editor { display: grid; gap: var(--space-4, 16px); }
-.notify-action-row__main { display: grid; grid-template-columns: max-content 112px max-content minmax(0, 1fr); align-items: center; min-width: 0; gap: var(--space-2, 8px); min-height: 32px; }
-.notify-action-row__index { display: grid; place-items: center; flex: none; width: 22px; height: 22px; color: var(--ant-color-primary); background: #eef4ff; border-radius: 50%; font-size: 12px; font-weight: 600; }
-.notify-action-row__icon { display: grid; place-items: center; width: 28px; height: 28px; color: #d46b08; background: #fff7e8; border-radius: 6px; }
-.notify-action-row__icon :deep(.anticon) { display: block; line-height: 1; }
-.notify-action-row__label, .notify-action-row__content { color: var(--ant-color-text-secondary); font-size: 13px; }
-.notify-action-row__method {
-    width: 100%;
-    min-width: 0;
-}
-.notify-action-row__users {
-    width: 100%;
-    min-width: 0;
-}
-.notify-action-row__content { display: flex; gap: var(--space-2, 8px); align-items: flex-start; width: 100%; max-width: 100%; box-sizing: border-box; padding-top: var(--space-3, 12px); line-height: 24px; }
-.notify-action-row__content-label { display: inline-flex; flex: none; gap: var(--space-1, 4px); align-items: center; }
-.notify-action-row__remove { flex: none; margin-left: auto; }
-.notify-action-row__help { color: var(--ant-color-text-tertiary); cursor: pointer; }
-.notify-action-row__template { flex: 1; min-width: 0; max-width: 100%; color: var(--ant-color-text); font-weight: 500; overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap; }
-.notify-action-row__variable { display: inline-flex; align-items: center; margin: 0 2px; padding: 0 5px; color: var(--ant-color-primary); background: color-mix(in srgb, var(--ant-color-primary) 12%, var(--ant-color-bg-container)); border-radius: 4px; font-weight: 650; }
+.notify-action-row__editor { display: grid; gap: var(--space-4, 16px); min-width: 0; }
+.notify-action-row__editor :deep(.ant-form-item) { margin-bottom: 0; }
+.notify-action-row__method, .notify-action-row__users { width: 100%; min-width: 0; }
+.notify-action-row__hint { margin: 0; color: var(--jet-theme-text-secondary, #595959); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
 .notify-action-row__preview :deep(.scene-summary-parts__field) { display: inline-block; max-width: calc(100% - 4px); box-sizing: border-box; }
-@media (max-width: 480px) { .notify-action-row__main { grid-template-columns: 32px minmax(0, 1fr); }.notify-action-row__content { display: grid; gap: 4px; } }
 </style>

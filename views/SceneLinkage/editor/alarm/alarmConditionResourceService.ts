@@ -1,8 +1,8 @@
-import { getProduct, queryAiAlarmSceneTree, queryDeviceAlarmPreprocesses, queryDevicesPage, type AiSceneTreeOption } from '../../../../api/scene-linkage'
+import { queryProducts, queryAiAlarmSceneTree, queryDeviceAlarmPreprocesses, queryDevicesPage, type AiSceneTreeOption } from '../../../../api/scene-linkage'
 import { normalizeResult, type SceneAlarmTriggerConfig } from '../../utils'
 import type { SummaryTranslate } from '../summaryParts'
 import { loadVisualAlarmTaskPage } from '../aiVisualAlarmTaskService'
-import { formatTriggerText } from './utils'
+import { iotAlarmSummary, type IotAlarmPreprocess } from './utils'
 
 export type AlarmSourceKind = 'iot-device' | 'visual-ai'
 export type AlarmRule = {
@@ -15,17 +15,6 @@ export type AlarmRule = {
   value: SceneAlarmTriggerConfig
 }
 
-type IotAlarmPreprocess = {
-  templateId?: string; propertyName?: string
-  alarm?: {
-    id?: string; templateId?: string; thingId?: string; name?: string; propertyName?: string; property?: string
-    configuration?: {
-      processors?: Array<{ provider?: string; configuration?: { alarmName?: string; alarmLevel?: number } }>
-      matcher?: { provider?: string; configuration?: { not?: boolean; min?: unknown; max?: unknown } }
-    }
-  }
-}
-
 /** 物联告警沿用预处理器 ID 作为 alarmConfigId，避免改变运行时规则契约。 */
 export async function loadIotAlarmRules(state: SceneAlarmTriggerConfig['state'], t: SummaryTranslate): Promise<AlarmRule[]> {
   const result = normalizeResult<IotAlarmPreprocess>(await queryDeviceAlarmPreprocesses({
@@ -35,32 +24,22 @@ export async function loadIotAlarmRules(state: SceneAlarmTriggerConfig['state'],
     sorts: [{ name: 'createTime', order: 'desc' }],
   }))
   const productIds = [...new Set(result.data.map(item => String(item.templateId || item.alarm?.templateId || '')).filter(Boolean))]
-  const products = await Promise.all(productIds.map(async id => {
-    const response = await getProduct(id) as { result?: { name?: string }; name?: string }
-    const product = response?.result ?? response
-    return [id, product?.name || id] as const
-  }))
-  const productNames = Object.fromEntries(products)
   const deviceIds = [...new Set(result.data.map(item => String(item.alarm?.thingId || '')).filter(id => id && id !== '@all'))]
-  const devices = deviceIds.length
-    ? normalizeResult<{ id: string; name?: string }>(await queryDevicesPage({ pageIndex: 0, pageSize: Math.max(deviceIds.length, 20), terms: [{ column: 'id', termType: 'in', value: deviceIds }] })).data
-    : []
+  // 产品与设备名称按去重后的 ID 批量补全，请求数不随告警条数增长。
+  const [products, devices] = await Promise.all([
+    productIds.length ? queryProducts({ pageIndex: 0, pageSize: productIds.length, includes: ['id', 'name'], terms: [{ column: 'id', termType: 'in', value: productIds }] }) : [],
+    deviceIds.length ? queryDevicesPage({ pageIndex: 0, pageSize: deviceIds.length, includes: ['id', 'name'], terms: [{ column: 'id', termType: 'in', value: deviceIds }] }) : [],
+  ]).then(responses => responses.map(response => normalizeResult<{ id: string; name?: string }>(response).data))
+  const productNames = Object.fromEntries(products.map(item => [String(item.id), item.name || item.id]))
   const deviceNames = Object.fromEntries(devices.map(item => [String(item.id), item.name || item.id]))
 
   return result.data.flatMap(item => {
     const alarm = item.alarm || {}
-    const processor = (alarm.configuration?.processors || []).find(entry => entry.provider === 'device-alarm')
     const id = String(alarm.id || '')
-    const name = processor?.configuration?.alarmName || item.propertyName || alarm.name
+    const { name, level, condition: alarmCondition } = iotAlarmSummary(item)
     if (!id || !name) return []
     const productId = String(item.templateId || alarm.templateId || '')
     const deviceId = String(alarm.thingId || '')
-    const propertyName = item.propertyName || alarm.propertyName || alarm.property || ''
-    const matcher = alarm.configuration?.matcher || {}
-    const matcherConfig = matcher.configuration || {}
-    const alarmCondition = matcher.provider === 'number-range'
-      ? formatTriggerText({ propertyName, trigger: matcherConfig.not === false ? 'inside' : 'outside', limit: { lower: matcherConfig.min, upper: matcherConfig.max } })
-      : propertyName
     const productName = productNames[productId] || productId
     const deviceName = deviceId && deviceId !== '@all'
       ? deviceNames[deviceId] || deviceId
@@ -68,7 +47,7 @@ export async function loadIotAlarmRules(state: SceneAlarmTriggerConfig['state'],
     return [{
       id,
       name,
-      level: Number(processor?.configuration?.alarmLevel) || undefined,
+      level,
       lines: [
         t('IotSceneLinkage.alarmCondition.productLine', { value: productName }),
         t('IotSceneLinkage.alarmCondition.deviceLine', { value: deviceName }),
