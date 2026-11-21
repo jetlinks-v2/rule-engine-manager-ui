@@ -32,9 +32,9 @@
                   <AIcon v-if="selectedKeys.includes(channelKey(channel))" type="CheckOutlined" />
                 </button>
                 <button class="ai-event-media-channel-grid__content" type="button" :disabled="channel.modelConfigured !== true" @click="select(channel)">
-                  <span class="ai-event-media-channel-grid__image">
-                    <img v-if="channelImage(channel)" :src="channelImage(channel)" :alt="channel.name || channel.channelId">
-                    <span v-else class="ai-event-media-channel-grid__image-empty"><AIcon :type="channel.mappingType ? 'PictureOutlined' : 'VideoCameraOutlined'" /></span>
+                  <span class="ai-event-media-channel-grid__image" :data-preview-placeholder="channelImage(channel) ? undefined : channel.mappingType">
+                    <img v-if="channelImage(channel)" :src="channelImage(channel)" :alt="channel.name || channel.channelId" @error="handleImageError">
+                    <span v-else-if="!channel.mappingType" class="ai-event-media-channel-grid__image-empty"><AIcon type="VideoCameraOutlined" /></span>
                     <em
                       class="ai-event-media-channel-grid__configuration-status"
                       :data-status="channel.modelConfigured === true ? 'configured' : 'unconfigured'"
@@ -62,7 +62,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import { aiEventSourceKey } from '../aiEventSourceService'
 import type { AiEventMediaChannel } from '../../../../api/scene-linkage'
 
@@ -85,6 +85,7 @@ const emit = defineEmits<{
 const { t: $t } = useI18n()
 const CHANNELS_PER_ROW = 3
 const CHANNEL_ROW_HEIGHT = 172
+const failedImageUrls = reactive(new Set<string>())
 const channelRows = computed(() => {
   const rows: Array<{ id: string; channels: AiEventMediaChannel[] }> = []
   for (let index = 0; index < props.channels.length; index += CHANNELS_PER_ROW) {
@@ -101,7 +102,14 @@ function channelKey(channel: AiEventMediaChannel) {
 }
 
 function channelImage(channel: AiEventMediaChannel) {
-  return channel.image || channel.others?.playerScreenshotCover || ''
+  const image = channel.image || channel.others?.playerScreenshotCover || ''
+  return failedImageUrls.has(image) ? '' : image
+}
+
+// 图片失效后按来源类型展示默认封面，新的图片地址仍可正常加载。
+function handleImageError(event: Event) {
+  const image = (event.currentTarget as HTMLImageElement).getAttribute('src')
+  if (image) failedImageUrls.add(image)
 }
 
 function toggle(channel: AiEventMediaChannel) {
@@ -140,6 +148,9 @@ function loadMore() {
 .ai-event-media-channel-grid__image { position: relative; display: block; aspect-ratio: 1.7; overflow: hidden; background: var(--canvas, #f5f5f5); }
 .ai-event-media-channel-grid__image img { width: 100%; height: 100%; object-fit: cover; }
 .ai-event-media-channel-grid__image-empty { display: grid; width: 100%; height: 100%; place-items: center; color: var(--ink-4, #9ca3af); font-size: 2rem; }
+.ai-event-media-channel-grid__image[data-preview-placeholder] { background-color: color-mix(in srgb, var(--accent, #1677ff) 6%, var(--canvas, #f5f5f5)); background-position: center; background-repeat: no-repeat; background-size: cover; }
+.ai-event-media-channel-grid__image[data-preview-placeholder='event'] { background-image: url('../../../../assets/scene/device-event-cover.webp'); }
+.ai-event-media-channel-grid__image[data-preview-placeholder='property'] { background-image: url('../../../../assets/scene/device-property-cover.webp'); }
 .ai-event-media-channel-grid__configuration-status { position: absolute; top: .5rem; left: .5rem; padding: .1875rem .4375rem; border-radius: 1rem; color: #fff; font-size: .625rem; font-style: normal; }
 .ai-event-media-channel-grid__configuration-status[data-status='configured'] { background: #16b59f; }
 .ai-event-media-channel-grid__configuration-status[data-status='unconfigured'] { background: #9ca3af; }
