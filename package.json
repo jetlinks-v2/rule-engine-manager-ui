@@ -10,7 +10,8 @@
     "test:agent-tools": "node scripts/run-agent-tool-tests.mjs",
     "test:alarm-agent": "node agentCapabilities/alarmAnalysis/visionSceneSearch.test.mjs && node agentCapabilities/alarmAnalysis/alarmData.test.mjs",
     "test:data-capabilities": "node dataCapabilities/dataCapabilities.test.mjs",
-    "test:scene-notify": "node --test tests/sceneNotify.test.mjs"
+    "test:scene-notify": "node --test tests/sceneNotify.test.mjs",
+    "test:metric": "node --test --experimental-test-isolation=none --test-concurrency=1 tests/metric*.test.mjs"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
   "dependencies": {
     "cronstrue": "^2.50.0",
     "marked": "^14.1.1",
-    "vue-echarts": "^7.0.3"
+    "vue-echarts": "^7.0.3",
+    "@babel/parser": "7.29.8"
   }
 }

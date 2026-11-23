@@ -2,11 +2,12 @@
   <MetricWorkspace v-if="scopeKey" :key="scopeKey" :scope-key="scopeKey" :selection="selection" :initial-reference="initialReference" :initial-template="initialTemplate" :editable="auth.hasPermission('rule-engine/Metric:save')" @apply-started="consumeTemplate" @update:selection="changeSelection" @to-business="toBusiness" />
 </template>
 <script setup lang="ts">
+import MetricWorkspace from '../../components/Metric/workspace/MetricWorkspace.vue'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import type { RouteLocationRaw } from 'vue-router'
 import { useAuthStore, useUserStore } from '@jetlinks-web-core/store'
-import { MetricWorkspace, type MetricWorkspaceSelection, type MetricReference } from '@jetlinks-web-core/components'
+import { type MetricWorkspaceSelection, type MetricReference } from '@jetlinks-web-core/components'
 import { useProjectRouter } from '@jetlinks-web-core/hooks'
 import { getRequestTenantDomain } from '@jetlinks-web-core/utils/request-context'
 import { metricReferenceFromQuery, metricBusinessQuery, metricScopeKey, metricWorkspaceQuery, metricWorkspaceSelectionFromQuery } from '@jetlinks-web-core/components/Metric/location'

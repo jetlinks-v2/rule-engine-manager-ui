@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "moduleResolution": "Bundler", "types": ["vite/client"] },
+  "include": ["components/Metric/**/*.ts", "components/Metric/**/*.vue", "views/Metric/**/*.vue", "views/MetricTemplate/**/*.vue", "../../jetlinks-web-core/src/env.d.ts", "../../jetlinks-web-core/src/auto-imports.d.ts"]
+}
