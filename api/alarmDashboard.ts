@@ -21,8 +21,11 @@ export function createAlarmDashboardApi(client: DataCapabilityRequest = request)
     // 只判断当前权限范围内是否存在配置，不受今日窗口和规则启停状态影响。
     queryIotRules: (signal?: AbortSignal) =>
       post('/message/preprocessor/device-alarm/_query', { paging: true, pageIndex: 0, pageSize: 1, terms: [] }, signal),
-    countVisionRules: (signal?: AbortSignal) =>
-      post('/ai/aggregate/task/_count', { terms: [] }, signal),
+    queryVisionRules: (signal?: AbortSignal) =>
+      post('/ai/trigger/tasks/_query', {
+        paging: true, pageIndex: 0, pageSize: 1,
+        terms: [{ column: 'type', termType: 'eq', value: 'visualAlarm' }],
+      }, signal),
     countAlarms: (target: AlarmTarget, data: object, signal?: AbortSignal) =>
       post(`/alarm/record/${target}/_count`, scoped(target, data), signal),
     aggregateAlarms: (target: AlarmTarget, data: object, signal?: AbortSignal) =>

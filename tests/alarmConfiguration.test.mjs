@@ -83,7 +83,7 @@ function fixture(request) {
     request: (url, data, config) => {
       state.calls.push({url,data,config})
       if (request) return request(url, data, config)
-      return Promise.resolve(ok(url.includes('device-alarm/_query') ? {data:[],total:0}
+      return Promise.resolve(ok(url.includes('device-alarm/_query') || url.includes('/ai/trigger/tasks/_query') ? {data:[],total:0}
         : url.endsWith('_count') ? 0 : []))
     },
   }
@@ -134,39 +134,39 @@ function mountHook(t,preview=ref(false),count=1) {
 function widget(t,kind,preview=false) {
   return mount(t,()=>h(api.AlarmWidget,{kind,isEdit:preview,info:{componentProps:{[api.typeOf(kind)]:{refreshSeconds:0}}}}))
 }
-const defaultApi = overrides => ({queryIotRules:async()=>ok({data:[],total:0}),countVisionRules:async()=>ok(0),...overrides})
+const defaultApi = overrides => ({queryIotRules:async()=>ok({data:[],total:0}),queryVisionRules:async()=>ok({data:[],total:0}),...overrides})
 
 test('configuration API uses the real rule sources, a bounded first page, no time or enabled filter, and cancellation',async()=>{
   const calls=[]
   const client=api.createAlarmDashboardApi({post:(...args)=>{calls.push(args);return Promise.resolve(ok(0))}})
   const abort=signal()
-  await client.queryIotRules(abort);await client.countVisionRules(abort)
+  await client.queryIotRules(abort);await client.queryVisionRules(abort)
   assert.equal(calls[0][0],'/message/preprocessor/device-alarm/_query')
   assert.deepEqual(calls[0][1],{paging:true,pageIndex:0,pageSize:1,terms:[]})
-  assert.equal(calls[1][0],'/ai/aggregate/task/_count')
-  assert.deepEqual(calls[1][1],{terms:[]})
+  assert.equal(calls[1][0],'/ai/trigger/tasks/_query')
+  assert.deepEqual(calls[1][1],{paging:true,pageIndex:0,pageSize:1,terms:[{column:'type',termType:'eq',value:'visualAlarm'}]})
   assert(calls.every(call=>call[2].signal===abort&&call[2].hiddenError))
 })
 
-test('successful empty rule sources mean missing; disabled rules and nonzero counts remain configured',async()=>{
+test('successful empty rule sources mean missing; disabled visual and device rules remain configured',async()=>{
   assert.equal(await api.loadRuleConfiguration(defaultApi(),'iot',signal()),'missing')
   assert.equal(await api.loadRuleConfiguration(defaultApi(),'vision',signal()),'missing')
   assert.equal(await api.loadRuleConfiguration(defaultApi({queryIotRules:async()=>ok({data:[{id:'rule',state:'disabled'}],total:1})}),'iot',signal()),'configured')
-  assert.equal(await api.loadRuleConfiguration(defaultApi({countVisionRules:async()=>ok(1)}),'vision',signal()),'configured')
+  assert.equal(await api.loadRuleConfiguration(defaultApi({queryVisionRules:async()=>ok({data:[{id:'visual',enabled:false}],total:1})}),'vision',signal()),'configured')
 })
 
 test('failed, malformed and forbidden responses never mean missing',async()=>{
   for(const payload of [null,{},ok({}),{success:false,result:0},{status:'500',result:0}]) {
-    assert.equal(await api.loadRuleConfiguration(defaultApi({countVisionRules:async()=>payload}),'vision',signal()),'error')
+    assert.equal(await api.loadRuleConfiguration(defaultApi({queryVisionRules:async()=>payload}),'vision',signal()),'error')
     assert.equal(await api.loadRuleConfiguration(defaultApi({queryIotRules:async()=>payload}),'iot',signal()),'error')
   }
   assert.equal(await api.loadRuleConfiguration(defaultApi({queryIotRules:async()=>({status:403,result:[]})}),'iot',signal()),'forbidden')
-  assert.equal(await api.loadRuleConfiguration(defaultApi({countVisionRules:async()=>{throw {response:{status:403}}}}),'vision',signal()),'forbidden')
+  assert.equal(await api.loadRuleConfiguration(defaultApi({queryVisionRules:async()=>{throw {response:{status:403}}}}),'vision',signal()),'forbidden')
 })
 
 test('all seven consumers share only two configuration requests and concurrent retry is deduplicated',async t=>{
   const pending=deferred()
-  const state=fixture(url=>url.includes('device-alarm')?pending.promise:Promise.resolve(ok(0)))
+  const state=fixture(url=>url.includes('device-alarm')?pending.promise:Promise.resolve(ok({data:[],total:0})))
   const {hooks}=mountHook(t,ref(false),7)
   assert.equal(state.calls.length,2)
   assert.equal(hooks[0].state.value.iot,'loading')
@@ -193,7 +193,7 @@ test('preview is isolated and returning to runtime starts fresh detection',async
 
 test('switching project aborts old requests and ignores their late no-rule results',async t=>{
   const old=deferred()
-  const state=fixture(url=>state.route.params.projectId==='p'?old.promise:Promise.resolve(ok(url.includes('device-alarm')?{data:[{id:'new'}],total:1}:1)))
+  const state=fixture(()=>state.route.params.projectId==='p'?old.promise:Promise.resolve(ok({data:[{id:'new'}],total:1})))
   const {hooks}=mountHook(t)
   const previous=state.calls.slice()
   state.route.params.projectId='other';await flush()
@@ -247,7 +247,7 @@ test('unconfigured statistics replace generic no-record empty state and configur
 })
 
 test('metrics preserve raw event and historical alarm counts without configuration hints or queries',async t=>{
-  const state=fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:url.endsWith('_count')?(url.includes('/ai/aggregate/')?0:24):[])))
+  const state=fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:url.endsWith('_count')?24:[])))
   const events=widget(t,'TodayEvents'),alarms=widget(t,'IotAlarms')
   await flush()
   assert(textOf(events.container).includes('24'))
@@ -255,7 +255,7 @@ test('metrics preserve raw event and historical alarm counts without configurati
   assert(textOf(alarms.container).includes(messages['alarmDashboard.total']))
   assert(textOf(alarms.container).includes('24'))
   assert(!textOf(alarms.container).includes(messages['alarmDashboard.configuration.missing.iot']))
-  assert(!state.calls.some(call=>call.url.includes('device-alarm')||call.url.includes('/ai/aggregate/')))
+  assert(!state.calls.some(call=>call.url.includes('device-alarm')||call.url.includes('/ai/trigger/tasks/')))
 })
 
 test('all three metric cards display successful zero values without empty guides',async t=>{
@@ -272,7 +272,7 @@ test('all three metric cards display successful zero values without empty guides
 })
 
 test('zero-filled trend and handling series display the centered guide instead of empty charts',async t=>{
-  fixture((url,data)=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}
+  fixture((url,data)=>Promise.resolve(ok(url.includes('device-alarm')||url.includes('/ai/trigger/tasks/')?{data:[],total:0}
     :data.groupByTime?[{time:data.groupByTime.from,count:0}]
       :url.includes('history/aggregation')?[{time:data.from,total:0}]
         :url.endsWith('_count')?0:[])))
@@ -287,7 +287,7 @@ test('zero-filled trend and handling series display the centered guide instead o
 })
 
 test('trend with two missing sources shows short source-specific actions and preserves their navigation',async t=>{
-  const state=fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:url.includes('/ai/aggregate/')?0:[])))
+  const state=fixture(url=>Promise.resolve(ok(url.includes('device-alarm')||url.includes('/ai/trigger/tasks/')?{data:[],total:0}:[])))
   const {container}=widget(t,'AlarmTrend')
   await flush()
   const iot=find(container,el=>el.type==='button'&&textOf(el)===messages['alarmDashboard.empty.configure.iot'])[0]
@@ -301,7 +301,7 @@ for(const configured of ['iot','vision']) {
   test(`trend displays a chart when only ${configured} is configured and has data`,async t=>{
     fixture((url,data)=> {
       if(url.includes('device-alarm')) return Promise.resolve(ok({data:configured==='iot'?[{id:'rule'}]:[],total:configured==='iot'?1:0}))
-      if(url.includes('/ai/aggregate/')) return Promise.resolve(ok(configured==='vision'?1:0))
+      if(url.includes('/ai/trigger/tasks/')) return Promise.resolve(ok({data:configured==='vision'?[{id:'rule'}]:[],total:configured==='vision'?1:0}))
       if(url.includes('history/aggregation')) return Promise.resolve(ok([]))
       const target=data.filter.terms.find(term=>term.column==='targetType')?.value
       const hasData=target===(configured==='iot'?'device':'aiTaskMediaTarget')
@@ -347,7 +347,7 @@ test('configuration guidance never hides an independently failed trend source',a
 })
 
 test('configured but empty alarms show the illustrated no-record guide without a configuration action',async t=>{
-  fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[{id:'disabled',state:'disabled'}],total:1}:url.includes('/ai/aggregate/')?1:url.endsWith('_count')?0:[])))
+  fixture(url=>Promise.resolve(ok(url.includes('device-alarm')?{data:[{id:'disabled',state:'disabled'}],total:1}:url.includes('/ai/trigger/tasks/')?{data:[{id:'visual',enabled:false}],total:1}:url.endsWith('_count')?0:[])))
   const {container}=widget(t,'VisionStatistics')
   await flush()
   assert.equal(find(container,el=>el.props['data-chart']).length,0)
@@ -376,7 +376,7 @@ test('missing rules without an accessible menu show the prompt without a dead co
 })
 
 test('failed configuration is silent and never presents a missing-rule action',async t=>{
-  fixture(url=>url.includes('/ai/aggregate/')?Promise.reject(new Error('temporary')):Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:url.endsWith('_count')?0:[])))
+  fixture(url=>url.includes('/ai/trigger/tasks/')?Promise.reject(new Error('temporary')):Promise.resolve(ok(url.includes('device-alarm')?{data:[],total:0}:url.endsWith('_count')?0:[])))
   const {container}=widget(t,'VisionStatistics')
   await flush()
   assert(!textOf(container).includes(messages['alarmDashboard.configuration.error.vision']))
@@ -435,7 +435,7 @@ test('shared configuration scopes query only enabled sources and recheck when vi
   assert(state.calls[0].url.includes('device-alarm'))
   enabled.value=true;await flush()
   assert.equal(state.calls.length,3)
-  assert.equal(state.calls.filter(call=>call.url.includes('/ai/aggregate/')).length,1)
+  assert.equal(state.calls.filter(call=>call.url.includes('/ai/trigger/tasks/')).length,1)
   assert(hooks.every(hook=>hook.state.value===hooks[0].state.value))
 })
 

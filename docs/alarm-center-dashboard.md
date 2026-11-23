@@ -80,7 +80,7 @@
 
 - 方案档案：保留监控感知页和当前画布，新增 `IotHandlingStatistics / alarmCenterIotHandlingStatistics` 与 `VisionHandlingStatistics / alarmCenterVisionHandlingStatistics` 两个独立组件；保留旧 `HandlingStatistics` 引用兼容。物联、视觉各自使用今天 / 昨天 / 近3天 / 近7天 / 近30天筛选；每卡展示当前范围的未处理数、总量、已处理数、处理率及状态占比。整卡打开对应待处理记录，沿用“分页列表 → 重新查询详情 → 必填处理说明 → 确认处理”。底部口径 / 更新时间小字与组件内部刷新按钮均不显示。只读监控区不引入主搜索、侧栏或额外指标；窄屏两卡顺排。
 - 数据口径：沿用 `api/alarmDashboard.ts` 的分类聚合，显式 targetType；按同一 alarmTime 窗口与 state 分组计数，warning 为未处理、normal 为已处理，总量为两种状态之和；处理率使用同一结果计算，成功返回零总量时处理率显示 0%、隐藏状态占比条。每类查询独立失败，不把错误转为零。
-- 处理复用：认证模块将既有 `AlarmQuickEntry` 作为 `QuickAlarmEntry` 公开注册；新增可选 trigger slot、查询 terms、scopeKey，既有概览默认行为保持。新仪表盘通过 `moduleRegistry` 消费公开组件，不直接导入认证模块私有路径。列表带当前统计窗口；详情按类型与记录 ID 重新读取。物联仍提交 `/alarm/record/_handle`，视觉仍提交 `/ai/aggregate/task/alarm/_handle`，说明必填、trim 后不超过 200 字。提交失败保留输入；成功重新查询统计与后续打开的列表。范围 / 账号 / 项目切换及卸载使旧回调失效。
+- 处理复用：认证模块将既有 `AlarmQuickEntry` 作为 `QuickAlarmEntry` 公开注册；新增可选 trigger slot、查询 terms、scopeKey，既有概览默认行为保持。新仪表盘通过 `moduleRegistry` 消费公开组件，不直接导入认证模块私有路径。列表带当前统计窗口；详情按类型与记录 ID 重新读取。物联提交 `/alarm/record/_handle`，视觉提交 `/ai/trigger/alarms/_handle`，说明必填、trim 后不超过 200 字。提交失败保留输入；成功重新查询统计与后续打开的列表。范围 / 账号 / 项目切换及卸载使旧回调失效。
 - 接线与布局：补齐目录四件套、缩略图、双语文案、配置和扫描白名单；新卡默认位于趋势后、排行前。缓存先迁移再交给公共画布：旧完整默认布局升级为九卡默认布局；手动七卡追加两张新卡，手动八卡优先拆分原处理区，保留其他卡坐标；保留旧七卡长 key 的识别，继续使用原短 key。
 - 实现入口：`services/handling.ts` 使用现有分类聚合并独立处理来源失败；`AlarmHandlingPanel.vue / AlarmHandlingCard.vue` 按来源展示处理指标，`useAlarmHandlingEntry.ts` 监听公开注册资源。扩展 `useAlarmWidget` 时保留轮询中的已挂载处理面板；只有显式筛选或身份改变才使 scope 失效。默认每张处理卡高度为桌面 6 行、中宽 / 窄屏 9 行；桌面 / 中宽各占 12 列、窄屏各占 24 列。每张只查询本分类，保留旧组合组件的双来源查询兼容。
 - 定向验证：`node --test tests/alarmHandling.test.mjs tests/alarmDashboard.test.mjs tests/alarmDashboardStorage.test.mjs tests/alarmConfiguration.test.mjs tests/alarmRanking.test.mjs` 59/59 通过。本次 11 项新增检查覆盖同窗状态聚合、分类隔离、空值 / 非法状态 / 单类失败 / 取消、默认及手动缓存升级、公开列表的时间条件、scope 迟到响应、普通轮询保留详情、KeepAlive 关闭与返回。既有概览 `node scripts/verify-quick-alarms.cjs` 两组处理契约及生命周期检查通过。
@@ -203,7 +203,7 @@
 - 展示范围由 `AlarmWidget`、`AlarmConfigurationGuide` 和 `useAlarmWidget` 共同承载。顶部今日事件、今日物联告警、今日视觉告警只展示真实统计值与图标，成功零值显示 `0`。快速开始保留原有授权入口，移除“未配置”标记。顶部指标与快速开始不订阅规则配置检测。
 - 下方趋势、处理情况、排行在数据查询成功且无记录时，复用 `CloudEmpty` 展示居中插图、标题、说明与授权配置入口。空态插图为 40px，按钮使用 24px 紧凑尺寸。单来源按钮为“前往配置”，双来源按钮为“物联配置 / 视觉配置”。短卡片隐藏插图，内容超出时允许卡内滚动。
 - 趋势按当前时间范围的数据决定空态，任一来源有记录即展示柱状图。有数据时不显示其他来源的未配置提示或配置按钮。已有事件和历史告警继续展示。处理图补齐的全零时间桶仍属于无记录。
-- 配置检测以物联 `/message/preprocessor/device-alarm/_query` 和视觉 `/ai/aggregate/task/_count` 为准，沿用账号 / 项目请求身份，不附加时间或启用状态筛选，禁用规则仍属于已配置。只有成功确认无规则时才显示配置说明，配置失败或 403 使用中性空态，无可访问菜单时不提供配置按钮。数据查询失败或部分失败保留原错误展示。
+- 配置检测以物联 `/message/preprocessor/device-alarm/_query` 和视觉 `/ai/trigger/tasks/_query` 为准，视觉查询限定 `type=visualAlarm`，两个来源均只查询第一页的一条配置。沿用账号 / 项目请求身份，不附加时间或启用状态筛选，禁用规则仍属于已配置。只有成功确认无规则时才显示配置说明，配置失败或 403 使用中性空态，无可访问菜单时不提供配置按钮。数据查询失败或部分失败保留原错误展示。
 - `services/configuration.ts` 校验配置响应并映射来源。`hooks/useAlarmRuleConfiguration.ts` 按仍挂载消费者共享同作用域状态，每 60 秒重查，最后一个消费者离开即取消请求并清理。预览使用样例且无真实请求或跳转，账号 / 项目切换及返回页面时重新核对。
 - 相关四组测试共 90/90 通过，覆盖零值、全零时间桶、两种单来源有数据时的图表展示、配置权限、导航和失败隔离。修改组件的脚本、模板、样式编译及双语 JSON 检查通过。隔离展示和静态预览已核对 40px 插图及紧凑按钮，真实项目入口需验证码登录，尚未完成该项目的真实接口联调。未执行完整类型检查或构建。验证命令为 `TZ=Asia/Shanghai node --test tests/alarmConfiguration.test.mjs tests/alarmDashboard.test.mjs tests/alarmHandling.test.mjs tests/alarmRanking.test.mjs`。
 - 交付需更新 runtime-ui 前端静态资源。
