@@ -8,6 +8,7 @@
     :users="users"
     :methods-loading="methodsLoading"
     :users-loading="usersLoading"
+    :users-has-more="(usersPageIndex + 1) * 20 < usersTotal"
     @change="updateAction"
     @method-change="changeMethod"
     @load-users="loadUsers"
@@ -21,10 +22,11 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
-import { queryCurrentSceneNotifyUser, querySceneNotifyChannels, querySceneNotifyUsers, type SceneNotifyMethod, type SceneNotifyUser } from '@rule-engine-manager-ui/api/scene-linkage'
+import { queryCurrentSceneNotifyUser, querySceneNotifyMethods, querySceneNotifyUsers, type SceneNotifyMethod, type SceneNotifyUser } from '@rule-engine-manager-ui/api/scene-linkage'
 import { normalizeResult, type SceneActionForm } from '@rule-engine-manager-ui/views/SceneLinkage/utils'
-import { canReceiveProfileBackedNotification, mergeNotifyUsersById } from '@rule-engine-manager-ui/utils/notifyUser'
+import { canReceiveProfileBackedNotification, getNotifyUserOrganization, mergeNotifyUsersById } from '@rule-engine-manager-ui/utils/notifyUser'
 import NotifyActionRow from '@rule-engine-manager-ui/views/SceneLinkage/editor/components/NotifyActionRow.vue'
+import { isSceneNotifyConfigured, requiresSceneNotifyRecipients } from '@rule-engine-manager-ui/utils/sceneNotify'
 
 const props = defineProps({
   value: {
@@ -54,27 +56,18 @@ async function loadMethods() {
   if (methodsLoading.value) return
   methodsLoading.value = true
   try {
-    const providers = normalizeResult<any>(await querySceneNotifyChannels()).data
-    methods.value = providers
-      .filter(provider => provider.provider === 'scene')
-      .flatMap(provider => (provider.channels || []).map((channel: any) => ({
-        id: channel.id,
-        providerId: provider.id || provider.provider,
-        name: channel.name || channel.channelProvider,
-        channelProvider: channel.channelProvider,
-      })))
-      .filter(method => method.id && method.providerId && (method.channelProvider?.startsWith('notifier-') || ['inside-mail', 'inbox'].includes(method.channelProvider)))
+    methods.value = await querySceneNotifyMethods()
   } finally {
     methodsLoading.value = false
   }
 }
 
 const toUsers = (value: any[]): SceneNotifyUser[] => value
-  .map(user => ({ id: String(user.id || ''), name: user.name, username: user.username, email: user.email, telephone: user.telephone }))
+  .map(user => ({ id: String(user.id || ''), name: user.name, username: user.username, email: user.email, telephone: user.telephone, orgName: getNotifyUserOrganization(user) }))
   .filter(user => Boolean(user.id))
 
 async function loadUsers(reset = true) {
-  if (usersLoading.value || (!reset && users.value.length >= usersTotal.value)) return
+  if (usersLoading.value || (!reset && (usersPageIndex.value + 1) * 20 >= usersTotal.value)) return
   const pageIndex = reset ? 0 : usersPageIndex.value + 1
   const selectedUserIds = (action.config?.userIds || []).map(String).filter(Boolean)
   usersLoading.value = true
@@ -102,12 +95,12 @@ function updateAction(value: SceneActionForm) {
 }
 
 function changeMethod(method: SceneNotifyMethod) {
-  action.config = { ...action.config, notifyChannelIds: [method.id] }
-  action.options = { ...action.options, channelName: method.name }
+  action.config = { ...action.config, notifyChannelIds: [method.id], ...(!requiresSceneNotifyRecipients(method) ? { userIds: [] } : {}) }
+  action.options = { ...action.options, channelName: method.name, fixedRecipient: !requiresSceneNotifyRecipients(method) }
 }
 
 function save(value: SceneActionForm) {
-  if (!value.config?.notifyChannelIds?.length || !value.config?.userIds?.length) {
+  if (!isSceneNotifyConfigured(value.config, methods.value)) {
     onlyMessage(t('IotSceneLinkage.message.notifyRequired'), 'warning')
     return
   }
