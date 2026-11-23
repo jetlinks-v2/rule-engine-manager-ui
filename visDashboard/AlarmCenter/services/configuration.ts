@@ -20,8 +20,8 @@ function isForbidden(value: unknown): boolean {
     || (isRecord(value.response) && (String(value.response.status) === '403' || isForbidden(value.response.data)))
 }
 
-/** 物联规则是设备属性预处理配置，不能用告警记录数或通用告警配置数代替。 */
-function hasIotRules(payload: unknown): boolean {
+/** 两种规则都按配置分页查询，不能用已产生的告警记录数代替。 */
+function hasRules(payload: unknown): boolean {
   const result = resultOf(payload)
   const rows = Array.isArray(result) ? result : isRecord(result) ? result.data ?? result.records : undefined
   if (!Array.isArray(rows) || rows.some(row => !isRecord(row))) throw invalidResponse()
@@ -34,11 +34,11 @@ export async function loadRuleConfiguration(
   api: AlarmDashboardApi, source: AlarmRuleSource, signal: AbortSignal,
 ): Promise<AlarmConfigurationStatus> {
   try {
-    const response = await (source === 'iot' ? api.queryIotRules(signal) : api.countVisionRules(signal))
+    const response = await (source === 'iot' ? api.queryIotRules(signal) : api.queryVisionRules(signal))
     signal.throwIfAborted()
     if (isForbidden(response)) return 'forbidden'
     if (isRecord(response) && (response.success === false || Number(response.status) >= 400)) throw invalidResponse()
-    const exists = source === 'iot' ? hasIotRules(response) : countOf(response) > 0
+    const exists = hasRules(response)
     return exists ? 'configured' : 'missing'
   } catch (error) {
     signal.throwIfAborted()
