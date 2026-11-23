@@ -72,7 +72,8 @@
 						:users="notifyUsers"
 						:methods-loading="notifyMethodsLoading"
 						:users-loading="notifyUsersLoading"
-						:invalid="hasError('notify') && (!action.config?.notifyChannelIds?.length || !action.config?.userIds?.length)"
+						:users-has-more="(notifyUsersPageIndex + 1) * 20 < notifyUsersTotal"
+						:invalid="hasError('notify') && hasIncompleteNotifyAction(action)"
 						@change="updateAction(index, $event)"
 						@method-change="changeNotifyMethod(index, $event)"
 						@load-users="loadNotifyUsers"
@@ -276,12 +277,12 @@ import { useI18n } from 'vue-i18n'
 import { Modal } from 'ant-design-vue'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
 import { isPrivateDeployment } from '@jetlinks-web-core/utils/deployment'
-import { createSceneLinkage, getProduct, getSceneDetail, queryCurrentSceneNotifyUser, queryProtocolUnits, querySceneNotifyChannels, querySceneNotifyUsers, querySceneSupportedActions, querySceneSupportedTriggers, updateSceneLinkage, type SceneNotifyMethod, type SceneNotifyUser, type SceneProviderInfo } from '../../../api/scene-linkage'
-import { canReceiveProfileBackedNotification, mergeNotifyUsersById } from '../../../utils/notifyUser'
+import { createSceneLinkage, getProduct, getSceneDetail, queryCurrentSceneNotifyUser, queryProtocolUnits, querySceneNotifyMethods, querySceneNotifyUsers, querySceneSupportedActions, querySceneSupportedTriggers, updateSceneLinkage, type SceneNotifyMethod, type SceneNotifyUser, type SceneProviderInfo } from '../../../api/scene-linkage'
+import { canReceiveProfileBackedNotification, getNotifyUserOrganization, mergeNotifyUsersById } from '../../../utils/notifyUser'
 import { applyMultiTriggerForm, buildRequest, defaultForm, formatSceneDuration, MULTI_TRIGGER_PROVIDERS, normalizeResult, toForm, type SceneConditionForm, type SceneEditorMode, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTimeRange, type SceneTriggerKind } from '../utils'
 import DetailedSceneEditor from './detail/DetailedSceneEditor.vue'
 import { createClearedDetailedDraft, mergeDetailedDraft, mergeQuickDraft, resolveInitialEditorMode, resolveLockedTriggerProviders, type SceneRuleRecord } from './editorMode'
-import { toSceneNotifyMethods } from '../../../utils/sceneNotify'
+import { isSceneNotifyConfigured, requiresSceneNotifyRecipients } from '../../../utils/sceneNotify'
 import IotAlarmTargetSelect, { type IotAlarmTargetSelectOption, type IotAlarmTargetSelectQuery } from './alarm/IotAlarmTargetSelect.vue'
 import { getSceneCompatibility } from '../sceneCompatibility'
 import { SCENE_TRIGGER_CATEGORIES } from './triggerPickerOptions'
@@ -709,7 +710,7 @@ function hasIncompleteDeviceAction(action: any) {
     || !operationId
 }
 function hasMissingWritePropertyValue(action: any) { return action.type === 'device' && action.config?.message?.messageType === 'WRITE_PROPERTY' && isEmptyValue(Object.values(action.config.message.properties || {})[0]) }
-function hasIncompleteNotifyAction(action: any) { return action.type === 'sceneNotify' && (!action.config?.notifyChannelIds?.length || !action.config?.userIds?.length) }
+function hasIncompleteNotifyAction(action: any) { return action.type === 'sceneNotify' && !isSceneNotifyConfigured(action.config, notifyMethods.value) }
 function clearActionValidationIfResolved() {
   // 用户补齐当前错误对应的动作配置后，立即撤销红框和提示，避免旧校验状态滞留到下一次保存。
   if (hasError('action')) {
@@ -723,25 +724,25 @@ function clearActionValidationIfResolved() {
 function changeNotifyMethod(index: number, method: SceneNotifyMethod) {
   form.actions[index] = {
     ...form.actions[index],
-    config: { ...form.actions[index].config, notifyChannelIds: [method.id] },
-    options: { ...form.actions[index].options, channelName: method.name },
+    config: { ...form.actions[index].config, notifyChannelIds: [method.id], ...(!requiresSceneNotifyRecipients(method) ? { userIds: [] } : {}) },
+    options: { ...form.actions[index].options, channelName: method.name, fixedRecipient: !requiresSceneNotifyRecipients(method) },
   }
 }
-async function loadNotifyMethods(force = false) { if ((!force && notifyMethods.value.length) || notifyMethodsLoading.value) return; notifyMethodsLoading.value = true; try { const providers: any[] = normalizeResult(await querySceneNotifyChannels()).data; notifyMethods.value = toSceneNotifyMethods(providers); } finally { notifyMethodsLoading.value = false } }
+async function loadNotifyMethods(force = false) { if ((!force && notifyMethods.value.length) || notifyMethodsLoading.value) return; notifyMethodsLoading.value = true; try { notifyMethods.value = await querySceneNotifyMethods(); } finally { notifyMethodsLoading.value = false } }
 const selectedNotifyUserIds = () => [...new Set(form.actions
   .filter(action => action.type === 'sceneNotify')
   .flatMap(action => action.config?.userIds || [])
   .map(String)
   .filter(Boolean))]
 const toSceneNotifyUsers = (users: any[]): SceneNotifyUser[] => users
-  .map<SceneNotifyUser>(user => ({ id: String(user.id || ''), name: user.name, username: user.username, email: user.email, telephone: user.telephone }))
+  .map<SceneNotifyUser>(user => ({ id: String(user.id || ''), name: user.name, username: user.username, email: user.email, telephone: user.telephone, orgName: getNotifyUserOrganization(user) }))
   .filter(user => Boolean(user.id))
 const toSceneNotifyUser = (user: any): SceneNotifyUser | undefined =>
   toSceneNotifyUsers([user])[0]
 const currentUserHasAvailableNotifyChannel = (user: SceneNotifyUser) =>
   notifyMethods.value.some(method => canReceiveProfileBackedNotification(user, method.channelProvider))
 async function loadNotifyUsers(reset = true) {
-  if (notifyUsersLoading.value || (!reset && notifyUsers.value.length >= notifyUsersTotal.value)) return
+  if (notifyUsersLoading.value || (!reset && (notifyUsersPageIndex.value + 1) * 20 >= notifyUsersTotal.value)) return
   const pageIndex = reset ? 0 : notifyUsersPageIndex.value + 1
   const userIds = selectedNotifyUserIds()
   notifyUsersLoading.value = true

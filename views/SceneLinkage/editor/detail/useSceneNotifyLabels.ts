@@ -1,5 +1,5 @@
 import { computed, inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue'
-import { querySceneNotifyChannels, querySceneNotifyUsers, type SceneNotifyMethod, type SceneNotifyUser } from '../../../../api/scene-linkage'
+import { querySceneNotifyMethods, querySceneNotifyUsers, type SceneNotifyMethod, type SceneNotifyUser } from '../../../../api/scene-linkage'
 import { normalizeResult } from '../../utils'
 import type { SceneRuleRecord } from '../editorMode'
 
@@ -27,17 +27,12 @@ export function provideSceneNotifyLabels(rule: Ref<SceneRuleRecord>) {
     if (!ids.length && !channels.length) { users.value = []; methods.value = []; return }
     const [userResult, methodResult] = await Promise.all([
       ids.length ? querySceneNotifyUsers({ paging: false, userIds: ids }).catch(() => undefined) : undefined,
-      channels.length ? querySceneNotifyChannels().catch(() => undefined) : undefined,
+      channels.length ? querySceneNotifyMethods().catch(() => undefined) : undefined,
     ])
     // 切换、删除或改选后，旧请求不能把过时名称回填到当前摘要。
     if (current !== requestId) return
     users.value = userResult ? normalizeResult<SceneNotifyUser>(userResult).data : []
-    methods.value = methodResult ? normalizeResult<SceneRuleRecord>(methodResult).data
-      .filter(provider => provider.provider === 'scene')
-      .flatMap(provider => (provider.channels || []).map((channel: SceneRuleRecord) => ({
-        id: String(channel.id), name: channel.name || channel.channelProvider,
-        providerId: provider.id || provider.provider, channelProvider: channel.channelProvider,
-      }))) : []
+    methods.value = methodResult || []
   }, { immediate: true })
 }
 

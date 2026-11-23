@@ -36,7 +36,8 @@ function actionValue(value: unknown, t: SummaryTranslate): string {
 }
 
 /** 通知卡片和两种预览使用相同的名称解析及字段标注，逐个保留收信人。 */
-export function notificationSummaryParts(notification: { method: string; recipients: string[] }, t: SummaryTranslate): SummaryPart[] {
+export function notificationSummaryParts(notification: { method: string; recipients: string[]; fixedRecipient?: boolean }, t: SummaryTranslate): SummaryPart[] {
+  if (notification.fixedRecipient) return localizedSummaryParts(t, 'IotSceneLinkage.detail.previewFixedNotify', { channel: notification.method })
   const marker = '__scene_recipients__'
   const parts = localizedSummaryParts(t, 'IotSceneLinkage.detail.previewNotify', { channel: notification.method, recipients: marker })
   return parts.flatMap(part => part.field && part.text === marker

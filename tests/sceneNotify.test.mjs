@@ -8,7 +8,7 @@ const { outputFiles } = await build({
     resolveDir: fileURLToPath(new URL('../', import.meta.url)),
     contents: `
       export * from './utils/sceneNotify';
-      export { canReceiveProfileBackedNotification } from './utils/notifyUser';
+      export { canReceiveProfileBackedNotification, getNotifyUserOrganization } from './utils/notifyUser';
     `,
   },
   bundle: true,
@@ -19,8 +19,11 @@ const { outputFiles } = await build({
 
 const {
   canReceiveProfileBackedNotification,
+  getNotifyUserOrganization,
   requiresSceneNotifyTemplate,
   toSceneNotifyMethods,
+  isSceneNotifyConfigured,
+  requiresSceneNotifyRecipients,
 } = await import(
   'data:text/javascript;base64,' + Buffer.from(outputFiles[0].text).toString('base64')
 )
@@ -64,4 +67,80 @@ test('a current user with an id can receive inside mail without email or telepho
   assert.equal(canReceiveProfileBackedNotification(user, 'notifier-email'), false)
   assert.equal(canReceiveProfileBackedNotification(user, 'notifier-sms'), false)
   assert.equal(canReceiveProfileBackedNotification({ id: '' }, 'inside-mail'), false)
+})
+
+test('通知对象沿用视觉告警的组织说明，缺少组织信息时不补造路径', () => {
+  assert.equal(getNotifyUserOrganization({ orgName: ' 一级 / 二级 ' }), '一级 / 二级')
+  assert.equal(getNotifyUserOrganization({ orgList: [{ name: '一级' }], parentOrgList: [{ name: '二级' }], childrenOrgList: [{ name: '三级' }] }), '一级 / 二级 / 三级')
+  assert.equal(getNotifyUserOrganization({}), '')
+})
+
+test('仅 Webhook 免选人员，钉钉和站内信保持现有后端的收信人规则', () => {
+  const webhook = { id: 'hook', name: 'Webhook', channelProvider: 'notifier-webhook', providerId: 'scene' }
+  const robot = { id: 'robot', name: 'Robot', channelProvider: 'notifier-dingTalk', providerId: 'scene', fixedRecipient: true }
+  const work = { ...robot, id: 'work', fixedRecipient: false }
+  const inbox = { ...webhook, id: 'inbox', channelProvider: 'inside-mail' }
+  const methods = [webhook, robot, work, inbox]
+  for (const method of [webhook]) {
+    assert.equal(requiresSceneNotifyRecipients(method), false)
+    assert.equal(isSceneNotifyConfigured({ notifyChannelIds: [method.id], userIds: [] }, methods), true)
+  }
+  for (const id of ['robot', 'work', 'inbox', 'unknown']) {
+    assert.equal(isSceneNotifyConfigured({ notifyChannelIds: [id], userIds: [] }, methods), false)
+    assert.equal(isSceneNotifyConfigured({ notifyChannelIds: [id], userIds: ['u1'] }, methods), true)
+  }
+  assert.equal(isSceneNotifyConfigured({}, methods), false)
+  assert.equal(isSceneNotifyConfigured(null, methods), false)
+  assert.equal(isSceneNotifyConfigured({ notifyChannelIds: ['hook', 'inbox'], userIds: [] }, methods), false)
+})
+
+test('渠道目录仅将 Webhook 标记为固定目标，不改写服务器渠道标识', () => {
+  const methods = toSceneNotifyMethods([{ provider: 'scene', id: 'scene', channels: [
+    { id: 'hook', name: 'Webhook', channelProvider: 'notifier-webhook' },
+    { id: 'robot', name: 'Robot', channelProvider: 'notifier-dingTalk' },
+  ] }])
+  assert.equal(methods[0].fixedRecipient, true)
+  assert.equal(methods[1].fixedRecipient, undefined)
+})
+
+const api = await build({
+  stdin: { resolveDir: fileURLToPath(new URL('../', import.meta.url)), contents: "export { querySceneNotifyMethods } from './api/scene-linkage'" },
+  bundle: true, write: false, platform: 'node', format: 'esm',
+  plugins: [{ name: 'notification-request-boundary', setup(builder) {
+    builder.onResolve({ filter: /^@jetlinks-web\/core$/ }, () => ({ path: 'request', namespace: 'fixture' }))
+    builder.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: 'export const request={get:(...args)=>globalThis.__sceneNotifyRequest(...args)}' }))
+  } }],
+})
+const { querySceneNotifyMethods } = await import('data:text/javascript;base64,' + Buffer.from(api.outputFiles[0].text).toString('base64'))
+
+test('真实渠道加载只查询可访问目录，不增加通知凭据的查询权限依赖', async t => {
+  const calls = []
+  const providers = [{ provider: 'scene', id: 'scene', channels: [
+    { id: 'hook', channelProvider: 'notifier-webhook' },
+    ...['robot-a', 'robot-b'].map(id => ({ id, channelProvider: 'notifier-dingTalk', channelConfiguration: { notifierId: 'robot/config' } })),
+    { id: 'work', channelProvider: 'notifier-dingTalk', channelConfiguration: { notifierId: 'work' } },
+  ] }]
+  globalThis.__sceneNotifyRequest = async url => {
+    calls.push(url)
+    return { result: url === '/notify/channel/all' ? providers
+      : { type: 'dingTalk', provider: url.endsWith('/work') ? 'dingTalkMessage' : 'dingTalkRobotWebHook' } }
+  }
+  t.after(() => delete globalThis.__sceneNotifyRequest)
+  const methods = await querySceneNotifyMethods()
+  assert.deepEqual(methods.map(method => [method.id, Boolean(method.fixedRecipient)]), [['hook', true], ['robot-a', false], ['robot-b', false], ['work', false]])
+  assert.deepEqual(calls, ['/notify/channel/all'])
+})
+
+test('Webhook 无需凭据详情权限，钉钉保持人员选择', async t => {
+  globalThis.__sceneNotifyRequest = async url => {
+    if (url !== '/notify/channel/all') throw Error('forbidden')
+    return { result: [{ provider: 'scene', id: 'scene', channels: [
+      { id: 'hook', channelProvider: 'notifier-webhook' },
+      { id: 'unknown', channelProvider: 'notifier-dingTalk', channelConfiguration: { notifierId: 'denied' } },
+    ] }] }
+  }
+  t.after(() => delete globalThis.__sceneNotifyRequest)
+  const methods = await querySceneNotifyMethods()
+  assert.equal(requiresSceneNotifyRecipients(methods[0]), false)
+  assert.equal(requiresSceneNotifyRecipients(methods[1]), true)
 })

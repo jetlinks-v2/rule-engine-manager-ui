@@ -1,5 +1,6 @@
 import { request } from '@jetlinks-web/core'
 import { IOT_DEVICE_LIST_EXCLUDED_ACCESS_PROVIDERS } from './deviceListDefaultTerms'
+import { toSceneNotifyMethods } from '../utils/sceneNotify'
 
 export type SceneEntity = Record<string, any>
 
@@ -23,6 +24,8 @@ export interface SceneNotifyMethod {
   providerId: string
   name: string
   channelProvider: string
+  /** 当前场景通知仅 Webhook 使用渠道的固定目标。 */
+  fixedRecipient?: boolean
 }
 
 export interface SceneNotifyUser {
@@ -31,6 +34,7 @@ export interface SceneNotifyUser {
   username?: string
   email?: string
   telephone?: string
+  orgName?: string
 }
 
 export interface SceneProviderInfo {
@@ -287,6 +291,16 @@ export const querySceneContextRecords = (id: string, contextId: string, data: Re
 
 export const querySceneNotifyChannels = () =>
   request.get('/notify/channel/all')
+
+/** 两种场景编辑模式共用当前用户可访问的通知渠道。 */
+export async function querySceneNotifyMethods(): Promise<SceneNotifyMethod[]> {
+  const response = await querySceneNotifyChannels()
+  if (response?.success === false) throw new Error('Notification channels unavailable')
+  const result = response?.result ?? response
+  const providers = Array.isArray(result) ? result : result?.data
+  if (!Array.isArray(providers)) throw new Error('Invalid notification channels')
+  return toSceneNotifyMethods(providers)
+}
 
 export const queryCurrentSceneNotifyUser = () =>
   request.get('/user/detail')
