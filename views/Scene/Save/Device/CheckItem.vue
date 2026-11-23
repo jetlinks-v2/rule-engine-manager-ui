@@ -2,7 +2,7 @@
   <slot></slot>
 </template>
 
-<script setup lang="ts" name="CheckItem">
+<script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { useSceneStore } from "@rule-engine-manager-ui/store/scene";
 import { Form } from "ant-design-vue";
@@ -14,6 +14,8 @@ import {
 import { getTreeData_api } from "@rule-engine-manager-ui/api/department";
 import {query as channelQuery} from '@rule-engine-manager-ui/api/channel'
 import {queryCollector, queryPointNoPagingV2} from '@rule-engine-manager-ui/api/collector'
+
+defineOptions({ name: 'CheckItem' })
 
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);

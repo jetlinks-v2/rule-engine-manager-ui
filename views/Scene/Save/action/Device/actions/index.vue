@@ -60,12 +60,14 @@
     </div>
 </template>
 
-<script lang="ts" setup name="ActionDeviceActions">
+<script lang="ts" setup>
 import ThingModelSelect from '../../../../../SceneLinkage/editor/components/ThingModelSelect.vue'
 import TopCard from '../device/TopCard.vue';
 import EditTable from './EditTable.vue';
 import WriteProperty from './WriteProperty.vue';
 import { useDeviceActions } from './useDeviceActions'
+
+defineOptions({ name: 'ActionDeviceActions' })
 const props = defineProps({
     compact: { type: Boolean, default: false },
     values: {

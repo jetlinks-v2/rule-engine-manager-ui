@@ -17,12 +17,14 @@
     />
 </template>
 
-<script lang="ts" setup name='UpdateActionItemModal'>
+<script lang="ts" setup>
 import { type PropType, type Ref } from 'vue';
 import { ActionsType } from '../../../typings';
 import ActionTypeComponent from './ActionTypeComponent.vue';
 import { randomNumber, randomString } from '@jetlinks-web/utils';
 import ActionPickerModal, { type ActionPickerItem } from '../../../../SceneLinkage/editor/components/ActionPickerModal.vue'
+
+defineOptions({ name: 'UpdateActionItemModal' })
 
 const props = defineProps({
     branchesName: {

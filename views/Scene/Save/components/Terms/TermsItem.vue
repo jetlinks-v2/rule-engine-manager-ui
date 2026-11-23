@@ -17,7 +17,7 @@
   </a-form-item>
 </template>
 
-<script setup lang='ts' name='TermsItem'>
+<script setup lang='ts'>
 import type { PropType } from 'vue'
 import type { TermsType } from '../../../typings';
 import { storeToRefs } from 'pinia';
@@ -25,6 +25,8 @@ import { useSceneStore } from '../../../../../store/scene'
 import ParamsItem from './ParamsItem.vue'
 import { isArray, isNil } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'TermsItem' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore()

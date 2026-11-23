@@ -66,12 +66,14 @@
     </a-input-group>
 </template>
 
-<script lang="ts" setup name="NotifyBuildIn">
+<script lang="ts" setup>
 import { queryBuiltInParams } from '@rule-engine-manager-ui/api/scene';
 import { useSceneStore } from '@rule-engine-manager-ui/store/scene';
 import { storeToRefs } from 'pinia';
 import { useI18n } from 'vue-i18n'
 import {ACTION_DATA} from "@rule-engine-manager-ui/views/Scene/Save/util";
+
+defineOptions({ name: 'NotifyBuildIn' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

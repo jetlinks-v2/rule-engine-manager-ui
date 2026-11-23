@@ -31,12 +31,14 @@
   </a-form>
 </template>
 
-<script setup lang='ts' name='WriteProperties'>
+<script setup lang='ts'>
 import { FunctionCall } from '../components'
 import type { PropType } from 'vue'
 import { defineExpose } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ThingModelSelect from '../../../SceneLinkage/editor/components/ThingModelSelect.vue'
+
+defineOptions({ name: 'WriteProperties' })
 
 const { t: $t } = useI18n()
 type Emit = {

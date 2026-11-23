@@ -118,7 +118,7 @@
   </div>
 </template>
 
-<script lang="ts" setup name="ActionItem">
+<script lang="ts" setup>
 import { type Ref, PropType } from "vue";
 import { ActionsType, ParallelType } from "../../../typings";
 import EditModal from "../Modal/index.vue";
@@ -136,6 +136,8 @@ import DetailedActionNode from "./DetailedActionNode.vue";
 import { useI18n } from 'vue-i18n'
 import ComponentsMap from './detail'
 import { onlyMessage } from '@jetlinks-web-core/utils/comm'
+
+defineOptions({ name: 'ActionItem' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

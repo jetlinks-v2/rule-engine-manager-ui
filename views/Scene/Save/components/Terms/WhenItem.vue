@@ -48,7 +48,7 @@
     </div>
 </template>
 
-<script setup lang="ts" name="WhenItem">
+<script setup lang="ts">
 import type { PropType } from 'vue';
 import TermsItem from './TermsItem.vue';
 import { TermsType } from '../../../typings';
@@ -57,6 +57,8 @@ import DropdownButton from '../DropdownButton';
 import { storeToRefs } from 'pinia';
 import { randomString } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'WhenItem' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

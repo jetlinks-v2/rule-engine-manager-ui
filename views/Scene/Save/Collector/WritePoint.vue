@@ -39,7 +39,7 @@
     </a-form>
 </template>
 
-<script setup lang='ts' name='WriteProperties'>
+<script setup lang='ts'>
 import { filterSelectNode } from '@jetlinks-web-core/utils/comm'
 import FunctionCall from '../components/FunctionCall/FunctionCall.vue'
 import ThingModelValueInput from '../../../SceneLinkage/editor/components/ThingModelValueInput.vue'
@@ -47,6 +47,8 @@ import ThingModelSelect from '../../../SceneLinkage/editor/components/ThingModel
 import type { PropType } from 'vue'
 import { defineExpose } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'WriteProperties' })
 
 type Emit = {
     (e: 'update:value', data: Record<string, any>): void

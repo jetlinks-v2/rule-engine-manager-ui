@@ -98,7 +98,7 @@
   </div>
 </template>
 
-<script lang='ts' setup name='Branches'>
+<script lang='ts' setup>
 import type { PropType } from 'vue'
 import type { ActionBranchesProps } from '../../../typings';
 import WhenItem from './WhenItem.vue'
@@ -111,6 +111,8 @@ import SceneFilterAddButton from '../SceneFilterAddButton.vue'
 import { randomString} from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n'
 import {ACTION_DATA} from "@rule-engine-manager-ui/views/Scene/Save/util";
+
+defineOptions({ name: 'Branches' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore()

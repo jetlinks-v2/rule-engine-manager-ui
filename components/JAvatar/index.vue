@@ -5,7 +5,10 @@
   </div>
 </template>
 
-<script setup name="JAvatar">
+<script setup>
+
+defineOptions({ name: 'JAvatar' })
+
 const props = defineProps({
   name: {
     type: String,

@@ -11,7 +11,7 @@
     />
   </main>
 </template>
-<script setup lang="ts" name="AlarmCenterDashboard">
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
@@ -19,6 +19,8 @@ import { DashBoardCanvas } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { useHomeAgentCapabilityProvider } from '@jetlinks-web-core/layout/components/AiChat/useHomeAgentCapabilityProvider'
 import { alarmDashboardHomeAgentProvider } from './homeAgentProvider'
 import { useAlarmDashboard } from './useAlarmDashboard'
+
+defineOptions({ name: 'AlarmCenterDashboard' })
 
 useHomeAgentCapabilityProvider(alarmDashboardHomeAgentProvider)
 const { t } = useI18n()

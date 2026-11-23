@@ -38,7 +38,7 @@
   </a-drawer>
 </template>
 
-<script setup name="SceneDrawer">
+<script setup>
 import { useRequest } from "@jetlinks-web/hooks";
 import {
   queryBindScene,
@@ -49,6 +49,8 @@ import {
 import { handleGroupAndFilter, typeMap } from "./Save/utils";
 import BranchesTabs from "./Save/BranchesTabs.vue";
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'SceneDrawer' })
 
 const { t: $t } = useI18n()
 const props = defineProps({

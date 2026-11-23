@@ -16,11 +16,13 @@
   </ParamsDropdown>
 </template>
 
-<script lang="ts" setup name="FunctionItem">
+<script lang="ts" setup>
 import { cloneDeep } from "lodash-es";
 import ParamsDropdown from "../../../components/ParamsDropdown";
 import { handleParamsData } from "./index";
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'FunctionItem' })
 
 const { t: $t } = useI18n()
 const props = defineProps({

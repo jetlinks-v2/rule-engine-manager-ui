@@ -1,5 +1,5 @@
 import type { AlarmDashboardApi } from '../../../api/alarmDashboard'
-import type { AlarmDashboardKind, AlarmQuickAction } from '../dashboard.types'
+import { isMetricKind, type AlarmDashboardKind, type AlarmQuickAction } from '../dashboard.types'
 import { countOf, invalidResponse, isRecord, resultOf } from './query'
 
 export type AlarmRuleSource = 'iot' | 'vision'
@@ -46,12 +46,12 @@ export async function loadRuleConfiguration(
   }
 }
 
-/** 今日事件只关联视觉规则引导；配置状态不参与修改或过滤任何统计数据。 */
+/** 顶部指标只展示统计值；下方板块按来源提供引导，不修改或过滤统计数据。 */
 export function configurationHintsFor(
   kind: AlarmDashboardKind, state: AlarmConfigurationState, actions: AlarmQuickAction[], visionEnabled = true,
 ): AlarmConfigurationHint[] {
-  const sources: AlarmRuleSource[] = kind === 'QuickStart' ? []
-    : kind === 'IotAlarms' || kind === 'IotStatistics' || kind === 'IotHandlingStatistics' ? ['iot']
+  const sources: AlarmRuleSource[] = kind === 'QuickStart' || isMetricKind(kind) ? []
+    : kind === 'IotStatistics' || kind === 'IotHandlingStatistics' ? ['iot']
       : kind === 'AlarmTrend' || kind === 'HandlingStatistics' ? ruleSources : ['vision']
   return sources.filter(source => source !== 'vision' || visionEnabled).flatMap(source => {
     const status = state[source]

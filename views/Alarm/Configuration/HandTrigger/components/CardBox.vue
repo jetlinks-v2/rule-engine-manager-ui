@@ -98,7 +98,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="SceneCardBox">
+<script setup lang="ts">
 import  colorMap ,{ getHexColor } from "@jetlinks-web/components/es/BadgeStatus/color";
 import BranchesTabs from "./BranchesTabs.vue";
 import { PropType } from "vue";
@@ -111,6 +111,8 @@ import { useMenuStore } from "@jetlinks-web-core/store/menu";
 import { useI18n } from 'vue-i18n';
 import { randomString } from "@jetlinks-web/utils";
 import { useTabSaveSuccess } from '@jetlinks-web-core/hooks'
+
+defineOptions({ name: 'SceneCardBox' })
 
 const { t: $t } = useI18n();
 type EmitProps = {

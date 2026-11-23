@@ -67,13 +67,15 @@
   </a-modal>
 </template>
 
-<script lang="ts" setup name="SceneSave">
+<script lang="ts" setup>
 import { query, queryType } from "../../../../../../api/scene";
 import { bindScene, queryBindScene } from "../../../../../../api/configuration";
 import { onlyMessage } from "@jetlinks-web/utils";
 import SceneCardBox from "./CardBox.vue";
 import { useRequest } from "@jetlinks-web/hooks";
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'SceneSave' })
 
 const { t: $t } = useI18n();
 const columns = [

@@ -6,8 +6,8 @@ import { useAlarmCapabilities } from './useAlarmCapabilities'
 const targets = [
   { key: 'iotRules', icon: 'BellOutlined', menus: ['iot-user/device/alarm', 'rule-engine/Alarm/Configuration'] },
   { key: 'visionRules', icon: 'EyeOutlined', menus: ['machine-vision/VisualAlarm'] },
-  { key: 'templates', icon: 'FileTextOutlined', menus: ['notice/template'] },
-  { key: 'channels', icon: 'SendOutlined', menus: ['notice/channel'] },
+  { key: 'templates', icon: 'FileTextOutlined', menus: ['system/MessageNotification/Templates'] },
+  { key: 'channels', icon: 'SendOutlined', menus: ['system/MessageNotification/Channels'] },
 ]
 
 /** 可见入口来自当前项目菜单；设计预览显示全部入口但不执行导航。 */

@@ -29,13 +29,15 @@
   </div>
 </template>
 
-<script lang="ts" setup name='SceneSaveManual'>
+<script lang="ts" setup>
 import { useSceneStore } from '../../../../store/scene';
 import { storeToRefs } from 'pinia';
 import type { BranchesThen } from '../../typings';
 import Action from '../action/index.vue';
 import AddButton from '../components/AddButton.vue'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'SceneSaveManual' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

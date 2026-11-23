@@ -78,9 +78,11 @@
     </div>
 </template>
 
-<script lang="ts" setup name="DeviceTag">
+<script lang="ts" setup>
 import { PropType } from 'vue';
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'DeviceTag' })
 
 const { t: $t } = useI18n()
 const props = defineProps({

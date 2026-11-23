@@ -52,7 +52,7 @@
     </div>
 </template>
 
-<script lang="ts" setup name="ActionDeviceActions">
+<script lang="ts" setup>
 import TopCard from '../../Device/device/TopCard.vue';
 import ThingModelSelect from '../../../../../SceneLinkage/editor/components/ThingModelSelect.vue';
 import WriteProperty from './WriteProperty.vue';
@@ -61,6 +61,8 @@ import { useI18n } from 'vue-i18n';
 import {ACTION_DATA, getParams} from "@rule-engine-manager-ui/views/Scene/Save/util";
 import {useSceneStore} from "@rule-engine-manager-ui/store/scene";
 import {storeToRefs} from "pinia";
+
+defineOptions({ name: 'ActionDeviceActions' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

@@ -82,10 +82,12 @@
   </div>
 </template>
 
-<script setup name="BranchesTabs">
+<script setup>
 import Terms from './Terms/Terms.vue'
 import Actions from './Actions.vue'
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'BranchesTabs' })
 
 const { t: $t } = useI18n();
 const props = defineProps({

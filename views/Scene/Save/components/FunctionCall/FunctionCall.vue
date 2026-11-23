@@ -49,10 +49,12 @@
   </EditTable>
 </template>
 
-<script setup lang='ts' name='FunctionCall'>
+<script setup lang='ts'>
 import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {EditTable} from '@jetlinks-web/components'
+
+defineOptions({ name: 'FunctionCall' })
 
 const { t: $t } = useI18n()
 type Emit = {

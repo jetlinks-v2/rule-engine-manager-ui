@@ -26,9 +26,11 @@
   </div>
 </template>
 
-<script setup name="WhenItem">
+<script setup>
 import { TermTypeMap } from '../utils'
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'WhenItem' })
 
 const { t: $t } = useI18n();
 const TermsTypeMap = {

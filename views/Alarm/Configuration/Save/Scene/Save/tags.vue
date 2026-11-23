@@ -15,8 +15,10 @@
   </ResizeObserver>
 </template>
 
-<script setup name="tags">
+<script setup>
 import ResizeObserver from 'ant-design-vue/lib/vc-resize-observer';
+
+defineOptions({ name: 'tags' })
 
 const props = defineProps({
   tags: {

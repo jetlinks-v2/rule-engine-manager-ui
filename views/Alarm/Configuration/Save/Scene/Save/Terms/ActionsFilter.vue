@@ -17,8 +17,10 @@
   </div>
 </template>
 
-<script setup name="ActionFIlter">
+<script setup>
 import WhenItem from "./WhenItem.vue";
+
+defineOptions({ name: 'ActionFIlter' })
 
 const props = defineProps({
   when: {

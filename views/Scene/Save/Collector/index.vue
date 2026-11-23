@@ -21,7 +21,7 @@
   </div>
 </template>
 
-<script setup lang='ts' name='SceneSaveDevice'>
+<script setup lang='ts'>
 import AddModel from './AddModal.vue'
 import AddButton from '../components/AddButton.vue'
 import Title from './Title.vue'
@@ -33,6 +33,8 @@ import {storeToRefs} from "pinia";
 import { useI18n } from 'vue-i18n'
 import DetailedTriggerNode from '@rule-engine-manager-ui/views/SceneLinkage/editor/detail/DetailedTriggerNode.vue'
 import type { Ref } from 'vue'
+
+defineOptions({ name: 'SceneSaveDevice' })
 
 const sceneStore = useSceneStore()
 // 采集器是后续扩展的触发器，原版 Store 类型未包含它；本组件仍沿用原有规则树字段。

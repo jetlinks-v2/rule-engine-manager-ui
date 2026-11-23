@@ -34,7 +34,7 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="Scene">
+<script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { useSceneStore } from "../../../store/scene";
 import { TriggerHeaderIcon } from "./asstes";
@@ -53,6 +53,8 @@ import { Modal } from 'ant-design-vue';
 import { unBindAlarm } from "../../../api/configuration";
 import { debounce, omit } from "lodash-es";
 import {useTabSaveSuccessBack} from "@jetlinks-web-core/hooks";
+
+defineOptions({ name: 'Scene' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

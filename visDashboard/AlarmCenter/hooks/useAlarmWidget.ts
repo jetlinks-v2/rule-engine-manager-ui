@@ -24,6 +24,17 @@ export function useAlarmWidget(kind: AlarmDashboardKind, info: Ref<AlarmWidgetIn
   const active = ref(true)
   const capabilities = useAlarmCapabilities(isEdit)
   const available = computed(() => isAlarmKindAvailable(kind, capabilities.value))
+  // 聚合接口会补出全零时间桶；只有成功且没有记录时才进入空态，失败仍保留原错误展示。
+  const empty = computed(() => {
+    if (loading.value || error.value) return false
+    if (kind === 'AlarmTrend') return data.value.series.length > 0
+      && data.value.series.every(series => !series.failed && series.points.every(point => point.count === 0))
+    if (isHandlingKind(kind)) {
+      const sources = Object.values(data.value.handling || {})
+      return sources.length > 0 && sources.every(source => !source.failed && source.total === 0)
+    }
+    return (kind === 'IotStatistics' || kind === 'VisionStatistics') && !data.value.ranking.length
+  })
   const user = useUserStore()
   const route = useRoute()
   const api = createAlarmDashboardApi()
@@ -86,6 +97,6 @@ export function useAlarmWidget(kind: AlarmDashboardKind, info: Ref<AlarmWidgetIn
   onActivated(() => { active.value = true })
   onDeactivated(() => { active.value = false; cancel() })
   onScopeDispose(cancel)
-  return { config, timeRange, dimension, data, loading, error, refresh, scope, capabilities, available }
+  return { config, timeRange, dimension, data, loading, error, empty, refresh, scope, capabilities, available }
 }
 

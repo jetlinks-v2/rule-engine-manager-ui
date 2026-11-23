@@ -29,9 +29,11 @@
   </div>
 </template>
 
-<script setup name="Actions">
+<script setup>
 import { iconMap } from "../../../../Scene/Save/action/ListItem/util";
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'Actions' })
 
 const { t: $t } = useI18n();
 const props = defineProps({

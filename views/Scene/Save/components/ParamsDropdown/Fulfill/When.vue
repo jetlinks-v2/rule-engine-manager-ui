@@ -1,4 +1,4 @@
-<script setup name="When">
+<script setup>
 import DropdownButton from "../../DropdownButton";
 import {useMouseEvent,} from "./hooks";
 import {useI18n} from "vue-i18n";
@@ -7,6 +7,8 @@ import {
   defaultTermsValue
 } from "./util";
 import {isArray, isNil} from "lodash-es";
+
+defineOptions({ name: 'When' })
 
 const props = defineProps({
   isLast: {

@@ -28,8 +28,10 @@
     </div>
 </template>
 
-<script lang="ts" setup name="DeviceTopCard">
+<script lang="ts" setup>
 import { PropType } from 'vue';
+
+defineOptions({ name: 'DeviceTopCard' })
 
 const props = defineProps({
     typeList: {

@@ -23,7 +23,7 @@
   </div>
 </template>
 
-<script setup lang='ts' name='SceneSaveDevice'>
+<script setup lang='ts'>
 import { storeToRefs } from 'pinia';
 import { useSceneStore } from '../../../../store/scene'
 import AddModel from './AddModal.vue'
@@ -35,6 +35,8 @@ import type { TriggerDevice } from '../../typings';
 import { EventEmitter, DeviceEmitterKey } from '../util';
 import CheckItem from './CheckItem.vue'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'SceneSaveDevice' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore()
