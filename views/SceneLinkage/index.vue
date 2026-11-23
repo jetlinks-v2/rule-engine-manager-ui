@@ -21,7 +21,6 @@
           :request="queryScenes"
           :params="tableParams"
           :default-params="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
-          :pagination="{ showSizeChanger: true, showQuickJumper: true }"
           row-key="id"
           :scroll="{ x: 1400 }"
         >

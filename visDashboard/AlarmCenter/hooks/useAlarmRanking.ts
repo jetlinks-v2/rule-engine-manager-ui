@@ -34,6 +34,7 @@ export function useAlarmRanking(props: AlarmRankingOptions) {
       customRender: ({ text }: { text: number }) => text.toLocaleString(locale.value) },
   ])
   const pagination = computed(() => ({
+    size: 'default' as const,
     current: current.value, pageSize: pageSize.value, total: rows.value.length,
     showSizeChanger: true, pageSizeOptions: ['20', '50', '100'],
     showTotal: (total: number) => t('alarmDashboard.rankTotal', { total }),

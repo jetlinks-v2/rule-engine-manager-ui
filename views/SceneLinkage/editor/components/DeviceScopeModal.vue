@@ -46,7 +46,7 @@
           </template>
           <template #emptyText><CloudEmpty :description="$t('IotSceneLinkage.scope.empty')" /></template>
         </a-table>
-        <a-pagination class="device-scope-modal__pagination" size="small" :current="pageIndex + 1" :page-size="pageSize" :total="total" show-less-items @change="changePage" />
+        <a-pagination class="device-scope-modal__pagination" size="default" :current="pageIndex + 1" :page-size="pageSize" :total="total" show-less-items @change="changePage" />
       </section>
       <aside v-if="configurationPlacement === 'side'" class="device-scope-modal__selection">
         <header v-if="!detailed" class="device-scope-modal__column-title"><strong>{{ $t('IotSceneLinkage.scope.configuration') }}</strong><slot name="configuration-help" /></header>
