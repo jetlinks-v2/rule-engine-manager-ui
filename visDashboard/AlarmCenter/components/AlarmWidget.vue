@@ -96,7 +96,7 @@ const trendFailed = computed(() => props.kind === 'AlarmTrend' && data.value.ser
   width: 100%; height: 100%; min-width: 0; min-height: 0; box-sizing: border-box; display: flex; flex-direction: column;
   background: var(--ant-color-bg-container, #fff); border: 1px solid var(--jet-theme-border-secondary, #e8edf3);
   border-radius: var(--r-3, 8px); color: #1d2939;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 3%); font-size: 14px; line-height: 1.4; container: alarm-widget / inline-size;
+  font-size: 14px; line-height: 1.4; container: alarm-widget / inline-size;
 }
 .alarm-widget-metric { padding: 16px; }
 header { box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; min-height: 48px; padding: 8px 16px; border-bottom: 1px solid #f0f2f5; flex: none; }
