@@ -4,6 +4,17 @@ type NotifyUser = {
   telephone?: string
 }
 
+/** 沿用视觉告警的组织展示口径，仅读取用户详情，不改变通知目标。 */
+export function getNotifyUserOrganization(user: {
+  orgName?: string; departmentName?: string
+  orgList?: Array<{ name?: string }>; parentOrgList?: Array<{ name?: string }>; childrenOrgList?: Array<{ name?: string }>
+}): string {
+  return user.orgName?.trim() || user.departmentName?.trim()
+    || [user.orgList, user.parentOrgList, user.childrenOrgList]
+      .flatMap(items => Array.isArray(items) ? items.map(item => item?.name?.trim()).filter(Boolean) : [])
+      .join(' / ')
+}
+
 /**
  * Keep existing option positions while refreshing user details so selected tags do not jump.
  */

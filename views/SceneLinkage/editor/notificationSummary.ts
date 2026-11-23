@@ -1,7 +1,8 @@
 import type { SceneNotifyMethod, SceneNotifyUser } from '../../../api/scene-linkage'
+import { requiresSceneNotifyRecipients } from '../../../utils/sceneNotify'
 
 type NotifyConfig = { userIds?: string[]; notifyChannelIds?: string[] }
-type NotifyOptions = { channelName?: string; methodName?: string; notifyChannelName?: string; userNames?: string[] | string; recipientNames?: string[] | string; users?: Array<{ id: string; name?: string; username?: string } | string> }
+type NotifyOptions = { channelName?: string; methodName?: string; notifyChannelName?: string; fixedRecipient?: boolean; userNames?: string[] | string; recipientNames?: string[] | string; users?: Array<{ id: string; name?: string; username?: string } | string> }
 type Translate = (key: string, values?: Record<string, string | number>) => string
 
 /** 联系方式属于通知配置，不作为收信人的显示名称。 */
@@ -28,8 +29,13 @@ export function getNotificationSummary(config: NotifyConfig = {}, options: Notif
   const missing = ids.length - names.length
   if (missing) names.push(t('IotSceneLinkage.detail.previewRecipientCount', { count: missing }))
   const channelNames = (config.notifyChannelIds || []).map(id => methods.find(method => String(method.id) === String(id))?.name).filter(Boolean)
+  const fixedRecipient = Boolean(config.notifyChannelIds?.length) && config.notifyChannelIds!.every(id => {
+    const method = methods.find(method => method.id === id)
+    return method ? !requiresSceneNotifyRecipients(method) : options.fixedRecipient === true
+  })
   return {
     method: channelNames.length ? channelNames.join('、') : options.channelName || options.methodName || options.notifyChannelName || t('IotSceneLinkage.action.notify'),
-    recipients: names.length ? names : [t('IotSceneLinkage.detailNotify.unconfigured')],
+    recipients: fixedRecipient ? [] : names.length ? names : [t('IotSceneLinkage.detailNotify.unconfigured')],
+    ...(fixedRecipient ? { fixedRecipient: true } : {}),
   }
 }

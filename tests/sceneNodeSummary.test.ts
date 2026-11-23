@@ -4,6 +4,14 @@ import { getNotificationSummary, formatNotificationRecipient } from '../views/Sc
 
 const t = (key: string, values?: Record<string, string | number>) => values?.count !== undefined ? `已选择 ${values.count} 位接收人` : key
 
+test('固定目标渠道摘要不显示收信人未配置或历史人员', () => {
+  const method = { id: 'hook', name: 'Webhook', providerId: 'scene', channelProvider: 'notifier-webhook' }
+  const summary = getNotificationSummary({ notifyChannelIds: ['hook'], userIds: ['old'] }, { users: [{ id: 'old', name: '历史人员' }] }, t, [], [method])
+  assert.deepEqual(summary, { method: 'Webhook', recipients: [], fixedRecipient: true })
+  const cached = getNotificationSummary({ notifyChannelIds: ['hook'] }, { channelName: 'Webhook', fixedRecipient: true }, t)
+  assert.deepEqual(cached, { method: 'Webhook', recipients: [], fixedRecipient: true })
+})
+
 test('notification labels follow selected IDs rather than API response order', () => {
   const config = { userIds: ['u2', 'u1'], notifyChannelIds: ['mail'] }
   const snapshot = structuredClone(config)
