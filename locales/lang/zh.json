@@ -2521,5 +2521,6 @@
   "IotSceneLinkage.node.allProductTarget": "所有的 {product}",
   "IotSceneLinkage.node.scopedProductTarget": "{scope} 所有的 {product}",
   "IotSceneLinkage.timer.calendarCondition": "日历条件",
-  "IotSceneLinkage.timer.calendarLoadFailed": "日历标签加载失败"
+  "IotSceneLinkage.timer.calendarLoadFailed": "日历标签加载失败",
+	"metric.ruleAndCalculation": "规则与计算"
 }

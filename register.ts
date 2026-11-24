@@ -1,3 +1,4 @@
+import { defineAsyncComponent } from 'vue'
 import {useRulePermissionContext, useScenePermissionContext} from '@rule-engine-manager-ui/hook/usePermission'
 import {EventEmitter, DeviceEmitterKey, ACTION_DATA} from '@rule-engine-manager-ui/views/Scene/Save/util';
 import dataCapabilityProviders from './dataCapabilities'
@@ -46,6 +47,7 @@ const homeAgentProviders = Object.fromEntries(
 export default {
     moduleId: 'rule-engine-manager-ui',
     components: {
+        MetricScopePanel: defineAsyncComponent(() => import('./components/Metric/collection/MetricScopePanel.vue')),
         ruleInstance: defineAsyncComponent(() => import('./views/Instance/index.vue')),
         // 私有化运行时从该注册表加载场景菜单，不能只依赖 index.ts 的动态路由映射。
         scenePage: defineAsyncComponent(() => import('./views/SceneLinkage/index.vue')),

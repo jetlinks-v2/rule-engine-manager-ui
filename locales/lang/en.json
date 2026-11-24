@@ -2520,5 +2520,6 @@
   "IotSceneLinkage.node.allProductTarget": "All {product}",
   "IotSceneLinkage.node.scopedProductTarget": "All {product} in {scope}",
   "IotSceneLinkage.timer.calendarCondition": "Calendar condition",
-  "IotSceneLinkage.timer.calendarLoadFailed": "Failed to load calendar tags"
+  "IotSceneLinkage.timer.calendarLoadFailed": "Failed to load calendar tags",
+	"metric.ruleAndCalculation": "Rules and calculations"
 }
