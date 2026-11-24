@@ -1,5 +1,7 @@
 import type { Component, Ref } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
+import type { SourceReference as MetricSourceReference, SourceSemantics as MetricInputSemantics } from '@jetlinks-web-core/data-capability/sourceSchema'
+export type { SourceReference as MetricSourceReference, SourceSemantics as MetricInputSemantics } from '@jetlinks-web-core/data-capability/sourceSchema'
 
 /** 与通用指标 JSON 契约一致；业务宿主仅提供对象及来源选择。 */
 export interface MetricInputMapping {
@@ -13,13 +15,6 @@ export interface MetricInputMapping {
   statistics?: MetricScopeStatistics
   providerSource?: MetricSourceReference
   id: string
-}
-/** 业务选择器引用原事件/对象能力；公共组件只传递固定配置，不解释业务字段或执行查询。 */
-export interface MetricSourceReference {
-  provider: string
-  sourceType: string
-  configuration: Record<string, unknown>
-  subject?: {type:string;id:string}
 }
 export interface MetricProviderSourceDescription {
   name: string
@@ -58,7 +53,6 @@ export interface MetricTemplateInput {
   [key: string]: unknown
 }
 /** 原物模型语义的必要子集；未声明时保持现有候选范围。 */
-export interface MetricInputSemantics { semanticId?:string; semanticTypes?:string[]; semanticRole?:string }
 export interface MetricParameter {
   id: string
   name?: string

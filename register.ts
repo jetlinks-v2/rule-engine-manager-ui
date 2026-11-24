@@ -48,6 +48,10 @@ export default {
     moduleId: 'rule-engine-manager-ui',
     components: {
         MetricScopePanel: defineAsyncComponent(() => import('./components/Metric/collection/MetricScopePanel.vue')),
+        processPage: defineAsyncComponent(() => import('./views/Process/index.vue')),
+        processTemplatePage: defineAsyncComponent(() => import('./views/ProcessTemplate/index.vue')),
+        ObjectProcesses: defineAsyncComponent(() => import('./components/Process/ObjectProcesses.vue')),
+        ObjectProcessEntry: defineAsyncComponent(() => import('./components/Process/ObjectProcessEntry.vue')),
         ruleInstance: defineAsyncComponent(() => import('./views/Instance/index.vue')),
         // 私有化运行时从该注册表加载场景菜单，不能只依赖 index.ts 的动态路由映射。
         scenePage: defineAsyncComponent(() => import('./views/SceneLinkage/index.vue')),

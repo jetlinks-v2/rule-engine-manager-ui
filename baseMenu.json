@@ -20,6 +20,28 @@
     "buttons": [],
     "children": [
       {
+        "code":"rule-engine/ProcessTemplate","id":"thing-process-template","name":"过程模板","url":"/rule-engine/process-templates","icon":"ApartmentOutlined","sortIndex":50,"showPage":["process-template"],
+        "i18nMessages":{"name":{"zh_CN":"过程模板","en_US":"Process templates","en":"Process templates","ja_JP":"プロセステンプレート"}},
+        "buttons":[
+          {"id":"view","name":"查看","permissions":[{"permission":"process-template","actions":["query"]}]},
+          {"id":"save","name":"配置","permissions":[{"permission":"process-template","actions":["query","save"]}]}
+        ]
+      },
+      {
+        "code":"rule-engine/Process","id":"thing-process","name":"过程管理","url":"/rule-engine/processes","icon":"DeploymentUnitOutlined","sortIndex":60,"showPage":["process-config"],
+        "i18nMessages":{"name":{"zh_CN":"过程管理","en_US":"Processes","en":"Processes","ja_JP":"プロセス管理"}},
+        "buttons":[
+          {"id":"view","name":"查看","permissions":[{"permission":"process-config","actions":["query"]},{"permission":"process-template","actions":["query"]},{"permission":"relation","actions":["query"]}]},
+          {"id":"configure","name":"配置","permissions":[{"permission":"process-config","actions":["query","save"]},{"permission":"process-template","actions":["query"]},{"permission":"relation","actions":["query"]}]},
+          {"id":"remove","name":"恢复继承","permissions":[{"permission":"process-config","actions":["delete"]}]},
+          {"id":"start","name":"发起","permissions":[{"permission":"process-config","actions":["save"]}]},
+          {"id":"stop","name":"停止","permissions":[{"permission":"process-config","actions":["save"]}]},
+          {"id":"reconcile","name":"核对","permissions":[{"permission":"process-config","actions":["save"]}]},
+          {"id":"resume","name":"恢复","permissions":[{"permission":"process-config","actions":["save"]}]},
+          {"id":"resolve","name":"人工核实","permissions":[{"permission":"process-config","actions":["save"]}]}
+        ]
+      },
+      {
         "code": "rule-engine/Instance",
         "name": "规则编排",
         "i18nMessages": {
