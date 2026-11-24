@@ -1,0 +1,1119 @@
+[
+  {
+    "id": "avg",
+    "name": "Average",
+    "description": "Arithmetic mean of window values; each sample has equal weight",
+    "icon": "BarChartOutlined",
+    "resultSemantics": {
+      "procedure": "avg",
+      "characteristic": "level",
+      "unitRule": "source"
+    },
+    "aggregation": "avg",
+    "timeAggregation": null,
+    "windowModes": [
+      "time",
+      "latestN"
+    ],
+    "timeModes": [
+      "processing",
+      "event",
+      "hybrid"
+    ],
+    "windowDefaults": {},
+    "parameterDefinitions": [],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": "\\bar{x}=\\frac{1}{n}\\sum_{i=1}^{n}x_i",
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {},
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 4.666666666666667,
+          "reason": null,
+          "estimated": false,
+          "explanation": "(2 + 4 + 8) ÷ 3; each sample has equal weight.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "line",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": [
+              {
+                "fromTime": 0.0,
+                "fromValue": 4.666666666666667,
+                "toTime": 3.0,
+                "toValue": 4.666666666666667,
+                "label": "Average"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "max",
+    "name": "Maximum",
+    "description": "Largest value in the window",
+    "icon": "VerticalAlignTopOutlined",
+    "resultSemantics": {
+      "procedure": "max",
+      "characteristic": "level",
+      "unitRule": "source"
+    },
+    "aggregation": "max",
+    "timeAggregation": null,
+    "windowModes": [
+      "time",
+      "latestN"
+    ],
+    "timeModes": [
+      "processing",
+      "event",
+      "hybrid"
+    ],
+    "windowDefaults": {},
+    "parameterDefinitions": [],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": null,
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {},
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 8.0,
+          "reason": null,
+          "estimated": false,
+          "explanation": "The largest of the three samples is 8.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "line",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": [
+              {
+                "fromTime": 0.0,
+                "fromValue": 8.0,
+                "toTime": 3.0,
+                "toValue": 8.0,
+                "label": "Maximum"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "min",
+    "name": "Minimum",
+    "description": "Smallest value in the window",
+    "icon": "VerticalAlignBottomOutlined",
+    "resultSemantics": {
+      "procedure": "min",
+      "characteristic": "level",
+      "unitRule": "source"
+    },
+    "aggregation": "min",
+    "timeAggregation": null,
+    "windowModes": [
+      "time",
+      "latestN"
+    ],
+    "timeModes": [
+      "processing",
+      "event",
+      "hybrid"
+    ],
+    "windowDefaults": {},
+    "parameterDefinitions": [],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": null,
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {},
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 2.0,
+          "reason": null,
+          "estimated": false,
+          "explanation": "The smallest of the three samples is 2.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "line",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": [
+              {
+                "fromTime": 0.0,
+                "fromValue": 2.0,
+                "toTime": 3.0,
+                "toValue": 2.0,
+                "label": "Minimum"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "range",
+    "name": "Range",
+    "description": "Maximum minus minimum: the spread within the window",
+    "icon": "ColumnWidthOutlined",
+    "resultSemantics": {
+      "procedure": "range",
+      "characteristic": "extent",
+      "unitRule": "difference"
+    },
+    "aggregation": "range",
+    "timeAggregation": null,
+    "windowModes": [
+      "time",
+      "latestN"
+    ],
+    "timeModes": [
+      "processing",
+      "event",
+      "hybrid"
+    ],
+    "windowDefaults": {},
+    "parameterDefinitions": [],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": "R=x_{\\max}-x_{\\min}",
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {},
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 6.0,
+          "reason": null,
+          "estimated": false,
+          "explanation": "Maximum 8 − minimum 2 = 6.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "line",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": [
+              {
+                "fromTime": 3.0,
+                "fromValue": 2.0,
+                "toTime": 3.0,
+                "toValue": 8.0,
+                "label": "Range 6"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "variance",
+    "name": "Population variance",
+    "description": "Population variance, divided by sample count n; unit is squared input unit",
+    "icon": "DotChartOutlined",
+    "resultSemantics": {
+      "procedure": "variance",
+      "characteristic": "variance",
+      "unitRule": "squared"
+    },
+    "aggregation": "variance",
+    "timeAggregation": null,
+    "windowModes": [
+      "time",
+      "latestN"
+    ],
+    "timeModes": [
+      "processing",
+      "event",
+      "hybrid"
+    ],
+    "windowDefaults": {},
+    "parameterDefinitions": [],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": "\\sigma^2=\\frac{1}{n}\\sum_{i=1}^{n}(x_i-\\bar{x})^2",
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {},
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 6.222222222222222,
+          "reason": null,
+          "estimated": false,
+          "explanation": "Sum the squared distances from the mean, then divide by 3.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "line",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": [
+              {
+                "fromTime": 0.0,
+                "fromValue": 4.666666666666667,
+                "toTime": 3.0,
+                "toValue": 4.666666666666667,
+                "label": "Average"
+              },
+              {
+                "fromTime": 0.0,
+                "fromValue": 2.0,
+                "toTime": 0.0,
+                "toValue": 4.666666666666667,
+                "label": null
+              },
+              {
+                "fromTime": 1.0,
+                "fromValue": 4.0,
+                "toTime": 1.0,
+                "toValue": 4.666666666666667,
+                "label": null
+              },
+              {
+                "fromTime": 3.0,
+                "fromValue": 8.0,
+                "toTime": 3.0,
+                "toValue": 4.666666666666667,
+                "label": null
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "dev",
+    "name": "Population standard deviation",
+    "description": "Square root of population variance, in the input unit",
+    "icon": "AreaChartOutlined",
+    "resultSemantics": {
+      "procedure": "dev",
+      "characteristic": "deviation",
+      "unitRule": "difference"
+    },
+    "aggregation": "dev",
+    "timeAggregation": null,
+    "windowModes": [
+      "time",
+      "latestN"
+    ],
+    "timeModes": [
+      "processing",
+      "event",
+      "hybrid"
+    ],
+    "windowDefaults": {},
+    "parameterDefinitions": [],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": "\\sigma=\\sqrt{\\mathrm{Var}(x)}",
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {},
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 2.494438257849294,
+          "reason": null,
+          "estimated": false,
+          "explanation": "The square root of population variance, in the input unit.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "line",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": [
+              {
+                "fromTime": 0.0,
+                "fromValue": 4.666666666666667,
+                "toTime": 3.0,
+                "toValue": 4.666666666666667,
+                "label": "Average"
+              },
+              {
+                "fromTime": 0.0,
+                "fromValue": 2.0,
+                "toTime": 0.0,
+                "toValue": 4.666666666666667,
+                "label": null
+              },
+              {
+                "fromTime": 1.0,
+                "fromValue": 4.0,
+                "toTime": 1.0,
+                "toValue": 4.666666666666667,
+                "label": null
+              },
+              {
+                "fromTime": 3.0,
+                "fromValue": 8.0,
+                "toTime": 3.0,
+                "toValue": 4.666666666666667,
+                "label": null
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "sum",
+    "name": "Sum",
+    "description": "Add numeric values in the window",
+    "icon": "PlusOutlined",
+    "resultSemantics": {
+      "procedure": "sum",
+      "characteristic": "total",
+      "unitRule": "source"
+    },
+    "aggregation": "sum",
+    "timeAggregation": null,
+    "windowModes": [
+      "time",
+      "latestN"
+    ],
+    "timeModes": [
+      "processing",
+      "event",
+      "hybrid"
+    ],
+    "windowDefaults": {},
+    "parameterDefinitions": [],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": null,
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {},
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 14.0,
+          "reason": null,
+          "estimated": false,
+          "explanation": "2 + 4 + 8 = 14; duration does not affect the sum.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "bar",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "count",
+    "name": "Count",
+    "description": "Number of samples in the window",
+    "icon": "NumberOutlined",
+    "resultSemantics": {
+      "procedure": "count",
+      "characteristic": "count",
+      "unitRule": "count"
+    },
+    "aggregation": "count",
+    "timeAggregation": null,
+    "windowModes": [
+      "time",
+      "latestN"
+    ],
+    "timeModes": [
+      "processing",
+      "event",
+      "hybrid"
+    ],
+    "windowDefaults": {},
+    "parameterDefinitions": [],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": null,
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {},
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 3,
+          "reason": null,
+          "estimated": false,
+          "explanation": "There are 3 recorded samples, regardless of their values.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "points",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "first",
+    "name": "First",
+    "description": "Oldest value in the window",
+    "icon": "StepBackwardOutlined",
+    "resultSemantics": {
+      "procedure": "first",
+      "characteristic": "level",
+      "unitRule": "source"
+    },
+    "aggregation": "first",
+    "timeAggregation": null,
+    "windowModes": [
+      "time",
+      "latestN"
+    ],
+    "timeModes": [
+      "processing",
+      "event",
+      "hybrid"
+    ],
+    "windowDefaults": {},
+    "parameterDefinitions": [],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": null,
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {},
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 2.0,
+          "reason": null,
+          "estimated": false,
+          "explanation": "Use the earliest sample in the window: 2 at 0 seconds.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "line",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": [
+              {
+                "fromTime": 0.0,
+                "fromValue": 2.0,
+                "toTime": 0.0,
+                "toValue": 2.0,
+                "label": "First"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "last",
+    "name": "Last",
+    "description": "Latest value in the window",
+    "icon": "StepForwardOutlined",
+    "resultSemantics": {
+      "procedure": "last",
+      "characteristic": "level",
+      "unitRule": "source"
+    },
+    "aggregation": "last",
+    "timeAggregation": null,
+    "windowModes": [
+      "time",
+      "latestN"
+    ],
+    "timeModes": [
+      "processing",
+      "event",
+      "hybrid"
+    ],
+    "windowDefaults": {},
+    "parameterDefinitions": [],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": null,
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {},
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 8.0,
+          "reason": null,
+          "estimated": false,
+          "explanation": "Use the latest sample in the window: 8 at 3 seconds.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "line",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": [
+              {
+                "fromTime": 3.0,
+                "fromValue": 8.0,
+                "toTime": 3.0,
+                "toValue": 8.0,
+                "label": "Last"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "timeSlope",
+    "name": "Time slope",
+    "description": "Linear regression over report timestamps, per time unit; needs at least two distinct timestamps",
+    "icon": "RiseOutlined",
+    "resultSemantics": {
+      "procedure": "timeSlope",
+      "characteristic": "rate",
+      "unitRule": "perTime"
+    },
+    "aggregation": null,
+    "timeAggregation": "timeSlope",
+    "windowModes": [
+      "time"
+    ],
+    "timeModes": [
+      "event"
+    ],
+    "windowDefaults": {
+      "timeMode": "event",
+      "timeUnit": "PT1S"
+    },
+    "parameterDefinitions": [
+      {
+        "description": "For 1 second, the result unit is input unit/second",
+        "valueType": {
+          "type": "string"
+        },
+        "expands": {
+          "editor": "duration"
+        },
+        "id": "timeUnit",
+        "name": "per"
+      }
+    ],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": "b=\\frac{\\sum_i(t_i-\\bar{t})(x_i-\\bar{x})}{\\sum_i(t_i-\\bar{t})^2}",
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {
+            "timeUnit": "PT1S"
+          },
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 2.0,
+          "reason": null,
+          "estimated": false,
+          "explanation": "Fit a line against actual time; a rise of 6 over 3 seconds gives 2 per second.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "line",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": null,
+            "guides": [
+              {
+                "fromTime": 0.0,
+                "fromValue": 2.0,
+                "toTime": 3.0,
+                "toValue": 2.0,
+                "label": "Δt = 3s"
+              },
+              {
+                "fromTime": 3.0,
+                "fromValue": 2.0,
+                "toTime": 3.0,
+                "toValue": 8.0,
+                "label": "Δx = 6"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "timeWeightedMean",
+    "name": "Time-weighted mean",
+    "description": "Weight by last-value hold duration over covered intervals within the hold limit; incomplete coverage is estimated",
+    "icon": "FieldTimeOutlined",
+    "resultSemantics": {
+      "procedure": "timeWeightedMean",
+      "characteristic": "level",
+      "unitRule": "source"
+    },
+    "aggregation": null,
+    "timeAggregation": "timeWeightedMean",
+    "windowModes": [
+      "time"
+    ],
+    "timeModes": [
+      "event"
+    ],
+    "windowDefaults": {
+      "timeMode": "event",
+      "maxGap": "PT1M"
+    },
+    "parameterDefinitions": [
+      {
+        "description": "Longer gaps are excluded from the mean",
+        "valueType": {
+          "type": "string"
+        },
+        "expands": {
+          "editor": "duration"
+        },
+        "id": "maxGap",
+        "name": "Hold previous value for"
+      }
+    ],
+    "inputNames": {
+      "samples": "Samples"
+    },
+    "documentation": {
+      "formula": "\\bar{x}_t=\\frac{\\sum_i x_i\\Delta t_i}{\\sum_i\\Delta t_i}",
+      "symbols": [],
+      "steps": [],
+      "examples": [
+        {
+          "name": "Irregular samples",
+          "parameters": {
+            "maxGap": "PT2S"
+          },
+          "inputs": {
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ]
+          },
+          "cutoffSeconds": 5,
+          "result": 5.2,
+          "reason": null,
+          "estimated": true,
+          "explanation": "Hold 2 for 1 second, then 4 and 8 for 2 seconds each; the weighted mean is 5.2.",
+          "visualization": {
+            "timeLabel": "Time (seconds)",
+            "valueLabel": "Samples",
+            "style": "step",
+            "samples": [
+              {
+                "offsetSeconds": 0,
+                "value": 2.0
+              },
+              {
+                "offsetSeconds": 1,
+                "value": 4.0
+              },
+              {
+                "offsetSeconds": 3,
+                "value": 8.0
+              }
+            ],
+            "endSeconds": 5,
+            "guides": [
+              {
+                "fromTime": 0.0,
+                "fromValue": 5.2,
+                "toTime": 5.0,
+                "toValue": 5.2,
+                "label": "Time-weighted mean"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+]

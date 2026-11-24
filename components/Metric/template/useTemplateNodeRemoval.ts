@@ -1,6 +1,6 @@
 import { onScopeDispose } from 'vue'
 import { Modal } from 'ant-design-vue'
-import type { TemplateNode } from '@jetlinks-web-core/components/Metric/template/designer'
+import type { TemplateNode } from './designer'
 
 /** Both menu and keyboard use the same permission check and confirmation; a changed selection cannot delete another node. */
 export function useTemplateNodeRemoval(state:() => { node?:TemplateNode; identity?:string; disabled:boolean; invalid:boolean; published?:boolean }, remove:()=>void, t:(key:string)=>string) {

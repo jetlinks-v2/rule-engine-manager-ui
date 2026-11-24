@@ -12,8 +12,8 @@
 </template>
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import type { MetricConfig } from '@jetlinks-web-core/components/Metric/types'
+import { metricMessages } from './messages'
+import type { MetricConfig } from './types'
 defineProps<{ configuration: MetricConfig; busy?: boolean }>()
 const emit = defineEmits<{ (event: 'edit'): void; (event: 'toggle'): void; (event: 'remove'): void }>()
 const { t } = useI18n({ useScope: 'local', messages: metricMessages })

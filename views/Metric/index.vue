@@ -7,10 +7,10 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import type { RouteLocationRaw } from 'vue-router'
 import { useAuthStore, useUserStore } from '@jetlinks-web-core/store'
-import { type MetricWorkspaceSelection, type MetricReference } from '@jetlinks-web-core/components'
+import { type MetricWorkspaceSelection, type MetricReference } from '@rule-engine-manager-ui/components/Metric'
 import { useProjectRouter } from '@jetlinks-web-core/hooks'
 import { getRequestTenantDomain } from '@jetlinks-web-core/utils/request-context'
-import { metricReferenceFromQuery, metricBusinessQuery, metricScopeKey, metricWorkspaceQuery, metricWorkspaceSelectionFromQuery } from '@jetlinks-web-core/components/Metric/location'
+import { metricReferenceFromQuery, metricBusinessQuery, metricScopeKey, metricWorkspaceQuery, metricWorkspaceSelectionFromQuery } from '../../components/Metric/location'
 const route = useRoute()
 const router = useProjectRouter()
 const user = useUserStore()

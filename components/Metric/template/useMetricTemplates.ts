@@ -1,10 +1,10 @@
 import { computed, onScopeDispose, ref, watch, type Ref } from 'vue'
 import { metricApi } from '../api'
-import { copy, errorText } from '@jetlinks-web-core/components/Metric/service'
-import { configurationObject, configurationSnapshot, encodeConfiguration, type ConfigurationFormat } from '@jetlinks-web-core/components/Metric/template/configurationText'
-import type { ValueTranslate } from '@jetlinks-web-core/components/Metric/valueSemantics'
+import { copy, errorText } from '../service'
+import { configurationObject, configurationSnapshot, encodeConfiguration, type ConfigurationFormat } from './configurationText'
+import type { ValueTranslate } from '../valueSemantics'
 import { captureTemplateExample, exampleFacts, templateAuthoring } from './templateAuthoring'
-import type { MetricApi, MetricCalculatorDescriptor, MetricAggregationDescriptor, MetricConfig, MetricSimulationRequest, MetricSimulationResponse, MetricTemplate, MetricTemplateCategory, MetricTemplateEntity, MetricTemplateStarter } from '@jetlinks-web-core/components/Metric/types'
+import type { MetricApi, MetricCalculatorDescriptor, MetricAggregationDescriptor, MetricConfig, MetricSimulationRequest, MetricSimulationResponse, MetricTemplate, MetricTemplateCategory, MetricTemplateEntity, MetricTemplateStarter } from '../types'
 
 const emptyTemplate = (withInput:boolean): MetricTemplate => ({
   id: '', version: '1', name: '', enabled: true, inputDefinitions: withInput ? [{id:'input1',presence:'required'}] : [], parameterDefinitions: [],

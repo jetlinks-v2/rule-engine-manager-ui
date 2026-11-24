@@ -11,7 +11,7 @@
     "test:alarm-agent": "node agentCapabilities/alarmAnalysis/visionSceneSearch.test.mjs && node agentCapabilities/alarmAnalysis/alarmData.test.mjs",
     "test:data-capabilities": "node dataCapabilities/dataCapabilities.test.mjs",
     "test:scene-notify": "node --test tests/sceneNotify.test.mjs",
-    "test:metric": "node --test --experimental-test-isolation=none --test-concurrency=1 tests/metric*.test.mjs"
+    "test:metric": "node scripts/run-metric-tests.mjs"
   },
   "repository": {
     "type": "git",
@@ -26,10 +26,14 @@
     "url": "https://github.com/jetlinks-v2/rule-engine-manager-ui/issues"
   },
   "homepage": "https://github.com/jetlinks-v2/rule-engine-manager-ui#readme",
+  "devDependencies": {
+    "mathlive": "0.110.0"
+  },
   "dependencies": {
     "cronstrue": "^2.50.0",
     "marked": "^14.1.1",
     "vue-echarts": "^7.0.3",
-    "@babel/parser": "7.29.8"
+    "@babel/parser": "7.29.8",
+    "yaml": "2.8.2"
   }
 }

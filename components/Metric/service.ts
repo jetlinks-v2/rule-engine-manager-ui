@@ -1,5 +1,6 @@
-import type { MetricApi, MetricConfig, MetricContext } from '@jetlinks-web-core/components/Metric/types'
-import { copy } from '@jetlinks-web-core/components/Metric/service'
+import type { MetricApi, MetricConfig, MetricContext } from './types'
+import { copy } from './resultService'
+export * from './resultService'
 
 /** 一次新增只生成一个稳定引用位置；保存/启用重试沿用服务端返回的配置。 */
 export function createConfig(context: MetricContext): MetricConfig {

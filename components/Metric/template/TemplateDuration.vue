@@ -10,10 +10,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
+import { metricMessages } from '../messages'
 import Editable from '@jetlinks-web-core/components/Editable/index.vue'
-import { durationSeconds } from '@jetlinks-web-core/components/Metric/template/window'
-import { durationUnitText } from '@jetlinks-web-core/components/Metric/template/durationPresentation'
+import { durationSeconds } from './window'
+import { durationUnitText } from './durationPresentation'
 const props = withDefaults(defineProps<{ modelValue?: string; disabled?: boolean; min?: number; emptyLabel?: string }>(), { min: 0 })
 const emit = defineEmits<{ (event: 'update:modelValue', value: string | undefined): void }>()
 const { t } = useI18n({ useScope: 'local', messages: metricMessages })

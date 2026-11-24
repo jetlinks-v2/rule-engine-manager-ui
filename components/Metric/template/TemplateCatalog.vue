@@ -28,7 +28,7 @@
 </template>
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
+import { metricMessages } from '../messages'
 import type { TemplateCatalogGroup, TemplateCatalogItem } from './templateCatalog'
 import TemplateOverview from './TemplateOverview.vue'
 defineProps<{ groups: TemplateCatalogGroup[]; flat?: boolean; reference?:boolean }>()

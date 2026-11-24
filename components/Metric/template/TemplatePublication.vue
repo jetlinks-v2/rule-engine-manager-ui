@@ -57,12 +57,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import { metricDateText as time } from '@jetlinks-web-core/components/Metric/time'
-import { useMetricResources } from '@jetlinks-web-core/components/Metric/extensions/useMetricResources'
-import MetricDisclosure from '@jetlinks-web-core/components/Metric/MetricDisclosure.vue'
+import { metricMessages } from '../messages'
+import { metricDateText as time } from '../time'
+import { useMetricResources } from '../extensions/useMetricResources'
+import MetricDisclosure from '../MetricDisclosure.vue'
 import { useTemplateReferenceLabels } from './useTemplateReferenceLabels'
-import type { MetricConfig, MetricTemplate, MetricTemplateEntity } from '@jetlinks-web-core/components/Metric/types'
+import type { MetricConfig, MetricTemplate, MetricTemplateEntity } from '../types'
 import type { useTemplateUpdates } from './useTemplateUpdates'
 const props = defineProps<{ template: MetricTemplate; entity?: MetricTemplateEntity; editable: boolean; pending: boolean; saving: boolean; updates: ReturnType<typeof useTemplateUpdates> }>()
 const emit = defineEmits<{ (event: 'release'): void }>()

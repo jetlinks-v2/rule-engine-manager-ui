@@ -23,13 +23,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import MetricExtension from '@jetlinks-web-core/components/Metric/extensions/MetricExtension.vue'
+import MetricExtension from './MetricExtension.vue'
 import SelectOption from '@jetlinks-web-core/components/SelectOption/index.vue'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import { metricOutputName } from '@jetlinks-web-core/components/Metric/presentation'
-import { outputId } from '@jetlinks-web-core/components/Metric/service'
-import { summaryMetricOutputs } from '@jetlinks-web-core/components/Metric/extensions/presentationSettings'
-import type { MetricPresentationProvider, MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
+import { metricMessages } from '../messages'
+import { metricOutputName } from '../presentation'
+import { outputId } from '../service'
+import { summaryMetricOutputs } from './presentationSettings'
+import type { MetricPresentationProvider, MetricTemplate } from '../types'
 const props = withDefaults(defineProps<{ modelValue: Readonly<Record<string, unknown>>; defaults?: Readonly<Record<string, unknown>>; disabled?: boolean; provider?: MetricPresentationProvider; template?: MetricTemplate }>(), { defaults: () => ({}) })
 const emit = defineEmits<{ (event: 'update:modelValue', value: Record<string, unknown>): void; (event: 'failed'): void }>()
 const { t } = useI18n({ useScope: 'local', messages: metricMessages })

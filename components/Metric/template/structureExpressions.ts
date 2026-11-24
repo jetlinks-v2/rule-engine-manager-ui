@@ -1,9 +1,9 @@
 import { parseExpression } from '@babel/parser'
 import type { ExpressionNode,StructuredExpression } from '@jetlinks-web-core/components/Expression/types'
-import type { MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
-import { formulaReferencePath,ruleFormulaReferences,type FormulaReference } from '@jetlinks-web-core/components/Metric/template/formula'
-import type { TemplateRule } from '@jetlinks-web-core/components/Metric/template/designer'
-import { metricValueLabels } from '@jetlinks-web-core/components/Metric/valueSemantics'
+import type { MetricTemplate } from '../types'
+import { formulaReferencePath,ruleFormulaReferences,type FormulaReference } from './formula'
+import type { TemplateRule } from './designer'
+import { metricValueLabels } from '../valueSemantics'
 
 type Syntax=ReturnType<typeof parseExpression>
 const operators:Record<string,string>={'+':'add','-':'subtract','*':'multiply','/':'divide','%':'mod','==':'eq','!=':'ne','>':'gt','>=':'ge','<':'lt','<=':'le'}

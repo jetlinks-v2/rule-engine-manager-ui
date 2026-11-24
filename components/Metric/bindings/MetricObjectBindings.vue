@@ -11,15 +11,15 @@
 import {computed,inject,provide,ref,watch,type ComponentPublicInstance} from 'vue'
 import {useI18n} from 'vue-i18n'
 import JlDrawerShell from '@jetlinks-web-core/components/JlDrawerShell/index.vue'
-import MetricResult from '@jetlinks-web-core/components/Metric/MetricResult.vue'
+import MetricResult from '../MetricResult.vue'
 import MetricBindingCard from './MetricBindingCard.vue'
 import {bindingMessages} from './messages'
 import {bindingHistoryKey,bindingSourceContext,useMetricBindingResults,type MetricBindingCard as BindingCard} from './useMetricBindingResults'
-import {metricHistoryKey,useMetricTrends,type MetricHistoryScope,type MetricTrendTarget} from '@jetlinks-web-core/components/Metric/useMetricTrends'
-import { metricResultKey } from '@jetlinks-web-core/components/Metric/service'
-import {tracksStateIntervals} from '@jetlinks-web-core/components/Metric/stateIntervals'
+import {metricHistoryKey,useMetricTrends,type MetricHistoryScope,type MetricTrendTarget} from '../useMetricTrends'
+import { metricResultKey } from '../service'
+import {tracksStateIntervals} from '../stateIntervals'
 import type {useMetricBindings} from './useMetricBindings'
-import type {MetricContext,MetricLatest,MetricObjectBinding,MetricReference,MetricWorkspaceSelection} from '@jetlinks-web-core/components/Metric/types'
+import type {MetricContext,MetricLatest,MetricObjectBinding,MetricReference,MetricWorkspaceSelection} from '../types'
 const props=defineProps<{context:MetricContext;state:ReturnType<typeof useMetricBindings>;managing?:boolean;exclude?:MetricReference[]}>()
 defineEmits<{(event:'manageLocation',value:MetricWorkspaceSelection):void}>()
 const {t,locale}=useI18n({useScope:'local',messages:bindingMessages})

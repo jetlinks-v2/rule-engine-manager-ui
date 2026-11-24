@@ -1,8 +1,8 @@
 import { computed, ref, shallowRef, watch, type Ref } from 'vue'
-import { useMetricResources } from '@jetlinks-web-core/components/Metric/extensions/useMetricResources'
-import { loadMetricObjectTypes } from '@jetlinks-web-core/components/Metric/api'
-import { errorText } from '@jetlinks-web-core/components/Metric/service'
-import type { MetricContext, MetricObjectSelection, MetricWorkspaceSelection } from '@jetlinks-web-core/components/Metric/types'
+import { useMetricResources } from '../extensions/useMetricResources'
+import { loadMetricObjectTypes } from '../api'
+import { errorText } from '../service'
+import type { MetricContext, MetricObjectSelection, MetricWorkspaceSelection } from '../types'
 
 type Memory = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 const memoryKey = (scope: string) => `metric-workspace:${scope}`

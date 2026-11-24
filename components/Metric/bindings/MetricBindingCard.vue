@@ -13,13 +13,13 @@
 <script setup lang="ts">
 import {computed} from 'vue'
 import {useI18n} from 'vue-i18n'
-import MetricCardShell from '@jetlinks-web-core/components/Metric/MetricCardShell.vue'
-import MetricCardContent from '@jetlinks-web-core/components/Metric/extensions/MetricCardContent.vue'
-import {metricConfigurationIcon} from '@jetlinks-web-core/components/Metric/extensions/presentationSettings'
-import type {MetricHistoryState} from '@jetlinks-web-core/components/Metric/useMetricTrends'
+import MetricCardShell from '../MetricCardShell.vue'
+import MetricCardContent from '../extensions/MetricCardContent.vue'
+import {metricConfigurationIcon} from '../extensions/presentationSettings'
+import type {MetricHistoryState} from '../useMetricTrends'
 import {bindingMessages} from './messages'
 import {bindingLocation,bindingSourceContext,type MetricBindingCard} from './useMetricBindingResults'
-import type {MetricContext,MetricObjectBinding,MetricObjectBindingView,MetricWorkspaceSelection} from '@jetlinks-web-core/components/Metric/types'
+import type {MetricContext,MetricObjectBinding,MetricObjectBindingView,MetricWorkspaceSelection} from '../types'
 const props=defineProps<{card:MetricBindingCard;context:MetricContext;managing?:boolean;busy?:boolean;history?:MetricHistoryState}>()
 const emit=defineEmits<{(event:'inspect',reference:MetricObjectBinding):void;(event:'remove',id:string):void;(event:'manageLocation',value:MetricWorkspaceSelection):void}>()
 const {t}=useI18n({useScope:'local',messages:bindingMessages})

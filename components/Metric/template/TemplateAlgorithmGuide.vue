@@ -41,8 +41,8 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CalculatorFormula from './CalculatorFormula.vue'
 import ExamplePlot from './ExamplePlot.vue'
-import type { MetricCalculatorDescriptor } from '@jetlinks-web-core/components/Metric/types'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
+import type { MetricCalculatorDescriptor } from '../types'
+import { metricMessages } from '../messages'
 import { algorithmGuideMessages } from './algorithmGuideMessages'
 
 const props = defineProps<{ descriptor?:Pick<MetricCalculatorDescriptor,'description'|'documentation'> & Partial<Pick<MetricCalculatorDescriptor,'configuration'|'inputNames'|'parameterDefinitions'>>; invalid?:boolean }>()

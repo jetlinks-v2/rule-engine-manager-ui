@@ -1,9 +1,9 @@
 import { computed, ref, watch, type Ref } from 'vue'
-import { copy } from '@jetlinks-web-core/components/Metric/service'
-import { nextNodeId, nodeKey, nodeList, type TemplateNode, type TemplateRule } from '@jetlinks-web-core/components/Metric/template/designer'
-import { templateMessages } from '@jetlinks-web-core/components/Metric/template/text'
+import { copy } from '../service'
+import { nextNodeId, nodeKey, nodeList, type TemplateNode, type TemplateRule } from './designer'
+import { templateMessages } from './text'
 import { inputIdentityIssue, referenceInputId, renameTemplateInput } from './inputIdentity'
-import type { MetricSourceSelection, MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
+import type { MetricSourceSelection, MetricTemplate } from '../types'
 
 /** 属性面板直接更新页面草稿；检查点只负责撤回当前项，不承担持久化。 */
 export function useTemplateDesigner(template: Ref<MetricTemplate>, disabled: Ref<boolean>, commit: (value: MetricTemplate) => void, onInputRename?:(previous:string,next:string)=>void, initialInput=false) {

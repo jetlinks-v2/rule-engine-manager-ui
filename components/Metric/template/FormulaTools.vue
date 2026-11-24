@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { editorMessages } from '@jetlinks-web-core/components/Expression/editorMessages'
-import { formulaPopupContainer } from '@jetlinks-web-core/components/Metric/template/formula'
+import { formulaPopupContainer } from './formula'
 defineProps<{disabled?:boolean;advanced:boolean;canAdvance:boolean}>()
 const emit=defineEmits<{(event:'advanced'):void;(event:'business'):void}>()
 const {t}=useI18n({useScope:'local',messages:editorMessages})

@@ -1,5 +1,5 @@
-import type { MetricTemplate, MetricTemplateCategory, MetricTemplateEntity, MetricTemplateStarter } from '@jetlinks-web-core/components/Metric/types'
-import { localizedTemplate } from '@jetlinks-web-core/components/Metric/template/text'
+import type { MetricTemplate, MetricTemplateCategory, MetricTemplateEntity, MetricTemplateStarter } from '../types'
+import { localizedTemplate } from './text'
 import { i18nText } from '@jetlinks-web-core/components/I18n/text'
 import type { ConditionFilterTerm } from '@jetlinks-web-core/components/ConditionFilter/types'
 

@@ -1,9 +1,9 @@
 import { computed, onActivated, onDeactivated, onMounted, onScopeDispose, ref, watch, type Ref } from 'vue'
 import { metricApi } from './api'
-import { copy, errorText, outputId, metricDataTarget, metricValueMatches, newerMetricValue } from '@jetlinks-web-core/components/Metric/service'
-import { loadMetricLatest, metricLatestBatches } from '@jetlinks-web-core/components/Metric/extensions/latestBatch'
-import { presentationSettings, primaryMetricOutput, summaryMetricOutputs } from '@jetlinks-web-core/components/Metric/extensions/presentationSettings'
-import type { MetricApi, MetricConfig, MetricContext, MetricLatest, MetricReference, MetricResultFrame, MetricRuntime, MetricTemplate, MetricValue } from '@jetlinks-web-core/components/Metric/types'
+import { copy, errorText, outputId, metricDataTarget, metricValueMatches, newerMetricValue } from './service'
+import { loadMetricLatest, metricLatestBatches } from './extensions/latestBatch'
+import { presentationSettings, primaryMetricOutput, summaryMetricOutputs } from './extensions/presentationSettings'
+import type { MetricApi, MetricConfig, MetricContext, MetricLatest, MetricReference, MetricResultFrame, MetricRuntime, MetricTemplate, MetricValue } from './types'
 
 const templateRevisionKey = (config: MetricConfig) => JSON.stringify([config.templateId, config.templateVersion, config.templateRevision || 1])
 

@@ -14,8 +14,8 @@ import { expressionReferences } from '@jetlinks-web-core/components/Expression/d
 import { useTemplateMathContext,type FormulaChange } from './useTemplateMathEditor'
 import type { StructuredExpression,ExpressionFunction } from '@jetlinks-web-core/components/Expression/types'
 import type { ExpressionResultLabel } from '@jetlinks-web-core/components/Expression/editor'
-import type { FormulaReference } from '@jetlinks-web-core/components/Metric/template/formula'
-import { formulaReferencePath } from '@jetlinks-web-core/components/Metric/template/formula'
+import type { FormulaReference } from './formula'
+import { formulaReferencePath } from './formula'
 import { templateReferenceKey } from './templateReference'
 const props=defineProps<{modelValue:string;tree?:StructuredExpression;references:FormulaReference[];disabled?:boolean;conditions?:boolean;functions?:ExpressionFunction[];functionsError?:boolean;forceSource?:boolean;hideMode?:boolean;empty?:boolean;resultLabels?:ExpressionResultLabel[]}>()
 const emit=defineEmits<{(event:'change',value:FormulaChange):void;(event:'invalid',value:boolean):void;(event:'retryFunctions'):void}>()

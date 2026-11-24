@@ -11,13 +11,13 @@
 import { computed, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import MetricDisplayFields from '../extensions/MetricDisplayFields.vue'
-import TemplateClause from '@jetlinks-web-core/components/Metric/template/TemplateClause.vue'
+import TemplateClause from './TemplateClause.vue'
 import SelectOption from '@jetlinks-web-core/components/SelectOption/index.vue'
-import { useMetricPresentation } from '@jetlinks-web-core/components/Metric/extensions/useMetricPresentation'
-import { DEFAULT_METRIC_PRESENTATION } from '@jetlinks-web-core/components/Metric/extensions/registry'
-import { normalizePresentation } from '@jetlinks-web-core/components/Metric/extensions/presentationSettings'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import type { MetricLabel, MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
+import { useMetricPresentation } from '../extensions/useMetricPresentation'
+import { DEFAULT_METRIC_PRESENTATION } from '../extensions/registry'
+import { normalizePresentation } from '../extensions/presentationSettings'
+import { metricMessages } from '../messages'
+import type { MetricLabel, MetricTemplate } from '../types'
 const props = defineProps<{ template: MetricTemplate; disabled?: boolean }>()
 const emit = defineEmits<{ (event: 'update:template', value: MetricTemplate): void; (event: 'failed'): void }>()
 const { t } = useI18n({ useScope: 'local', messages: metricMessages })

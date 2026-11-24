@@ -1,8 +1,8 @@
 import {computed,onScopeDispose,ref,shallowRef,watch,type Ref} from 'vue'
 import {useDiagnosticQuery} from '@jetlinks-web-core/hooks/useDiagnosticQuery'
 import { metricApi } from '../api'
-import { errorText } from '@jetlinks-web-core/components/Metric/service'
-import type {MetricApi,MetricContext,MetricObjectBinding,MetricObjectBindingPage,MetricSourcePicker} from '@jetlinks-web-core/components/Metric/types'
+import { errorText } from '../service'
+import type {MetricApi,MetricContext,MetricObjectBinding,MetricObjectBindingPage,MetricSourcePicker} from '../types'
 
 /** 对象切换使旧请求失效；关联只负责原宿主上的添加、移除和重新授权读取。 */
 export function useMetricBindings(context:Ref<MetricContext>,picker:Ref<MetricSourcePicker | undefined>,api:MetricApi=metricApi) {

@@ -22,9 +22,9 @@ import { useI18n } from 'vue-i18n'
 import IconLibrary from '@jetlinks-web-core/components/IconLibrary/index.vue'
 import InputEditable from '@jetlinks-web-core/components/Editable/InputEditable.vue'
 import I18nTextEditable from '@jetlinks-web-core/components/I18n/I18nTextEditable.vue'
-import { templateMessages } from '@jetlinks-web-core/components/Metric/template/text'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import type { MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
+import { templateMessages } from './text'
+import { metricMessages } from '../messages'
+import type { MetricTemplate } from '../types'
 const props = defineProps<{ template: MetricTemplate; disabled?: boolean; published?: boolean; revision?: number; pending?: boolean }>()
 const emit = defineEmits<{ (event: 'update:template', value: MetricTemplate): void }>()
 const { t } = useI18n({ useScope: 'local', messages: metricMessages })

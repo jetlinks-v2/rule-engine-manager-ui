@@ -1,9 +1,9 @@
 import { computed, onScopeDispose, ref, watch, type Ref } from 'vue'
 import { metricApi } from './api'
-import { copy, errorText } from '@jetlinks-web-core/components/Metric/service'
+import { copy, errorText } from './service'
 import { useTemplateSimulation } from './template/useTemplateSimulation'
-import { addSimulationSample, type SimulationFacts } from '@jetlinks-web-core/components/Metric/template/simulation'
-import type { MetricApi, MetricConfig, MetricSimulationResponse, MetricTemplate, MetricValue } from '@jetlinks-web-core/components/Metric/types'
+import { addSimulationSample, type SimulationFacts } from './template/simulation'
+import type { MetricApi, MetricConfig, MetricSimulationResponse, MetricTemplate, MetricValue } from './types'
 
 /** 业务试算只提交固定模板引用与显式样本；过程展示复用模板试算的索引与虚拟时钟。 */
 export function useMetricConfigTrial(template:Ref<MetricTemplate | undefined>, configuration:Ref<MetricConfig>, editable:Ref<boolean>, api:Pick<MetricApi,'simulateConfig'> = metricApi, ready:() => boolean = () => true) {

@@ -5,9 +5,9 @@ import { relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { sourceRoot, createMetricLoader } from './helpers/metricRuntime.mjs'
+import { platformSources, platformRoot, createMetricLoader } from './helpers/metricRuntime.mjs'
 
-const { setupNamePlugin } = createMetricLoader()('../configs/plugin/setup-name.ts')
+const { setupNamePlugin } = createMetricLoader()(resolve(platformRoot,'configs/plugin/setup-name.ts'))
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const metricRoot = resolve(root, 'components/Metric')
 const collect = async directory => (await Promise.all((await readdir(directory, { withFileTypes: true })).map(item => item.isDirectory() ? collect(resolve(directory, item.name)) : resolve(directory, item.name)))).flat()
@@ -16,7 +16,7 @@ test('指标SFC通过生产相同setup-name-support预编译及Vue插件链', as
   const server = await createServer({
     configFile: false, root, logLevel: 'silent',
     plugins: [setupNamePlugin(), vue()],
-    resolve: { alias: { '@jetlinks-web-core': sourceRoot } },
+    resolve: { alias: { '@jetlinks-web-core': platformSources, '@rule-engine-manager-ui':root } },
     server: { middlewareMode: true, preTransformRequests: false, watch: null },
     optimizeDeps: { noDiscovery: true, include: [] },
   })

@@ -1,9 +1,9 @@
 import { computed, reactive, ref, watch, type Ref } from 'vue'
-import type { MetricSimulationResponse, MetricTemplate, MetricValue } from '@jetlinks-web-core/components/Metric/types'
-import { nodeKey, nodeList } from '@jetlinks-web-core/components/Metric/template/designer'
-import { configurationObject, encodeConfiguration, type ConfigurationFormat } from '@jetlinks-web-core/components/Metric/template/configurationText'
-import { addSimulationSample, patchSimulationSample, visualSamples, type SimulationFacts } from '@jetlinks-web-core/components/Metric/template/simulation'
-import { simulationIndex, simulationNodeAt, type SimulationPreview } from '@jetlinks-web-core/components/Metric/template/simulationPreview'
+import type { MetricSimulationResponse, MetricTemplate, MetricValue } from '../types'
+import { nodeKey, nodeList } from './designer'
+import { configurationObject, encodeConfiguration, type ConfigurationFormat } from './configurationText'
+import { addSimulationSample, patchSimulationSample, visualSamples, type SimulationFacts } from './simulation'
+import { simulationIndex, simulationNodeAt, type SimulationPreview } from './simulationPreview'
 import { useAutoSimulation } from './useAutoSimulation'
 
 /** 当前编辑会话的样本与观察游标；请求、模板保存及结果失效仍由 useMetricTemplates 负责。 */

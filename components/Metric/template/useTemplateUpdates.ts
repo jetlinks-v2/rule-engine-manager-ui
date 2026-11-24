@@ -1,7 +1,7 @@
 import { onScopeDispose, ref, watch, type Ref } from 'vue'
 import { metricApi } from '../api'
-import { errorText } from '@jetlinks-web-core/components/Metric/service'
-import type { MetricApi, MetricConfig, MetricTemplateEntity, MetricTemplateRevision } from '@jetlinks-web-core/components/Metric/types'
+import { errorText } from '../service'
+import type { MetricApi, MetricConfig, MetricTemplateEntity, MetricTemplateRevision } from '../types'
 
 /** 发布修订按配置应用；每份配置沿用现有保存/CAS/装载反馈，不引入另一套批量执行器。 */
 export function useTemplateUpdates(entity: Ref<MetricTemplateEntity | undefined>, editable: Ref<boolean>, api: MetricApi = metricApi) {

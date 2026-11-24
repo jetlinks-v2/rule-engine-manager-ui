@@ -12,7 +12,7 @@ const { graphNodeSummary } = load('components/Metric/template/graphPresentation.
 const { simulationSteps, simulationOperation } = load('components/Metric/template/simulationFlow.ts')
 const { resolveMetricResultType } = load('components/Metric/template/resultTypes.ts')
 // 由后端 MetricAggregationDescriptorTest 的真实目录输出生成。
-const catalog = JSON.parse(readFileSync(resolve(sourceRoot,'../tests/fixtures/metricAggregations.json'),'utf8'))
+const catalog = JSON.parse(readFileSync(new URL('./fixtures/metricAggregations.json',import.meta.url),'utf8'))
 const t = key => key
 const template = rule => ({id:'stats',version:'1',name:'Statistics',inputDefinitions:[{id:'reading',valueType:{type:'double'}}],definitions:[rule],outputs:[],parameterDefinitions:[]})
 

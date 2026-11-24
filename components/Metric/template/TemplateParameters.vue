@@ -9,7 +9,7 @@
       <template #state><button type="button" class="metric-parameters__permission" :disabled="disabled || published" @click="setEditable(index)"><AIcon :type="parameter.expands?.editable ? 'UserOutlined' : 'LockOutlined'" />{{ t(parameter.expands?.editable ? 'parameterAdjustable' : 'parameterFixed') }}</button></template>
       <template #description><I18nTextEditable :value="parameter.description" :field="`parameter.${parameter.id}.description`" :label="t('parameterPurpose')" :placeholder="t('parameterPurposePlaceholder')" :disabled="disabled" :i18n-messages="templateMessages(template)" @change="setText(index, 'description', $event)" /></template>
       <div v-if="references.get(parameter.id)?.length" class="metric-parameters__references"><span>{{ t('parameterUsedBy') }}</span><TemplateReference v-for="rule in references.get(parameter.id)" :key="rule.id" :metric-id="rule.id" locatable>{{ rule.label }}</TemplateReference></div>
-      <TemplateParameterSettings :parameter="parameter" :messages="templateMessages(template)" :disabled="disabled" :published="published" @patch="(fields, messages) => parameterField(index, fields, messages)" />
+      <TemplateParameterSettings :parameter="parameter" :messages="templateMessages(template)" :disabled="disabled" :published="published" @patch="(fields:Partial<MetricParameter>, messages?:I18nMessages) => parameterField(index, fields, messages)" />
     </MetricParameterBlock>
     <a-dropdown v-if="!disabled && !published" :trigger="['click']">
       <a-button type="text" size="small"><AIcon type="PlusOutlined" />{{ t('parameterAdd') }}</a-button>
@@ -23,15 +23,15 @@ import { useI18n } from 'vue-i18n'
 import MetricParameterBlock from '../MetricParameterBlock.vue'
 import Editable from '@jetlinks-web-core/components/Editable/index.vue'
 import SelectOption from '@jetlinks-web-core/components/SelectOption/index.vue'
-import { parameterTypeKeys } from '@jetlinks-web-core/components/Metric/parameterPresentation'
+import { parameterTypeKeys } from '../parameterPresentation'
 import I18nTextEditable from '@jetlinks-web-core/components/I18n/I18nTextEditable.vue'
 import type { I18nMessages } from '@jetlinks-web-core/components/I18n/types'
 import TemplateParameterSettings from './TemplateParameterSettings.vue'
 import TemplateReference from './TemplateReference.vue'
-import { localizedTemplate, templateMessages } from '@jetlinks-web-core/components/Metric/template/text'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
+import { localizedTemplate, templateMessages } from './text'
+import { metricMessages } from '../messages'
 import { removeTemplateParameter, templateParameterDefault, templateParameterReferences, updateTemplateParameter } from './parameters'
-import type { MetricParameter, MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
+import type { MetricParameter, MetricTemplate } from '../types'
 const props = defineProps<{ template: MetricTemplate; disabled?: boolean; published?: boolean }>()
 const emit = defineEmits<{ (event: 'update:template', template: MetricTemplate): void }>()
 const { t, locale } = useI18n({ useScope: 'local', messages: metricMessages })

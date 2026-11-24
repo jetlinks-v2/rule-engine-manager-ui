@@ -1,9 +1,9 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { i18nText } from '@jetlinks-web-core/components/I18n/text'
-import { metricValueLabels, schemaValueLabels, semanticValueText, type ValueTranslate } from '@jetlinks-web-core/components/Metric/valueSemantics'
-import type { MetricStateLabel, MetricTemplate, MetricTemplateInput } from '@jetlinks-web-core/components/Metric/types'
+import { metricValueLabels, schemaValueLabels, semanticValueText, type ValueTranslate } from '../valueSemantics'
+import type { MetricStateLabel, MetricTemplate, MetricTemplateInput } from '../types'
 import type Editable from '@jetlinks-web-core/components/Editable/index.vue'
-import { parameterConstraints } from '@jetlinks-web-core/components/Metric/parameterPresentation'
+import { parameterConstraints } from '../parameterPresentation'
 
 /** 共享图内／时间轴的状态候选与异常样本入口；始终发出原始标量类型。 */
 export function useSampleValue(props:{ input:MetricTemplateInput; value:unknown; template?:MetricTemplate; disabled?:boolean },

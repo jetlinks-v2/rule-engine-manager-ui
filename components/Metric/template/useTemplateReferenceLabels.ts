@@ -1,5 +1,5 @@
 import { computed, ref, watch, onScopeDispose, type Ref } from 'vue'
-import type { MetricConfig, MetricDimensionProvider } from '@jetlinks-web-core/components/Metric/types'
+import type { MetricConfig, MetricDimensionProvider } from '../types'
 
 /** 名称仅归当前可见引用所有；按业务类型批量读取，旧请求不能回填另一模板或已卸载视图。 */
 export function useTemplateReferenceLabels(references: Ref<MetricConfig[]>, dimensions: Ref<MetricDimensionProvider[]>) {

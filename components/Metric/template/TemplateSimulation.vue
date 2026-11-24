@@ -36,11 +36,11 @@ import { useI18n } from 'vue-i18n'
 import MonacoEditor from '@jetlinks-web-core/components/MonacoEditor/monacoEditor.vue'
 import TemplateSampleEditor from './TemplateSampleEditor.vue'
 import TemplateSimulationDetail from './TemplateSimulationDetail.vue'
-import { nodeKey, type TemplateNode } from '@jetlinks-web-core/components/Metric/template/designer'
-import { sampleDate } from '@jetlinks-web-core/components/Metric/template/simulation'
+import { nodeKey, type TemplateNode } from './designer'
+import { sampleDate } from './simulation'
 import type { TemplateSimulationState } from './useTemplateSimulation'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import type { MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
+import { metricMessages } from '../messages'
+import type { MetricTemplate } from '../types'
 const props = withDefaults(defineProps<{ template:MetricTemplate; trial:TemplateSimulationState; selected?:TemplateNode; error?:string; disabled?:boolean; allowAdvanced?:boolean }>(), { allowAdvanced:true })
 const { t } = useI18n({ useScope:'local', messages:metricMessages })
 const samplesSection = ref<HTMLDetailsElement>()

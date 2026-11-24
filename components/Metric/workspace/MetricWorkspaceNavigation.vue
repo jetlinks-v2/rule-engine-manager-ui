@@ -16,9 +16,9 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import SelectOption from '@jetlinks-web-core/components/SelectOption/index.vue'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import type { RegisteredMetricDimension } from '@jetlinks-web-core/components/Metric/extensions/registry'
-import type { MetricLabel, MetricObjectSelection, MetricSelectionOrigin, MetricWorkspaceSelection } from '@jetlinks-web-core/components/Metric/types'
+import { metricMessages } from '../messages'
+import type { RegisteredMetricDimension } from '../extensions/registry'
+import type { MetricLabel, MetricObjectSelection, MetricSelectionOrigin, MetricWorkspaceSelection } from '../types'
 defineProps<{ scopeKey: string; dimensions: RegisteredMetricDimension[]; dimension?: RegisteredMetricDimension; selection?: MetricWorkspaceSelection }>()
 const emit = defineEmits<{ (event: 'dimension', value: string): void; (event: 'select', value?: MetricObjectSelection, origin?: MetricSelectionOrigin): void }>()
 const { t } = useI18n({ useScope: 'local', messages: metricMessages })

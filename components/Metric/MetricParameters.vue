@@ -12,8 +12,8 @@
 import { useI18n } from 'vue-i18n'
 import { computed, ref, watch } from 'vue'
 import MetricParameterBlock from './MetricParameterBlock.vue'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import type { MetricParameter } from '@jetlinks-web-core/components/Metric/types'
+import { metricMessages } from './messages'
+import type { MetricParameter } from './types'
 const props = defineProps<{ definitions: MetricParameter[]; values: Record<string, unknown>; defaults: Record<string, unknown>; disabled?:boolean }>()
 const emit = defineEmits<{ (event: 'change', id: string, value: unknown): void; (event:'reset', id:string):void }>()
 const { t } = useI18n({ useScope: 'local', messages: metricMessages })

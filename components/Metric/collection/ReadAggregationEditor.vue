@@ -18,11 +18,11 @@
 import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Editable from '@jetlinks-web-core/components/Editable/index.vue'
-import TemplateClause from '@jetlinks-web-core/components/Metric/template/TemplateClause.vue'
-import { collectionMessages } from '@jetlinks-web-core/components/Metric/collection/messages'
-import { compatibleReadOperations, readPolicy, readOperationPresentation, suggestedReadSemantic, supportedReadSemantics, updateReadPolicy } from '@jetlinks-web-core/components/Metric/collection/aggregationPolicy'
-import type { MetricTemplateOutput } from '@jetlinks-web-core/components/Metric/types'
-import type { MetricReadAggregation, ReadOperation, ReadSemantic } from '@jetlinks-web-core/components/Metric/collection/types'
+import TemplateClause from '../template/TemplateClause.vue'
+import { collectionMessages } from './messages'
+import { compatibleReadOperations, readPolicy, readOperationPresentation, suggestedReadSemantic, supportedReadSemantics, updateReadPolicy } from './aggregationPolicy'
+import type { MetricTemplateOutput } from '../types'
+import type { MetricReadAggregation, ReadOperation, ReadSemantic } from './types'
 const props = defineProps<{ output:MetricTemplateOutput; disabled?:boolean }>()
 const emit = defineEmits<{ (event:'patch', value:Record<string,unknown>):void; (event:'invalid', value:boolean):void }>()
 const { t } = useI18n({ useScope:'local', messages:collectionMessages })

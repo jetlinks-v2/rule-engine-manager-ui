@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { inject, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
+import { metricMessages } from '../messages'
 import { templateReferenceKey } from './templateReference'
 const props = defineProps<{ metricId?: string; locatable?: boolean }>()
 const context = inject(templateReferenceKey, undefined)

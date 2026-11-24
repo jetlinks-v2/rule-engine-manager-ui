@@ -36,9 +36,9 @@ import { useI18n } from 'vue-i18n'
 import TemplateSampleValue from './TemplateSampleValue.vue'
 import SelectOption from '@jetlinks-web-core/components/SelectOption/index.vue'
 import TemplateReference from './TemplateReference.vue'
-import { sampleInput, sampleInputs, sampleExecutionTime, sampleDate, addSimulationSample, patchSimulationSample, type SimulationFacts, type SimulationSample } from '@jetlinks-web-core/components/Metric/template/simulation'
-import type { MetricTemplate, MetricTemplateInput } from '@jetlinks-web-core/components/Metric/types'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
+import { sampleInput, sampleInputs, sampleExecutionTime, sampleDate, addSimulationSample, patchSimulationSample, type SimulationFacts, type SimulationSample } from './simulation'
+import type { MetricTemplate, MetricTemplateInput } from '../types'
+import { metricMessages } from '../messages'
 const props = defineProps<{ template:MetricTemplate; facts:SimulationFacts; loading?:boolean; times?:number[]; selectedTime?:number; selectedInput?:string }>()
 const emit = defineEmits<{ (event:'change', facts:SimulationFacts):void; (event:'invalid', value:boolean):void; (event:'select-time', time:number):void; (event:'clear-input'):void }>()
 const { t } = useI18n({ useScope:'local', messages:metricMessages })

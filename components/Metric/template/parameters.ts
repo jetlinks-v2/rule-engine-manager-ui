@@ -1,8 +1,8 @@
-import type { MetricParameter, MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
-import { parameterEnumField, templateMessages } from '@jetlinks-web-core/components/Metric/template/text'
-import { parameterElements } from '@jetlinks-web-core/components/Metric/parameterPresentation'
-import { expressionParameters } from '@jetlinks-web-core/components/Metric/template/expressionTokens'
-import {ruleExpression,type TemplateRule} from '@jetlinks-web-core/components/Metric/template/designer'
+import type { MetricParameter, MetricTemplate } from '../types'
+import { parameterEnumField, templateMessages } from './text'
+import { parameterElements } from '../parameterPresentation'
+import { expressionParameters } from './expressionTokens'
+import {ruleExpression,type TemplateRule} from './designer'
 
 function messageFields(parameter:MetricParameter) {
   return [`parameter.${parameter.id}.name`, `parameter.${parameter.id}.description`, ...parameterElements(parameter).map(item => parameterEnumField(parameter.id, item.value))]

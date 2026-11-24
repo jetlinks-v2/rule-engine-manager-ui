@@ -8,15 +8,15 @@ const root = new URL('../', import.meta.url)
 const files = directory => readdirSync(directory, { withFileTypes:true }).flatMap(entry => entry.isDirectory()
   ? files(resolve(directory,entry.name)) : [resolve(directory,entry.name)])
 
-test('core metric rendering and query imports stay independent of management implementation', () => {
-  const core = resolve(sourceRoot,'components/Metric')
-  for (const file of files(core).filter(file => /\.(ts|vue)$/.test(file))) {
-    const source = readFileSync(file,'utf8')
-    assert.doesNotMatch(source,/from\s*['"][^'"]*(?:rule-engine-manager-ui|useMetricEditor|useTemplateMathEditor|MetricWorkspace|TemplateDesigner)/,file)
+test('metric implementation and HTTP belong to the rule module while core stays generic', () => {
+  const platform = process.env.JETLINKS_WEB_CORE_ROOT || resolve(sourceRoot,'../../jetlinks-web-core')
+  assert.equal(existsSync(resolve(platform,'src/components/Metric')),false)
+  assert.doesNotMatch(readFileSync(resolve(platform,'src/types/module.ts'),'utf8'),/components\/Metric|metricDimensions|metricPresentations/)
+  for (const file of files(resolve(sourceRoot,'components/Metric')).filter(file => /\.(ts|vue)$/.test(file))) {
+    assert.doesNotMatch(readFileSync(file,'utf8'),/@jetlinks-web-core\/components\/Metric|\/ontology\//,file)
   }
-  assert.equal(existsSync(resolve(core,'MetricConfigEditor.vue')),false)
-  assert.equal(existsSync(resolve(core,'workspace/MetricWorkspace.vue')),false)
-  assert.doesNotMatch(readFileSync(resolve(core,'api.ts'),'utf8'),/\b(?:saveConfig|removeConfig|saveTemplate|releaseTemplate|simulateConfig|simulate):/)
+  assert.match(readFileSync(resolve(sourceRoot,'components/Metric/api.ts'),'utf8'),/saveConfig:/)
+  assert.match(readFileSync(resolve(sourceRoot,'components/Metric/readApi.ts'),'utf8'),/\/metric\/configs\/sources\/types/)
 })
 
 test('management routes and the public object panel load their owning module', () => {

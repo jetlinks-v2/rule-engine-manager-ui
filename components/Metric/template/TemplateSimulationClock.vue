@@ -7,8 +7,8 @@
 </template>
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import { sampleDate } from '@jetlinks-web-core/components/Metric/template/simulation'
+import { metricMessages } from '../messages'
+import { sampleDate } from './simulation'
 import type { TemplateSimulationState } from './useTemplateSimulation'
 defineProps<{ trial:TemplateSimulationState }>()
 const { t } = useI18n({ useScope:'local', messages:metricMessages })

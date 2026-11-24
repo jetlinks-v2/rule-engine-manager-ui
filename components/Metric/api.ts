@@ -1,7 +1,8 @@
 import { request, type Request } from '@jetlinks-web/core'
 import { parseJsonResponseWithPrecision } from '@jetlinks-web-core/utils/json'
-import { metricApi as readApi } from '@jetlinks-web-core/components/Metric/api'
-import type { MetricApi, MetricConfig, MetricTemplate, MetricTemplateEntity, MetricTemplateRevision, MetricSimulationResponse } from '@jetlinks-web-core/components/Metric/types'
+import { metricApi as readApi } from './readApi'
+export * from './readApi'
+import type { MetricApi, MetricConfig, MetricTemplate, MetricTemplateEntity, MetricTemplateRevision, MetricSimulationResponse } from './types'
 
 const options = { hiddenError: true, transformResponse: [parseJsonResponseWithPrecision] }
 const http: Pick<Request, 'get' | 'post' | 'put' | 'remove'> = request
@@ -13,7 +14,7 @@ function result<T>(response: { result: T; status?: number; message?: string }): 
 /** 管理请求复用平台传输和授权上下文；结果查询由 core 提供。 */
 export const metricApi: MetricApi = {
   ...readApi,
-  bindObjectMetric: async binding => result(await http.post<import('@jetlinks-web-core/components/Metric/types').MetricObjectBindingView>('/metric/bindings', binding, options)),
+  bindObjectMetric: async binding => result(await http.post<import('./types').MetricObjectBindingView>('/metric/bindings', binding, options)),
   unbindObjectMetric: async (type, objectId, bindingId) => { result(await http.remove(`/metric/bindings/${id(type)}/${id(objectId)}/${id(bindingId)}`, undefined, options)) },
   simulateConfig: async simulation => result(await http.post<MetricSimulationResponse>('/metric/configs/simulate', simulation, options)),
   selectable: async () => result(await http.get<MetricTemplateEntity[]>('/metric/configs/templates', undefined, options)),

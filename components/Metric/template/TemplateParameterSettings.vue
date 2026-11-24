@@ -22,10 +22,10 @@ import { useI18n } from 'vue-i18n'
 import Editable from '@jetlinks-web-core/components/Editable/index.vue'
 import I18nTextEditable from '@jetlinks-web-core/components/I18n/I18nTextEditable.vue'
 import type { I18nMessages } from '@jetlinks-web-core/components/I18n/types'
-import { numericParameter, parameterElements } from '@jetlinks-web-core/components/Metric/parameterPresentation'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import { parameterEnumField } from '@jetlinks-web-core/components/Metric/template/text'
-import type { MetricParameter } from '@jetlinks-web-core/components/Metric/types'
+import { numericParameter, parameterElements } from '../parameterPresentation'
+import { metricMessages } from '../messages'
+import { parameterEnumField } from './text'
+import type { MetricParameter } from '../types'
 const props = defineProps<{ parameter:MetricParameter; messages:I18nMessages; disabled?:boolean; published?:boolean }>()
 const emit = defineEmits<{ (event:'patch', fields:Partial<MetricParameter>, messages?:I18nMessages):void }>()
 const { t } = useI18n({ useScope:'local', messages:metricMessages })

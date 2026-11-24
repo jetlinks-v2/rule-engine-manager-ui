@@ -1,4 +1,4 @@
-import type { MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
+import type { MetricTemplate } from '../types'
 
 /** 下拉只投影已有来源信息，不改变引用编码或计算依赖。 */
 export function referenceChoice(template: MetricTemplate, item: { id:string; label:string }, t: (key:string) => string) {

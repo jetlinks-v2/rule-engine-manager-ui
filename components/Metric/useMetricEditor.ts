@@ -1,12 +1,12 @@
 import { computed, onScopeDispose, ref, watch, type Ref } from 'vue'
 import { metricApi } from './api'
 import { createConfig, MetricActivationError, saveAndActivate } from './service'
-import { copy, editableParameters, errorText, parameterOverrides, templateKey } from '@jetlinks-web-core/components/Metric/service'
-import { useMetricPresentation } from '@jetlinks-web-core/components/Metric/extensions/useMetricPresentation'
-import { normalizePresentation } from '@jetlinks-web-core/components/Metric/extensions/presentationSettings'
+import { copy, editableParameters, errorText, parameterOverrides, templateKey } from './service'
+import { useMetricPresentation } from './extensions/useMetricPresentation'
+import { normalizePresentation } from './extensions/presentationSettings'
 import { sourceScheduleMissing, supportsSnapshotSource } from './sourcePolicy'
-import { metricSourceHasInputConstraint } from '@jetlinks-web-core/components/Metric/sourceSchema'
-import type { MetricApi, MetricConfig, MetricContext, MetricSourceDescription, MetricSourcePicker, MetricTemplateCategory, MetricTemplateEntity, MetricTemplateInput } from '@jetlinks-web-core/components/Metric/types'
+import { metricSourceHasInputConstraint } from './sourceSchema'
+import type { MetricApi, MetricConfig, MetricContext, MetricSourceDescription, MetricSourcePicker, MetricTemplateCategory, MetricTemplateEntity, MetricTemplateInput } from './types'
 
 export function useMetricEditor(
   context: Ref<MetricContext>, initial: Ref<MetricConfig | undefined>,

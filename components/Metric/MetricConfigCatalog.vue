@@ -17,10 +17,10 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import TemplateOverview from './template/TemplateOverview.vue'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import { templateKey } from '@jetlinks-web-core/components/Metric/service'
-import { metricOutputName } from '@jetlinks-web-core/components/Metric/presentation'
-import type { MetricTemplateCategory, MetricTemplateEntity } from '@jetlinks-web-core/components/Metric/types'
+import { metricMessages } from './messages'
+import { templateKey } from './service'
+import { metricOutputName } from './presentation'
+import type { MetricTemplateCategory, MetricTemplateEntity } from './types'
 const props = defineProps<{ templates:MetricTemplateEntity[]; categories:MetricTemplateCategory[] }>()
 const emit = defineEmits<{ (event:'select', key:string):void }>()
 const { t } = useI18n({ useScope:'local', messages:metricMessages })

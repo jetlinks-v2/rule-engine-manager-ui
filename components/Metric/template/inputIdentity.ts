@@ -1,6 +1,6 @@
-import { copy } from '@jetlinks-web-core/components/Metric/service'
-import { ruleDependencies, type TemplateRule } from '@jetlinks-web-core/components/Metric/template/designer'
-import type { MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
+import { copy } from '../service'
+import { ruleDependencies, type TemplateRule } from './designer'
+import type { MetricTemplate } from '../types'
 import type { ExpressionNode, StructuredExpression } from '@jetlinks-web-core/components/Expression/types'
 
 const alias = (id:string) => id.replace(/[^a-zA-Z0-9_]/g, '_')

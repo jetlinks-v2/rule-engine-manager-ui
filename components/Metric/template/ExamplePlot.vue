@@ -25,7 +25,7 @@
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { MetricCalculatorDocumentation } from '@jetlinks-web-core/components/Metric/types'
+import type { MetricCalculatorDocumentation } from '../types'
 type Visualization = NonNullable<MetricCalculatorDocumentation['examples'][number]['visualization']>
 const props = defineProps<{ plot:Visualization; label:string }>()
 // 只投影后端算例坐标，不拟合、插值或计算结果。

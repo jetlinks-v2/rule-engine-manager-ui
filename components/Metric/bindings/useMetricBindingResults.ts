@@ -1,11 +1,11 @@
 import {computed,watch,type Ref} from 'vue'
 import {useDiagnosticQuery} from '@jetlinks-web-core/hooks/useDiagnosticQuery'
 import { metricApi } from '../api'
-import {collectMetricResources} from '@jetlinks-web-core/components/Metric/extensions/registry'
-import {metricOutputName} from '@jetlinks-web-core/components/Metric/presentation'
-import {localizedTemplate} from '@jetlinks-web-core/components/Metric/template/text'
-import { metricValueMatches, newerMetricValue } from '@jetlinks-web-core/components/Metric/service'
-import type {MetricApi,MetricConfig,MetricContext,MetricLatest,MetricObjectBindingView,MetricResultFrame,MetricTemplate,MetricTemplateOutput,MetricValue} from '@jetlinks-web-core/components/Metric/types'
+import {collectMetricResources} from '../extensions/registry'
+import {metricOutputName} from '../presentation'
+import {localizedTemplate} from '../template/text'
+import { metricValueMatches, newerMetricValue } from '../service'
+import type {MetricApi,MetricConfig,MetricContext,MetricLatest,MetricObjectBindingView,MetricResultFrame,MetricTemplate,MetricTemplateOutput,MetricValue} from '../types'
 
 export interface MetricBindingCard {
   key:string; links:MetricObjectBindingView[]; title:string; source?:string; locations:Record<string,string>

@@ -4,7 +4,7 @@ import type { ExpressionFunction,StructuredExpression } from '@jetlinks-web-core
 import type { ExpressionResultLabel } from '@jetlinks-web-core/components/Expression/editor'
 import type { MathEditorProps } from '@jetlinks-web-core/components/Expression/useMathEditor'
 import { expressionText } from '@jetlinks-web-core/components/Expression/display'
-import { expressionToTree,formulaReferencePath,templateExpressionReferences,type FormulaReference } from '@jetlinks-web-core/components/Metric/template/formula'
+import { expressionToTree,formulaReferencePath,templateExpressionReferences,type FormulaReference } from './formula'
 import { referenceKey } from '@jetlinks-web-core/components/Expression/document'
 
 export interface TemplateMathEditorProps { modelValue:string; tree?:StructuredExpression; references:FormulaReference[]; disabled?:boolean; conditions?:boolean; functions?:ExpressionFunction[]; functionsError?:boolean; forceSource?:boolean; hideMode?:boolean; empty?:boolean; resultLabels?:ExpressionResultLabel[] }

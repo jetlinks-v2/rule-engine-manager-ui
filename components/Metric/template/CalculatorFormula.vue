@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import LatexView from '@jetlinks-web-core/components/Expression/LatexView.vue'
-import type { MetricCalculatorDocumentation } from '@jetlinks-web-core/components/Metric/types'
+import type { MetricCalculatorDocumentation } from '../types'
 import { algorithmGuideMessages } from './algorithmGuideMessages'
 defineProps<{ formula:string; description?:string; symbols?:MetricCalculatorDocumentation['symbols'] }>()
 const { t } = useI18n({ useScope:'local', messages:algorithmGuideMessages })

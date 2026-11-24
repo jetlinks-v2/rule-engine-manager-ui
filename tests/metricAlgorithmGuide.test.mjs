@@ -25,7 +25,7 @@ function mount(descriptor,invalid=false) {
 }
 
 test('真实后端描述的所有公式和符号均能由共享 MathLive 排版',async()=>{
-  const {convertLatexToMarkup}=await import(pathToFileURL(resolve(sourceRoot,'../node_modules/mathlive/mathlive-ssr.min.mjs')).href)
+  const {convertLatexToMarkup}=await import(import.meta.resolve('mathlive/ssr'))
   assert.equal(descriptors.length,32)
   assert.equal(descriptors.flatMap(item=>item.documentation.examples).length,39)
   for(const descriptor of descriptors) {

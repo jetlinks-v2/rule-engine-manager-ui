@@ -26,9 +26,9 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Editable from '@jetlinks-web-core/components/Editable/index.vue'
-import MetricParameterValue from '@jetlinks-web-core/components/Metric/MetricParameterValue.vue'
-import { metricTypeOptions } from '@jetlinks-web-core/components/Metric/parameterPresentation'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
+import MetricParameterValue from '../MetricParameterValue.vue'
+import { metricTypeOptions } from '../parameterPresentation'
+import { metricMessages } from '../messages'
 const props = defineProps<{modelValue?:Record<string,unknown>;disabled?:boolean;unitEditable?:boolean;hideTypeLabel?:boolean}>()
 const emit = defineEmits<{(event:'update:modelValue',value:Record<string,unknown>):void}>()
 const {t} = useI18n({useScope:'local',messages:metricMessages})

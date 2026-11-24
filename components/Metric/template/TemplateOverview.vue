@@ -22,10 +22,10 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import type { MetricTemplate } from '@jetlinks-web-core/components/Metric/types'
-import { templateGraph, templateGraphLayout as layout } from '@jetlinks-web-core/components/Metric/template/designer'
-import { graphNodeSummary } from '@jetlinks-web-core/components/Metric/template/graphPresentation'
+import { metricMessages } from '../messages'
+import type { MetricTemplate } from '../types'
+import { templateGraph, templateGraphLayout as layout } from './designer'
+import { graphNodeSummary } from './graphPresentation'
 const props = defineProps<{ template: MetricTemplate }>()
 const { t } = useI18n({ useScope: 'local', messages: metricMessages })
 const id = useId()

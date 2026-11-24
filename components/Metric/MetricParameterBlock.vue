@@ -23,10 +23,10 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import MetricParameterValue from '@jetlinks-web-core/components/Metric/MetricParameterValue.vue'
-import { numericParameter, parameterConstraints, parameterRange, parameterTypeKeys, parameterValueText } from '@jetlinks-web-core/components/Metric/parameterPresentation'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import type { MetricParameter } from '@jetlinks-web-core/components/Metric/types'
+import MetricParameterValue from './MetricParameterValue.vue'
+import { numericParameter, parameterConstraints, parameterRange, parameterTypeKeys, parameterValueText } from './parameterPresentation'
+import { metricMessages } from './messages'
+import type { MetricParameter } from './types'
 const props = withDefaults(defineProps<{ parameter: MetricParameter; value: unknown; valueLabel: string; disabled?: boolean; expanded?: boolean }>(), { expanded:true })
 const emit = defineEmits<{ (event:'change', value:unknown):void; (event:'toggle'):void }>()
 const { t } = useI18n({ useScope:'local', messages:metricMessages })

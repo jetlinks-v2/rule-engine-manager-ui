@@ -14,12 +14,12 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import TemplateSampleValue from './TemplateSampleValue.vue'
-import { sampleDate } from '@jetlinks-web-core/components/Metric/template/simulation'
-import { simulationValueText } from '@jetlinks-web-core/components/Metric/template/simulationFlow'
-import type { SimulationNodePreview } from '@jetlinks-web-core/components/Metric/template/simulationPreview'
+import { sampleDate } from './simulation'
+import { simulationValueText } from './simulationFlow'
+import type { SimulationNodePreview } from './simulationPreview'
 import type { TemplateSimulationState } from './useTemplateSimulation'
-import type { MetricTemplate, MetricTemplateInput } from '@jetlinks-web-core/components/Metric/types'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
+import type { MetricTemplate, MetricTemplateInput } from '../types'
+import { metricMessages } from '../messages'
 const props = defineProps<{ template?:MetricTemplate; input:MetricTemplateInput; snapshot?:SimulationNodePreview; trial:TemplateSimulationState; disabled:boolean }>()
 const emit = defineEmits<{ (event:'details', editValue?:boolean):void }>()
 const { t } = useI18n({ useScope:'local', messages:metricMessages })

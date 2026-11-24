@@ -41,7 +41,7 @@ test('保留批量NDJSON请求消费同样的历史和实时帧，取消会释�
 test('对象目录读取原relation声明，空目录不补造类型且业务失败保留',async()=>{
   payload=[{id:'device',name:'Device'}];status=200
   assert.deepEqual(await loadMetricObjectTypes(),payload)
-  assert.deepEqual(calls.at(-1),['get','/relation/types',undefined,httpOptions])
+  assert.deepEqual(calls.at(-1),['get','/metric/configs/sources/types',undefined,httpOptions])
   payload=[];assert.deepEqual(await loadMetricObjectTypes(),[])
   status=503;await assert.rejects(loadMetricObjectTypes(),/Denied/)
   status=200

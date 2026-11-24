@@ -21,11 +21,11 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Editable from '@jetlinks-web-core/components/Editable/index.vue'
-import TemplateClause from '@jetlinks-web-core/components/Metric/template/TemplateClause.vue'
+import TemplateClause from './TemplateClause.vue'
 import TemplateDuration from './TemplateDuration.vue'
-import { durationSeconds } from '@jetlinks-web-core/components/Metric/template/window'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
-import type { MetricTemplateOutput, MetricHistoryPolicy } from '@jetlinks-web-core/components/Metric/types'
+import { durationSeconds } from './window'
+import { metricMessages } from '../messages'
+import type { MetricTemplateOutput, MetricHistoryPolicy } from '../types'
 const props = defineProps<{ output:MetricTemplateOutput; disabled?:boolean }>()
 const emit = defineEmits<{ (event:'patch', value:Partial<MetricTemplateOutput>):void }>()
 const { t } = useI18n({ useScope:'local', messages:metricMessages })

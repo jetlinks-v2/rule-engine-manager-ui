@@ -6,8 +6,8 @@
 <script setup lang="ts">
 import MetricTemplateManager from '../../components/Metric/template/MetricTemplateManager.vue'
 import { computed, ref } from 'vue'
-import { type MetricContext } from '@jetlinks-web-core/components'
-import { collectMetricResources } from '@jetlinks-web-core/components/Metric/extensions/registry'
+import { type MetricContext } from '@rule-engine-manager-ui/components/Metric'
+import { collectMetricResources } from '../../components/Metric/extensions/registry'
 import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import { useAuthStore } from '@jetlinks-web-core/store'
 import { useProjectRouter } from '@jetlinks-web-core/hooks'

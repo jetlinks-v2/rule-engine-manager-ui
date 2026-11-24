@@ -1,7 +1,7 @@
 import type { I18nTextMessages } from '@jetlinks-web-core/components/I18n/types'
-import type { MetricConfig, MetricTemplate, MetricTemplateEntity, MetricTemplateStarter } from '@jetlinks-web-core/components/Metric/types'
-import { copy } from '@jetlinks-web-core/components/Metric/service'
-import { sampleInputs, visualSamples, type SimulationFacts, type SimulationSample } from '@jetlinks-web-core/components/Metric/template/simulation'
+import type { MetricConfig, MetricTemplate, MetricTemplateEntity, MetricTemplateStarter } from '../types'
+import { copy } from '../service'
+import { sampleInputs, visualSamples, type SimulationFacts, type SimulationSample } from './simulation'
 
 export interface TemplateExample {
   /** 一条报文可供多个输入使用；恢复后仍只发送一次。 */

@@ -7,13 +7,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { metricMessages } from '@jetlinks-web-core/components/Metric/messages'
+import { metricMessages } from '../messages'
 import type { ExpressionNode, StructuredExpression } from '@jetlinks-web-core/components/Expression/types'
 import type { ExpressionResultLabel } from '@jetlinks-web-core/components/Expression/editor'
 import { useExpressionFunctions } from '@jetlinks-web-core/components/Expression/useExpressionFunctions'
-import { metricExpressionFunctions } from '@jetlinks-web-core/components/Metric/expressionApi'
+import { metricExpressionFunctions } from '../expressionApi'
 import TemplateMathEditor from './TemplateMathEditor.vue'
-import { expressionToTree, type FormulaReference } from '@jetlinks-web-core/components/Metric/template/formula'
+import { expressionToTree, type FormulaReference } from './formula'
 import type { FormulaChange } from './useTemplateMathEditor'
 const props=defineProps<{modelValue:string;tree?:StructuredExpression;references:FormulaReference[];resultLabels?:ExpressionResultLabel[];disabled?:boolean;conditions?:boolean}>()
 const emit=defineEmits<{(event:'change',value:FormulaChange):void;(event:'invalid',value:boolean):void}>()
