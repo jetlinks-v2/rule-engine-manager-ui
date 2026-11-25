@@ -1,6 +1,10 @@
+import { notificationRecipientCapabilities, queryNotificationRecipientNotifier } from '@jetlinks-web-core/api/notificationRecipients'
+import type { NotificationRecipient, NotificationRecipientType } from '@jetlinks-web-core/api/notificationRecipients'
 import { request } from '@jetlinks-web/core'
 import { IOT_DEVICE_LIST_EXCLUDED_ACCESS_PROVIDERS } from './deviceListDefaultTerms'
 import { toSceneNotifyMethods } from '../utils/sceneNotify'
+
+export type { NotificationRecipient }
 
 export type SceneEntity = Record<string, any>
 
@@ -19,13 +23,24 @@ export type SceneDetail = SceneEntity & {
   runtimeInfo?: SceneRuntimeInfo | null
 }
 
+/** 场景通知的持久化配置；展示名称仅保存在动作 options。 */
+export interface SceneNotifyConfig {
+  notifyChannelIds?: string[]
+  userIds?: string[]
+  dimensions?: NotificationRecipient[]
+  useThirdPartyRelation?: boolean
+}
+
 export interface SceneNotifyMethod {
   id: string
   providerId: string
   name: string
   channelProvider: string
-  /** 当前场景通知仅 Webhook 使用渠道的固定目标。 */
+  /** 固定目标和组织角色能力与视觉告警共用。 */
   fixedRecipient?: boolean
+  templateId?: string
+  notifierId?: string
+  recipientTypes?: NotificationRecipientType[]
 }
 
 export interface SceneNotifyUser {
@@ -299,7 +314,13 @@ export async function querySceneNotifyMethods(): Promise<SceneNotifyMethod[]> {
   const result = response?.result ?? response
   const providers = Array.isArray(result) ? result : result?.data
   if (!Array.isArray(providers)) throw new Error('Invalid notification channels')
-  return toSceneNotifyMethods(providers)
+  const configs = new Map<string, ReturnType<typeof queryNotificationRecipientNotifier>>()
+  return Promise.all(toSceneNotifyMethods(providers).map(async method => {
+    if (!method.notifierId) return method
+    const pending = configs.get(method.notifierId) ?? queryNotificationRecipientNotifier(method.notifierId)
+    configs.set(method.notifierId, pending)
+    return { ...method, ...notificationRecipientCapabilities(await pending) }
+  }))
 }
 
 export const queryCurrentSceneNotifyUser = () =>

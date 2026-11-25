@@ -26,7 +26,7 @@ import { queryCurrentSceneNotifyUser, querySceneNotifyMethods, querySceneNotifyU
 import { normalizeResult, type SceneActionForm } from '@rule-engine-manager-ui/views/SceneLinkage/utils'
 import { canReceiveProfileBackedNotification, getNotifyUserOrganization, mergeNotifyUsersById } from '@rule-engine-manager-ui/utils/notifyUser'
 import NotifyActionRow from '@rule-engine-manager-ui/views/SceneLinkage/editor/components/NotifyActionRow.vue'
-import { isSceneNotifyConfigured, requiresSceneNotifyRecipients } from '@rule-engine-manager-ui/utils/sceneNotify'
+import { changeSceneNotifyMethod, isSceneNotifyConfigured, requiresSceneNotifyRecipients } from '@rule-engine-manager-ui/utils/sceneNotify'
 
 const props = defineProps({
   value: {
@@ -45,6 +45,7 @@ const usersTotal = ref(0)
 const action = reactive<SceneActionForm>({
   type: 'sceneNotify',
   config: {
+    ...props.value,
     notifyChannelIds: [...(props.value?.notifyChannelIds || [])],
     userIds: [...(props.value?.userIds || [])],
   },
@@ -95,7 +96,7 @@ function updateAction(value: SceneActionForm) {
 }
 
 function changeMethod(method: SceneNotifyMethod) {
-  action.config = { ...action.config, notifyChannelIds: [method.id], ...(!requiresSceneNotifyRecipients(method) ? { userIds: [] } : {}) }
+  action.config = changeSceneNotifyMethod(action.config, method)
   action.options = { ...action.options, channelName: method.name, fixedRecipient: !requiresSceneNotifyRecipients(method) }
 }
 

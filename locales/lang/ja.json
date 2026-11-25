@@ -2339,5 +2339,14 @@
   "IotSceneLinkage.message.timeRangeDuplicate": "この時間帯は追加済みです。別の時間帯を選択してください。",
 	"IotSceneLinkage.aiEvent.sourceScope": "ソース範囲",
 	"IotSceneLinkage.aiEvent.sourceDevices": "デバイス",
-	"IotSceneLinkage.aiEvent.sourceLoadFailed": "一部のソースまたはアルゴリズム設定を読み込めませんでした。再度開いてください。"
+	"IotSceneLinkage.aiEvent.sourceLoadFailed": "一部のソースまたはアルゴリズム設定を読み込めませんでした。再度開いてください。",
+  "IotSceneLinkage.recipient.people": "メンバー",
+  "IotSceneLinkage.recipient.org": "部門",
+  "IotSceneLinkage.recipient.role": "タグ",
+  "IotSceneLinkage.recipient.remove": "{name}を削除",
+  "IotSceneLinkage.recipient.failed": "通知先を読み込めませんでした",
+  "IotSceneLinkage.recipient.retry": "再試行",
+  "IotSceneLinkage.recipient.selectScope": "通知先を選択",
+  "IotSceneLinkage.recipient.scopeCount": "{count} 件選択済み",
+  "IotSceneLinkage.hint.notifyTemplateRequired": "先にこのチャネルの通知テンプレートを設定してください。"
 }
