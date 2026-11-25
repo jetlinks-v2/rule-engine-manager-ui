@@ -1,5 +1,5 @@
 <template>
-  <div class="metric-chart-tools">
+  <div v-if="!header" class="metric-chart-tools">
     <div class="metric-chart-tools__query"><slot /></div>
     <div class="metric-chart-tools__actions">
       <template v-if="controls">
@@ -13,9 +13,20 @@
 </template>
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { computed, inject, watchEffect } from 'vue'
 import type { TimeZoomControls } from '@jetlinks-web-core/hooks/Echarts/useTimeZoom'
 import { metricMessages } from '../messages'
-defineProps<{ controls?:TimeZoomControls; hint?:string; limited?:boolean }>()
+import { metricChartToolsKey } from './chartTools'
+const props=defineProps<{ controls?:TimeZoomControls; hint?:string; limited?:boolean; inline?:boolean }>()
+const header=props.inline ? undefined : inject(metricChartToolsKey,undefined)
+const state=computed(()=>({controls:props.controls,hint:props.hint,limited:props.limited}))
+if (header) {
+  watchEffect(onCleanup=>{
+    const value=state.value
+    header.value=value
+    onCleanup(()=>{if(header.value===value)header.value=undefined})
+  })
+}
 const { t }=useI18n({useScope:'local',messages:metricMessages})
 </script>
 <style scoped>

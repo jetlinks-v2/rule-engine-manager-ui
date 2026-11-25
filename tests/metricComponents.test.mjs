@@ -2311,6 +2311,27 @@ test('部分结果显示服务端覆盖率且保留真实零值；具体异常�
   } finally {view.close()}
 })
 
+test('详情首次加载显示骨架，完成后展示静态曲线', async () => {
+  defaults();moduleRegistry.clear()
+  const Result=load('components/Metric/MetricResult.vue').default
+  let finish
+  api.history=()=>new Promise(resolve=>{finish=resolve})
+  const view=mount(Result,{reference:{configId:'c',outputId:'value'},output:template.outputs[0],template})
+  try {
+    await flush()
+    assert.equal(nodes(view.root,'a-skeleton').length,1)
+    assert.equal(nodes(view.root,'chart').length,0)
+    assert.ok(nodes(view.root,'a-spin').some(node=>node.props['aria-busy']))
+    finish([{...value,evaluationTime:Date.now()-1000}]);await flush()
+    assert.equal(nodes(view.root,'a-skeleton').length,0)
+    assert.equal(nodes(view.root,'chart')[0].props.option.animation,false)
+    const toolbar=walk(view.root,node=>node.props.class==='metric-history-view__tools')[0]
+    assert.ok(findText(toolbar,'a-button','refresh'))
+    assert.ok(findText(toolbar,'a-button','historyBrush'))
+    assert.ok(nodes(view.root,'a-spin').every(node=>!node.props['aria-busy']))
+  } finally {view.close();moduleRegistry.clear()}
+})
+
 test('详情切换时段保留图表实例和当前数据，完成后原位更新；迟到查询不回填', async () => {
   defaults();moduleRegistry.clear()
   const Result=load('components/Metric/MetricResult.vue').default

@@ -8,8 +8,8 @@ import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { MetricTemplateOutput } from './types'
 import { metricAggregationsKey } from './calculatorContext'
-import { statisticDuration, statisticMessages } from './statisticPresentation'
-const props=defineProps<{output?:MetricTemplateOutput}>()
+import { metricStatisticUnit, statisticDuration, statisticMessages } from './statisticPresentation'
+const props=defineProps<{output?:MetricTemplateOutput;withUnit?:boolean;unit?:string}>()
 const {t}=useI18n({useScope:'local',messages:statisticMessages})
 const catalog=inject(metricAggregationsKey,computed(()=>[]))
 const meaning=computed(()=>props.output?.resultSemantics)
@@ -21,7 +21,8 @@ const caption=computed(()=>{
   const duration=value.window.mode==='time' ? statisticDuration(value.window.size,t) : undefined
   const scope=duration ? t('statisticRecent',{duration}) : value.window.mode==='latestN' && value.window.size
     ? t('statisticPoints',{count:value.window.size}) : undefined
-  return [name,scope].filter(Boolean).join(' · ')
+  const unit=props.withUnit ? metricStatisticUnit(props.output,t,props.unit ? {unit:props.unit} : undefined) : undefined
+  return [name,scope,unit].filter(Boolean).join(' · ')
 })
 </script>
 <style scoped>

@@ -10,7 +10,9 @@
         <a-select-option :value="0" :label="t('historyBucketAuto')"><SelectOption icon="CompressOutlined" :label="t('historyBucketAuto')" :description="t('historyBucketAutoHint')" /></a-select-option>
         <a-select-option v-for="option in intervals" :key="option.value" :value="option.value" :label="t('historyBucketEvery',{value:t(option.label)})" :disabled="!bounds || option.value > bounds[1]-bounds[0] || Math.ceil((bounds[1]-bounds[0])/option.value)>256"><SelectOption icon="ClockCircleOutlined" :label="t('historyBucketEvery',{value:t(option.label)})" :description="t('historyBucketHint')" /></a-select-option>
       </a-select>
+      <MetricChartTools v-if="chartTools" v-bind="chartTools" inline />
     </div>
+    <slot name="caption" />
     <a-alert v-if="aggregate.error.value" type="error" show-icon :message="t('readFailed')" :description="aggregate.error.value"><template #action><a-button size="small" @click="aggregate.refresh">{{ t('retry') }}</a-button><a-button v-if="states" size="small" @click="aggregate.operation.value=''">{{ t('historyRaw') }}</a-button></template></a-alert>
     <template v-if="aggregate.operation.value">
       <a-skeleton v-if="aggregate.loading.value" active :paragraph="{rows:4}" />
@@ -23,7 +25,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue'
+import { computed, provide, ref, shallowRef, toRef } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import MetricTrend from '../MetricTrend.vue'
@@ -32,10 +34,14 @@ import SelectOption from '@jetlinks-web-core/components/SelectOption/index.vue'
 import { metricMessages } from '../messages'
 import { metricOutputPresentation } from '../outputPresentation'
 import { useMetricHistoryAggregate } from './useMetricHistoryAggregate'
+import MetricChartTools from './MetricChartTools.vue'
+import { metricChartToolsKey, type MetricChartToolsState } from './chartTools'
 import type { MetricReference, MetricTemplateOutput, MetricStateLabel, MetricHistoryOperation } from '../types'
 const props = defineProps<{reference:MetricReference;output?:MetricTemplateOutput;bounds?:[number,number];inaccessible?:boolean;stateOutput?:boolean;intervals?:boolean;labels?:MetricStateLabel[];dataVersion?:string;queryKey?:string}>()
 const emit=defineEmits<{(event:'drilldown',range:[number,number]):void}>()
 const {t} = useI18n({useScope:'local',messages:metricMessages})
+const chartTools=shallowRef<MetricChartToolsState>()
+provide(metricChartToolsKey,chartTools)
 const element=ref<HTMLElement>(),{width}=useElementSize(element)
 const states=computed(()=>!props.intervals && (props.stateOutput || ['state','boolean'].includes(metricOutputPresentation(props.output).history)))
 const available = computed(() => !props.inaccessible && !props.intervals && (states.value || metricOutputPresentation(props.output).history === 'number') && props.output?.aggregatable !== false && props.output?.persist !== false && !props.output?.latestOnly)
@@ -51,5 +57,6 @@ defineExpose({refresh:() => { if (aggregate.operation.value) void aggregate.refr
 .metric-history-view { min-width:0 }
 .metric-history-view__tools { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px }
 .metric-history-view__tools :deep(.ant-select) { min-width:104px; font-size:12px }
+.metric-history-view__tools :deep(.metric-chart-tools) { flex:1; min-width:132px; margin-bottom:0 }
 .metric-history-view__caption { display:flex; justify-content:space-between; gap:8px; color:var(--ink-3); font-size:12px; margin:4px 0 }
 </style>

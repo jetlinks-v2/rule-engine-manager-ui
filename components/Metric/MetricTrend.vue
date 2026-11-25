@@ -97,6 +97,7 @@ const chartEvents = computed(()=>({...zoom.events,click:(raw:unknown)=>{
   if (value) selectValue(value)
 }}))
 const duration = computed(() => metricDurationText(0, displayUnit.value, t) !== undefined)
+const showAxisUnit = computed(() => !!displayUnit.value && !duration.value && (!props.integrated || !props.output?.resultSemantics))
 const durationLabel = (value: unknown) => metricDurationText(value, displayUnit.value, t) ?? metricStatisticSigned(formatMetricValue(value,undefined,props.output),value,props.output)
 // 坐标刻度保持短读数；主值和悬停仍保留既有展示精度，不修改结果数据。
 const axisLabel=(value:number)=>new Intl.NumberFormat(String(locale.value),{maximumSignificantDigits:3,
@@ -131,11 +132,12 @@ const time = (value: number, short = false) => {
 }
 const option = computed(() => ({
   ...zoom.option.value,
+  animation: false,
   color: [token.value.colorPrimary],
-  grid: { left: duration.value ? 88 : 60, right: 24, top: displayUnit.value && !duration.value ? 28 : 16, bottom: zoom.controls.overview.value ? 60 : 32 },
+  grid: { left: duration.value ? 88 : 60, right: 24, top: showAxisUnit.value ? 28 : 16, bottom: zoom.controls.overview.value ? 60 : 32 },
   tooltip: { trigger: 'axis' as const, confine: true, renderMode: 'richText' as const, valueFormatter:(value:unknown) => duration.value ? durationLabel(value) : `${durationLabel(value)}${displayUnit.value ? ' '+displayUnit.value : ''}` },
   xAxis: { type: 'time' as const, min: zoom.extent.value?.[0], max: zoom.extent.value?.[1] },
-  yAxis: { type: 'value' as const, name: duration.value ? '' : displayUnit.value || '', nameTextStyle:{align:'left' as const}, scale: !baseline.value,
+  yAxis: { type: 'value' as const, name: showAxisUnit.value ? displayUnit.value : '', nameTextStyle:{align:'left' as const}, scale: !baseline.value,
     ...(baseline.value==='centered' ? { min:(range:{min:number;max:number})=>-Math.max(Math.abs(range.min),Math.abs(range.max)) || -1,max:(range:{min:number;max:number})=>Math.max(Math.abs(range.min),Math.abs(range.max)) || 1 } : {}),
     axisLabel: { formatter: duration.value ? durationLabel : axisLabel } },
   series: [{ type: 'line' as const, showSymbol: false, connectNulls: false, data: numericPoints.value,

@@ -9,11 +9,13 @@
         <MetricStateDuration v-if="intervals" detail :labels="labels" :value="processValue" :disabled="configuration?.state === 'disabled'" :live="!pinned && configuration?.state === 'enabled'"><template #label><MetricOutputSwitch :template="template" :output="output" :output-id="reference.outputId" @change="emit('selectOutput',$event)" /></template></MetricStateDuration>
         <template v-else><div class="metric-result__reading"><MetricOutputSwitch :template="template" :output="output" :output-id="reference.outputId" @change="emit('selectOutput',$event)" /><MetricValueView v-if="processValue || configuration?.state === 'disabled' || runtime?.state === 'loaded'" summary :hide-feedback="sourceFeedback && configuration?.state !== 'disabled'" :hide-quality="processValue?.quality?.valid === true" :value="processValue" :template="template" :output="output" :unit="output?.unit" :disabled="configuration?.state === 'disabled'" :settings="settings" :labels="labels" /><strong v-else>—</strong></div><small v-if="summaryTime" class="metric-result__stamp" :title="t('updatedAtHint')">{{ t('updatedAt') }} <time>{{ time(summaryTime) }}</time></small></template>
       </div>
-      <MetricStatisticSummary :output="output" />
       <a-alert v-if="missing || extensionFailed" type="warning" show-icon :message="t(missing ? 'presentationMissing' : 'presentationFailed')" />
       <MetricHistoryView ref="historyView" :reference="reference" :output="output" :bounds="bounds" :inaccessible="inaccessible || !configuration" :state-output="recordHistory" :intervals="intervals" :labels="labels" :data-version="configuration?.dataVersion" :query-key="historyQueryKey" @drilldown="customRange=$event">
       <template #tools><MetricTimeRange v-model:range="range" v-model:custom-range="customRange" /><a-button type="text" size="small" :aria-label="t('refresh')" @click="refresh"><AIcon type="ReloadOutlined" />{{ t('refresh') }}</a-button></template>
-      <a-spin :spinning="loading" :delay="150">
+      <template #caption><MetricStatisticSummary :output="output" with-unit :unit="processValue?.unit" /></template>
+      <a-spin :spinning="loading && !!values.length" :delay="150" :aria-busy="loading">
+      <a-skeleton v-if="loading && !values.length" class="metric-result__history-loading" active :title="false" :paragraph="{rows:6}" />
+      <template v-else>
       <template v-if="provider?.detail && context && configuration && template && output">
       <MetricExtension :content="provider.detail"
         :content-props="{ context, configuration, template, output, value: processValue, settings, values, loading, error }" @failed="extensionFailed = true">
@@ -21,6 +23,7 @@
       </MetricExtension>
       </template>
       <component :is="intervals ? MetricStateHistory : MetricTrend" v-else :key="historyScope" v-bind="intervals ? {} : { output,stateOutput,unit:output?.unit,sampleInterval,selectedValue:pinned ? processValue : undefined }" integrated :reset-selection="selectionReset" :values="values" :current="current" :bounds="bounds" :limited="limited" :labels="labels" :unavailable="!!error || loading" @select="selectHistory"></component>
+      </template>
       </a-spin>
       </MetricHistoryView>
       <section v-if="configuration && sourceTemplate && output" class="metric-result__process">
@@ -117,4 +120,5 @@ watch(provider, () => { extensionFailed.value = false })
 .metric-result__tools { justify-content:space-between }
 .metric-result__process { border-top:1px solid var(--line); padding-top:6px; display:grid; gap:6px; min-width:0 }
 .metric-result__process strong { font-size:13px; font-weight:500; color:var(--ink-2) }
+.metric-result__history-loading { min-height:240px; padding:16px 0 }
 </style>
