@@ -1,15 +1,6 @@
 import { copy } from './service'
 import type { MetricInputSemantics, MetricTemplateInput } from './types'
 
-/** 与后端 MetricInputSemantics 相同，只匹配来源显式声明，不推测名称或同义词。 */
-export function metricSourceMatchesSemantics(required:MetricInputSemantics | undefined, metadata:Record<string,unknown> = {}):boolean {
-  if (!required) return true
-  const types = Array.isArray(metadata.semanticTypes) ? metadata.semanticTypes : []
-  return (!required.semanticId || required.semanticId === metadata.semanticId)
-    && (!required.semanticRole || required.semanticRole === metadata.semanticRole)
-    && (required.semanticTypes || []).every(type=>types.includes(type))
-}
-
 const numericTypes = new Set(['byte','short','int','long','bigint','float','double','number','integer','decimal'])
 /** 平台枚举编码序列化为字符串，按其显式编码类型比较，不把普通文本编码当作数值。 */
 function enumCode(schema:Record<string,unknown>, value:unknown):unknown {

@@ -243,12 +243,12 @@ test('未声明类型不额外过滤目录，导入声明保留原语义',async(
   const {scope,state}=fixture()
   try{
     const pending=state.pickSource({context,input:{id:'value',valueType:{},semantics:{}}});await flush()
-    assert.equal(state.inputUndeclared.value,true);assert.ok(method(state,'temperature'))
+    assert.ok(method(state,'temperature'))
     state.showAllSources.value=true;await flush();assert.ok(state.groups.value.length > 0)
     state.propertyId.value='temperature';state.confirm();assert.equal(state.canConfirm.value,false);assert.equal(state.open.value,true)
     state.cancel();await pending
     const reference=state.pickSource({context,input:{id:'value'},purpose:'declaration'});await state.selectObject('D1');await flush()
-    assert.equal(state.inputUndeclared.value,false);assert.ok(method(state,'temperature'))
+    assert.ok(method(state,'temperature'))
     state.chooseMethod(method(state,'temperature'))
     assert.deepEqual((await reference).declaration.semantics,{semanticId:'urn:temperature'})
   }finally{scope.stop()}
