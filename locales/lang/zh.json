@@ -2599,5 +2599,14 @@
   "IotSceneLinkage.message.timeRangeDuplicate": "该时段已添加，请修改时间范围",
 	"IotSceneLinkage.aiEvent.sourceScope": "来源范围",
 	"IotSceneLinkage.aiEvent.sourceDevices": "设备",
-	"IotSceneLinkage.aiEvent.sourceLoadFailed": "部分来源或算法配置加载失败，请重新打开重试"
+	"IotSceneLinkage.aiEvent.sourceLoadFailed": "部分来源或算法配置加载失败，请重新打开重试",
+  "IotSceneLinkage.recipient.people": "成员",
+  "IotSceneLinkage.recipient.org": "部门",
+  "IotSceneLinkage.recipient.role": "标签",
+  "IotSceneLinkage.recipient.remove": "移除{name}",
+  "IotSceneLinkage.recipient.failed": "通知对象加载失败",
+  "IotSceneLinkage.recipient.retry": "重试",
+  "IotSceneLinkage.recipient.selectScope": "请选择通知对象",
+  "IotSceneLinkage.recipient.scopeCount": "已选择 {count} 项",
+  "IotSceneLinkage.hint.notifyTemplateRequired": "请先在消息模板中为该渠道配置通知模板。"
 }

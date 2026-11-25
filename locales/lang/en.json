@@ -2598,5 +2598,14 @@
   "IotSceneLinkage.message.timeRangeDuplicate": "This time range is already added. Choose a different range.",
 	"IotSceneLinkage.aiEvent.sourceScope": "Source scope",
 	"IotSceneLinkage.aiEvent.sourceDevices": "Devices",
-	"IotSceneLinkage.aiEvent.sourceLoadFailed": "Some sources or algorithm settings could not be loaded. Reopen to retry."
+	"IotSceneLinkage.aiEvent.sourceLoadFailed": "Some sources or algorithm settings could not be loaded. Reopen to retry.",
+  "IotSceneLinkage.recipient.people": "Members",
+  "IotSceneLinkage.recipient.org": "Departments",
+  "IotSceneLinkage.recipient.role": "Tags",
+  "IotSceneLinkage.recipient.remove": "Remove {name}",
+  "IotSceneLinkage.recipient.failed": "Failed to load recipients",
+  "IotSceneLinkage.recipient.retry": "Retry",
+  "IotSceneLinkage.recipient.selectScope": "Select recipients",
+  "IotSceneLinkage.recipient.scopeCount": "{count} selected",
+  "IotSceneLinkage.hint.notifyTemplateRequired": "Configure a notification template for this channel first."
 }

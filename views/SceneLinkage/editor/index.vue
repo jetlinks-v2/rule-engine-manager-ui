@@ -282,7 +282,7 @@ import { canReceiveProfileBackedNotification, getNotifyUserOrganization, mergeNo
 import { applyMultiTriggerForm, buildRequest, defaultForm, formatSceneDuration, MULTI_TRIGGER_PROVIDERS, normalizeResult, toForm, type SceneConditionForm, type SceneEditorMode, type SceneLinkageForm, type SceneMultiTriggerForm, type SceneTimeRange, type SceneTriggerKind } from '../utils'
 import DetailedSceneEditor from './detail/DetailedSceneEditor.vue'
 import { createClearedDetailedDraft, mergeDetailedDraft, mergeQuickDraft, resolveInitialEditorMode, resolveLockedTriggerProviders, type SceneRuleRecord } from './editorMode'
-import { isSceneNotifyConfigured, requiresSceneNotifyRecipients } from '../../../utils/sceneNotify'
+import { changeSceneNotifyMethod, isSceneNotifyConfigured, requiresSceneNotifyRecipients } from '../../../utils/sceneNotify'
 import IotAlarmTargetSelect, { type IotAlarmTargetSelectOption, type IotAlarmTargetSelectQuery } from './alarm/IotAlarmTargetSelect.vue'
 import { getSceneCompatibility } from '../sceneCompatibility'
 import { SCENE_TRIGGER_CATEGORIES } from './triggerPickerOptions'
@@ -724,7 +724,7 @@ function clearActionValidationIfResolved() {
 function changeNotifyMethod(index: number, method: SceneNotifyMethod) {
   form.actions[index] = {
     ...form.actions[index],
-    config: { ...form.actions[index].config, notifyChannelIds: [method.id], ...(!requiresSceneNotifyRecipients(method) ? { userIds: [] } : {}) },
+    config: changeSceneNotifyMethod(form.actions[index].config, method),
     options: { ...form.actions[index].options, channelName: method.name, fixedRecipient: !requiresSceneNotifyRecipients(method) },
   }
 }

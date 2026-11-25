@@ -1,8 +1,25 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { getNotificationSummary, formatNotificationRecipient } from '../views/SceneLinkage/editor/notificationSummary'
+import { getNotificationSummary, formatNotificationRecipient, getNotificationRecipientGroups } from '../views/SceneLinkage/editor/notificationSummary'
 
 const t = (key: string, values?: Record<string, string | number>) => values?.count !== undefined ? `已选择 ${values.count} 位接收人` : key
+
+test('通知预览依次展示非空部门、成员、标签，保留跨类型相同 ID', () => {
+  const config = { userIds: ['same'], dimensions: [{ type: 'role' as const, id: 'same' }, { type: 'org' as const, id: 'same' }] }
+  const snapshot = structuredClone(config)
+  const groups = getNotificationRecipientGroups(config, { recipientScopes: [
+    { type: 'org', id: 'same', name: '研发部' }, { type: 'role', id: 'same', name: '值班组' },
+  ] }, t, [{ id: 'same', name: '张三', username: 'zhangsan' }])
+  assert.deepEqual(groups, [
+    { type: 'org', items: [{ id: 'same', name: '研发部' }] },
+    { type: 'people', items: [{ id: 'same', name: '张三' }] },
+    { type: 'role', items: [{ id: 'same', name: '值班组' }] },
+  ])
+  assert.deepEqual(config, snapshot)
+  assert.deepEqual(getNotificationRecipientGroups({ userIds: ['missing'] }, {}, t), [
+    { type: 'people', items: [{ id: 'missing', name: '已选择 1 位接收人' }] },
+  ])
+})
 
 test('固定目标渠道摘要不显示收信人未配置或历史人员', () => {
   const method = { id: 'hook', name: 'Webhook', providerId: 'scene', channelProvider: 'notifier-webhook' }
