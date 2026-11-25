@@ -21,13 +21,16 @@ test('模板按原元数据语义限制输入，开放词汇保留，不以名�
   assert.equal(matches({semanticId:'urn:iot:temperature'}),false)
 })
 
-test('明确单位须一致，平台ID和显示符号保留，Unicode等价表示不改变值',()=>{
+test('来源仅按类型匹配，单位标识、符号及缺失不阻断绑定',()=>{
   const input={id:'v',valueType:{type:'double'},unit:'°C'}
   assert.equal(selectable(input,{valueType:{type:'double',unit:'celsiusDegrees'},unit:'℃'}),true)
-  assert.equal(selectable(input,{valueType:{type:'double',unit:'Pa'}}),false)
-  assert.equal(selectable(input,{valueType:{type:'double'}}),false)
+  assert.equal(selectable(input,{valueType:{type:'double',unit:'Pa'}}),true)
+  assert.equal(selectable(input,{valueType:{type:'double'}}),true)
   assert.equal(selectable({...input,unit:'celsiusDegrees'},{valueType:{type:'double',unit:'celsiusDegrees'},unit:'℃'}),true)
   assert.equal(selectable({...input,unit:undefined},{valueType:{type:'double',unit:'Pa'}}),true)
+  assert.equal(selectable({id:'cpu',valueType:{type:'double',unit:'%'},unit:'%'},{valueType:{type:'double',unit:'percent'},unit:'percent'}),true)
+  assert.equal(typeMatches({type:'object',properties:[{id:'v',valueType:{type:'double',unit:'%'}}]},
+    {type:'object',properties:[{id:'v',valueType:{type:'long',unit:'percent'}}]}),true)
 })
 
 test('JSON Schema投影保留根及嵌套扩展、枚举编码、单位和数组结构',()=>{
@@ -46,14 +49,14 @@ test('JSON Schema投影保留根及嵌套扩展、枚举编码、单位和数组
   assert.equal(samples.elementType.type,'date')
 })
 
-test('只列出声明兼容的来源；数值类型通用，显式语义与类型共同约束',()=>{
-  assert.equal(selectable({id:'v'},{valueType:{type:'double'}}),false)
-  assert.equal(selectable({id:'v',valueType:{},semantics:{}},{valueType:{type:'double'}}),false)
+test('来源按类型与结构兼容，语义声明不限制选择',()=>{
+  assert.equal(selectable({id:'v'},{valueType:{type:'double'}}),true)
+  assert.equal(selectable({id:'v',valueType:{},semantics:{}},{valueType:{type:'double'}}),true)
   for (const type of ['byte','short','integer','long','float','double','decimal']) assert.equal(selectable({id:'v',valueType:{type:'double'}},{valueType:{type}}),true)
   assert.equal(selectable({id:'v',valueType:{type:'double'}},{valueType:{type:'string'}}),false)
   assert.equal(selectable({id:'v',valueType:{type:'boolean'}},{valueType:{type:'long'}}),false)
   assert.equal(selectable({id:'v',semantics:{semanticId:'temperature'}},{expands:{semanticId:'temperature'}}),true)
-  assert.equal(selectable({id:'v',valueType:{type:'double'},semantics:{semanticId:'temperature'}},{valueType:{type:'double'},expands:{semanticId:'pressure'}}),false)
+  assert.equal(selectable({id:'v',valueType:{type:'double'},semantics:{semanticId:'temperature'}},{valueType:{type:'double'},expands:{semanticId:'pressure'}}),true)
   assert.equal(selectable({id:'v',valueType:{type:'double'},semantics:{semanticId:'temperature'}},{valueType:{type:'string'},expands:{semanticId:'temperature'}}),false)
 })
 
