@@ -55,11 +55,13 @@ Pending 使用已有 `Scannable` 主订阅父链，最多扫描64层，不递归
 
 不增加逐次执行记录、历史存储、定时器线程、全局指标注册表或新依赖。每个 Output 在自身继承字段中维护发出累计及速率，同时供入口/末端两种角色读取；Pending 只在查询时扫描。
 
-JDK21、256MiB 堆的 Instrumentation 对照原 QPS 版本：继承统计字段后的默认 Output 为96B，不再单独分配80B meter。终端只保留16B writer，删除固定冷 Mono 及其 supplier；相较前一版168B降至112B，每个终端少56B。有下游对象由40B+80B meter降至96B，少24B。相对原 QPS 版本，无下游 Output 新增80B（1万个约0.76MiB），有下游新增64B。执行监控器仍为112B（含原执行 meter）。执行指标快照56B，查询 Output 时另分配32B只读快照，不在写出热路径分配。
+JDK21、256MiB 堆的 Instrumentation 对照原 QPS 版本：继承统计字段后的默认 Output 为96B，不再单独分配80B meter。终端只保留16B writer，删除固定冷 Mono 及其 supplier；相较前一版168B降至112B，每个终端少56B。有下游对象由40B+80B meter降至96B，少24B。相对原 QPS 版本，无下游 Output 新增80B（1万个约0.76MiB），有下游新增64B。执行监控器同样继承 RateMeter，自身对象由原监控器及独立 meter 合计112B降至96B，每任务少一个对象、节省16B。执行指标快照56B，查询 Output 时另分配32B只读快照，不在写出热路径分配。
 
-同一 JMH 单输出空函数探针相对原 QPS 版本：执行416.88→406.28ns/op，分配保持1704B/次；执行指标快照23.27→23.13ns/op、分配保持56B/次。相较此前包装实现，执行分配1744→1704B/次。没有新增逐消息状态。这是本机短微基准，不能据此承诺生产吞吐或多线程争用成本。
+Input 保留原确认和回调适配，不新增接收计数器。数据及监听器通过惰性载体交给原 `observeExecution(Mono)` 扩展入口，默认监控器将其融合成一个订阅边界；自定义上下文装饰或透传该入口仍生效，不提前调用监听器。
 
-验证结果：core4项（含继承对象的速率及并发计数）通过并本地 install；引擎27项（含真实双节点 Output 指标 RPC、真实 EventBus 缓冲2→0、广播计数一次、空结果、共享终端返回值、并发写出及 Output 重建归零）通过并本地 install。管理层7项定向测试、前端11项行为测试复用前一阶段未改变字段契约与展示的有效证据，未重复执行。`git diff --check` 通过。
+对融合前后同一默认上下文、空监听器 JMH 探针，输入回调56.12→48.37ns/op，分配232→192B/次；直接有限执行49.06→49.25ns/op，分配保持192B/次。每项单线程、单fork、预热2轮/测量3轮、每轮1秒，启用GC profiler，基线为融合前的同一引擎构件。没有新增逐消息统计状态；短微基准的时间误差存在重叠，不能据此认定生产吞吐提升或多线程争用成本。
+
+验证结果：引擎33项定向测试、reactor编译及本地install通过，覆盖真实双节点RPC、EventBus缓冲2→0、Output计数，以及惰性回调的重复订阅、同步异常/null返回、Context、背压、取消、嵌套恢复/不同监控器隔离和原观测入口覆盖。QueueInput使用真实实现及可控队列流验证原处理与取消路径，不等同于外部队列集群测试。core4项、管理层7项、前端11项测试复用相关源码及协议未改变的前阶段证据，未重复执行。`git diff --check` 通过。
 
 内置浏览器已确认真实三列列表、独立预览、禁用不显示指标、输入/输出/缓冲图标气泡和真实 WebSocket 缺测处理；点击卡片进入原抽屉并恢复 `editorId`，关闭后回到列表，菜单仅保留启停/删除。760px视口重排为单列、内容区无横向溢出；一次刷新列表/预览响应头约51ms/177ms，数值不代表生产延迟。
 
@@ -70,11 +72,11 @@ JDK21、256MiB 堆的 Instrumentation 对照原 QPS 版本：继承统计字段�
 - 本模块未配置独立 lint 命令；类型检查、行为测试与差异空白检查分别记录，不能替代完整 lint。生产构建的既有阻塞未因本轮字段和展示调整改变，未重复执行同一失败构建。
 - 本轮内置浏览器确认真实页面缺测时显示警告图标、已观测副本数、说明及总流转数量入口；当前运行宿主缺少新指标字段，输入/输出、Pending、总流转量保留缺失。需在运行宿主升级后补全数值联调；未对运行中的规则执行启停或部署操作。
 
-重验入口：`pnpm test:instance-list`（包含三个测试文件）、`vue-tsc --noEmit -p tsconfig.instance-list.json`、`pnpm -F jetlinks-web-core build -- --module-name rule-engine-manager-ui`；后端 `mvn -Dtest=RuleInstanceObservationServiceTest test`，上游 reactor 执行 `TaskOutputMetricsTest,TaskRuntimeProjectionTest,TaskExecutionMonitorTest,TaskExecutionMetricsTest,FunctionTaskObservationTest,TaskDumpMetricsRpcTest`。
+重验入口：`pnpm test:instance-list`（包含三个测试文件）、`vue-tsc --noEmit -p tsconfig.instance-list.json`、`pnpm -F jetlinks-web-core build -- --module-name rule-engine-manager-ui`；后端 `mvn -Dtest=RuleInstanceObservationServiceTest test`，上游 reactor 执行 `TaskOutputMetricsTest,TaskRuntimeProjectionTest,TaskExecutionMonitorTest,TaskExecutionMetricsTest,FunctionTaskObservationTest,TaskDumpMetricsRpcTest,QueueInputObservationTest`。
 
 ## 关联交付
 
-- core继承支持 `2c01d86d8f4c46be5e8eaab7a1cf9689654e84f8`：[jetlinks-core #130](https://github.com/jetlinks/jetlinks-core/pull/130)，先合并并发布。
-- 引擎实现 `56b43668c66f41f806b2dd95e20d9a24de637af2`：[rule-engine #17](https://github.com/jetlinks/rule-engine/pull/17)，基于原 QPS [#16](https://github.com/jetlinks/rule-engine/pull/16)，并依赖 core继承支持。
+- core继承支持：[jetlinks-core #130](https://github.com/jetlinks/jetlinks-core/pull/130)，已合并至 `9bad5a4c6882d1029b759a8f51590f7f9a88292d`，运行构件须包含该变更。
+- 引擎实现 `d1e3b391b2705597062ae6b72d4de0a087161d00`：[rule-engine #17](https://github.com/jetlinks/rule-engine/pull/17)，基于原 QPS [#16](https://github.com/jetlinks/rule-engine/pull/16)，并依赖 core继承支持。
 - 管理入口 `b2f1874ea7a1e96f646faff8b88ef9f4eecccbe1`：[rule-engine-manager #294](https://github.com/jetlinks-v2/rule-engine-manager/pull/294)，Draft，等待完整依赖验证。
 - 页面实现 `91ba2aadf5a2bfc70b5ed66a96e806e66c76ed24`：[rule-engine-manager-ui #164](https://github.com/jetlinks-v2/rule-engine-manager-ui/pull/164)，Draft，等待完整构建与新宿主数值联调。
