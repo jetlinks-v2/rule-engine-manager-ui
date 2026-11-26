@@ -4,8 +4,8 @@
       <div class="rule-observation__detail">
         <div class="rule-observation__status" :style="{ color }"><AIcon :type="icon" :spin="loading" /> {{ statusText }}</div>
         <dl>
-          <dt :title="t('RuleInstanceList.inputHelp')"><AIcon type="LoginOutlined" /> {{ t('RuleInstanceList.inputRate') }}</dt><dd><a-skeleton-input v-if="loading" active size="small" /><template v-else>{{ rate(runtime?.inputRate) }} {{ t('RuleInstanceList.perSecond') }}</template></dd>
-          <dt :title="t('RuleInstanceList.outputHelp')"><AIcon type="LogoutOutlined" /> {{ t('RuleInstanceList.outputRate') }}</dt><dd>{{ rate(runtime?.outputRate) }} {{ t('RuleInstanceList.perSecond') }}</dd>
+          <dt :title="t('RuleInstanceList.inputHelp')"><AIcon type="DownloadOutlined" /> {{ t('RuleInstanceList.inputRate') }}</dt><dd><a-skeleton-input v-if="loading" active size="small" /><template v-else>{{ rate(runtime?.inputRate) }} {{ t('RuleInstanceList.perSecond') }}</template></dd>
+          <dt :title="t('RuleInstanceList.outputHelp')"><AIcon type="UploadOutlined" /> {{ t('RuleInstanceList.outputRate') }}</dt><dd>{{ rate(runtime?.outputRate) }} {{ t('RuleInstanceList.perSecond') }}</dd>
           <dt :title="t('RuleInstanceList.bufferHelp')"><AIcon type="InboxOutlined" /> {{ t('RuleInstanceList.buffered') }}</dt><dd>{{ ready ? runtime?.buffered ?? '—' : '—' }}</dd>
           <dt :title="t('RuleInstanceList.replicasHelp')">{{ t('RuleInstanceList.replicas') }}</dt><dd>{{ ready ? `${runtime?.runningReplicas}/${runtime?.totalReplicas}` : '—' }}</dd>
           <dt :title="t('RuleInstanceList.errorsHelp')">{{ t('RuleInstanceList.totalErrors') }}</dt><dd>{{ ready ? runtime?.errorCount ?? '—' : '—' }}</dd>
@@ -17,8 +17,8 @@
     <button type="button" class="rule-observation" :style="{ color }" :aria-label="`${t('RuleInstanceList.runtimeDetails')}: ${statusText}`" @click.stop>
       <AIcon :type="icon" :spin="loading" :style="{ color }" />
       <template v-if="ready">
-        <span :title="t('RuleInstanceList.inputRate')"><AIcon type="LoginOutlined" /> {{ rate(runtime?.inputRate) }}<small>/s</small></span>
-        <span :title="t('RuleInstanceList.outputRate')"><AIcon type="LogoutOutlined" /> {{ rate(runtime?.outputRate) }}<small>/s</small></span>
+        <span :title="t('RuleInstanceList.inputRate')"><AIcon type="DownloadOutlined" /> {{ rate(runtime?.inputRate) }}<small>/s</small></span>
+        <span :title="t('RuleInstanceList.outputRate')"><AIcon type="UploadOutlined" /> {{ rate(runtime?.outputRate) }}<small>/s</small></span>
         <span :title="t('RuleInstanceList.buffered')" :style="Number(runtime?.buffered) > 0 ? { color: token.colorWarning } : undefined"><AIcon type="InboxOutlined" /> {{ runtime?.buffered ?? '—' }}</span>
       </template>
       <span v-else>{{ statusText }}</span>
@@ -40,7 +40,7 @@ const state = computed(() => props.loading ? 'loading' : props.failed || !props.
 const statusText = computed(() => t(`RuleInstanceList.status.${state.value}`))
 const color = computed(() => state.value === 'running' ? token.value.colorSuccess
   : ['partial', 'observationPartial', 'paused'].includes(state.value) ? token.value.colorWarning : token.value.colorTextTertiary)
-const icon = computed(() => state.value === 'loading' ? 'SyncOutlined' : state.value === 'running' ? 'CheckCircleOutlined'
+const icon = computed(() => state.value === 'loading' ? 'SyncOutlined' : state.value === 'running' ? 'PlayCircleOutlined'
   : state.value === 'paused' ? 'PauseCircleOutlined' : ['partial', 'observationPartial'].includes(state.value) ? 'WarningOutlined'
     : state.value === 'stopped' ? 'StopOutlined' : 'QuestionCircleOutlined')
 const rate = (value?: number | null) => ready.value && value != null ? value.toLocaleString(undefined, { maximumFractionDigits: 1 }) : '—'
