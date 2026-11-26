@@ -8,6 +8,7 @@ import { computed, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import MetricScopePanel from '../collection/MetricScopePanel.vue'
 import { errorText } from '../service'
+import { useMetricSourceAdapter } from '../source-picker/useMetricSourceAdapter'
 import { metricMessages } from '../messages'
 import type { MetricAlarmReference, MetricTemplateReference, MetricContext, MetricDimensionProvider, MetricReference, MetricSourcePickerBinding,MetricWorkspaceSelection } from '../types'
 const props = defineProps<{ provider: MetricDimensionProvider; context: MetricContext; initialReference?: MetricReference; initialTemplate?:MetricTemplateReference; detailLinkLabel?: string }>()
@@ -16,6 +17,6 @@ const { t } = useI18n({ useScope: 'local', messages: metricMessages })
 let binding: MetricSourcePickerBinding | undefined
 let sourceError = ''
 // This keyed scope owns picker state and its host; switching owner destroys pending source drafts.
-try { binding = props.provider.useSourcePicker(toRef(props, 'context')) } catch (cause) { sourceError = errorText(cause) }
+try { binding = (props.provider.useSourcePicker || useMetricSourceAdapter)(toRef(props, 'context')) } catch (cause) { sourceError = errorText(cause) }
 const panelContext = computed(() => ({ ...props.context, readScopes:props.provider.readScopes?.(), editable: props.context.editable && !sourceError }))
 </script>

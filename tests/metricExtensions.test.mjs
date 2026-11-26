@@ -14,6 +14,17 @@ const { normalizePresentation, presentationSettings, formatMetricValue, applyMet
 const { useMetricWorkspace } = load('components/Metric/workspace/useMetricWorkspace.ts')
 const dimension = ownerType => ({ ownerType, label: ownerType, navigator: { render() {} }, useSourcePicker: () => ({ pickSource: async () => undefined }) })
 
+test('dimensions may describe objects without importing the metric source picker implementation', () => {
+  moduleRegistry.clear()
+  const { useSourcePicker, ...provider } = dimension('asset')
+  moduleRegistry.register('assets', { metricDimensions: { asset: provider } })
+  assert.deepEqual(collectMetricResources().dimensions.map(item => item.provider), [provider])
+  assert.deepEqual(collectMetricResources().issues, [])
+  moduleRegistry.register('assets', { metricDimensions: { asset: { ...provider, useSourcePicker: 'invalid' } } }, { override: true })
+  assert.deepEqual(collectMetricResources().issues, [{ type: 'invalid-dimension', moduleId: 'assets', key: 'asset' }])
+  moduleRegistry.clear()
+})
+
 test('首次工作区按授权维度排序预选，显式路由和历史选择优先，对象仍需授权确认', async () => {
   moduleRegistry.clear()
   moduleRegistry.register('objects', { metricDimensions: {

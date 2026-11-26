@@ -4,7 +4,8 @@ import { queryDevicesPage, queryProducts } from '../../../../api/scene-linkage'
 import { queryDeviceGroupDetailList_api, queryProjectSpaceAreaSettings_api } from '../../../../api/scene-resources'
 import { getTreeData_api } from '../../../../api/others'
 import type { IotAlarmTargetSelectOption, IotAlarmTargetSelectQuery } from '../alarm/IotAlarmTargetSelect.vue'
-import { batchDeviceNodeSummary_api } from '@device-manager-ui/api/deviceGroup'
+import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
+import type { queryDeviceScopeCounts } from '@device-manager-ui/deviceScope'
 import { ALL_DEVICES_COUNT_KEY, buildScopeCountRequests, type SpaceNode, type DeviceScope, type DeviceOption, type ScopeMode, type DeviceScopeModalProps, type DeviceScopeEvents, UNBOUND_SPACE_KEY } from '../deviceScopeTree'
 
 /** 设备范围弹窗的选择草稿、查询和统计；展示树不承担请求。 */
@@ -279,7 +280,9 @@ export function useDeviceScopeModal(props: DeviceScopeModalProps, emit: DeviceSc
     const requests = buildScopeCountRequests(scopeMode.value, navigationNodes.value)
     const baseTerms = productFilter.value ? [{ column: 'productId', termType: 'eq', value: productFilter.value }] : []
     try {
-      const rows = await batchDeviceNodeSummary_api(requests, baseTerms)
+      const queryCounts = moduleRegistry.getResourceItem<typeof queryDeviceScopeCounts>('device-manager-ui', 'apis', 'deviceScopeCounts')
+      if (!queryCounts) throw new Error('Device scope counts unavailable')
+      const rows = await queryCounts(requests, baseTerms)
       if (sequence === countSequence) scopeCounts.value = Object.fromEntries(rows.map(row => [row.id === ALL_DEVICES_COUNT_KEY ? '' : row.id, row.deviceCount]))
     } catch {
       if (sequence === countSequence) countsError.value = true

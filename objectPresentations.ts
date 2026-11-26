@@ -10,15 +10,7 @@ const alarmRecordPresentation = defineAsyncComponent(
 const openAlarmLog = async (query: Record<string, string>) => {
   const { useMenuStore } = await import('@jetlinks-web-core/store/menu')
   const menu = useMenuStore()
-  const detail = ['iot-user-device-list/Detail', 'iot-user/device/list/Detail', 'device/Instance/Detail'].find((code) =>
-    menu.getMenu(code)
-  )
-  if (detail)
-    menu.jumpPage(detail, {
-      params: { id: query.targetId },
-      query: { tab: detail === 'device/Instance/Detail' ? 'Alarm' : 'alarm' }
-    })
-  else menu.jumpPage('rule-engine/Alarm/Log', { query })
+  menu.jumpPage('rule-engine/Alarm/Log', { query })
 }
 
 export default {
@@ -34,17 +26,6 @@ export default {
   },
   deviceAlarm: {
     typeId: 'device',
-    queries: {
-      alarmSummary: {
-        nodeField: 'alarmCount',
-        icon: 'AlertOutlined',
-        parameters: defineAsyncComponent(() => import('./views/Alarm/Log/components/ObjectAlarmFocus.vue')),
-        format: (value) => ({
-          text: value == null ? '—' : String(value),
-          tone: Number(value) > 0 ? 'error' : 'neutral'
-        })
-      }
-    },
     lineage: true,
     fields: [
       {
