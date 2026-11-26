@@ -30,7 +30,7 @@
 | 累计错误 | 当前任务中出现过错误的执行数，包含已恢复错误，不等于最终失败消息数 |
 | 最近执行 | 当前任务最近一次执行开始时间，不是最近成功时间 |
 
-输入/输出分别汇总没有普通或事件上游/下游的节点，直接读取任务连接关系，不存额外 start/end 标记。`Output.getMetrics()` 由默认 Output 实现直接持有固定 meter，无额外观测包装；多入口或多末端可能重复计量同一业务事件。速率是60秒时间常数的 EWMA，5秒惰性推进、首次节拍前为0，单位条/秒；不是精确的一分钟窗口均值，也不表示下游系统写入成功。执行开始次数继续沿原统计契约，不能冒充数据条数。
+输入/输出分别汇总没有普通或事件上游/下游的节点，直接读取任务连接关系，不存额外 start/end 标记。默认 `AbstractOutput` 继承 `RateMeter`，直接在自身对象中承载统计字段，`Output.getMetrics()` 只在查询时生成快照；无独立 meter 或观测包装。无下游终端在 `write(data)` 调用时计数，直接返回共享 `Reactors.ALWAYS_TRUE`，重复订阅该返回值不重复计数；流式写出按消费到的数据逐条调用 write，有下游时沿原发送链计量。多入口或多末端可能重复计量同一业务事件。速率是60秒时间常数的 EWMA，5秒惰性推进、首次节拍前为0，单位条/秒；不是精确的一分钟窗口均值，也不表示下游系统写入成功。执行开始次数继续沿原统计契约，不能冒充数据条数。
 
 Pending 使用已有 `Scannable` 主订阅父链，最多扫描64层，不递归枚举活动执行、不增加逐消息 pending 状态。包含可扫描队列中的缓冲，不包含已取出执行的数据、不可扫描订阅、额外独立订阅或外部 Broker 积压。未知返回缺失，不能解释成0。
 
@@ -49,17 +49,17 @@ Pending 使用已有 `Scannable` 主订阅父链，最多扫描64层，不递归
 - 帧包括 `timestamp,rules[]`；规则项有 `id,observationStatus,runtimeState,runningReplicas,totalReplicas,inputRate,outputRate,buffered,transferCount,errorCount,lastExecutionTime`。累计大整数以十进制字符串传输，速率为数值，缺失保留 null/缺字段。
 - 页面15秒无更新即失效，传输失败按有界间隔重试；替换范围时清掉旧观测，只持有当前范围的帧。
 
-运行端必须装载新引擎构件；边界沿已有连接读取，无需为观测额外重新编译规则。旧节点或自定义 Output 没有对应能力时保留缺失；Output 装饰器应转交被装饰对象的指标。没有任务且完整读取成功时可明确返回0。
+运行端须先装载允许继承 `RateMeter` 的新 core，再升级引擎；旧 final 版本的 core 无法加载新的 `AbstractOutput`。边界沿已有连接读取，无需为观测额外重新编译规则。旧节点或自定义 Output 没有对应能力时保留缺失；Output 装饰器应转交被装饰对象的指标。没有任务且完整读取成功时可明确返回0。
 
 ## 成本与验证边界
 
-不增加逐次执行记录、历史存储、定时器线程、全局指标注册表或依赖。每任务复用一个新增发出 meter，同时供入口/末端两种角色读取；Pending 只在查询时扫描。
+不增加逐次执行记录、历史存储、定时器线程、全局指标注册表或新依赖。每个 Output 在自身继承字段中维护发出累计及速率，同时供入口/末端两种角色读取；Pending 只在查询时扫描。
 
-JDK21、256MiB 堆的 Instrumentation 对照原 QPS 版本：默认 Output 对象32→40B，加一个80B meter；无下游时另持有固定冷 Mono 和两个16B捕获对象，共新增136B/Output（1万个约1.30MiB），有下游时复用原 writer，不增加这48B。执行监控器不再持有输出 meter，仍为112B（含原执行 meter）。执行指标快照为56B，查询 Output 时另分配32B只读快照，不在写出热路径分配。
+JDK21、256MiB 堆的 Instrumentation 对照原 QPS 版本：继承统计字段后的默认 Output 为96B，不再单独分配80B meter。终端只保留16B writer，删除固定冷 Mono 及其 supplier；相较前一版168B降至112B，每个终端少56B。有下游对象由40B+80B meter降至96B，少24B。相对原 QPS 版本，无下游 Output 新增80B（1万个约0.76MiB），有下游新增64B。执行监控器仍为112B（含原执行 meter）。执行指标快照56B，查询 Output 时另分配32B只读快照，不在写出热路径分配。
 
-同一 JMH 单输出空函数探针相对原 QPS 版本：执行416.88→414.51ns/op，分配保持1704B/次；执行指标快照23.27→23.41ns/op、分配保持56B/次。相较此前包装实现，执行分配1744→1704B/次。没有新增逐消息状态。这是本机短微基准，不能据此承诺生产吞吐或多线程争用成本。
+同一 JMH 单输出空函数探针相对原 QPS 版本：执行416.88→406.28ns/op，分配保持1704B/次；执行指标快照23.27→23.13ns/op、分配保持56B/次。相较此前包装实现，执行分配1744→1704B/次。没有新增逐消息状态。这是本机短微基准，不能据此承诺生产吞吐或多线程争用成本。
 
-验证结果：引擎27项（含真实双节点 Output 指标 RPC、真实 EventBus 缓冲2→0、广播计数一次、空结果、并发订阅及 Output 重建归零）通过并本地 install；管理层7项定向测试通过，覆盖总流转数量及缺测保留已观测数据；前端列表/游标/范围替换/禁用/Blob 清理和气泡渲染11项通过，包含警告图标、缺测数字、过期隐藏、真实零值及大整数。`git diff --check` 通过。
+验证结果：core4项（含继承对象的速率及并发计数）通过并本地 install；引擎27项（含真实双节点 Output 指标 RPC、真实 EventBus 缓冲2→0、广播计数一次、空结果、共享终端返回值、并发写出及 Output 重建归零）通过并本地 install。管理层7项定向测试、前端11项行为测试复用前一阶段未改变字段契约与展示的有效证据，未重复执行。`git diff --check` 通过。
 
 内置浏览器已确认真实三列列表、独立预览、禁用不显示指标、输入/输出/缓冲图标气泡和真实 WebSocket 缺测处理；点击卡片进入原抽屉并恢复 `editorId`，关闭后回到列表，菜单仅保留启停/删除。760px视口重排为单列、内容区无横向溢出；一次刷新列表/预览响应头约51ms/177ms，数值不代表生产延迟。
 
@@ -74,6 +74,7 @@ JDK21、256MiB 堆的 Instrumentation 对照原 QPS 版本：默认 Output 对�
 
 ## 关联交付
 
-- 引擎实现 `0d539595025bc329df3f42f731fb6fd725d49f5c`：[rule-engine #17](https://github.com/jetlinks/rule-engine/pull/17)，基于原 QPS [#16](https://github.com/jetlinks/rule-engine/pull/16)。
+- core继承支持 `2c01d86d8f4c46be5e8eaab7a1cf9689654e84f8`：[jetlinks-core #130](https://github.com/jetlinks/jetlinks-core/pull/130)，先合并并发布。
+- 引擎实现 `56b43668c66f41f806b2dd95e20d9a24de637af2`：[rule-engine #17](https://github.com/jetlinks/rule-engine/pull/17)，基于原 QPS [#16](https://github.com/jetlinks/rule-engine/pull/16)，并依赖 core继承支持。
 - 管理入口 `b2f1874ea7a1e96f646faff8b88ef9f4eecccbe1`：[rule-engine-manager #294](https://github.com/jetlinks-v2/rule-engine-manager/pull/294)，Draft，等待完整依赖验证。
 - 页面实现 `91ba2aadf5a2bfc70b5ed66a96e806e66c76ed24`：[rule-engine-manager-ui #164](https://github.com/jetlinks-v2/rule-engine-manager-ui/pull/164)，Draft，等待完整构建与新宿主数值联调。
