@@ -67,3 +67,9 @@ JDK21、256MiB 堆的对象布局/Instrumentation 对照原 QPS 版本：监控�
 - 新输入/输出与 Pending 需在运行宿主升级并重新编译规则后补全页面联调；未对运行中的规则执行启停或部署操作。
 
 重验入口：`node --test tests/ruleInstanceList.test.mjs tests/ruleInstanceApi.test.mjs`、`vue-tsc --noEmit -p tsconfig.instance-list.json`、`pnpm -F jetlinks-web-core build -- --module-name rule-engine-manager-ui`；后端 `mvn -Dtest=RuleInstanceObservationServiceTest test`，上游 reactor 执行 `TaskOutputMetricsTest,TaskRuntimeProjectionTest,TaskExecutionMonitorTest,TaskExecutionMetricsTest,FunctionTaskObservationTest,TaskDumpMetricsRpcTest`。
+
+## 关联交付
+
+- 引擎实现 `12411daa9d4af69d77f8045df43efa7fe6388ccc`：[rule-engine #17](https://github.com/jetlinks/rule-engine/pull/17)，基于原 QPS [#16](https://github.com/jetlinks/rule-engine/pull/16)。
+- 管理入口 `6e71fca85534d40ccb0e23fb534050797a0776c9`：[rule-engine-manager #294](https://github.com/jetlinks-v2/rule-engine-manager/pull/294)，Draft，等待完整依赖验证。
+- 页面实现 `91ba2aadf5a2bfc70b5ed66a96e806e66c76ed24`：[rule-engine-manager-ui #164](https://github.com/jetlinks-v2/rule-engine-manager-ui/pull/164)，Draft，等待完整构建与新宿主数值联调。
