@@ -1,6 +1,6 @@
 <template>
   <a-select
-    :value="parameters.alarmConfigIds || []"
+    :value="selectedIds"
     :options="options"
     :loading="loading"
     :disabled="disabled"
@@ -20,11 +20,16 @@
   />
 </template>
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { queryList } from '../../../../api/configuration'
 const props = defineProps<{ parameters: Record<string, unknown>; disabled?: boolean }>()
 const emit = defineEmits<{ change: [parameters: Record<string, unknown>] }>()
+const selectedIds = computed(() =>
+  Array.isArray(props.parameters.alarmConfigIds)
+    ? props.parameters.alarmConfigIds.filter((id): id is string => typeof id === 'string')
+    : []
+)
 const { t } = useI18n()
 const options = ref<Array<{ value: string; label: string }>>([]),
   loading = ref(false),
@@ -56,10 +61,7 @@ async function load(reset = false) {
     const rows = (response.result?.data || []) as Array<{ id: string; name?: string }>
     const next = new Map(
       (reset
-        ? options.value.filter(
-            (item) =>
-              Array.isArray(props.parameters.alarmConfigIds) && props.parameters.alarmConfigIds.includes(item.value)
-          )
+        ? options.value.filter((item) => selectedIds.value.includes(item.value))
         : options.value
       ).map((item) => [item.value, item])
     )
@@ -84,7 +86,11 @@ function scroll(event: Event) {
   if (element.scrollTop + element.clientHeight >= element.scrollHeight - 24) void load()
 }
 function change(value: unknown) {
-  if (Array.isArray(value)) emit('change', { ...props.parameters, alarmConfigIds: value.slice(0, 20) })
+  if (Array.isArray(value))
+    emit('change', {
+      ...props.parameters,
+      alarmConfigIds: value.filter((id): id is string => typeof id === 'string').slice(0, 20)
+    })
 }
 void load(true)
 </script>
