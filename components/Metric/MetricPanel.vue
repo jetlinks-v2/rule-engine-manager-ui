@@ -15,6 +15,7 @@
         <a-button v-if="context.editable && !hideAdd" type="primary" size="small" @click="openEditor()"><AIcon type="PlusOutlined" /> {{ t('add') }}</a-button>
       </div>
     </div>
+    <div class="metric-panel__data">
     <a-alert v-if="error" type="error" show-icon :message="t('readFailed')" :description="error">
       <template #action><a-button size="small" @click="refreshAll">{{ t('retry') }}</a-button></template>
     </a-alert>
@@ -71,6 +72,7 @@
       </div>
     </template>
     <slot :references="visibleReferences" />
+    </div>
     <JlDrawerShell :open="editorOpen || !!reference" :title="editorOpen ? (editing ? t('edit') : t('add')) : selected && configName(selected) || t('unnamedOutput')"
       :sub="editorOpen ? undefined : selected && configName(selected)" :width="860" :fullscreen="editorOpen" :hide-head="editorOpen" :class="{ 'metric-panel__editor-shell':editorOpen, 'metric-panel__detail-shell':!editorOpen }" :icon="editorOpen ? 'SettingOutlined' : 'LineChartOutlined'" @update:open="!$event && requestDismiss()" @after-open-change="restoreCardFocus">
       <template #head><div class="metric-panel__drawer-title"><b>{{ editorOpen ? (editing ? t('edit') : t('add')) : selected && configName(selected) || t('unnamedOutput') }}</b><a-button v-if="!editorOpen && selected && canManage(selected)" type="text" size="small" :aria-label="t('edit')" :title="t('edit')" @click="openEditor(selected)"><AIcon type="EditOutlined" /></a-button></div><p v-if="!editorOpen" class="metric-panel__drawer-subtitle">{{ context.label }}</p></template>
@@ -201,6 +203,11 @@ function openDetailLink() {
 defineExpose({create:()=>openEditor(),async canLeave(){if(editorOpen.value && !await configEditor.value?.canLeave())return false;dismissDrawer();return true}})
 </script>
 <style scoped>
+.metric-panel__data{display:grid;align-content:start;gap:var(--space-4,16px);min-width:0}
+.metric-panel.is-fill{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden;gap:0}
+.metric-panel.is-fill>.metric-panel__tools{flex:none;padding:12px 16px;border-bottom:1px solid var(--line)}
+.metric-panel.is-fill>.metric-panel__data{flex:1;min-height:0;overflow:auto;scrollbar-gutter:stable;padding:16px}
+
 .metric-panel { display:grid; gap:var(--space-4,16px); min-width:0; container:metric-panel / inline-size }
 .metric-panel__empty{margin:var(--space-8,32px) 0}
 .metric-panel__editor-shell :deep(.drawer-body) { display:flex; flex-direction:column; overflow:hidden; padding:0 }
@@ -232,7 +239,7 @@ defineExpose({create:()=>openEditor(),async canLeave(){if(editorOpen.value && !a
 .metric-panel__card:disabled { cursor:default }
 .metric-panel__card:disabled:hover { border-color:var(--line) }
 .metric-panel__card.is-stopped { background:var(--bg-sunken); color:var(--ink-2) }
-.metric-panel__secondary-outputs { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr)); align-content:start; flex:none; gap:12px 20px; padding:12px var(--space-4,16px); border-top:1px solid var(--line) }
+.metric-panel__secondary-outputs { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr)); align-content:start; flex:none; gap:12px 20px; padding:12px var(--space-4,16px); border-top:1px solid var(--line) }
 .metric-panel__secondary-outputs.is-link { padding-block:6px }
 .metric-panel__details { grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; border:0; background:transparent; padding:0; color:var(--ink-3); font:inherit; font-size:var(--fs-12,12px); cursor:pointer }
 .metric-panel__details:hover { color:var(--accent) }

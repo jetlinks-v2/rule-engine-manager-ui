@@ -172,6 +172,25 @@ test('卡片与详情显示时长下界，停用不残留至少字样',async()=>
   } finally {app.unmount()}
 })
 
+test('上次状态与持续时间分开展示并保留未知边界，不改变区间事实', async () => {
+  const local = createMetricLoader({ 'vue-i18n': { useI18n: () => ({ locale: ref('zh'), t: (key, values) => key === 'intervalPreviousState' ? `上次${values.state}` : values?.count != null ? `${key}:${values.count}` : key }) } })
+  const Component = local('components/Metric/MetricStateDuration.vue').default
+  const fact = value(85, { currentInterval: interval('now', 70), previousInterval: interval('old', 50, 60, { value: 'stopped', startKnown: false, endKnown: false }) })
+  const props = reactive({ value: fact, compact: true, detail: false, labels: [{ value: 'running', name: '运行' }, { value: 'stopped', name: '停止' }] })
+  const { renderer, root } = createMetricRenderer()
+  const app = renderer.createApp({ setup: () => () => h(Component, props) }); app.config.warnHandler = () => {}; app.mount(root)
+  try {
+    const previous = walk(root, node => node.props.class === 'state-duration__last')[0]
+    assert.ok(textContent(previous).includes('上次停止'))
+    assert.ok(textContent(previous).includes('intervalAtLeast'))
+    assert.ok(textContent(previous).includes('intervalInterrupted'))
+    assert.equal(fact.state.previousInterval.value, 'stopped')
+    assert.equal(fact.state.previousInterval.endKnown, false)
+    props.detail = true; await flush()
+    assert.equal(walk(root, node => node.props.class === 'state-duration__last').length, 0)
+  } finally { app.unmount() }
+})
+
 test('实时持续时长按接收后的单调时间推进，历史固定；过期停止且不改写服务端事实',async context=>{
   let now=0,tick,active=false
   context.mock.method(performance,'now',()=>now)

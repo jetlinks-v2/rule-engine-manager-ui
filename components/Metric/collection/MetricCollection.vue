@@ -10,6 +10,7 @@
       <a-tooltip :title="t('refresh')"><a-button type="text" size="small" :loading="loading" :aria-label="t('refresh')" @click="refresh"><AIcon type="ReloadOutlined" /></a-button></a-tooltip>
       </div>
     </header>
+    <div class="metric-collection__data">
     <a-alert v-if="error" type="error" show-icon :message="t('failed')" :description="error"><template #action><a-button @click="refresh">{{ t('retry') }}</a-button></template></a-alert>
     <div v-if="result" class="metric-collection__scope">
       <strong>{{ t('scope', { count:result.visibleMembers }) }}</strong>
@@ -40,6 +41,7 @@
         </section>
       </div>
     </a-spin>
+    </div>
     <footer v-if="result?.total" class="metric-collection__footer"><a-pagination :current="page" :total="result.total" :page-size="20" :show-size-changer="false" @change="changePage" /></footer>
     <JlDrawerShell :open="!!selected" :title="selected?.configName || detail.template.value?.name" :sub="selected?.target.name" :width="860" @update:open="!$event && (selected = undefined)">
       <a-alert v-if="detail.error.value" type="error" :message="detail.error.value" />
@@ -86,6 +88,12 @@ const appearance = (key:string) => stateAppearance(rawState(key), activeGroup.va
 const stateName = (key:string) => stateLabel(rawState(key), activeGroup.value?.stateLabels || [], String(locale.value))
 </script>
 <style scoped>
+.metric-collection__data{display:grid;align-content:start;gap:var(--space-4,16px);min-width:0}
+.metric-collection.is-fill{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden;padding:0;gap:0}
+.metric-collection.is-fill>header{flex:none;padding:12px 16px;border-bottom:1px solid var(--line)}
+.metric-collection.is-fill>.metric-collection__data{flex:1;min-height:0;overflow:auto;scrollbar-gutter:stable;padding:16px}
+.metric-collection.is-fill>footer{flex:none;padding:12px 16px;border-top:1px solid var(--line)}
+
 .metric-collection { min-width:0; padding:var(--space-4,16px) }
 .metric-collection__breadcrumb{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;font-size:14px}
 .metric-collection__breadcrumb>span{font-size:12px;color:var(--ink-3)}

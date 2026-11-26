@@ -7,8 +7,8 @@
       <strong v-else :title="text">{{ text }}</strong><span v-if="renderable && duration === undefined && displayUnit">{{ displayUnit }}</span>
     </div>
     <template v-if="!hideFeedback">
-    <p v-if="summary && !disabled && issueCaption" class="metric-value__issue" :title="issueCaption"><AIcon type="ExclamationCircleOutlined" />{{ issueCaption }}</p>
-    <span v-else-if="inline && !disabled && !['valid', 'unknownQuality', 'waiting', 'noValue'].includes(state.key)" class="metric-value__inline-issue" :title="issueCaption || feedback">{{ t(state.tone === 'error' ? 'issueNoResult' : 'issuePartial') }}</span>
+    <a-tooltip v-if="iconFeedback" :title="feedbackHint"><span class="metric-value__inline-issue" :class="{ 'is-error':state.tone==='error' }" role="img" :aria-label="feedbackHint" :title="feedbackHint"><AIcon :type="state.tone==='error' ? 'ExclamationCircleOutlined' : 'InfoCircleOutlined'" aria-hidden="true" /></span></a-tooltip>
+    <p v-else-if="summary && !disabled && issueCaption" class="metric-value__issue" :title="issueCaption"><AIcon type="ExclamationCircleOutlined" />{{ issueCaption }}</p>
     <a-tag v-else-if="!inline && (!hideQuality || !['valid', 'unknownQuality'].includes(state.key))" :color="state.tone === 'default' ? undefined : state.tone" :title="!issueCaption && partialCoverage !== undefined ? t('coveragePartialHint') : undefined">{{ !disabled && issueCaption || feedback }}</a-tag>
     </template>
     <MetricValueFields v-if="schema && renderable && value?.value && typeof value.value === 'object' && !Array.isArray(value.value)" :value="value.value" :schema="schema" />
@@ -44,6 +44,9 @@ const props = defineProps<{ value?: MetricValue; template?:MetricTemplate; outpu
 const { t, locale } = useI18n({ useScope: 'local', messages: statisticMessages })
 const state = computed(() => props.disabled ? { key: 'disabled', tone: 'default' } : metricState(props.value))
 const issueCaption = computed(()=>metricIssueCaption(props.value,props.template,t))
+const iconFeedback = computed(() => !props.disabled && (props.inline
+  ? !['valid', 'unknownQuality', 'waiting', 'noValue'].includes(state.value.key)
+  : (props.compact || props.summary) && state.value.tone === 'warning'))
 const schema = computed(()=>props.meaning?.schema || (props.template && props.output ? metricValueSchema(props.template,props.output.metricId) : undefined) || (props.output?.valueType ? {type:props.output.valueType} : undefined))
 const labels = computed(()=>{
   const declared=props.meaning?.labels || (props.labels?.length ? props.labels : props.template && props.output ? metricValueLabels(props.template,props.output.metricId) : [])
@@ -63,6 +66,7 @@ const percentage = (value: number) => new Intl.NumberFormat(undefined, { style: 
 // 只展示服务端已有覆盖率，不把未知时段补为正常，也不覆盖具体来源诊断。
 const partialCoverage = computed(()=>{ const coverage=props.value?.quality?.coverage;return state.value.key === 'optionalInputMissing' && typeof coverage === 'number' && Number.isFinite(coverage) && coverage >= 0 && coverage < 1 ? coverage : undefined })
 const feedback = computed(()=>partialCoverage.value !== undefined ? `${t('coverage')} ${percentage(partialCoverage.value)}` : t(state.value.key))
+const feedbackHint = computed(() => issueCaption.value || (partialCoverage.value !== undefined ? `${feedback.value} · ${t('coveragePartialHint')}` : feedback.value))
 </script>
 <style scoped>
 .metric-value__main { display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--space-2, 8px) }
@@ -77,7 +81,8 @@ const feedback = computed(()=>partialCoverage.value !== undefined ? `${t('covera
 .metric-value--summary > .ant-tag { margin:0 }
 .metric-value__issue { display:flex; align-items:baseline; gap:6px; flex-basis:100%; margin:0; color:var(--ink-2); font-size:var(--fs-12,12px); line-height:1.6; overflow-wrap:anywhere }
 .metric-value__issue :deep(.anticon) { color:var(--color-warning,#faad14); flex:none }
-.metric-value__inline-issue { font-size:var(--fs-12,12px); color:var(--ink-3) }
+.metric-value__inline-issue { display:inline-flex; flex:none; font-size:var(--fs-12,12px); color:var(--ink-3) }
+.metric-value__inline-issue.is-error { color:var(--color-error,#ff4d4f) }
 .metric-value--summary .metric-value__main strong { font-size:var(--fs-32,32px); letter-spacing:-.5px; max-width:100%; line-height:1.4 }
 .metric-value__facts { display:flex; flex-wrap:wrap; gap:var(--space-1,4px) var(--space-4,16px); color:var(--ink-3); font-size:var(--fs-12,12px); margin-top:var(--space-1,4px) }
 .metric-value--inline { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:6px }

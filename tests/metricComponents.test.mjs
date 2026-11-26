@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { defineComponent, effectScope, h, inject, provide, onUnmounted, reactive, ref, nextTick } from 'vue'
+import { defineComponent, effectScope, h, inject, provide, onUnmounted, reactive, ref, nextTick, toRaw } from 'vue'
 import { useEventListener, onClickOutside, useIntervalFn } from '@vueuse/core'
 import { theme, Empty } from 'ant-design-vue'
 import { resolve } from 'node:path'
@@ -8,8 +8,29 @@ import { createMetricLoader, createMetricRenderer, flush, walk, textContent, sou
 const api = {}
 const confirmations = []
 const workspaceWidth = ref(1200)
+const navigationCollapsed = ref(false)
+const navigationCompact = ref(false)
+const navigationCloses = []
+const splitBoundary = defineComponent({
+  setup(_props, { slots, expose }) {
+    const close = target => navigationCloses.push(target)
+    expose({ close, toggle: () => { navigationCollapsed.value = !navigationCollapsed.value } })
+    return () => h('splitter-layout', [
+      slots.start?.({ close, compact: navigationCompact.value }),
+      slots.end?.({ collapsed: navigationCollapsed.value, compact: navigationCompact.value, toggle: () => { navigationCollapsed.value = !navigationCollapsed.value }, startId: 'metric-navigation' }),
+    ])
+  },
+})
 let discoverObjectTypes=async()=>[...moduleRegistry.getAllModules().values()].flatMap(module=>Object.keys(module.metricDimensions || {}).map(id=>({id})))
 const componentStubs = {
+  '@jetlinks-web-core/components': {
+    ResponsiveSplitter: splitBoundary,
+    PanelCollapseButton: defineComponent({
+      props: { collapsed: Boolean, label: String }, emits: ['toggle'],
+      setup: (props, { attrs, emit }) => () => h('a-button', { ...attrs, 'aria-expanded': !props.collapsed,
+        'aria-label': props.label || 'collapsePanel', onClick: () => emit('toggle') }),
+    }),
+  },
   '@vueuse/core': { useEventListener, onClickOutside, useIntervalFn, useElementSize: () => ({ width:workspaceWidth, height:ref(800) }) },
   '@jetlinks-web/vite/dist/dynamic-remote': { dynamicRemoteManager: {} },
   '@jetlinks-web-core/utils/consts': { isSubApp: false },
@@ -1255,40 +1276,37 @@ test('真实Workspace等待授权对象、导航失败清理、同ID重试重建
   } finally { view.close(); moduleRegistry.clear() }
 })
 
-test('工作区只装配一个导航；窄屏保留关闭抽屉内的授权确认，撤权销毁导航与来源',async()=>{
-  defaults();moduleRegistry.clear()
-  const allowed=ref(true)
-  let mounted=0,closed=0,sourceClosed=0,confirm
-  workspaceWidth.value=0
-  moduleRegistry.register('objects',{metricDimensions:{line:{ownerType:'line',label:'Line',available:()=>allowed.value,
-    navigator:defineComponent({setup:(_props,{emit})=>{mounted++;confirm=(object,origin)=>emit('select',object,origin);onUnmounted(()=>closed++);return()=>h('navigator')}}),
-    useSourcePicker:()=>{onUnmounted(()=>sourceClosed++);return{pickSource:async()=>undefined}},
-  }}})
-  const view=mount(Workspace,{scopeKey:'narrow/project',selection:{ownerType:'line',ownerId:'a'}})
-  try{
-    await flush();assert.equal(mounted,0)
-    workspaceWidth.value=700;await flush()
-    assert.equal(mounted,1);assert.equal(nodes(view.root,'navigator').length,1)
-    assert.equal(nodes(view.root,'a-drawer')[0].props.open,false)
-    confirm({ownerId:'a',label:'Line A'});await flush()
+test('工作区复用单个导航，授权确认不关闭公共布局，用户选择将焦点交给结果区', async () => {
+  defaults(); moduleRegistry.clear(); navigationCollapsed.value = false; navigationCloses.length = 0
+  const allowed = ref(true)
+  let mounted = 0, closed = 0, sourceClosed = 0, confirm
+  moduleRegistry.register('objects', { metricDimensions: { line: { ownerType: 'line', label: 'Line', available: () => allowed.value,
+    navigator: defineComponent({ setup: (_props, { emit }) => { mounted++; confirm = (object, origin) => emit('select', object, origin); onUnmounted(() => closed++); return () => h('navigator') } }),
+    useSourcePicker: () => { onUnmounted(() => sourceClosed++); return { pickSource: async () => undefined } },
+  } } })
+  const view = mount(Workspace, { scopeKey: 'navigation/project', selection: { ownerType: 'line', ownerId: 'a' } })
+  try {
+    await flush(); assert.equal(mounted, 1)
+    confirm({ ownerId: 'a', label: 'Line A' }, 'validation'); await flush()
+    assert.equal(navigationCloses.length, 0)
     assert.ok(textContent(view.root).includes('Line A'))
-    await click(findText(view.root,'a-button','selectObject'))
-    assert.equal(nodes(view.root,'a-drawer')[0].props.open,true)
-    confirm({ownerId:'a',label:'Line A'},'validation');await flush()
-    assert.equal(nodes(view.root,'a-drawer')[0].props.open,true)
-    confirm({ownerId:'a',label:'Line A'});await flush()
-    assert.equal(nodes(view.root,'a-drawer')[0].props.open,false)
-    workspaceWidth.value=1200;await flush()
-    assert.equal(nodes(view.root,'navigator').length,1);assert.equal(mounted-closed,1)
-    allowed.value=false;await flush()
-    assert.equal(nodes(view.root,'navigator').length,0);assert.equal(mounted,closed)
-    assert.equal(sourceClosed,1)
-    assert.equal(textContent(view.root).includes('Line A'),false)
-  }finally{view.close();workspaceWidth.value=1200;moduleRegistry.clear()}
+    navigationCompact.value = true; navigationCollapsed.value = true; await flush()
+    const trigger = nodes(view.root, 'a-button').find(node => node.props['aria-label'] === 'selectObject')
+    await click(trigger)
+    assert.equal(navigationCollapsed.value, false)
+    assert.equal(nodes(view.root, 'a-button').find(node => node.props['aria-label'] === 'selectObject'), trigger, 'drawer transitions retain the focus return target')
+    assert.equal(mounted, 1); assert.equal(closed, 0)
+    confirm({ ownerId: 'a', label: 'Line A' }); await flush()
+    assert.equal(navigationCloses.length, 1)
+    assert.equal(toRaw(navigationCloses[0]), nodes(view.root, 'main')[0])
+    allowed.value = false; await flush()
+    assert.equal(nodes(view.root, 'navigator').length, 0); assert.equal(mounted, closed)
+    assert.equal(sourceClosed, 1); assert.equal(textContent(view.root).includes('Line A'), false)
+  } finally { view.close(); navigationCollapsed.value = false; navigationCompact.value = false; moduleRegistry.clear() }
 })
 
-test('窄屏聚合、成员和本级视图始终可切换对象，宽窄往返保留选择且不重复入口',async()=>{
-  defaults();moduleRegistry.clear();workspaceWidth.value=700
+test('聚合、成员和本级视图共享一个公共导航入口并保留对象选择',async()=>{
+  defaults();moduleRegistry.clear();navigationCollapsed.value=true;navigationCloses.length=0
   const navigators=new Map()
   let aggregateRead
   const ready=new Promise(resolve=>{aggregateRead=resolve})
@@ -1311,32 +1329,32 @@ test('窄屏聚合、成员和本级视图始终可切换对象，宽窄往返�
     assert.equal(triggers[0].parent.props.class,'metric-workspace__object-heading')
     assert.equal(textContent(triggers[0].parent),'Line A')
     assert.equal(triggers[0].props['aria-expanded'],false)
-    await click(triggers[0]);assert.equal(nodes(view.root,'a-drawer')[0].props.open,true)
-    assert.equal(triggers[0].props['aria-expanded'],true)
-    nodes(view.root,'a-drawer')[0].props.onClose();await flush()
+    await click(triggers[0]);assert.equal(navigationCollapsed.value,false)
+    navigationCollapsed.value=true;await flush()
   }
   try{
     await flush();navigators.get('line')({ownerId:'a',label:'Line A'});await flush()
     assert.equal(findText(view.root,'a-button','viewCurrent'),undefined,'results are the initial task')
-    await openNavigation();nodes(view.root,'a-tabs').find(node=>node.props.class==='metric-scope-panel__tabs').props.onChange('overview');await ready;await flush()
+    await openNavigation();nodes(view.root,'a-menu').find(node=>node.props.class==='metric-scope-panel__view-menu').props.onClick({key:'overview'});await ready;await flush()
     assert.ok(findText(view.root,'a-button','viewCurrent'));await openNavigation()
-    nodes(view.root,'a-tabs').find(node=>node.props.class==='metric-scope-panel__tabs').props.onChange('metrics');await flush();await openNavigation()
-    nodes(view.root,'a-tabs').find(node=>node.props.class==='metric-scope-panel__tabs').props.onChange('overview');await flush()
+    nodes(view.root,'a-menu').find(node=>node.props.class==='metric-scope-panel__view-menu').props.onClick({key:'metrics'});await flush();await openNavigation()
+    nodes(view.root,'a-menu').find(node=>node.props.class==='metric-scope-panel__view-menu').props.onClick({key:'overview'});await flush()
     await click(findText(view.root,'a-button','viewCurrent'));await openNavigation()
     assert.ok(findText(view.root,'a-button','backOverview'))
-    workspaceWidth.value=1200;await flush()
-    assert.equal(findText(view.root,'a-button','selectObject'),undefined)
+    navigationCollapsed.value=false;await flush()
+    assert.equal(nodes(view.root,'a-button').some(node=>node.props['aria-label']==='selectObject'),false)
     assert.equal(nodes(view.root,'navigator')[0].props.selectedId,'a')
-    workspaceWidth.value=700;await flush();await openNavigation()
+    navigationCollapsed.value=true;await flush();await openNavigation()
     assert.equal(nodes(view.root,'navigator')[0].props.selectedId,'a')
-    await click(findText(view.root,'a-button','selectObject'))
+    const beforeSelection=navigationCloses.length
+    await click(nodes(view.root,'a-button').find(node=>node.props['aria-label']==='selectObject'))
     nodes(view.root,'a-select').find(node=>node.props['aria-label']==='chooseDimension').props['onUpdate:value']('area');await flush()
-    assert.equal(nodes(view.root,'a-drawer')[0].props.open,true)
+    assert.equal(navigationCloses.length,beforeSelection)
     navigators.get('area')({ownerId:'b',label:'Area B'});await flush()
-    assert.equal(nodes(view.root,'a-drawer')[0].props.open,false)
+    assert.equal(navigationCloses.length,beforeSelection+1)
     assert.equal(nodes(view.root,'navigator')[0].props.selectedId,'b')
     assert.equal(nodes(view.root,'h3').filter(node=>textContent(node)==='Area B').length,1)
-  }finally{view.close();workspaceWidth.value=1200;moduleRegistry.clear()}
+  }finally{view.close();navigationCollapsed.value=false;moduleRegistry.clear()}
 })
 
 test('模板筛选空集不显示空库引导，编辑后返回保留分类和搜索且不重新加载目录',async()=>{
@@ -2205,13 +2223,15 @@ test('真实Panel轮询展示服务端过期与独立装载反馈，旧值和真
   const view = mount(Panel, props)
   const card = () => nodes(view.root, 'button').find(node => node.props.class?.includes('metric-panel__card'))
   const refresh = () => click(findText(view.root, 'a-button', 'refresh'))
+  const expiryFeedback = () => walk(card(), node => node.props.role === 'img' && node.props['aria-label']?.includes('inputExpired')).length > 0
   try {
     await flush()
     assert.ok(nodes(card(), 'a-tooltip').some(node => node.props.title?.includes('valid')))
     assert.equal(textContent(card()).includes('runtimeLoaded'), false)
     observed = { ...observed, quality: { ...observed.quality, stale: true } }
     await refresh()
-    assert.ok(textContent(card()).includes('inputExpired'))
+    assert.ok(expiryFeedback())
+    assert.ok(textContent(card()).includes('lastKnownResult'))
     assert.ok(textContent(card()).includes('6'))
     const timeHint = nodes(card(), 'a-tooltip').find(node => node.props.title?.includes(new Date(1000).toLocaleString('zh')))
     const timestamp = nodes(timeHint, 'time')[0]
@@ -2222,10 +2242,10 @@ test('真实Panel轮询展示服务端过期与独立装载反馈，旧值和真
     runtime = { nodeId: 'node-a', state: 'pending' }; await refresh()
     assert.ok(textContent(card()).includes('runtimePending'))
     assert.ok(textContent(card()).includes('lastResult'))
-    assert.ok(textContent(card()).includes('inputExpired'))
+    assert.ok(expiryFeedback())
     runtime = { nodeId: 'node-a', state: 'failed', replicas: 0, complete: true, lastSuccessTime: 100, lastFailureTime: 200, errorCode: 'load_failed' }; await refresh()
     assert.ok(textContent(card()).includes('runtimeFailed'))
-    assert.ok(textContent(card()).includes('inputExpired'))
+    assert.ok(expiryFeedback())
     await click(card())
     assert.equal(textContent(view.root).includes('node-a'), false)
     assert.ok(textContent(view.root).includes('runtimeReplicas'))
@@ -2245,7 +2265,7 @@ test('真实Panel轮询展示服务端过期与独立装载反馈，旧值和真
     assert.equal(textContent(view.root).includes('runtimeFailed'), false)
     runtime = undefined; await refresh()
     assert.equal(textContent(card()).includes('runtimeUnknown'), false)
-    assert.ok(textContent(card()).includes('inputExpired'))
+    assert.ok(expiryFeedback())
     runtime = { nodeId: 'node-a', state: 'loaded' }; empty = true; await refresh()
     assert.ok(textContent(card()).includes('waiting'))
     assert.equal(textContent(card()).includes('runtimeLoaded'), false)
@@ -2302,12 +2322,12 @@ test('部分结果显示服务端覆盖率且保留真实零值；具体异常�
   const view=mount(Value,props)
   try {
     assert.equal(textContent(nodes(view.root,'strong')[0]),'0')
-    assert.equal(textContent(nodes(view.root,'a-tag')[0]),'coverage 43%')
-    assert.equal(nodes(view.root,'a-tag')[0].props.title,'coveragePartialHint')
+    const hint = () => walk(view.root, node => node.props.class === 'metric-value__inline-issue')[0]?.props['aria-label']
+    assert.equal(hint(),'coverage 43% · coveragePartialHint')
     props.value={...props.value,reason:'inputExpired'};await flush()
-    assert.equal(textContent(nodes(view.root,'a-tag')[0]),'inputExpired')
+    assert.equal(hint(),'inputExpired')
     props.value={...props.value,reason:undefined,quality:{valid:true}};await flush()
-    assert.equal(textContent(nodes(view.root,'a-tag')[0]),'optionalInputMissing')
+    assert.equal(hint(),'optionalInputMissing')
   } finally {view.close()}
 })
 
@@ -2374,4 +2394,27 @@ test('持续条件未填输出类型时仍按模板布尔语义读取完整分�
     await click(cell);assert.equal(calls.length,1)
     assert.ok(nodes(view.root,'chart').length,'drilldown renders the existing original-record timeline')
   }finally{view.close();delete api.aggregateHistory;moduleRegistry.clear()}
+})
+
+test('紧凑质量反馈使用带完整说明的图标，详情和错误仍保留明确反馈', async () => {
+  const Value = load('components/Metric/MetricValue.vue').default
+  const props = reactive({ value: { metricId: 'quality', value: 96, status: 'partial', quality: { valid: true, coverage: 0.5 } }, inline: true, summary: false, disabled: false })
+  const view = mount(Value, props)
+  const icons = () => walk(view.root, node => node.props.class === 'metric-value__inline-issue' && node.props.role === 'img')
+  try {
+    assert.equal(icons().length, 1)
+    assert.ok(icons()[0].props['aria-label'])
+    assert.equal(icons()[0].props.title, icons()[0].props['aria-label'])
+    assert.equal(textContent(view.root).includes('issuePartial'), false)
+    props.inline = false; props.summary = true; await flush()
+    assert.equal(icons().length, 1)
+    props.summary = false; await flush()
+    assert.equal(icons().length, 0); assert.ok(nodes(view.root, 'a-tag').length)
+    props.value = { metricId: 'quality', value: 96, status: 'success', quality: { valid: true } }
+    props.inline = true; await flush(); assert.equal(icons().length, 0)
+    props.value = { metricId: 'quality', value: 96, status: 'invalid', quality: { valid: false } }
+    props.inline = false; props.summary = true; await flush()
+    assert.equal(icons().length, 0); assert.ok(textContent(view.root).includes('issueNoResult'))
+    props.disabled = true; await flush(); assert.equal(icons().length, 0)
+  } finally { view.close() }
 })

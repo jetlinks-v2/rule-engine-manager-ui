@@ -42,7 +42,7 @@ export function createMetricLoader(stubs = {}, resolvePath = path => path) {
       source = script.content
       sfcMap = script.map
     }
-    const sourcePath = filename.startsWith(platformSources + '/') ? `core/${relative(platformSources, filename)}` : relative(coreRoot, filename)
+    const sourcePath = filename.startsWith(platformRoot + '/') ? `core/${relative(platformRoot, filename)}` : relative(coreRoot, filename)
     const output = resolve(instrumented, sourcePath.replace(/\.(ts|vue)$/, '.cjs'))
     mkdirSync(dirname(output), { recursive: true })
     const transpiled = ts.transpileModule(source.replaceAll('import.meta.env', '({})'), {
