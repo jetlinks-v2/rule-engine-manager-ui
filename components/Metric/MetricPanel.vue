@@ -239,7 +239,7 @@ defineExpose({create:()=>openEditor(),async canLeave(){if(editorOpen.value && !a
 .metric-panel__card:disabled { cursor:default }
 .metric-panel__card:disabled:hover { border-color:var(--line) }
 .metric-panel__card.is-stopped { background:var(--bg-sunken); color:var(--ink-2) }
-.metric-panel__secondary-outputs { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr)); align-content:start; flex:none; gap:12px 20px; padding:12px var(--space-4,16px); border-top:1px solid var(--line) }
+.metric-panel__secondary-outputs { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,120px),1fr)); align-content:start; flex:none; gap:12px 20px; padding:12px var(--space-4,16px); border-top:1px solid var(--line) }
 .metric-panel__secondary-outputs.is-link { padding-block:6px }
 .metric-panel__details { grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; border:0; background:transparent; padding:0; color:var(--ink-3); font:inherit; font-size:var(--fs-12,12px); cursor:pointer }
 .metric-panel__details:hover { color:var(--accent) }
@@ -251,7 +251,6 @@ defineExpose({create:()=>openEditor(),async canLeave(){if(editorOpen.value && !a
 .metric-panel__secondary :deep(.metric-value__main strong) { white-space:normal; overflow-wrap:anywhere }
 .metric-panel__secondary :deep(.metric-value--inline) { justify-content:flex-start; gap:4px 8px; line-height:1.5 }
 .metric-panel__secondary :deep(.metric-value__main) { align-items:center; gap:6px; min-height:22px }
-.metric-panel__secondary :deep(.metric-value__inline-issue) { flex-basis:100%; line-height:1.5 }
 .metric-panel__secondary.is-score :deep(.metric-value__main strong) { color:var(--ink-1); font-size:18px; line-height:20px }
 .metric-panel__secondary:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
 .metric-panel__secondary:hover,.metric-panel__secondary[aria-pressed=true] { color:var(--accent) }

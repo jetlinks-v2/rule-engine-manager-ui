@@ -60,7 +60,7 @@ const baseline=computed(()=>metricStatisticBaseline(props.output))
 const observedKind = useHistoryKind(toRef(props, 'values'), toRef(props, 'current'))
 const declared = computed(() => metricOutputPresentation(props.output,{labels:props.labels}).history)
 const declaredState = computed(() => props.stateOutput || declared.value === 'state')
-const kind = computed(() => declaredState.value ? 'state' : declared.value === 'auto' ? observedKind.value : declared.value)
+const kind = computed(() => props.aggregated ? 'number' : declaredState.value ? 'state' : declared.value === 'auto' ? observedKind.value : declared.value)
 const visibleValues = computed(() => props.values.filter(value => {
   const time = resultTime(value)
   return time != null && (!props.bounds || time >= props.bounds[0] && time <= props.bounds[1])

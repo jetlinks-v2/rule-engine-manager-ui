@@ -2379,6 +2379,33 @@ test('详情切换时段保留图表实例和当前数据，完成后原位更�
   } finally {view.close();moduleRegistry.clear()}
 })
 
+test('普通公式未声明输出类型时也能发现时间聚合并绘制精确数值桶',async()=>{
+  defaults();moduleRegistry.clear()
+  const Result=load('components/Metric/MetricResult.vue').default
+  const now=Date.now(),calls=[]
+  const output={metricId:'value',label:'Pressure',aggregatable:true,persist:true}
+  const definition={...template,outputs:[output],definitions:[{id:'value'}]}
+  const options=['avg','min','max','last'].map(id=>({id,name:id}))
+  api.history=async()=>[{...value,evaluationTime:now-1000}]
+  api.aggregateHistory=async(_id,query)=>{calls.push(query);return {operations:options,operation:query.operation,interval:1000,
+    buckets:query.operation ? [{from:now-2000,to:now-1000,value:'45.750000000000000001'},
+      {from:now-1000,to:now,value:'46.125000000000000003'}] : []}}
+  const view=mount(Result,{reference:{configId:'c',outputId:'value'},output,template:definition})
+  try{
+    await flush()
+    const select=nodes(view.root,'a-select').find(node=>node.props['aria-label']==='historyAggregation')
+    assert.ok(select,'missing optional type metadata must not hide the aggregation selector')
+    assert.equal(calls.length,0,'capability discovery stays on demand')
+    select.props.onDropdownVisibleChange(true);await flush()
+    assert.equal(calls.length,1);assert.equal(calls[0].operation,undefined)
+    select.props.onChange('avg');await flush()
+    assert.equal(calls.at(-1).operation,'avg')
+    assert.deepEqual(nodes(view.root,'chart')[0].props.option.series[0].data,
+      [[now-2000,45.75],[now-1000,46.125]])
+    assert.equal(output.valueType,undefined,'numeric bucket display must not rewrite the template declaration')
+  }finally{view.close();delete api.aggregateHistory;moduleRegistry.clear()}
+})
+
 test('持续条件未填输出类型时仍按模板布尔语义读取完整分布，点击仅切换原始记录时段',async()=>{
   defaults();moduleRegistry.clear()
   const Result=load('components/Metric/MetricResult.vue').default
