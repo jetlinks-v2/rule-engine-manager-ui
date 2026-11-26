@@ -11,7 +11,8 @@
     "test:alarm-agent": "node agentCapabilities/alarmAnalysis/visionSceneSearch.test.mjs && node agentCapabilities/alarmAnalysis/alarmData.test.mjs",
     "test:data-capabilities": "node dataCapabilities/dataCapabilities.test.mjs",
     "test:scene-notify": "node --test tests/sceneNotify.test.mjs",
-    "test:metric": "node scripts/run-metric-tests.mjs"
+    "test:metric": "node scripts/run-metric-tests.mjs",
+    "test:instance-list": "node --test tests/ruleInstanceList.test.mjs tests/ruleInstanceApi.test.mjs"
   },
   "repository": {
     "type": "git",
