@@ -59,9 +59,21 @@ JDK21、256MiB 堆的 Instrumentation 对照原 QPS 版本：继承统计字段�
 
 Input 保留原确认和回调适配，不新增接收计数器。数据及监听器通过惰性载体交给原 `observeExecution(Mono)` 扩展入口，默认监控器将其融合成一个订阅边界；自定义上下文装饰或透传该入口仍生效，不提前调用监听器。
 
-对融合前后同一默认上下文、空监听器 JMH 探针，输入回调56.12→48.37ns/op，分配232→192B/次；直接有限执行49.06→49.25ns/op，分配保持192B/次。每项单线程、单fork、预热2轮/测量3轮、每轮1秒，启用GC profiler，基线为融合前的同一引擎构件。没有新增逐消息统计状态；短微基准的时间误差存在重叠，不能据此认定生产吞吐提升或多线程争用成本。
+同一监控器直接相邻的观察返回原Mono；惰性回调在订阅时直接遇到同监控器观察点，也复用已有订阅器。隔着错误恢复等算子时保留轻量订阅器，共享根执行的失败状态，保持原Context及请求、取消和终止保护。根订阅器和嵌套订阅器均由40B降至32B，根状态仍按每次订阅独立创建。
 
-验证结果：引擎33项定向测试、reactor编译及本地install通过，覆盖真实双节点RPC、EventBus缓冲2→0、Output计数，以及惰性回调的重复订阅、同步异常/null返回、Context、背压、取消、嵌套恢复/不同监控器隔离和原观测入口覆盖。QueueInput使用真实实现及可控队列流验证原处理与取消路径，不等同于外部队列集群测试。core4项、管理层7项、前端11项测试复用相关源码及协议未改变的前阶段证据，未重复执行。`git diff --check` 通过。
+相对嵌套融合前的同一引擎构件（d1e3b39），同一默认上下文JMH探针的分配量如下：
+
+| 路径 | 融合前 B/次 | 融合后 B/次 |
+| --- | ---: | ---: |
+| 直接相邻重复观察 | 256 | 184 |
+| 惰性回调内直接相邻观察 | 232 | 184 |
+| 跨错误恢复算子的嵌套观察 | 272 | 256 |
+| 单层有限执行 | 192 | 184 |
+| 空输入回调 | 192 | 184 |
+
+JDK21/256MiB堆，每项单线程单fork，预热2轮/测量3轮、每轮1秒，启用GC profiler。另对单层执行、空输入和跨恢复路径反转顺序，以预热3轮/测量5轮复核；单层执行与空输入的耗时和基线误差区间重叠，嵌套耗时存在大幅波动，不作生产吞吐或时延改善承诺。没有新增逐消息统计状态、全局缓存或对象池。
+
+验证结果：引擎34项定向测试、reactor编译及本地install通过，覆盖相邻观察幂等、动态相邻观察的Context/背压/取消、重复订阅及恢复前错误独立计量，以及真实双节点RPC、EventBus缓冲2→0、Output计数、同步异常/null返回、不同监控器隔离和原观测入口覆盖。QueueInput使用真实实现及可控队列流验证原处理与取消路径，不等同于外部队列集群测试。core4项、管理层7项、前端11项测试复用相关源码及协议未改变的前阶段证据，未重复执行。`git diff --check` 通过。
 
 内置浏览器已确认真实三列列表、独立预览、禁用不显示指标、输入/输出/缓冲图标气泡和真实 WebSocket 缺测处理；点击卡片进入原抽屉并恢复 `editorId`，关闭后回到列表，菜单仅保留启停/删除。760px视口重排为单列、内容区无横向溢出；一次刷新列表/预览响应头约51ms/177ms，数值不代表生产延迟。
 
@@ -70,13 +82,13 @@ Input 保留原确认和回调适配，不新增接收计数器。数据及监�
 - 前端 `vue-tsc --noEmit -p tsconfig.instance-list.json` 被已有跨模块类型错误阻断，本次新增/修改文件无诊断；模块生产构建被现有场景页 `Product.vue` 引用设备 API 未导出的 `queryDeviceProductCategoryTree_api` 阻断。
 - 管理模块完整 Maven 构建被现有 things/assets 构件不一致阻断；管理层使用实际依赖及改变源码独立 javac/JUnit 验证，不等同于整个模块重新编译成功。
 - 本模块未配置独立 lint 命令；类型检查、行为测试与差异空白检查分别记录，不能替代完整 lint。生产构建的既有阻塞未因本轮字段和展示调整改变，未重复执行同一失败构建。
-- 本轮内置浏览器确认真实页面缺测时显示警告图标、已观测副本数、说明及总流转数量入口；当前运行宿主缺少新指标字段，输入/输出、Pending、总流转量保留缺失。需在运行宿主升级后补全数值联调；未对运行中的规则执行启停或部署操作。
+- 前阶段内置浏览器已确认真实页面缺测时显示警告图标、已观测副本数、说明及总流转数量入口；该次验证的运行宿主缺少新指标字段，输入/输出、Pending、总流转量保留缺失。仍需补全升级后的数值联调，本次内部观测融合没有重新验证或部署运行宿主。
 
 重验入口：`pnpm test:instance-list`（包含三个测试文件）、`vue-tsc --noEmit -p tsconfig.instance-list.json`、`pnpm -F jetlinks-web-core build -- --module-name rule-engine-manager-ui`；后端 `mvn -Dtest=RuleInstanceObservationServiceTest test`，上游 reactor 执行 `TaskOutputMetricsTest,TaskRuntimeProjectionTest,TaskExecutionMonitorTest,TaskExecutionMetricsTest,FunctionTaskObservationTest,TaskDumpMetricsRpcTest,QueueInputObservationTest`。
 
 ## 关联交付
 
 - core继承支持：[jetlinks-core #130](https://github.com/jetlinks/jetlinks-core/pull/130)，已合并至 `9bad5a4c6882d1029b759a8f51590f7f9a88292d`，运行构件须包含该变更。
-- 引擎实现 `d1e3b391b2705597062ae6b72d4de0a087161d00`：[rule-engine #17](https://github.com/jetlinks/rule-engine/pull/17)，基于原 QPS [#16](https://github.com/jetlinks/rule-engine/pull/16)，并依赖 core继承支持。
+- 引擎实现 `e26d1fb2635265afa179f8e41d37e72ad3eb63f9`：[rule-engine #17](https://github.com/jetlinks/rule-engine/pull/17)，基于原 QPS [#16](https://github.com/jetlinks/rule-engine/pull/16)，并依赖 core继承支持。
 - 管理入口 `b2f1874ea7a1e96f646faff8b88ef9f4eecccbe1`：[rule-engine-manager #294](https://github.com/jetlinks-v2/rule-engine-manager/pull/294)，Draft，等待完整依赖验证。
 - 页面实现 `91ba2aadf5a2bfc70b5ed66a96e806e66c76ed24`：[rule-engine-manager-ui #164](https://github.com/jetlinks-v2/rule-engine-manager-ui/pull/164)，Draft，等待完整构建与新宿主数值联调。
