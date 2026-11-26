@@ -1,6 +1,5 @@
 export const metricHostMessages = {
   zh: {
-    inputUndeclared:'请先在模板中声明输入的数据类型或语义，再选择来源。',
     boundObjectHint:'当前{type}声明的数据来源',sourceNoSubscribe:'此来源不提供实时订阅，请使用定时计算。',sourceNoCurrent:'此来源仅支持历史读取。',
     sourceHint_property:'物模型属性的当前值或历史记录',sourceHint_event:'设备上报的物模型事件',sourceHint_builtin:'平台状态、会话与范围统计等数据',
     sourceHint_metric:'复用已有指标的计算结果',sourceHint_businessEvent:'对象关联的业务更新事件',sourceHint_businessQuery:'计算时读取对象关联的业务数据',
@@ -54,7 +53,6 @@ export const metricHostMessages = {
     noAccess: '没有查看指标的权限', templates: '指标模板', saveMetrics: '配置指标',
   },
   en: {
-    inputUndeclared:'Declare the input type or semantics in the template before selecting a source.',
     boundObjectHint:'Sources declared by the current {type}',sourceNoSubscribe:'This source has no live subscription. Use scheduled calculation.',sourceNoCurrent:'This source supports historical reads only.',
     sourceHint_property:'Current values or history of model properties',sourceHint_event:'Model events reported by devices',sourceHint_builtin:'Platform state, sessions and scope statistics',
     sourceHint_metric:'Reuse existing metric results',sourceHint_businessEvent:'Business updates associated with an object',sourceHint_businessQuery:'Read associated business data when calculating',

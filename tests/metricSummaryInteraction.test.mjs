@@ -28,6 +28,7 @@ const stored={id:'value',cardId:'t:1:1:default:true',templateId:'t',templateName
 const entry={...stored,id:'catalog',cardId:'default',operations:['collection','average']}
 const scope={kind:'members',memberType:'device',label:'Devices',icon:'DesktopOutlined',tree:true}
 const settle=async()=>{await new Promise(resolve=>setTimeout(resolve,15));await flush()}
+const viewMenu=root=>walk(root,node=>node.props.class==='metric-scope-panel__view-menu')[0]
 
 function mount(component,props){
   const {renderer,root}=createMetricRenderer(),app=renderer.createApp({setup:()=>()=>h(component,props())})
@@ -46,17 +47,17 @@ test('summary uses one task, keeps filters on drilldown return and hides adding 
   const {app,root}=mount(ScopePanel,()=>({context:context.value}))
   try {
     assert.match(textContent(root),/addMetric/)
-    walk(root,node=>node.type==='a-tabs')[0].props.onChange('overview');await settle()
+    viewMenu(root).props.onClick({key:'overview'});await settle()
     assert.doesNotMatch(textContent(root),/addMetric/)
     assert.equal(walk(root,node=>node.type==='a-radio-group').length,0)
-    walk(root,node=>node.type==='a-menu')[0].props.onClick({key:'false'});await settle()
+    walk(root,node=>node.type==='a-menu'&&node.props.class!=='metric-scope-panel__view-menu')[0].props.onClick({key:'false'});await settle()
     walk(root,node=>node.type==='button'&&node.props.title==='day')[0].props.onClick();await settle()
     const before=calls.at(-1)
     assert.equal(before.depth,'self');assert.equal(before.to-before.from,86400000)
     walk(root,node=>node.type==='summary-card')[0].props.onClick();await flush()
     const current=walk(root,node=>node.type==='current-results')[0]
     assert.deepEqual(current.props.selection,{templateId:'t',descendants:false})
-    assert.equal(walk(root,node=>node.type==='a-tabs')[0].props['active-key'],'overview')
+    assert.deepEqual(viewMenu(root).props['selected-keys'],['overview'])
     current.props.onClick();await settle()
     assert.equal(calls.at(-1).to-calls.at(-1).from,86400000);assert.equal(calls.at(-1).depth,'self')
     walk(root,node=>node.type==='a-select')[0].props.onChange(JSON.stringify(['members','deviceGroup']));await settle()
@@ -104,7 +105,7 @@ test('已添加指标默认进入同一汇总入口，切换成员范围不混�
   const {app,root}=mount(ScopePanel,()=>({context:context.value}))
   const choose=value=>walk(root,node=>node.type==='a-select')[0].props.onChange(JSON.stringify(value))
   try{
-    walk(root,node=>node.type==='a-tabs')[0].props.onChange('overview');await settle()
+    viewMenu(root).props.onClick({key:'overview'});await settle()
     assert.deepEqual(calls.map(([kind])=>kind),['linked'])
     assert.equal(calls[0][1].objectId,'room');assert.equal(calls[0][1].targetType,'device')
     assert.equal(walk(root,node=>node.props.class==='aggregate-overview__intro').length,0)
@@ -112,7 +113,7 @@ test('已添加指标默认进入同一汇总入口，切换成员范围不混�
     assert.ok(walk(root,node=>node.type==='a-button' && node.props['aria-label']==='summaryRules').length)
     assert.equal(walk(root,node=>node.type==='summary-card')[0].props.hideMembers,true)
     assert.equal(walk(root,node=>node.type==='details').length,0,'only one summary entry is presented')
-    assert.equal(walk(root,node=>node.type==='a-menu').length,0,'linked summaries cannot pretend to have a member depth switch')
+    assert.equal(walk(root,node=>node.type==='a-menu'&&node.props.class!=='metric-scope-panel__view-menu').length,0,'linked summaries cannot pretend to have a member depth switch')
     walk(root,node=>node.type==='button'&&node.props.title==='day')[0].props.onClick();await settle()
     choose(['members','space']);await settle()
     assert.equal(calls.at(-1)[0],'members');assert.equal(calls.at(-1)[1].memberType,'space')
@@ -124,7 +125,7 @@ test('已添加指标默认进入同一汇总入口，切换成员范围不混�
     assert.equal(walk(root,node=>node.type==='summary-card').length,1,'linked summaries do not depend on declared member ranges')
     linkedTypes.value=[];await settle()
     assert.equal(walk(root,node=>node.type==='summary-card').length,0)
-    assert.equal(walk(root,node=>node.type==='a-tabs').length,0)
+    assert.equal(viewMenu(root),undefined)
   }finally{app.unmount();linkedTypes.value=[]}
 })
 
@@ -136,7 +137,7 @@ test('首屏关联尚未读取完成时先呈现骨架，避免先查询错误�
   api.aggregateLinked=async()=>{calls.push('linked');return {readTime:1,from:0,to:1000,interval:1000,groups:[stored]}}
   const {app,root}=mount(ScopePanel,()=>({context:{ownerType:'space',ownerId:'room',readScopes:[scope]}}))
   try{
-    walk(root,node=>node.type==='a-tabs')[0].props.onChange('overview');await settle()
+    viewMenu(root).props.onClick({key:'overview'});await settle()
     assert.equal(walk(root,node=>node.type==='a-skeleton').length,1);assert.deepEqual(calls,[])
     linkedTypes.value=['device'];bindingPageState.value={status:'ready'};bindingPageData.value={items:[{id:'linked'}]}
     await settle()

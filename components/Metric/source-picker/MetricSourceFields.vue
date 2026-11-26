@@ -46,7 +46,7 @@
               <h4><AIcon type="FolderOutlined" />{{ group.name || t('ungrouped') }}<small>{{ group.items.length }}</small></h4>
               <SourceItemRow v-for="item in group.items" :key="item.key" :item="item" :declaration="state.request.value.purpose === 'declaration'" :selected="state.selectedKey.value === item.key" @select="selectItem(item)" />
             </section>
-            <a-empty v-if="!state.groups.value.length && !state.business.loading.value" :description="t(state.inputUndeclared.value ? 'inputUndeclared' : 'noData')" :image-style="{height:'36px'}" />
+            <a-empty v-if="!state.groups.value.length && !state.business.loading.value" :description="t('noData')" :image-style="{height:'36px'}" />
             <details v-if="!state.inherited.value && state.request.value.purpose !== 'declaration' && showKind('metric')" :open="state.metricsExpanded.value" class="source-service" @toggle="state.metricsExpanded.value = ($event.target as HTMLDetailsElement).open">
               <summary><AIcon type="NodeIndexOutlined" />{{ t('metrics') }}</summary>
               <a-spin v-if="state.metricSources.loading.value" size="small" />

@@ -65,10 +65,9 @@ const timeLabel = computed(() => props.value?.state?.readView ? 'readAt' : evalu
 const timeHint = computed(() => `${fullTime.value} · ${t(`${timeLabel.value}Hint`)} · ${t(state.value.key)}`)
 </script>
 <style scoped>
-.metric-card-empty { display:flex; align-items:center; min-height:46px; font-size:var(--fs-24,24px) }
+.metric-card-empty { display:flex; align-items:center; min-height:46px; font-size:var(--fs-32,32px) }
 .metric-card-content { display:flex; flex:1; flex-direction:column; min-height:0; min-width:0; gap:var(--space-1,4px) }
 .metric-card-content :deep(.metric-value--summary .metric-value__main) { min-height:46px }
-.has-intervals .metric-card-content__trend { height:40px; min-height:40px }
 .metric-card-content__trend { min-height:64px; flex:none; margin-top:auto }
 .metric-card-content__skeleton { min-height:46px; padding:4px 0 }
 .metric-card-content__skeleton :deep(.ant-skeleton-paragraph) { margin:0 }

@@ -39,7 +39,7 @@ test('diagnoses resolve local aliases and upstream calculation names without sel
 function mount(component,props) {
   const {renderer,root}=createMetricRenderer()
   const app=renderer.createApp({setup:()=>()=>h(component,props)})
-  for(const name of ['a-tag','a-button','AIcon']) app.component(name,defineComponent({setup:(_, {attrs,slots})=>()=>h(name,attrs,slots.default?.())}))
+  for(const name of ['a-tag','a-button','a-tooltip','AIcon']) app.component(name,defineComponent({setup:(_, {attrs,slots})=>()=>h(name,attrs,slots.default?.())}))
   app.mount(root)
   return {root,close:()=>app.unmount()}
 }
@@ -59,14 +59,14 @@ test('an absent result is neutral in cards and details, while input and calculat
     try {
       await flush()
       assert.equal(textContent(views[0].root).includes('未能计算'),abnormal)
-      assert.equal(textContent(views[1].root).includes('未能计算'),abnormal)
+      assert.deepEqual(walk(views[1].root,node=>node.props.role==='img').map(node=>node.props['aria-label']),reason==='noValue' ? [] : [metricMessages.zh[metricState(value).key]])
       assert.equal(walk(views[2].root,node=>node.type==='details').length,abnormal ? 1 : 0)
       if (!abnormal) assert.match(textContent(views[0].root),/—/)
     } finally { views.forEach(view=>view.close()) }
   }
 })
 
-test('primary cards explain one cause while secondary outputs use a short status and keep the cause in their title',async()=>{
+test('primary cards explain one cause while secondary outputs keep it in an accessible icon',async()=>{
   const localLoad=createMetricLoader({'vue-i18n':{useI18n:()=>({t:key=>metricMessages.zh[key],locale:{value:'zh'}})}})
   const component=localLoad('components/Metric/MetricValue.vue').default
   const value={metricId:'score',status:'invalid',unit:'%',quality:{valid:false,attributes:{inputIssues:[{inputId:'online',reason:'inputInvalid'}]}}}
@@ -79,8 +79,9 @@ test('primary cards explain one cause while secondary outputs use a short status
     assert.equal(textContent(main.root).split('平台连接状态：数据不符合计算要求').length,2)
     assert.equal(walk(main.root,node=>node.type==='a-tag').length,0)
     assert.doesNotMatch(textContent(main.root),/%/,'an invalid result must not display a unit without a value')
-    assert.equal(textContent(inline.root),'—未能计算')
-    assert.equal(walk(inline.root,node=>node.props.title==='平台连接状态：数据不符合计算要求').length,1)
+    assert.equal(textContent(inline.root),'—')
+    assert.equal(walk(inline.root,node=>node.props.role==='img'&&node.props['aria-label']==='平台连接状态：数据不符合计算要求').length,1)
+    assert.equal(walk(inline.root,node=>node.props.role==='img'&&node.props.title==='平台连接状态：数据不符合计算要求').length,1)
   } finally { main.close();inline.close() }
 })
 

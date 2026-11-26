@@ -193,6 +193,15 @@ test('500项指标只读取可见与选中配置，采样更新不放大为全�
   } finally {f.close();globalThis.IntersectionObserver=before}
 })
 
+test('精确 JSON 数值字符串参与绘图，保留原值、质量与空白断点', () => {
+  const readings = ['-0.007317812586280520233333333333333333', '-0.039314081873677195', 0, '1.25e-8', '', ' ', null, false, 'invalid', '1e400']
+  const values = readings.map((reading, index) => result('average', reading, index + 1))
+  values.push({...result('average', '1.5', 11), quality:{valid:false}})
+  assert.deepEqual(metricChartPoints(values), [[1,Number(readings[0])],[2,Number(readings[1])],[3,0],[4,1.25e-8],
+    [5,null],[6,null],[7,null],[8,null],[9,null],[10,null],[11,null]])
+  assert.deepEqual(values.slice(0,-1).map(value=>value.value),readings,'drawing must not rewrite precise source values')
+})
+
 test('数值保留0与断点，条件保留false和未知，不生成持续区间；孤立样本仍可见', () => {
   const values = [result('v', 0, 100), { ...result('v', 50, 200), quality: { stale: true } }, result('v', 2, 300)]
   const points = metricChartPoints(values)

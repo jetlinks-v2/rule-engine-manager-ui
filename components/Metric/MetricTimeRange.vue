@@ -1,6 +1,6 @@
 <template>
   <div class="metric-time-range" :class="{'is-compact':compact}" :aria-label="t('trendRange')">
-    <span class="metric-time-range__label"><AIcon type="ClockCircleOutlined" /> {{ t('trendRange') }}</span>
+    <span v-if="!hideLabel" class="metric-time-range__label"><AIcon type="ClockCircleOutlined" /> {{ t('trendRange') }}</span>
     <div class="metric-time-range__choices">
       <button v-for="item in options" :key="item.value" type="button" :title="t(item.label)" :aria-label="t(item.label)" :aria-pressed="!customRange && range === item.value" @click="choose(item.value)"><span class="metric-time-range__full">{{ t(item.label) }}</span><span v-if="compact" class="metric-time-range__short" aria-hidden="true">{{ t(item.label+'Compact') }}</span></button>
       <a-popover v-model:open="open" trigger="click" placement="bottomRight">
@@ -16,7 +16,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import dayjs, { type Dayjs } from 'dayjs'
 import { metricMessages } from './messages'
-const props = defineProps<{ range: number; customRange?: [number, number]; compact?:boolean }>()
+const props = defineProps<{ range: number; customRange?: [number, number]; compact?:boolean; hideLabel?:boolean }>()
 const emit = defineEmits<{ (event: 'update:range', value: number): void; (event: 'update:customRange', value: [number, number] | undefined): void }>()
 const { t, locale } = useI18n({ useScope: 'local', messages: metricMessages })
 const options = [{ value: 3600000, label: 'hour' }, { value: 86400000, label: 'day' }]

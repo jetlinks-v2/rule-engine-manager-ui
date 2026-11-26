@@ -1,6 +1,6 @@
 <template>
   <a-alert v-if="sourceError" type="error" show-icon :message="t('sourcePickerUnavailable')" :description="sourceError" />
-  <MetricScopePanel :context="panelContext" :pick-source="binding?.pickSource" :initial-reference="initialReference" :initial-template="initialTemplate" @apply-started="emit('applyStarted')" :detail-link-label="detailLinkLabel" @open-object="emit('openObject',$event)" @open-detail-link="(reference:MetricAlarmReference) => emit('openDetailLink', reference)"><template v-if="$slots['object-heading']" #object-heading><slot name="object-heading" /></template><template #object-actions><slot name="object-actions" /></template></MetricScopePanel>
+  <MetricScopePanel fill :context="panelContext" :pick-source="binding?.pickSource" :initial-reference="initialReference" :initial-template="initialTemplate" @apply-started="emit('applyStarted')" :detail-link-label="detailLinkLabel" @open-object="emit('openObject',$event)" @open-detail-link="(reference:MetricAlarmReference) => emit('openDetailLink', reference)"><template v-if="$slots['object-heading']" #object-heading><slot name="object-heading" /></template><template #object-actions><slot name="object-actions" /></template></MetricScopePanel>
   <component :is="binding.host" v-if="binding?.host" />
 </template>
 <script setup lang="ts">

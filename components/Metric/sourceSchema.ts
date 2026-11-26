@@ -1,17 +1,7 @@
 import { copy } from './service'
 import type { MetricInputSemantics, MetricTemplateInput } from './types'
 
-/** 与后端 MetricInputSemantics 相同，只匹配来源显式声明，不推测名称或同义词。 */
-export function metricSourceMatchesSemantics(required:MetricInputSemantics | undefined, metadata:Record<string,unknown> = {}):boolean {
-  if (!required) return true
-  const types = Array.isArray(metadata.semanticTypes) ? metadata.semanticTypes : []
-  return (!required.semanticId || required.semanticId === metadata.semanticId)
-    && (!required.semanticRole || required.semanticRole === metadata.semanticRole)
-    && (required.semanticTypes || []).every(type=>types.includes(type))
-}
-
 const numericTypes = new Set(['byte','short','int','long','bigint','float','double','number','integer','decimal'])
-const unitText = (value:unknown) => typeof value === 'string' ? value.normalize('NFKC') : undefined
 /** 平台枚举编码序列化为字符串，按其显式编码类型比较，不把普通文本编码当作数值。 */
 function enumCode(schema:Record<string,unknown>, value:unknown):unknown {
   const type = (schema.valueType as Record<string,unknown> | undefined)?.type
@@ -23,7 +13,6 @@ function enumCode(schema:Record<string,unknown>, value:unknown):unknown {
 export function metricSourceMatchesType(required:Record<string,unknown> | undefined, actual:Record<string,unknown> | undefined):boolean {
   if (!required?.type) return true
   if (!actual?.type) return false
-  if (required.unit && unitText(required.unit) !== unitText(actual.unit)) return false
   if (required.type === 'object' && actual.type === 'object') {
     const fields = new Map((Array.isArray(actual.properties) ? actual.properties : []).map(field=>[field.id,field.valueType]))
     return (Array.isArray(required.properties) ? required.properties : []).every(field=>fields.has(field.id) && metricSourceMatchesType(field.valueType,fields.get(field.id)))
@@ -49,13 +38,9 @@ export function metricSourceSemantics(metadata:Record<string,unknown> = {}):Metr
 export function metricSourceHasInputConstraint(input:MetricTemplateInput):boolean {
   return !!(input.valueType?.type || input.semantics?.semanticId || input.semantics?.semanticRole || input.semantics?.semanticTypes?.length)
 }
-/** 声明了类型和语义时两者都须匹配；没有任何约束时不把整个目录当作兼容来源。 */
+/** 来源绑定仅判断声明的类型与结构；单位和语义保留为元数据。 */
 export function metricSourceMatchesInput(input:MetricTemplateInput, source:{valueType?:Record<string,unknown>;unit?:string;expands?:Record<string,unknown>}):boolean {
-  const requiredUnit = input.unit || input.valueType?.unit
-  const actualUnit = source.unit || source.valueType?.unit
-  return metricSourceHasInputConstraint(input) && metricSourceMatchesType(input.valueType,source.valueType)
-    && metricSourceMatchesSemantics(input.semantics,source.expands)
-    && (!requiredUnit || unitText(requiredUnit) === unitText(actualUnit) || unitText(requiredUnit) === unitText(source.valueType?.unit))
+  return metricSourceMatchesType(input.valueType,source.valueType)
 }
 
 /** 来源目录使用 JSON Schema，编辑器使用平台 valueType；只按声明转换，不猜业务字段含义。 */

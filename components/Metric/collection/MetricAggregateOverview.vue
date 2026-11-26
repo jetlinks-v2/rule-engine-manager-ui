@@ -2,18 +2,19 @@
   <section class="aggregate-overview">
     <header class="aggregate-overview__tools">
       <div class="aggregate-overview__filters">
-        <div class="aggregate-overview__field"><span>{{ t('summaryObjects') }}</span>
-          <a-select v-if="scopes.length>1" :value="aggregateScopeKey(scope)" :aria-label="t('summaryObjects')" :bordered="false" size="small" :dropdown-match-select-width="false" @change="$emit('scope',String($event))">
+        <div class="aggregate-overview__field" role="group" :aria-label="t('summaryObjects')">
+          <a-select v-if="scopes.length>1" :value="aggregateScopeKey(scope)" :aria-label="t('summaryObjects')" option-label-prop="label" :bordered="false" size="small" :dropdown-match-select-width="false" @change="$emit('scope',String($event))">
             <a-select-option v-for="item in scopes" :key="aggregateScopeKey(item)" :value="aggregateScopeKey(item)" :label="item.label"><SelectOption :label="item.label" :icon="item.icon" :description="t(item.kind==='linked' ? 'addedScopeOptionHint' : 'memberScopeOptionHint')" /></a-select-option>
             <template #suffixIcon><AIcon type="DownOutlined" /></template>
           </a-select>
           <strong v-else><AIcon :type="scope.icon" />{{ scope.label }}</strong>
           <a-dropdown v-if="scope.kind==='members' && scope.tree" :trigger="['click']"><a-button type="text" size="small"><AIcon type="BranchesOutlined" />{{ depthLabel(descendants) }}<AIcon type="DownOutlined" /></a-button><template #overlay><a-menu :selected-keys="[String(descendants)]" @click="descendants=$event.key==='true'"><a-menu-item v-for="value in [false,true]" :key="String(value)"><SelectOption :label="depthLabel(value)" icon="BranchesOutlined" /></a-menu-item></a-menu></template></a-dropdown>
         </div>
-        <div class="aggregate-overview__field"><span>{{ t('metric') }}</span><MetricCollectionPicker :groups="choices" :value="selectedTemplates" templates @change="selectTemplates" @open="refreshDirectory" /></div>
+        <div class="aggregate-overview__field"><MetricCollectionPicker :groups="choices" :value="selectedTemplates" templates @change="selectTemplates" @open="refreshDirectory" /></div>
       </div>
-      <div class="aggregate-overview__period"><MetricTimeRange v-model:range="range" v-model:custom-range="customRange" compact /><a-tooltip :title="t('refresh')"><a-button type="text" size="small" shape="circle" :loading="loading" :aria-label="t('refresh')" @click="refresh()"><AIcon type="ReloadOutlined" /></a-button></a-tooltip><a-tooltip :title="[t(scope.kind==='linked' ? 'addedScopeHint' : 'memberScopeHint'),t('aggregateHistoryHint')].join(' ')"><a-button type="text" size="small" shape="circle" :aria-label="t('summaryRules')"><AIcon type="QuestionCircleOutlined" /></a-button></a-tooltip></div>
+      <div class="aggregate-overview__period"><MetricTimeRange v-model:range="range" v-model:custom-range="customRange" compact hide-label /><a-tooltip :title="t('refresh')"><a-button type="text" size="small" shape="circle" :loading="loading" :aria-label="t('refresh')" @click="refresh()"><AIcon type="ReloadOutlined" /></a-button></a-tooltip><a-tooltip :title="[t(scope.kind==='linked' ? 'addedScopeHint' : 'memberScopeHint'),t('aggregateHistoryHint')].join(' ')"><a-button type="text" size="small" shape="circle" :aria-label="t('summaryRules')"><AIcon type="QuestionCircleOutlined" /></a-button></a-tooltip></div>
     </header>
+    <div class="aggregate-overview__data">
     <div v-if="result" class="aggregate-overview__note"><time>{{ error ? t('previousResults')+' · ' : '' }}{{ t('refreshed',{time:new Date(result.readTime).toLocaleTimeString(String(locale))}) }}</time></div>
     <a-alert v-if="error" type="error" show-icon :message="t('overviewFailed')" :description="error"><template #action><a-button @click="refresh()">{{ t('retry') }}</a-button></template></a-alert>
     <a-skeleton v-if="loading && !result" active :paragraph="{rows:5}" />
@@ -29,6 +30,7 @@
         </div>
       </ResponsiveGrid>
     </template>
+    </div>
   </section>
 </template>
 <script setup lang="ts">
@@ -77,13 +79,18 @@ function openCurrent(templateId?:string){emit('members',{templateId,descendants:
 const cardPreferenceKey=(id:string)=>props.context.preferenceScope ? 'metric-aggregate-card:'+JSON.stringify([props.context.preferenceScope,props.context.ownerType,props.context.ownerId,aggregateScopeKey(props.scope),id]) : undefined
 </script>
 <style scoped>
+.aggregate-overview__data{display:grid;align-content:start;gap:var(--space-4,16px);min-width:0}
+.aggregate-overview.is-fill{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden;padding:0;gap:0}
+.aggregate-overview.is-fill>header{flex:none;padding:12px 16px;border-bottom:1px solid var(--line)}
+.aggregate-overview.is-fill>.aggregate-overview__data{flex:1;min-height:0;overflow:auto;scrollbar-gutter:stable;padding:16px}
+
 .aggregate-overview{padding:16px;min-width:0}
-.aggregate-overview__tools{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap}
-.aggregate-overview__filters{display:flex;align-items:center;flex-wrap:wrap;gap:12px 24px;min-width:0;max-width:100%}
+.aggregate-overview__tools{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
+.aggregate-overview__filters{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;min-width:0;max-width:100%}
 .aggregate-overview__field{display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0;max-width:100%;font-size:12px}
 .aggregate-overview__field>span{color:var(--ink-3);flex:none}.aggregate-overview__field>strong{display:flex;align-items:center;gap:6px;font-weight:500}
-.aggregate-overview__field :deep(.ant-select){min-width:100px;max-width:100%}.aggregate-overview__field :deep(.ant-btn){color:var(--ink-2)}
-.aggregate-overview__period{display:flex;align-items:center;gap:4px;min-width:0;max-width:100%;margin-left:auto}.aggregate-overview__period>.ant-btn{flex:none}
+.aggregate-overview__field :deep(.ant-select){min-width:72px;max-width:100%}.aggregate-overview__field :deep(.ant-btn){color:var(--ink-2)}
+.aggregate-overview__period{display:flex;align-items:center;flex-wrap:wrap;gap:4px;min-width:0;max-width:100%}.aggregate-overview__period>.ant-btn{flex:none}
 .aggregate-overview__note{display:flex;justify-content:flex-end;font-size:11px;color:var(--ink-3);margin:8px 0 12px}
 .aggregate-overview__note time{white-space:nowrap}
 .aggregate-overview__empty{padding:40px 0}

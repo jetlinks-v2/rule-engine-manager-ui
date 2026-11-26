@@ -82,6 +82,10 @@ test('同一结果在缩略图和详情中使用相同量纲与对称坐标，�
     assert.equal(chart().yAxis.axisLabel.formatter(.084211755),'0.0842','极值刻度不能展示长尾数字造成裁切')
     assert.equal(chart().yAxis.nameTextStyle.align,'left')
     assert.equal(chart().grid.top,28)
+    props.integrated=true;await flush()
+    assert.equal(chart().yAxis.name,'','详情顶部说明已包含单位')
+    assert.equal(chart().grid.top,16)
+    props.integrated=false
     props.output=output('variance','(°C)²');await flush()
     assert.equal(chart().series[0].markLine,undefined)
     assert.equal(chart().yAxis.name,'(°C)²')
@@ -102,6 +106,8 @@ test('共享目录迟到和语言变动不新增请求，来源卡片和关联�
     directory.value=[{id:'timeSlope',name:'Time slope',icon:'RiseOutlined'}];await flush()
     assert.equal(walk(root,node=>node.type==='p' && node.props.class==='metric-statistic-summary').length,2)
     assert.match(textContent(root),/Time slope · Last 5 minutes/)
+    props.withUnit=true;await flush()
+    assert.match(textContent(root),/Time slope · Last 5 minutes · pp \/ minute/)
     assert.equal(props.output.resultSemantics.unit,'pp')
   } finally {app.unmount()}
 })
