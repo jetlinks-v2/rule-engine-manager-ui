@@ -19,6 +19,7 @@ export interface RuleRuntimeInfo {
   inputRate?: number | null
   outputRate?: number | null
   buffered?: number | string | null
+  transferCount?: number | string | null
 }
 
 export interface RuleRuntimeFrame { timestamp: number; rules: RuleRuntimeInfo[] }
