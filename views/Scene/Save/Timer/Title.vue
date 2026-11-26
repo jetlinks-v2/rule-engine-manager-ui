@@ -15,8 +15,10 @@
   </div>
 </template>
 
-<script setup lang='ts' name='TimerTitle'>
+<script setup lang='ts'>
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'TimerTitle' })
 
 const { t: $t } = useI18n()
 const props = defineProps({

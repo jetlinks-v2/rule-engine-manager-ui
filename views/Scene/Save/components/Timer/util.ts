@@ -73,14 +73,14 @@ export const handleTimerOptions = (timer: OperationTimer):TimerOption => {
 
   if (timer.when?.length) {
     when = timer!.trigger === 'week' ? $t('Timer.util.803811-14') : $t('Timer.util.803811-15');
-    const whenStrArr = continuousValue(timer.when! || [], timer!.trigger);
-    const whenStrArr3 = whenStrArr.splice(0, 3);
-    when += whenStrArr3.join('、');
-    when += $t('Timer.util.803811-16', [timer.when!.length]);
+    const whenStrArr = continuousValue([...new Set(timer.when.map(Number))].sort((left, right) => left - right), timer.trigger);
+    // 只有实际省略了选项才追加数量，单日、双日和连续日期范围直接展示。
+    when += whenStrArr.slice(0, 2).join('、');
+    if (whenStrArr.length > 2) when += $t('Timer.util.803811-16', [timer.when!.length]);
   }
 
-  if (timer.once) {
-    time = timer.once.time + ` ${$t('Timer.util.803811-17')}`;
+  if (timer.mod === 'once' || (!timer.mod && timer.once)) {
+    time = timer.once?.time ? timer.once.time + ` ${$t('Timer.util.803811-17')}` : undefined;
   } else if (timer.period) {
     time = timer.period.from + '-' + timer.period.to;
     extraTime = $t('Timer.util.803811-18', [timer.period.every,timeUnitEnum[timer.period.unit]]);

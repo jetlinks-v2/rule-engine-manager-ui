@@ -3,6 +3,21 @@ import { IOT_DEVICE_LIST_EXCLUDED_ACCESS_PROVIDERS } from './deviceListDefaultTe
 
 export type SceneEntity = Record<string, any>
 
+export interface SceneRuntimeInfo {
+  instanceId: string
+  nodeId?: string
+  executor?: string
+  serverId?: string | null
+  executionCount: number
+  errorCount: number
+  lastExecutionTime: number
+}
+
+/** 当前存活任务的运行指标；禁用、重建或重启后清空，只读返回。 */
+export type SceneDetail = SceneEntity & {
+  runtimeInfo?: SceneRuntimeInfo | null
+}
+
 export interface SceneNotifyMethod {
   id: string
   providerId: string
@@ -89,6 +104,14 @@ export interface AiEventCameraBindingStatus {
   }>
 }
 
+export interface ProtocolUnit {
+  id?: string
+  value?: string
+  name?: string
+  text?: string
+  symbol?: string
+}
+
 const pendingProductRequests = new Map<string, Promise<any>>()
 const pendingDeviceQueries = new Map<string, Promise<any>>()
 
@@ -104,8 +127,9 @@ const mergePendingQuery = <T>(key: string, loader: () => Promise<T>) => {
   return requestPromise
 }
 
+/** 列表详情按需返回最近执行时间；规则选择等普通查询继续使用通用查询接口。 */
 export const queryScenes = (data: Record<string, any>) =>
-  request.post('/scene/_query', data)
+  request.post('/scene/detail/_query', data)
 
 export const getSceneDetail = (id: string) =>
   request.get<SceneEntity>(`/scene/${id}`)
@@ -171,6 +195,10 @@ export const queryDeviceAlarmPreprocesses = (data: Record<string, any>) =>
 export const queryAiSceneTree = (data: Record<string, any>) =>
   request.post('/ai/scene/tree/_query', data)
 
+/** Loads the complete scene-package tree so algorithm choices never depend on a camera binding. */
+export const queryAiSceneTreeNoPaging = () =>
+  request.post('/ai/scene/tree/_query/no-paging', { paging: false })
+
 export const queryAiAlarmSceneTree = (data: Record<string, any>) =>
   request.post('/ai/scene/alarm/tree/_query', data)
 
@@ -197,6 +225,15 @@ export const queryAiEventSpaceChannels = (spaceIds: string[], data: Record<strin
     sorts: data.sorts ?? [{ name: 'createTime', order: 'desc' }],
   })
 
+/** Queries cloud media channels directly for the quick visual-event picker. */
+export const queryAiEventChannels = (data: Record<string, any> = {}) =>
+  request.post<AiEventMediaChannel[]>('/media/channel/_query', {
+    pageIndex: 0,
+    pageSize: 18,
+    ...data,
+    sorts: data.sorts ?? [{ name: 'createTime', order: 'desc' }],
+  })
+
 export const queryAiEventMediaGateways = (data: Record<string, any> = {}) =>
   request.post<AiEventMediaDevice[]>('/media/device/_query', {
     pageIndex: 0,
@@ -214,15 +251,19 @@ export const queryAiEventMediaDeviceChannels = (deviceId: string, data: Record<s
     sorts: data.sorts ?? [{ name: 'createTime', order: 'desc' }],
   })
 
-/** Queries whether each cloud media channel has an enabled task for the selected visual event. */
+/**
+ * Queries the visual-algorithm bindings for cloud media channels.
+ * Omitting `sceneId` and `taskTarget` returns all bindings, which quick configuration uses to
+ * derive the selectable scene and algorithm after a camera is chosen.
+ */
 export const queryAiEventCameraBindingStatus = (data: {
   cloudChannelEntityIds: string[]
   sceneId?: string
-  taskTarget: string
+  taskTarget?: string
 }) => request.post<AiEventCameraBindingStatus[]>('/ai/edge/task/channel/bind/_query', {
   cloudChannelEntityIds: data.cloudChannelEntityIds,
   ...(data.sceneId ? { sceneIds: [data.sceneId] } : {}),
-  taskTargets: [data.taskTarget],
+  ...(data.taskTarget ? { taskTargets: [data.taskTarget] } : {}),
 }, { hiddenError: true })
 
 export const querySceneRecordsByScene = (id: string, data: Record<string, any>) =>
@@ -267,3 +308,6 @@ export const querySceneSupportedTriggers = () =>
 
 export const querySceneSupportedActions = () =>
   request.get<SceneProviderInfo[]>('/scene/action/supports')
+
+/** Uses the protocol unit dictionary so thing-model unit IDs never reach user-visible rule text. */
+export const queryProtocolUnits = () => request.get<ProtocolUnit[]>('/protocol/units')

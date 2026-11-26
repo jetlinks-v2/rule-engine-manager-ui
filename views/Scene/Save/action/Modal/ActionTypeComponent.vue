@@ -1,5 +1,6 @@
 <template>
-  <div>
+  <!-- 配置弹窗独立承载校验，不能继承动作列表的错误状态或把搜索输入当作动作变更。 -->
+  <a-form-item no-style>
       <Device
         v-if="actionType === 'device'"
         v-bind="props"
@@ -11,7 +12,7 @@
     <DeviceData
         v-else-if="actionType === 'device-data'"
         v-bind="props"
-        :value="data?.configuration"
+        :value="actionConfiguration"
         :options="options"
         @cancel="onCancel"
         @save="onPropsOk"
@@ -23,6 +24,19 @@
       :name="name"
       :thenName="thenName"
       :branchesName="branchesName"
+      @cancel="onCancel"
+      @save="onPropsOk"
+    />
+    <SceneNotify
+      v-else-if="actionType === 'sceneNotify'"
+      :value="actionConfiguration"
+      @cancel="onCancel"
+      @save="onPropsOk"
+    />
+    <AlarmRecordQuery
+      v-else-if="actionType === 'alarm-record-query'"
+      :value="actionConfiguration"
+      :options="options"
       @cancel="onCancel"
       @save="onPropsOk"
     />
@@ -40,17 +54,25 @@
       @cancel="onCancel"
       @save="onPropsOk"
     />
-  </div>
+    <LegacyActionSummary
+      v-else
+      :data="data"
+      :options="options"
+    />
+  </a-form-item>
 </template>
 
 <script lang="ts" setup>
-import { PropType } from "vue";
+import { computed, PropType } from "vue";
 import { ActionsType } from "../../../typings";
 import Delay from "../Delay/index.vue";
 import Notify from "../Notify/index.vue";
 import Device from "../Device/index.vue";
 import Collector from "../Collector/index.vue";
 import DeviceData from '../DeviceData/index.vue'
+import SceneNotify from '../SceneNotify/index.vue'
+import AlarmRecordQuery from '../AlarmRecordQuery/index.vue'
+import LegacyActionSummary from '../LegacyActionSummary.vue'
 import { randomNumber } from "@jetlinks-web/utils";
 
 const props = defineProps({
@@ -83,6 +105,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["cancel", "save"]);
+// 原版 ActionsType 未声明 SaaS Provider 的 configuration；详细模式仅透传该已持久化字段。
+const actionConfiguration = computed(() => (props.data as any)?.configuration)
 
 const onCancel = () => {
   emit("cancel");
@@ -90,7 +114,7 @@ const onCancel = () => {
 
 const onPropsOk = (data: any, options: any) => {
 
-  const key = props.actionType === 'device-data' ? 'configuration' : props.actionType
+  const key = ['device-data', 'sceneNotify', 'alarm-record-query'].includes(props.actionType) ? 'configuration' : props.actionType
 
   const _data = {
     type: props.actionType,

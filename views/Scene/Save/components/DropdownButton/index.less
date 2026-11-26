@@ -50,5 +50,11 @@
 
 .tree-title-description {
   padding-left: 5px;
-  color: grey;
+  color: var(--ant-color-text-secondary, #595959);
+}
+
+// 分组节点不可选，但它是参数来源标题，不使用禁用字段的灰色。
+.scene-param-group {
+  color: var(--ant-color-text, #262626);
+  font-weight: 500;
 }

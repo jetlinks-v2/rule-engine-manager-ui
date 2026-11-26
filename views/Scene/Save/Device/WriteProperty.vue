@@ -6,13 +6,10 @@
           name='reportKey'
           :rules="[{ required: true, message: $t('Device.WriteProperty.372527-0') }]"
         >
-          <a-select
-            showSearch
-            style='width: 100%'
+          <ThingModelSelect
             :placeholder="$t('Device.WriteProperty.372527-1')"
-            v-model:value='formModel.reportKey'
+            v-model='formModel.reportKey'
             :options='properties'
-            :filter-option='filterSelectNode'
             @change='change'
           />
         </a-form-item>
@@ -34,12 +31,14 @@
   </a-form>
 </template>
 
-<script setup lang='ts' name='WriteProperties'>
-import { filterSelectNode } from '../../../../utils/comm'
+<script setup lang='ts'>
 import { FunctionCall } from '../components'
 import type { PropType } from 'vue'
 import { defineExpose } from 'vue'
 import { useI18n } from 'vue-i18n'
+import ThingModelSelect from '../../../SceneLinkage/editor/components/ThingModelSelect.vue'
+
+defineOptions({ name: 'WriteProperties' })
 
 const { t: $t } = useI18n()
 type Emit = {
@@ -124,13 +123,14 @@ const showTable = computed(() => {
   return !!formModel.reportKey
 })
 
-const change = (v: string, option: any) => {
+const change = (v: string) => {
+  const option = props.properties.find((item: any) => item.value === v)
   const _data = {
     [v]: undefined
   }
   callData.value = [{ id: v, value: undefined }]
   emit('update:value', _data)
-  emit('update:action', $t('Device.WriteProperty.372527-3', [option.name]))
+  emit('update:action', $t('Device.WriteProperty.372527-3', [option?.label || option?.name || v]))
 }
 
 const callDataChange = (v: any[]) => {

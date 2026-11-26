@@ -24,10 +24,12 @@
     </a-row>
 </template>
 
-<script setup lang='ts' name='ReadProperties'>
+<script setup lang='ts'>
 import {filterSelectNode} from '@jetlinks-web-core/utils/comm'
 import type {PropType} from 'vue'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'ReadProperties' })
 
 type Emit = {
     (e: 'update:value', data: Array<string>): void

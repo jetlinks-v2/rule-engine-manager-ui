@@ -1,5 +1,5 @@
 <template>
-  <CloudEmpty v-if="!visibleItems.length" :description="t('alarmDashboard.noStatistics')" />
+  <CloudEmpty v-if="!visibleItems.length" class="alarm-ranking-empty" :description="t('alarmDashboard.noStatistics')" />
   <div v-else ref="chartContainer" class="alarm-ranking-scroll">
     <div class="alarm-ranking-chart">
       <Echarts :option="option" :library="libraries" />
@@ -60,6 +60,7 @@ const option = computed(() => ({
 }))
 </script>
 <style scoped>
+.alarm-ranking-empty { display: flex; flex: 1; min-height: 0; align-items: center; justify-content: center; }
 .alarm-ranking-scroll { flex: 1; height: 100%; min-height: 0; overflow: hidden; }
 .alarm-ranking-chart { width: 100%; height: 100%; }
 </style>

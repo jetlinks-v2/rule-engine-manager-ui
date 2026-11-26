@@ -84,7 +84,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="AlertStats">
+<script setup lang="ts">
 import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import rank1 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/1.png'
 import rank2 from '@rule-engine-manager-ui/assets/rule-engine/dashboard/ranking/2.png'
@@ -142,6 +142,8 @@ interface QueryCondition {
 
 import { TimeSelect } from '@jetlinks-web-core/components/DashBoardCanvas/runtime'
 import { Guide } from '@jetlinks-web-core/components/DashBoardCanvas/runtime'
+
+defineOptions({ name: 'AlertStats' })
 
 const props = defineProps({
   info: {

@@ -1,6 +1,7 @@
 <template>
   <div class='manual actions-branches-item'>
-    <a-form-item>
+    <p v-if="!showActions" class="manual__trigger-description">{{ $t('Manual.index.515142-1') }}</p>
+    <a-form-item v-else>
       <template #label>
         <TitleComponent :data="$t('Manual.index.515142-0')" style='font-size: 14px;' >
         </TitleComponent>
@@ -13,6 +14,7 @@
       </AddButton>
     </a-form-item>
     <a-form-item
+      v-if="showActions"
       :rules="actionRules"
       :name="['branches', 0, 'then']"
     >
@@ -27,7 +29,7 @@
   </div>
 </template>
 
-<script lang="ts" setup name='SceneSaveManual'>
+<script lang="ts" setup>
 import { useSceneStore } from '../../../../store/scene';
 import { storeToRefs } from 'pinia';
 import type { BranchesThen } from '../../typings';
@@ -35,9 +37,19 @@ import Action from '../action/index.vue';
 import AddButton from '../components/AddButton.vue'
 import { useI18n } from 'vue-i18n'
 
+defineOptions({ name: 'SceneSaveManual' })
+
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
+
+defineProps({
+  /** 详细模式会将原版动作树放到独立区段，其他入口继续保留默认承载方式。 */
+  showActions: {
+    type: Boolean,
+    default: true,
+  },
+})
 
 const actionRules = [{
   validator(_: any, v?: BranchesThen[]) {
@@ -57,6 +69,13 @@ const actionRules = [{
 .manual {
   &.actions-branches-item {
     width: 100%;
+  }
+
+  &__trigger-description {
+    margin: 0;
+    color: var(--ant-color-text-secondary);
+    font-size: .8125rem;
+    line-height: 1.5rem;
   }
 }
 

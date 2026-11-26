@@ -31,12 +31,14 @@
     </j-pro-table>
 </template>
 
-<script setup lang='ts' name='OrgList'>
+<script setup lang='ts'>
 import type { PropType } from 'vue'
 import { getExpandedRowById } from './util'
 import { getTreeData_api } from "@rule-engine-manager-ui/api/department";
 import { SelectorValuesItem } from '../../typings'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'OrgList' })
 
 const { t: $t } = useI18n()
 type Emit = {

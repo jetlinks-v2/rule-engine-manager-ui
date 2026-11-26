@@ -87,7 +87,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="FilterGroup">
+<script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { useSceneStore } from "../../../../../store/scene";
 import DropdownButton from "../../components/DropdownButton";
@@ -100,6 +100,8 @@ import { handleParamsData, handleParamsDataMap } from '../../components/Terms/ut
 import { filterTermsValidator } from "./util";
 import CheckFilterItem from "./CheckFilterItem.vue";
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'FilterGroup' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

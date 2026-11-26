@@ -29,7 +29,7 @@
 <script setup lang="ts">
 import { computed, ref, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { SceneTimeRange } from '../../utils'
+import { formatSceneTimeRange, type SceneTimeRange } from '../../utils'
 
 const props = defineProps({
   modelValue: { type: Array as PropType<SceneTimeRange[]>, required: true },
@@ -50,7 +50,7 @@ const isCustomDuplicate = computed(() => isCustomRangeReady.value && props.model
 const availablePresets = computed(() => presets.value.filter(item => !hasRange(item.range)))
 
 function rangeKey(range: SceneTimeRange) { return `${range.start}-${range.end}` }
-function rangeLabel(range: SceneTimeRange) { const preset = presets.value.find(item => rangeKey(item.range) === rangeKey(range)); return preset ? preset.label : `${range.start}–${range.end}` }
+function rangeLabel(range: SceneTimeRange) { return formatSceneTimeRange(t, range) }
 function isPreset(range: SceneTimeRange) { return presets.value.some(item => rangeKey(item.range) === rangeKey(range)) }
 function hasRange(range: SceneTimeRange) { return props.modelValue.some(item => rangeKey(item) === rangeKey(range)) }
 function addRange(range: SceneTimeRange) { if (isFull.value || hasRange(range)) return; emit('update:modelValue', [...props.modelValue, range]) }

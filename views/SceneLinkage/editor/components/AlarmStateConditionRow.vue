@@ -1,6 +1,6 @@
 <template>
   <div class="alarm-state-condition-row">
-    <a-radio-group class="alarm-state-condition-row__source" :value="sourceKind" size="small" @change="changeSource">
+    <a-radio-group v-if="!sourceLocked" class="alarm-state-condition-row__source" :value="sourceKind" size="small" @change="changeSource">
       <a-radio-button value="iot-device">{{ $t('IotSceneLinkage.alarmSource.iotDevice') }}</a-radio-button>
       <a-radio-button value="visual-ai">{{ $t('IotSceneLinkage.alarmSource.visualAi') }}</a-radio-button>
     </a-radio-group>
@@ -65,7 +65,7 @@ import { enrichDeviceOptionData } from '../deviceOptionData'
 
 type AlarmConfigOption = { label: string; value: string; targetType: string; scope: 'device' | 'product'; detail: string }
 
-const props = defineProps({ modelValue: { type: Object as PropType<SceneAlarmTriggerConfig>, required: true } })
+const props = defineProps({ modelValue: { type: Object as PropType<SceneAlarmTriggerConfig>, required: true }, sourceLocked: Boolean })
 const emit = defineEmits<{ (event: 'update:modelValue', value: SceneAlarmTriggerConfig): void }>()
 
 const { t } = useI18n()

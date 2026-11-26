@@ -11,10 +11,12 @@
   </div>
 </template>
 
-<script setup lang='ts' name='WhenOption'>
+<script setup lang='ts'>
 import type { PropType } from 'vue'
 import { numberToString } from './util'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'WhenOption' })
 
 const { t: $t } = useI18n()
 type Emit = {

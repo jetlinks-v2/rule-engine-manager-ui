@@ -1,0 +1,174 @@
+[
+  {
+    "id": "communication-observation",
+    "template": {
+      "inputDefinitions": [
+        {
+          "id": "connectionState",
+          "name": "平台连接状态",
+          "semantics": {
+            "semanticId": "urn:jetlinks:device:platform:online",
+            "semanticTypes": [
+              "observation"
+            ]
+          },
+          "valueType": {
+            "type": "enum",
+            "valueType": {
+              "type": "int"
+            },
+            "elements": [
+              {
+                "value": 0,
+                "text": "离线"
+              },
+              {
+                "value": 1,
+                "text": "在线"
+              }
+            ]
+          },
+          "source": {
+            "lookback": "PT2H",
+            "maxPoints": 512
+          },
+          "historyReconciliation": "PT5M"
+        },
+        {
+          "id": "lastCommunicationTime",
+          "name": "最近会话通信时间",
+          "semantics": {
+            "semanticId": "urn:jetlinks:device:platform:lastCommunicationTime",
+            "semanticTypes": [
+              "observation"
+            ]
+          },
+          "valueType": {
+            "type": "date"
+          },
+          "presence": "optional"
+        }
+      ],
+      "definitions": []
+    }
+  },
+  {
+    "id": "scope-connectivity",
+    "simulation": {
+      "configuration": {
+        "inputMappings": {
+          "deviceCount": {
+            "kind": "builtin",
+            "thingType": "deviceGroup",
+            "thingId": "example-line",
+            "id": "deviceCount"
+          },
+          "onlineDeviceCount": {
+            "kind": "builtin",
+            "thingType": "deviceGroup",
+            "thingId": "example-line",
+            "id": "onlineDeviceCount"
+          },
+          "offlineDeviceCount": {
+            "kind": "builtin",
+            "thingType": "deviceGroup",
+            "thingId": "example-line",
+            "id": "offlineDeviceCount"
+          }
+        }
+      }
+    },
+    "template": {
+      "inputDefinitions": [
+        {
+          "id": "deviceCount",
+          "name": "设备总数",
+          "valueType": {
+            "type": "long",
+            "min": 0
+          },
+          "maxAge": "PT10M"
+        },
+        {
+          "id": "onlineDeviceCount",
+          "name": "在线设备数",
+          "valueType": {
+            "type": "long",
+            "min": 0
+          },
+          "maxAge": "PT10M"
+        },
+        {
+          "id": "offlineDeviceCount",
+          "name": "离线设备数",
+          "valueType": {
+            "type": "long",
+            "min": 0
+          },
+          "maxAge": "PT10M"
+        }
+      ],
+      "definitions": [
+        {
+          "name": "设备在线率",
+          "id": "scopeOnlinePercent",
+          "type": "composite",
+          "dependsOn": [
+            "deviceCount",
+            "onlineDeviceCount"
+          ],
+          "window": {
+            "mode": "none",
+            "timeMode": "processing",
+            "emitPolicy": "onSchedule",
+            "emitInterval": "PT5M"
+          },
+          "expressionTree": {
+            "version": 1,
+            "root": {
+              "type": "binary",
+              "operator": "divide",
+              "left": {
+                "type": "binary",
+                "operator": "multiply",
+                "left": {
+                  "type": "reference",
+                  "id": "onlineDeviceCount",
+                  "path": []
+                },
+                "right": {
+                  "type": "literal",
+                  "valueType": "double",
+                  "value": "100.0"
+                }
+              },
+              "right": {
+                "type": "reference",
+                "id": "deviceCount",
+                "path": []
+              }
+            }
+          },
+          "language": "spel",
+          "applicabilityTree": {
+            "version": 1,
+            "root": {
+              "type": "binary",
+              "operator": "gt",
+              "left": {
+                "type": "reference",
+                "id": "deviceCount",
+                "path": []
+              },
+              "right": {
+                "type": "literal",
+                "valueType": "int",
+                "value": "0"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+]

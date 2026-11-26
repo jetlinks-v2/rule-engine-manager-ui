@@ -11,19 +11,10 @@
                     :label="$t('actions.WriteProperty.9667836-0')"
                     :rules="[{ required: true, message: $t('actions.WriteProperty.9667836-1') }]"
                 >
-                    <a-select
-                        showSearch
-                        :placeholder="$t('actions.WriteProperty.9667836-2')"
-                        v-model:value="propertyModelRef.properties"
-                        @change="onChange"
-                    >
-                        <a-select-option
-                            v-for="item in (metadata?.properties || [])?.filter(i => i?.expands?.type?.includes('write')) || []"
-                            :value="item?.id"
-                            :key="item?.id"
-                            >{{ item?.name }}</a-select-option
-                        >
-                    </a-select>
+                    <ThingModelSelect
+                        v-model="propertyModelRef.properties" :options="writeOptions"
+                        :placeholder="$t('actions.WriteProperty.9667836-2')" @change="onChange"
+                    />
                 </a-form-item>
             </a-col>
             <a-col :span="12" v-if="propertyModelRef.properties">
@@ -54,6 +45,8 @@
 </template>
 
 <script lang="ts" setup>
+import ThingModelSelect from '../../../../../SceneLinkage/editor/components/ThingModelSelect.vue'
+import { toThingModelOptions } from '../../../../../SceneLinkage/editor/thingModel'
 import { cloneDeep, isObject } from 'lodash-es'
 import ParamsDropdown from '../../../components/ParamsDropdown';
 import { handleParamsData } from './index';
@@ -94,6 +87,9 @@ const propertyModelRef = reactive({
     source: 'fixed',
 });
 
+
+// 保留原有可写能力过滤和对象/数组类型，只丰富选项展示。
+const writeOptions = computed(() => toThingModelOptions((props.metadata.properties || []).filter(item => item.expands?.type?.includes('write')), 'property', true))
 
 const getType = computed(() => {
     return props.metadata.properties.find(

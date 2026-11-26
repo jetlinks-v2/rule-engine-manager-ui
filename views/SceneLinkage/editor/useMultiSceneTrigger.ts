@@ -1,20 +1,25 @@
 import { computed, ref, watch, type Ref } from 'vue'
-import { applyMultiTriggerForm, defaultMultiTriggerForm, toMultiTriggerForm, type SceneLinkageForm, type SceneTriggerKind } from '../utils'
+import { applyMultiTriggerForm, defaultMultiTriggerForm, MULTI_TRIGGER_PROVIDERS, toMultiTriggerForm, type SceneLinkageForm, type SceneTriggerKind } from '../utils'
 
 export const useMultiSceneTrigger = (
   form: SceneLinkageForm,
   supportedTriggers: Ref<string[]>,
-  isEditing: () => boolean,
   onActiveTriggerChange: () => void,
+  isEditing: () => boolean,
+  clearTrigger: () => void,
 ) => {
+  const triggerProvider = (kind: SceneTriggerKind) => ['repeat', 'date', 'interval'].includes(kind)
+    ? 'timer'
+    : ['property', 'event', 'online', 'offline', 'state'].includes(kind) ? 'device' : kind
   const activeMultiTriggerIndex = ref(0)
   const addingMultiTrigger = ref(false)
   let applyingMultiTrigger = false
   // multi 保留一个叶子时仍须使用 multi 模型，避免编辑已保存场景时改变根触发器类型。
   const isMulti = computed(() => Boolean(form.multiTriggers?.length))
-  // 已保存的单条件场景不能变更为组合条件，直接不展示入口；手动条件仍保留禁用提示。
+  // 组合类型沿用前后端约定，仍需后端已启用 multi 且已注册当前触发类型。
   const showMultiTriggerControl = computed(() => supportedTriggers.value.includes('multi')
-    && (form.triggerKind === 'manual' || !isEditing() || isMulti.value))
+    && MULTI_TRIGGER_PROVIDERS.some(provider => provider === triggerProvider(form.triggerKind)
+      && supportedTriggers.value.includes(provider)))
   const multiTriggerDisabledReason = computed(() => {
     if (!showMultiTriggerControl.value) return ''
     if (form.triggerKind === 'manual') {
@@ -50,7 +55,12 @@ export const useMultiSceneTrigger = (
   const removeMultiTrigger = (index: number) => {
     syncActiveMultiTrigger()
     const triggers = form.multiTriggers || []
-    if (triggers.length <= 1) return
+    if (triggers.length <= 1) {
+      // 编辑态也允许删除最后一条触发规则；重新选择时由页面层 Provider 锁限制类型。
+      clearTrigger()
+      activeMultiTriggerIndex.value = 0
+      return
+    }
     const remaining = triggers.filter((_, triggerIndex) => triggerIndex !== index)
     if (remaining.length === 1) {
       applyMultiTriggerForm(form, remaining[0])

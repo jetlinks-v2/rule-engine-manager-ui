@@ -108,7 +108,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="FilterCondition">
+<script setup lang="ts">
 import type { PropType } from "vue";
 import type { TermsType } from "../../../typings";
 import DropdownButton from "../../components/DropdownButton";
@@ -138,6 +138,8 @@ import { analysisFilterTerms , handleFilterTerms , useCheckFilter } from "./util
 import { useI18n } from 'vue-i18n'
 import { queryLevel } from "@rule-engine-manager-ui/api/config";
 import { useRequest } from "@jetlinks-web/hooks";
+
+defineOptions({ name: 'FilterCondition' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();

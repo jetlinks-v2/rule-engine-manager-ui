@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import {
   queryAiEventCameraBindingStatus,
+  queryAiEventChannels,
   queryAiEventMediaDeviceChannels,
   queryAiEventMediaGateways,
   queryAiEventSpaceChannels,
@@ -12,9 +13,9 @@ import {
 } from '../../../api/scene-linkage'
 import { normalizeResult } from '../utils'
 
-type MediaScope = 'region' | 'gateway'
+type MediaScope = 'region' | 'channel'
 type MediaTreeNode = { key: string; id: string; name?: string; children?: MediaTreeNode[] }
-type VisionModelContext = { sceneId?: string; taskTarget?: string }
+type VisionModelContext = { sceneId?: string; taskTarget?: string; allChannelsLabel?: string }
 
 const RESOURCE_PAGE_SIZE = 18
 
@@ -39,7 +40,9 @@ export function useAiEventMediaTargetSelector(getVisionModelContext: () => Visio
   const loadingMoreChannels = ref(false)
   let channelRequestVersion = 0
 
-  const sourceTree = computed(() => activeScope.value === 'region' ? regionTree.value : gatewayTree.value)
+  const sourceTree = computed(() => activeScope.value === 'region'
+    ? [{ id: '__all-channels__', key: '__all-channels__', name: getVisionModelContext().allChannelsLabel || '' }, ...regionTree.value]
+    : [])
   const visibleSourceTree = computed(() => {
     const keyword = deviceKeyword.value.trim().toLocaleLowerCase()
     return keyword ? filterTree(sourceTree.value, keyword) : sourceTree.value
@@ -57,11 +60,7 @@ export function useAiEventMediaTargetSelector(getVisionModelContext: () => Visio
     if (loadingDevices.value) return
     loadingDevices.value = true
     try {
-      if (activeScope.value === 'region') {
-        regionTree.value = mapSpaceTree(normalizeResult<AiEventSpace>(await queryAiEventSpaceTree()).data)
-      } else {
-        await loadGatewayPage(true)
-      }
+      regionTree.value = mapSpaceTree(normalizeResult<AiEventSpace>(await queryAiEventSpaceTree()).data)
     } finally {
       loadingDevices.value = false
     }
@@ -98,14 +97,34 @@ export function useAiEventMediaTargetSelector(getVisionModelContext: () => Visio
     channelPageIndex.value = -1
     channelTotal.value = 0
     channelRequestVersion += 1
+    if (scope === 'channel') {
+      activeSource.value = { id: '__all-channels__', key: '__all-channels__', name: '' }
+      await loadChannelPage(true)
+      return
+    }
     await loadDevices()
   }
 
-  async function selectTreeNode(keys: string[], info: { node?: MediaTreeNode }) {
+  async function selectTreeNode(keys: Array<string | number>, info: { node?: Record<string, unknown> }) {
     const node = info.node
-    if (!node?.id) return
-    selectedTreeKeys.value = keys
-    activeSource.value = node
+    if (typeof node?.id !== 'string') return
+    const source: MediaTreeNode = {
+      id: node.id,
+      key: typeof node.key === 'string' ? node.key : node.id,
+      name: typeof node.name === 'string' ? node.name : node.id,
+    }
+    selectedTreeKeys.value = keys.map(String)
+    activeSource.value = source
+    channelKeyword.value = ''
+    await loadChannelPage(true)
+  }
+
+  /** Initializes every dialog session from the complete channel list, matching visual-alarm browsing. */
+  async function selectAllChannels() {
+    const allChannels = sourceTree.value[0]
+    if (!allChannels) return
+    selectedTreeKeys.value = [allChannels.key]
+    activeSource.value = allChannels
     channelKeyword.value = ''
     await loadChannelPage(true)
   }
@@ -118,15 +137,21 @@ export function useAiEventMediaTargetSelector(getVisionModelContext: () => Visio
     const visionModelContext = getVisionModelContext()
     const requestVersion = ++channelRequestVersion
     const pageIndex = reset ? 0 : channelPageIndex.value + 1
-    if (reset) loadingChannels.value = true
+    if (reset) {
+      // Do not leave the previous algorithm's enabled badges selectable while the new status query runs.
+      channelRows.value = []
+      channelPageIndex.value = -1
+      channelTotal.value = 0
+      loadingChannels.value = true
+    }
     else loadingMoreChannels.value = true
     try {
-      const result = sourceScope === 'region'
+      const result = sourceScope === 'region' && source.id !== '__all-channels__'
         ? normalizeResult<AiEventMediaChannel>(await queryAiEventSpaceChannels(
           collectRegionIds(sourceTree.value, source.id),
           { pageIndex, pageSize: RESOURCE_PAGE_SIZE },
         ))
-        : normalizeResult<AiEventMediaChannel>(await queryAiEventMediaDeviceChannels(source.id, { pageIndex, pageSize: RESOURCE_PAGE_SIZE }))
+        : normalizeResult<AiEventMediaChannel>(await queryAiEventChannels({ pageIndex, pageSize: RESOURCE_PAGE_SIZE }))
       const channels = await applyVisionModelConfiguration(result.data, visionModelContext)
       if (requestVersion !== channelRequestVersion || source !== activeSource.value || sourceScope !== activeScope.value) return
       channelRows.value = reset ? channels : appendDistinctChannels(channelRows.value, channels)
@@ -169,7 +194,7 @@ export function useAiEventMediaTargetSelector(getVisionModelContext: () => Visio
   }
 
   function handleTreeScroll(event: Event) {
-    if (activeScope.value !== 'gateway' || !hasMoreGateways.value || loadingMoreGateways.value) return
+    if (!hasMoreGateways.value || loadingMoreGateways.value) return
     const target = event.currentTarget as HTMLElement
     if (target.scrollTop + target.clientHeight >= target.scrollHeight - 48) void loadGatewayPage()
   }
@@ -209,6 +234,7 @@ export function useAiEventMediaTargetSelector(getVisionModelContext: () => Visio
     loadingMoreChannels,
     hasMoreChannels,
     loadDevices,
+    selectAllChannels,
     changeScope,
     selectTreeNode,
     selectChannel,

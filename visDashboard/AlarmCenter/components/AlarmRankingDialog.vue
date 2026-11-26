@@ -6,8 +6,7 @@
         :placeholder="searchPlaceholder" :aria-label="searchPlaceholder" />
     </div>
     <div v-if="error" class="alarm-ranking-dialog-error" role="alert">
-      <CloudEmpty :description="t('alarmDashboard.loadError')" />
-      <a-button @click="$emit('retry')">{{ t('alarmDashboard.retry') }}</a-button>
+      <CloudEmpty :description="t('alarmDashboard.loadError')" :image-style="{ height: '48px' }" />
     </div>
     <a-table v-else row-key="rank" size="small" table-layout="fixed" :columns="columns" :data-source="rows" :loading="loading"
       :pagination="pagination" :scroll="{ y: 'min(60vh, 520px)' }">
@@ -23,7 +22,7 @@ const props = defineProps<{
   open: boolean; title: string; items: AlarmRankItem[]; dimension: AlarmDimension;
   preview: boolean; loading: boolean; error: boolean
 }>()
-defineEmits<{ 'update:open': [value: boolean]; retry: [] }>()
+defineEmits<{ 'update:open': [value: boolean] }>()
 const { t } = useI18n()
 const { keyword, rows, columns, pagination, searchPlaceholder, emptyDescription } = useAlarmRanking(props)
 </script>

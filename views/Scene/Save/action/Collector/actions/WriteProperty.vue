@@ -5,13 +5,14 @@
         :model="propertyModelRef"
     >
         <a-row :gutter="24">
-            <a-col :span="12">
+            <a-col :span="compact ? 24 : 12">
                 <a-form-item
                     name="properties"
                     :label="$t('Collector.actions.index-6100078-3')"
                     :rules="[{ validator: validator, trigger: 'change' }]"
                 >
-                    <a-select
+                    <ThingModelSelect v-if="compact" v-model="propertyModelRef.properties" :options="writePointOptions" :placeholder="$t('Collector.actions.index-6100078-2')" @change="onChange" />
+                    <a-select v-else
                         showSearch
                         :placeholder="$t('Collector.actions.index-6100078-2')"
                         v-model:value="propertyModelRef.properties"
@@ -26,7 +27,7 @@
                     </a-select>
                 </a-form-item>
             </a-col>
-            <a-col :span="12" v-if="propertyModelRef.properties">
+            <a-col :span="compact ? 24 : 12" v-if="propertyModelRef.properties">
                 <a-form-item
                     name="propertiesValue"
                     :label="$t('Collector.actions.index-6100078-5')"
@@ -55,6 +56,7 @@
 
 <script lang="ts" setup>
 import { cloneDeep, isObject } from 'lodash-es'
+import ThingModelSelect from '../../../../../SceneLinkage/editor/components/ThingModelSelect.vue';
 import ParamsDropdown from '../../../components/ParamsDropdown';
 import { handleParamsData } from './index';
 import { useI18n } from 'vue-i18n'
@@ -62,6 +64,7 @@ import { useI18n } from 'vue-i18n'
 const { t: $t } = useI18n()
 
 const props = defineProps({
+    compact: { type: Boolean, default: false },
     value: {
         type: Object,
         default: () => {},
@@ -101,10 +104,11 @@ const writePointList = computed(() => {
   return props.pointList.filter((item: any) => (item.accessModeMask & (1 << 1)) !== 0).map((item: any) => {
     return {
       ...item,
-      component: item.dataType.type
+      component: item.dataType?.type
     }
   })
 })
+const writePointOptions = computed(() => writePointList.value.map(item => ({ label: item.name, value: item.id, valueType: item.dataType, kind: 'property' as const })))
 const propertyFormRef = ref();
 const columnMap = ref(props.columnMap || {})
 
@@ -206,6 +210,7 @@ const onChange = () => {
     propertyModelRef.propertiesValue = undefined;
     propertyModelRef.source = 'fixed';
     columnMap.value = {}
+    emit('update:columnMap', columnMap.value);
     emit('update:value', {
         [`${propertyModelRef.properties}`]: {
             value: propertyModelRef?.propertiesValue,
@@ -241,14 +246,10 @@ const onValueChange = (val: any, label: string) => {
 watch(
     () => props.value,
     (newVal) => {
-        if (newVal) {
-            const _keys = Object.keys(newVal)?.[0];
-            if (_keys) {
-                propertyModelRef.properties = _keys as any;
-                propertyModelRef.propertiesValue = newVal[_keys]?.value;
-                propertyModelRef.source = newVal[_keys]?.source;
-            }
-        }
+        const key = Object.keys(newVal || {})[0];
+        propertyModelRef.properties = key as any;
+        propertyModelRef.propertiesValue = key ? newVal[key]?.value : undefined;
+        propertyModelRef.source = key ? newVal[key]?.source : 'fixed';
     },
     { deep: true, immediate: true },
 );

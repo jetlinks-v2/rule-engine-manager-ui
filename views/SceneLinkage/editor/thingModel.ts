@@ -1,3 +1,6 @@
+import { shallowRef } from 'vue'
+import type { ProtocolUnit } from '../../../api/scene-linkage'
+
 export type ThingModelValueType = {
   type?: string
   elements?: Array<{ text?: string; label?: string; name?: string; value?: unknown; id?: unknown }>
@@ -12,6 +15,7 @@ export type ThingModelKind = 'property' | 'event' | 'function'
 export type ThingModelOption = {
   label: string
   value: string
+  description?: string
   valueType?: ThingModelValueType
   kind?: ThingModelKind
   unit?: string
@@ -21,6 +25,18 @@ export type ThingModelOption = {
 
 const numberTypes = new Set(['int', 'long', 'float', 'double', 'number'])
 const unsupportedTypes = new Set(['object', 'array'])
+const unitNames = shallowRef<Record<string, string>>({})
+
+/** Registers the protocol dictionary once for all quick-editor thing-model renderers. */
+export const setThingModelUnitNames = (units: ProtocolUnit[]) => {
+  const names: Record<string, string> = {}
+  units.forEach((unit) => {
+    const key = String(unit.id || unit.value || '')
+    const label = String(unit.name || unit.text || unit.symbol || '').trim()
+    if (key && label) names[key] = label
+  })
+  unitNames.value = names
+}
 
 export const getValueType = (item?: any): ThingModelValueType | undefined => {
   const valueType = item?.valueType || item?.dataType || item?.type
@@ -44,16 +60,26 @@ const normalizeUnitName = (value: any): string | undefined => {
 // unit 保存的是单位标识；场景下拉描述只展示后端返回的单位名称。
 const getUnitName = (item?: any): string | undefined => {
   const valueType = item?.valueType || {}
-  const name = valueType.unitName || valueType.unitText || valueType.unitLabel || item?.unitName || item?.unitText || item?.unitLabel
+  const expands = item?.expands || {}
+  const valueTypeExpands = valueType?.expands || {}
+  const name = valueType.unitName || valueType.unitText || valueType.unitLabel
+    || item?.unitName || item?.unitText || item?.unitLabel
+    || expands.unitName || expands.unitText || expands.unitLabel
+    || valueTypeExpands.unitName || valueTypeExpands.unitText || valueTypeExpands.unitLabel
   if (name) return normalizeUnitName(name)
-  const unit = valueType.unit || item?.unit
-  if (!unit || typeof unit !== 'object') return undefined
-  return normalizeUnitName(unit)
+  const unit = valueType.unit || item?.unit || expands.unit || valueTypeExpands.unit
+  const text = normalizeUnitName(unit)
+  const unitName = text ? unitNames.value[text] : undefined
+  if (unitName) return unitName
+  // 单位标识（如 turnPerSeconds）不是面向用户的名称；没有名称时宁可不展示，避免把内部键暴露到规则配置中。
+  const standardUnit = text ? ({ percent: '%', celsius: '℃', fahrenheit: '℉' }[text.toLowerCase()]) : undefined
+  return standardUnit || (text && /^[a-z][A-Za-z0-9]*$/.test(text) ? undefined : text)
 }
 
-export const toThingModelOptions = (items: any[] = [], kind: ThingModelKind = 'property'): ThingModelOption[] => items
+/** 条件默认过滤复杂类型；执行动作可显式保留对象、数组等原有物模型能力。 */
+export const toThingModelOptions = (items: any[] = [], kind: ThingModelKind = 'property', includeComplex = false): ThingModelOption[] => items
   // 事件的 valueType 通常是 object，但仍应作为事件输出参数的入口提供选择。
-  .filter(item => kind === 'event' || isSupportedValueType(getValueType(item)))
+  .filter(item => includeComplex || kind === 'event' || isSupportedValueType(getValueType(item)))
   .map(item => ({
     label: item.name || item.id,
     value: item.id,
@@ -67,7 +93,7 @@ export const toThingModelOptions = (items: any[] = [], kind: ThingModelKind = 'p
 
 export const getTermTypes = (valueType?: ThingModelValueType) => {
   const type = getValueTypeName(valueType)
-  if (numberTypes.has(type) || isDateValueType(valueType)) return ['gt', 'gte', 'eq', 'lte', 'lt']
+  if (numberTypes.has(type) || isDateValueType(valueType)) return ['gt', 'gte', 'eq', 'neq', 'lte', 'lt']
   if (type === 'string') return ['eq', 'neq', 'like', 'nlike']
   return ['eq', 'neq']
 }

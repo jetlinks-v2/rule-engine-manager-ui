@@ -1,4 +1,4 @@
-<script setup name="Fulfill">
+<script setup>
 import {useI18n} from "vue-i18n";
 import { queryAggregation, queryArrayTerms, queryBuiltInParams } from '@rule-engine-manager-ui/api/scene'
 import {useRequest} from "@jetlinks-web/hooks";
@@ -13,6 +13,8 @@ import {cloneDeep, isArray, isNil} from "lodash-es";
 import TermItem from './Terms.vue'
 import {randomNumber} from "@jetlinks-web/utils";
 import {handleParamsData} from "@rule-engine-manager-ui/views/Scene/Save/components/Terms/util";
+
+defineOptions({ name: 'Fulfill' })
 
 const props = defineProps({
   value: {

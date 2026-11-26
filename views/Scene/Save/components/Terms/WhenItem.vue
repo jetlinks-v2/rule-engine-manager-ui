@@ -20,7 +20,7 @@
                 <ConfirmModal
                     :title="$t('Terms.WhenItem.9093425-2')"
                     :onConfirm="onDelete"
-                    :show="showDelete"
+                    :show="detailCardLayout || showDelete"
                     className="terms-params-delete"
                 >
                     <AIcon type="CloseOutlined" />
@@ -48,7 +48,7 @@
     </div>
 </template>
 
-<script setup lang="ts" name="WhenItem">
+<script setup lang="ts">
 import type { PropType } from 'vue';
 import TermsItem from './TermsItem.vue';
 import { TermsType } from '../../../typings';
@@ -57,6 +57,8 @@ import DropdownButton from '../DropdownButton';
 import { storeToRefs } from 'pinia';
 import { randomString } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'WhenItem' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
@@ -74,6 +76,11 @@ const props = defineProps({
             shakeLimit: {},
             then: [],
         }),
+    },
+    /** 详细模式允许删除最后一组条件，删除后回到过滤条件添加入口。 */
+    detailCardLayout: {
+        type: Boolean,
+        default: false,
     },
     showDeleteBtn: {
         type: Boolean,

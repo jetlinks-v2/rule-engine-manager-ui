@@ -1,5 +1,5 @@
 <template>
-  <CloudEmpty v-if="!hasData" :description="t('alarmDashboard.noTrend')" />
+  <CloudEmpty v-if="!hasData" class="alarm-trend-empty" :description="t('alarmDashboard.noTrend')" />
   <Echarts v-else :option="option" :library="libraries" />
 </template>
 <script setup lang="ts">
@@ -18,7 +18,7 @@ const { t } = useI18n()
 const { token } = theme.useToken()
 const chartTextStyle = useAlarmTypography()
 const libraries = [BarChart, GridComponent, LegendComponent, TooltipComponent]
-const hasData = computed(() => props.series.some(item => item.points.length))
+const hasData = computed(() => props.series.some(item => !item.failed && item.points.length))
 const colors = { events: '#1677ff', iot: '#fa8c16', vision: '#13a8e8' }
 const option = computed(() => {
   const series = props.series.filter(item => !item.failed)
@@ -51,4 +51,7 @@ const option = computed(() => {
   }
 })
 </script>
+<style scoped>
+.alarm-trend-empty { height: 100%; display: flex; align-items: center; justify-content: center; }
+</style>
 

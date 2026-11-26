@@ -5,7 +5,8 @@ import {cloneDeep, isArray, isObject} from 'lodash-es'
 import {randomNumber, randomString} from '@jetlinks-web/utils'
 import i18n from '@jetlinks-web-core/locales';
 
-const assignmentKey = (data: any[]): any[] => {
+/** 为编辑会话的分支、条件和动作补齐临时标识；调用方需先克隆持久化规则。 */
+export const assignmentKey = (data: any[]): any[] => {
   const onlyKey = ['when', 'then', 'terms', 'actions'];
   if (!data) return [];
   return data.map((item: any) => {

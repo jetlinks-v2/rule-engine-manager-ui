@@ -87,7 +87,7 @@
     </a-modal>
 </template>
 
-<script lang="ts" setup name='NotifyIndex'>
+<script lang="ts" setup>
 import NotifyWay from './NotifyWay.vue';
 import NotifyConfig from './NotifyConfig.vue';
 import NotifyTemplate from './NotifyTemplate.vue';
@@ -97,6 +97,8 @@ import { getTemplateDetail , queryTemplateDetail} from '../../../../../api/other
 import { PropType } from 'vue';
 import { NotifyProps } from '../../../typings';
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'NotifyIndex' })
 
 const { t: $t } = useI18n()
 const props = defineProps({

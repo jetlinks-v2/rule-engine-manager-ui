@@ -19,8 +19,10 @@
   </div>
 </template>
 
-<script setup name="BranchesTabs">
+<script setup>
 import Actions from "./Actions.vue";
+
+defineOptions({ name: 'BranchesTabs' })
 
 const props = defineProps({
   branchesGroup: {

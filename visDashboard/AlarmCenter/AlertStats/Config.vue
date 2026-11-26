@@ -85,11 +85,13 @@
   </div>
 </template>
 
-<script lang="ts" name="AlertStats" setup>
+<script lang="ts" setup>
 import { cloneDeep } from 'lodash-es'
 import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import { useI18n } from 'vue-i18n'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
+
+defineOptions({ name: 'AlertStats' })
 
 const { t: $t } = useI18n()
 

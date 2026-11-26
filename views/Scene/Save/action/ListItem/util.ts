@@ -13,6 +13,7 @@ iconMap.set('relieve', 'icon-jiechugaojing');
 iconMap.set('delay', 'icon-yanchizhihang');
 iconMap.set('device-data', 'icon-shebei');
 iconMap.set('collector', 'icon-collector-output');
+iconMap.set('sceneNotify', 'icon-xiaoxitongzhi');
 
 export const itemNotifyIconMap = new Map();
 itemNotifyIconMap.set(

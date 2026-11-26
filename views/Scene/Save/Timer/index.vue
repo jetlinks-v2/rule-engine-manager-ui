@@ -19,7 +19,7 @@
           <Title :options='data.options.trigger' />
         </AddButton>
       </a-form-item>
-      <div class='actions-branches-item' >
+      <div v-if="showActions" class='actions-branches-item' >
 
         <a-form-item
           :rules="actionRules"
@@ -43,7 +43,7 @@
     </div>
 </template>
 
-<script lang="ts" setup name='SceneSaveTimer'>
+<script lang="ts" setup>
 import { useSceneStore } from '../../../../store/scene';
 import { storeToRefs } from 'pinia';
 import Action from '../action/index.vue';
@@ -53,10 +53,20 @@ import Title from './Title.vue'
 import type { OperationTimer, BranchesThen } from '../../typings';
 import { useI18n } from 'vue-i18n'
 
+defineOptions({ name: 'SceneSaveTimer' })
+
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore();
 const { data } = storeToRefs(sceneStore);
 const visible = ref(false)
+
+defineProps({
+  /** 详细模式会将原版动作树放到独立区段，其他入口继续保留默认承载方式。 */
+  showActions: {
+    type: Boolean,
+    default: true,
+  },
+})
 
 const rules = [{
   validator(_: any, v: any) {

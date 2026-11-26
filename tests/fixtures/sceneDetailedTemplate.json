@@ -1,0 +1,118 @@
+{
+  "name": "设备上线",
+  "triggerType": "device",
+  "trigger": {
+    "type": "device",
+    "device": {
+      "source": "fixed",
+      "selector": "fixed",
+      "selectorValues": [
+        {
+          "value": "device-1",
+          "name": "TCP"
+        }
+      ],
+      "productId": "product-1",
+      "operation": {
+        "operator": "online"
+      }
+    },
+    "typeName": "设备触发",
+    "multiTrigger": false
+  },
+  "parallel": false,
+  "branches": [
+    {
+      "when": [
+        {
+          "type": "and",
+          "termType": "eq",
+          "options": [],
+          "terms": [
+            {
+              "column": "timestamp",
+              "value": {
+                "source": "manual",
+                "value": "22:41:23"
+              },
+              "type": "and",
+              "termType": "neq",
+              "options": [],
+              "terms": []
+            }
+          ]
+        }
+      ],
+      "shakeLimit": {
+        "enabled": false,
+        "time": 1,
+        "threshold": 1,
+        "continuous": false,
+        "alarmFirst": true,
+        "outputFirst": false,
+        "rolling": false
+      },
+      "then": [
+        {
+          "parallel": false,
+          "actions": [
+            {
+              "executor": "collector",
+              "collector": {
+                "pointSelectInfos": [
+                  {
+                    "collectorId": "collector-1",
+                    "pointIds": [
+                      "point-1"
+                    ]
+                  }
+                ],
+                "stateOperator": "justRunningPoint",
+                "handlerType": "read"
+              },
+              "options": {
+                "name": "1号排风扇",
+                "productName": "modbus风扇",
+                "channelName": "modbus风扇",
+                "collectorName": "1号排风扇",
+                "channelId": "channel-1",
+                "type": "读取",
+                "pointName": "开关",
+                "columnMap": {},
+                "otherColumns": [],
+                "columns": []
+              }
+            }
+          ]
+        }
+      ],
+      "executeAnyway": true,
+      "branchName": "条件"
+    }
+  ],
+  "startTime": 1794276094290,
+  "state": {
+    "text": "正常",
+    "value": "started"
+  },
+  "options": {
+    "trigger": {
+      "name": "TCP",
+      "extraName": "",
+      "onlyName": false,
+      "type": "上线",
+      "typeIcon": "icon-a-Group4713",
+      "productName": "",
+      "selectorIcon": "icon-shebei1",
+      "action": ""
+    },
+    "when": [],
+    "editorMode": "detail",
+    "summary": "当 TCP在线，且 （上报时间 不等于 22:41:23），就 读取modbus风扇中1号排风扇的开关",
+    "summaryTitle": "当 TCP在线，且 （上报时间 不等于 22:41:23），就 读取modbus风扇中1号排风扇的开关",
+    "editorSchemaVersion": 2
+  },
+  "features": [
+    "none"
+  ]
+}

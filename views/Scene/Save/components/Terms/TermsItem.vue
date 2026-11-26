@@ -1,4 +1,5 @@
 <template>
+  <!-- 校验时机继承所属表单，详细模式只在保存场景时检查条件。 -->
   <a-form-item
       :name='["branches", branchName, "when", whenName, "terms", props.name]'
       :rules='rules'
@@ -16,7 +17,7 @@
   </a-form-item>
 </template>
 
-<script setup lang='ts' name='TermsItem'>
+<script setup lang='ts'>
 import type { PropType } from 'vue'
 import type { TermsType } from '../../../typings';
 import { storeToRefs } from 'pinia';
@@ -24,6 +25,8 @@ import { useSceneStore } from '../../../../../store/scene'
 import ParamsItem from './ParamsItem.vue'
 import { isArray, isNil } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'TermsItem' })
 
 const { t: $t } = useI18n()
 const sceneStore = useSceneStore()
@@ -118,7 +121,6 @@ const rules = [
       }
       return Promise.resolve();
     },
-    trigger: 'change'
   }
 ]
 

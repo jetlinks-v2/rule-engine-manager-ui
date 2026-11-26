@@ -2,12 +2,14 @@
   <a-modal
       :title="$t('Manual.index.515142-2')"
       open
-      :width="1000"
+      :width="isDetailedEditor ? 1240 : 1000"
+      :footer="isDetailedEditor ? null : undefined"
       @cancel="onCancel"
       @ok="save"
       :maskClosable="false"
   >
-    <div class="body_height_60">
+    <CollectorActionWorkspace v-if="isDetailedEditor" :value="value" :options="options" :name="name" :then-name="thenName" :branches-name="branchesName" @cancel="onCancel" @save="(configuration, labels) => emit('save', configuration, labels)" />
+    <div v-else class="body_height_60">
       <a-steps :current="current" @change="stepChange">
         <a-step>
           <template #title>{{ $t('Collector.actions.index-6100078-7') }}</template>
@@ -55,7 +57,7 @@
         />
       </div>
     </div>
-    <template #footer>
+    <template v-if="!isDetailedEditor" #footer>
       <div class="steps-action">
         <a-button v-if="current === 0" @click="onCancel">{{ $t('Save.index.551009-1')}}</a-button>
         <a-button v-else @click="prev">{{ $t('DeviceAccess.index.551011-21') }}</a-button>
@@ -68,6 +70,8 @@
 
 <script lang="ts" setup>
 import Channel from './Channel.vue';
+import CollectorActionWorkspace from './CollectorActionWorkspace.vue';
+import { inject } from 'vue';
 import Collector from './Collector.vue';
 import Action from './actions/index.vue';
 import {onlyMessage} from '@jetlinks-web/utils';
@@ -75,6 +79,8 @@ import {useRequest} from "@jetlinks-web/hooks";
 import {queryPointNoPagingV2} from "@rule-engine-manager-ui/api/collector";
 import {cloneDeep} from "lodash-es";
 import { useI18n } from 'vue-i18n'
+
+const isDetailedEditor = inject('scene-editor-mode', 'legacy') === 'detail'
 
 type Emit = {
   (e: 'cancel'): void;
@@ -247,6 +253,7 @@ watch(
 watch(
     () => CollectorModel.pointSelectInfos[0]?.collectorId,
     (newVal) => {
+      if (isDetailedEditor || !newVal) return
       run({
         terms: [
           {

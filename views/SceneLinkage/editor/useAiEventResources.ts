@@ -3,6 +3,7 @@ import {
   queryAiAggregateTasks,
   queryAiAlarmSceneTree,
   queryAiSceneTree,
+  queryAiSceneTreeNoPaging,
   type AiAggregateTaskOption,
   type AiSceneTreeOption,
 } from '../../../api/scene-linkage'
@@ -52,6 +53,24 @@ export const useAiEventResources = (sceneMode: 'event' | 'alarm' = 'event') => {
       scenes.value = reset ? page.data : mergeScenes(scenes.value, page.data)
       scenePageIndex.value = pageIndex
       sceneTotal.value = page.total
+    } finally {
+      if (requestVersion === sceneRequestVersion) loadingScenes.value = false
+    }
+  }
+
+  /**
+   * Visual-event configuration chooses an algorithm before a camera. It therefore needs the
+   * complete scene-package tree instead of a binding-derived subset of paged scene results.
+   */
+  const loadSceneTree = async () => {
+    const requestVersion = ++sceneRequestVersion
+    loadingScenes.value = true
+    try {
+      const tree = normalizeResult<AiSceneTreeOption>(await queryAiSceneTreeNoPaging())
+      if (requestVersion !== sceneRequestVersion) return
+      scenes.value = tree.data
+      scenePageIndex.value = 0
+      sceneTotal.value = tree.total
     } finally {
       if (requestVersion === sceneRequestVersion) loadingScenes.value = false
     }
@@ -121,6 +140,7 @@ export const useAiEventResources = (sceneMode: 'event' | 'alarm' = 'event') => {
     hasMoreScenes,
     taskTargets,
     loadScenes,
+    loadSceneTree,
     searchScenes,
     loadSelectedScene,
     loadAggregateTasks,

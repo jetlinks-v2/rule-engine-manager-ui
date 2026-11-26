@@ -81,13 +81,15 @@
   />
 </template>
 
-<script setup name="LogDrawer">
+<script setup>
 import { query } from "@rule-engine-manager-ui/api/log";
 import Record from "./Record.vue";
 import Log from "./Log.vue";
 import SolveComponent from "../../SolveComponent/index.vue";
 import LevelIcon from "@rule-engine-manager-ui/components/AlarmLevelIcon/index.vue";
 import { useI18n } from 'vue-i18n'
+
+defineOptions({ name: 'LogDrawer' })
 
 const { t: $t } = useI18n()
 const props = defineProps({

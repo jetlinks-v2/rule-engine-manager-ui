@@ -17,6 +17,7 @@
                 :class="{
                   'is-selected': selectedKeys.includes(channelKey(channel)),
                   'is-active': activeKey === channelKey(channel),
+                  'is-unavailable': channel.modelConfigured !== true,
                 }"
               >
                 <button
@@ -25,11 +26,12 @@
                   role="checkbox"
                   :aria-checked="selectedKeys.includes(channelKey(channel))"
                   :aria-label="channel.name || channel.channelId"
+                  :disabled="channel.modelConfigured !== true"
                   @click="toggle(channel)"
                 >
                   <AIcon v-if="selectedKeys.includes(channelKey(channel))" type="CheckOutlined" />
                 </button>
-                <button class="ai-event-media-channel-grid__content" type="button" @click="select(channel)">
+                <button class="ai-event-media-channel-grid__content" type="button" :disabled="channel.modelConfigured !== true" @click="select(channel)">
                   <span class="ai-event-media-channel-grid__image">
                     <img v-if="channelImage(channel)" :src="channelImage(channel)" :alt="channel.name || channel.channelId">
                     <span v-else class="ai-event-media-channel-grid__image-empty"><AIcon type="VideoCameraOutlined" /></span>
@@ -42,7 +44,7 @@
                   </span>
                 </button>
                 <div class="ai-event-media-channel-grid__meta">
-                  <button class="ai-event-media-channel-grid__title" type="button" @click="select(channel)">
+                  <button class="ai-event-media-channel-grid__title" type="button" :disabled="channel.modelConfigured !== true" @click="select(channel)">
                     <strong>{{ channel.name || channel.channelId }}</strong>
                   </button>
                   <a-button type="link" size="small" @click.stop="preview(channel)">{{ $t('IotSceneLinkage.action.preview') }}</a-button>
@@ -129,6 +131,9 @@ function loadMore() {
 .ai-event-media-channel-grid__item:hover { border-color: color-mix(in srgb, var(--accent, #1677ff) 42%, var(--line, #e5e7eb)); }
 .ai-event-media-channel-grid__item.is-selected { border-color: color-mix(in srgb, var(--accent, #1677ff) 60%, var(--line, #e5e7eb)); }
 .ai-event-media-channel-grid__item.is-active { border-color: var(--accent, #1677ff); box-shadow: 0 0 0 .0625rem var(--accent, #1677ff); }
+.ai-event-media-channel-grid__item.is-unavailable { background: var(--ant-color-fill-quaternary); }
+.ai-event-media-channel-grid__item.is-unavailable .ai-event-media-channel-grid__content, .ai-event-media-channel-grid__item.is-unavailable .ai-event-media-channel-grid__title, .ai-event-media-channel-grid__item.is-unavailable .ai-event-media-channel-grid__select { cursor: not-allowed; }
+.ai-event-media-channel-grid__item.is-unavailable .ai-event-media-channel-grid__image, .ai-event-media-channel-grid__item.is-unavailable .ai-event-media-channel-grid__meta { opacity: .58; }
 .ai-event-media-channel-grid__content { display: block; width: 100%; padding: 0; border: 0; color: inherit; background: transparent; cursor: pointer; text-align: left; }
 .ai-event-media-channel-grid__content:focus-visible, .ai-event-media-channel-grid__title:focus-visible, .ai-event-media-channel-grid__select:focus-visible { outline: .125rem solid var(--jet-theme-primary-3, #91caff); outline-offset: -.125rem; }
 .ai-event-media-channel-grid__image { position: relative; display: block; aspect-ratio: 1.7; overflow: hidden; background: var(--canvas, #f5f5f5); }

@@ -6,11 +6,14 @@
     </div>
     <a-form ref="typeForm" :model="formModel" layout="vertical" :colon="false">
       <a-form-item required :label="$t('Device.Type.372529-1')">
-        <TopCard
-          :label-bottom="true"
-          :options="topOptions"
-          v-model:value="formModel.operator"
-        />
+        <a-select v-model:value="formModel.operator" :options="topOptions" popup-class-name="scene-editor__resource-dropdown scene-editor__device-trigger-dropdown" :dropdown-match-select-width="false">
+          <template #option="option">
+            <div class="scene-editor__device-trigger-option">
+              <span><AIcon :type="optionValue(option).icon" /></span>
+              <div><b>{{ optionValue(option).label }}</b><small>{{ optionValue(option).description }}</small></div>
+            </div>
+          </template>
+        </a-select>
       </a-form-item>
       <template v-if="showTimer">
         <Timer ref="timerRef" v-model:value="formModel.timer" />
@@ -33,13 +36,11 @@
         name="eventId"
         :rules="[{ required: true, message: $t('Device.Type.372529-2') }]"
       >
-        <a-select
-          v-model:value="formModel.eventId"
-          :filter-option="filterSelectNode"
+        <ThingModelSelect
+          v-model="formModel.eventId"
           :options="eventOptions"
           :placeholder="$t('Device.Type.372529-2')"
-          style="width: 100%"
-          @select="eventSelect"
+          @change="eventSelect"
         />
       </a-form-item>
       <template v-if="showInvokeFunction">
@@ -56,8 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { filterSelectNode } from "../../../../utils/comm";
-import { TopCard, Timer } from "../components";
+import { Timer } from "../components";
 import type { metadataType, TriggerDeviceOptions } from "../../typings";
 import type { PropType } from "vue";
 import { TypeEnum } from "./util";
@@ -66,7 +66,8 @@ import WriteProperty from "./WriteProperty.vue";
 import InvokeFunction from "./InvokeFunction.vue";
 import { defineExpose } from "vue";
 import { cloneDeep, omit } from "lodash-es";
-import { sceneImages } from "../../../../assets/index";
+import ThingModelSelect from '../../../SceneLinkage/editor/components/ThingModelSelect.vue'
+import { toThingModelOptions } from '../../../SceneLinkage/editor/thingModel'
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
@@ -84,7 +85,6 @@ const props = defineProps({
     default: () => ({})
   }
 });
-
 const formModel = reactive({
   operator: "online",
   timer: {},
@@ -94,18 +94,20 @@ const formModel = reactive({
   functionId: undefined,
   functionParameters: [],
 });
-
 Object.assign(formModel, props.operator);
-
 const optionCache = reactive({
   action: props.options?.action || "",
 });
-
-const readProperties = ref<any[]>([]);
-const writeProperties = ref<any[]>([]);
-const eventOptions = ref<any[]>([]);
-const functionOptions = ref<any[]>([]);
-
+// 每次物模型变化都重建选项，避免切换到空物模型后沿用上一台设备的字段。
+const readProperties = computed(() => toThingModelOptions(
+  (props.metadata?.properties || []).filter(item => item.expands?.type?.includes('read')),
+));
+const writeProperties = computed(() => toThingModelOptions(
+  (props.metadata?.properties || []).filter(item => item.expands?.type?.includes('write')),
+));
+const eventOptions = computed(() => toThingModelOptions(props.metadata?.events || [], 'event'));
+// 功能参数编辑器需要原始 inputs，不能只保留下拉展示字段。
+const functionOptions = computed(() => (props.metadata?.functions || []).map(item => ({ ...item, label: item.name, value: item.id })));
 const typeForm = ref();
 const timerRef = ref();
 const writeRef = ref();
@@ -113,91 +115,38 @@ const invokeRef = ref();
 
 const topOptions = computed(() => {
   const cloneTypeEnum = cloneDeep(TypeEnum);
+  // 沿用原版触发类型及说明，只调整物模型能力的可见性。
   const baseOptions = [
     {
       label: $t('Device.Type.372529-3'),
       value: "online",
-      img: sceneImages.online,
+      icon: 'LoginOutlined',
+      description: $t('IotSceneLinkage.triggerDesc.online'),
     },
     {
       label: $t('Device.Type.372529-4'),
       value: "offline",
-      img: sceneImages.offline,
+      icon: 'LogoutOutlined',
+      description: $t('IotSceneLinkage.triggerDesc.offline'),
     },
-    cloneTypeEnum.reportEvent,
-    cloneTypeEnum.readProperty,
-    cloneTypeEnum.writeProperty,
-    cloneTypeEnum.reportProperty,
-    cloneTypeEnum.invokeFunction,
+    Object.assign(cloneTypeEnum.reportEvent, { icon: 'NotificationOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.reportEvent') }),
+    Object.assign(cloneTypeEnum.readProperty, { icon: 'ReadOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.readProperty') }),
+    Object.assign(cloneTypeEnum.writeProperty, { icon: 'EditOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.writeProperty') }),
+    Object.assign(cloneTypeEnum.reportProperty, { icon: 'RiseOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.reportProperty') }),
+    Object.assign(cloneTypeEnum.invokeFunction, { icon: 'ControlOutlined', description: $t('IotSceneLinkage.detail.deviceTriggerDesc.invokeFunction') }),
   ];
 
-  if (!props.metadata) return baseOptions;
-
-  if (props.metadata.events?.length) {
-    // baseOptions.push(TypeEnum.reportEvent)
-    cloneTypeEnum.reportEvent.disabled = false;
-    eventOptions.value = props.metadata.events.map((item) => ({
-      ...item,
-      label: item.name,
-      value: item.id,
-    }));
-  }
-
-  if (props.metadata.properties?.length) {
-    const _properties = props.metadata.properties;
-    readProperties.value = _properties
-      .filter((item: any) => item.expands?.type?.includes("read"))
-      .map((item) => ({
-        ...item,
-        label: item.name,
-        value: item.id,
-      }));
-    writeProperties.value = _properties
-      .filter((item: any) => item.expands?.type?.includes("write"))
-      .map((item) => ({
-        ...item,
-        label: item.name,
-        value: item.id,
-      }));
-    // 兼容上传的设备物模型没有type时，type值默认为上报
-    const reportProperties = _properties
-      .filter(
-        (item: any) =>
-          item.expands?.type?.includes("report") || !item.expands?.type
-      )
-      .map((item) => ({
-        ...item,
-        label: item.name,
-        value: item.id,
-      }));
-
-    if (readProperties.value.length) {
-      // baseOptions.push(TypeEnum.readProperty)
-      cloneTypeEnum.readProperty.disabled = false;
-    }
-
-    if (writeProperties.value.length) {
-      // baseOptions.push(TypeEnum.writeProperty)
-      cloneTypeEnum.writeProperty.disabled = false;
-    }
-
-    if (reportProperties.length) {
-      // baseOptions.push(TypeEnum.reportProperty)
-      cloneTypeEnum.reportProperty.disabled = false;
-    }
-  }
-
-  if (props.metadata.functions?.length) {
-    cloneTypeEnum.invokeFunction.disabled = false;
-    // baseOptions.push(TypeEnum.invokeFunction)
-    functionOptions.value = props.metadata.functions.map((item) => ({
-      ...item,
-      label: item.name,
-      value: item.id,
-    }));
-  }
-
-  return baseOptions;
+  const available: Record<string, boolean> = {
+    reportEvent: eventOptions.value.length > 0,
+    readProperty: readProperties.value.length > 0,
+    writeProperty: writeProperties.value.length > 0,
+    reportProperty: toThingModelOptions((props.metadata?.properties || []).filter(
+      item => item.expands?.type?.includes('report') || !item.expands?.type,
+    )).length > 0,
+    invokeFunction: functionOptions.value.length > 0,
+  };
+  // 类型只在实际存在可选物模型时展示，上下线触发始终可用。
+  return baseOptions.filter(item => !(item.value in available) || available[item.value]).map(item => ({ ...item, disabled: false }));
 });
 
 const showReadProperty = computed(() => {
@@ -224,9 +173,12 @@ const showTimer = computed(() => {
   ].includes(formModel.operator);
 });
 
-const eventSelect = (_: string, eventItem: any) => {
-  optionCache.action = $t('Device.Type.372529-5', [eventItem.name]);
+const eventSelect = (eventId: string) => {
+  const eventItem = eventOptions.value.find(item => item.value === eventId)
+  optionCache.action = $t('Device.Type.372529-5', [eventItem?.label || eventId]);
 };
+
+const optionValue = (option: any) => option?.data?.value ? option.data : option
 
 defineExpose({
   vail: () => {
@@ -295,13 +247,16 @@ watch(() => formModel.operator, (newVal, oldVal) => {
 <style scoped lang="less">
 .type {
   margin-top: 24px;
-
   .alert {
     height: 40px;
     padding-left: 10px;
     color: rgba(0, 0, 0, 0.55);
     line-height: 40px;
     background-color: #f6f6f6;
+  }
+
+  :deep(.ant-select) {
+    width: 100%;
   }
 }
 </style>

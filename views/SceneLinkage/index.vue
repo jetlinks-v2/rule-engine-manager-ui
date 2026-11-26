@@ -23,7 +23,7 @@
           :default-params="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
           :pagination="{ showSizeChanger: true, showQuickJumper: true }"
           row-key="id"
-          :scroll="{ x: 1140 }"
+          :scroll="{ x: 1400 }"
         >
           <template #emptyText>
             <CloudEmpty :search="queryTerms" :search-name="$t('Configuration.index.021440-10')">
@@ -54,9 +54,26 @@
               <EmptyCreateButton />
             </div>
           </template>
+          <template #headerCell="{ column }">
+            {{ column.title }}
+            <a-tooltip
+              v-if="column.dataIndex === 'runtimeInfo' || column.dataIndex === 'executionCount'"
+              :title="$t(column.dataIndex === 'runtimeInfo' ? 'IotSceneLinkage.column.lastExecuteTip' : 'IotSceneLinkage.column.executionCountTip')"
+            >
+              <AIcon class="scene-list__column-help" type="QuestionCircleOutlined" />
+            </a-tooltip>
+          </template>
           <template #name="scene">
-            <strong>{{ scene.name }}</strong>
-            <div><a-tag class="scene-list__trigger-tag">{{ triggerLabel(scene) }}</a-tag></div>
+            <div class="scene-list__name-line">
+              <a-tooltip :title="scene.name">
+                <span class="scene-list__name-wrap">
+                  <a class="scene-list__name" @click="openEditor(scene.id)">
+                    <j-ellipsis :tooltip="false">{{ scene.name }}</j-ellipsis>
+                  </a>
+                </span>
+              </a-tooltip>
+              <a-tag class="scene-list__trigger-tag">{{ triggerLabel(scene) }}</a-tag>
+            </div>
           </template>
           <template #rule="scene">
             <a-tooltip :title="sceneSummaryTitle(scene)">
@@ -71,12 +88,18 @@
             </a-tooltip>
           </template>
           <template #state="scene">
-            <a-switch
-              :checked="stateValue(scene) === 'started'"
-              :disabled="!hasScenePermission('action')"
-              :loading="pendingId === scene.id"
-              @change="confirmToggle(scene)"
+            <j-badge-status
+              :status="stateValue(scene) === 'started' ? 'success' : 'default'"
+              :text="sceneStateLabel(scene)"
             />
+          </template>
+          <template #runtimeInfo="scene">
+            {{ formatSceneExecutionTime(scene.runtimeInfo?.lastExecutionTime || null) }}
+          </template>
+          <template #executionCount="scene">
+            <a-button type="link" class="scene-list__record-link" @click="openRecordDrawer(scene)">
+              {{ scene.runtimeInfo?.executionCount ?? '-' }}
+            </a-button>
           </template>
           <template #actions="scene">
             <TableActions>
@@ -94,10 +117,25 @@
                 <j-permission-button
                   type="text"
                   :hasPermission="scenePermission('tigger')"
+                  :disabled="stateValue(scene) !== 'started'"
                   @click="confirmExecute(scene)"
                 >
                   <template #icon><AIcon type="PlayCircleOutlined" /></template>
                   {{ $t('IotSceneLinkage.action.execute') }}
+                </j-permission-button>
+              </TableActionsItem>
+              <TableActionsItem>
+                <j-permission-button
+                  type="link"
+                  :loading="pendingId === scene.id"
+                  :hasPermission="scenePermission('action')"
+                  :danger="stateValue(scene) === 'started'"
+                  @click="confirmToggle(scene)"
+                >
+                  <template #icon>
+                    <AIcon :type="stateValue(scene) === 'started' ? 'StopOutlined' : 'CheckCircleOutlined'" />
+                  </template>
+                  {{ $t(stateValue(scene) === 'started' ? 'IotSceneLinkage.action.disable' : 'IotSceneLinkage.action.enable') }}
                 </j-permission-button>
               </TableActionsItem>
               <TableActionsItem>
@@ -143,9 +181,11 @@
         :open="recordDrawerOpen"
         :scene="recordScene"
         :state="recordState"
+        :range="recordLogs.range"
         @update:open="updateRecordDrawerOpen"
         @toggle-record="recordLogs.toggleRecord"
         @load-more="recordLogs.loadMore"
+        @range="recordLogs.changeRange"
         @retry="recordLogs.reload"
         @retry-detail="recordLogs.retryDetail"
       />
@@ -172,9 +212,10 @@ import { useScenePermission } from '@rule-engine-manager-ui/hook/usePermission'
 import { deleteScene, disableScene, enableScene, executeScene, getSceneDetail, queryScenes } from '../../api/scene-linkage'
 import SceneRecordTimeline from './components/SceneRecordTimeline.vue'
 import SceneTemplateImportModal from './components/SceneTemplateImportModal.vue'
-import { useSceneExecutionRecords } from './hooks/useSceneExecutionRecords'
+import { formatSceneExecutionTime, useSceneExecutionRecords } from './hooks/useSceneExecutionRecords'
 import { formatDeviceScopeText, formatDeviceScopeTitle, formatProductScopeText, type SceneDeviceScopeValue } from './editor/deviceScopeLabel'
 import { toSceneTemplate } from './sceneCompatibility'
+import { formatSceneSummaryClauses, splitSceneSummaryParts } from './sceneSummary'
 
 interface SceneRecordTarget {
   id: string
@@ -217,8 +258,16 @@ const triggerTypeOptions = computed(() => ['manual', 'timer', 'device', 'alarm',
 })))
 const filterCommonFields: ConditionFilterCommonField[] = [{ label: t('IotSceneLinkage.form.name'), value: 'name' }, { label: t('IotSceneLinkage.form.triggerType'), value: 'triggerType' }, { label: t('IotSceneLinkage.form.state'), value: 'state' }]
 const filterFields = computed<ConditionFilterField[]>(() => [{ dataIndex: 'name', title: t('IotSceneLinkage.form.name'), search: { type: 'string', defaultTermType: 'like' } }, { dataIndex: 'triggerType', title: t('IotSceneLinkage.form.triggerType'), search: { type: 'select', defaultTermType: 'eq', options: triggerTypeOptions.value } }, { dataIndex: 'state', title: t('IotSceneLinkage.form.state'), search: { type: 'select', defaultTermType: 'eq', options: [{ label: t('IotSceneLinkage.state.started'), value: 'started' }, { label: t('IotSceneLinkage.state.disable'), value: 'disable' }] } }])
-const columns = computed(() => [{ title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 230, scopedSlots: true }, { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule', width: 720, scopedSlots: true }, { title: t('IotSceneLinkage.column.state'), dataIndex: 'state', width: 100, scopedSlots: true }, { title: t('IotSceneLinkage.column.action'), dataIndex: 'actions', width: 90, scopedSlots: true }])
+const columns = computed(() => [
+  { title: t('IotSceneLinkage.column.scene'), dataIndex: 'name', width: 260, scopedSlots: true },
+  { title: t('IotSceneLinkage.column.rule'), dataIndex: 'rule', width: 560, scopedSlots: true },
+  { title: t('IotSceneLinkage.column.lastExecute'), dataIndex: 'runtimeInfo', width: 180, scopedSlots: true },
+  { title: t('IotSceneLinkage.column.executionCount'), dataIndex: 'executionCount', width: 140, scopedSlots: true },
+  { title: t('IotSceneLinkage.column.state'), dataIndex: 'state', width: 100, scopedSlots: true },
+  { title: t('IotSceneLinkage.column.action'), dataIndex: 'actions', width: 160, scopedSlots: true },
+])
 const stateValue = (scene: any) => scene.state?.value || scene.state
+const sceneStateLabel = (scene: any) => scene.state?.text || t(stateValue(scene) === 'started' ? 'IotSceneLinkage.state.started' : 'IotSceneLinkage.state.disable')
 const sceneTriggerType = (scene: any) => scene.triggerType || scene.trigger?.type
 const triggerLabel = (scene: any) => t(`IotSceneLinkage.triggerType.${sceneTriggerType(scene)}`)
 const sceneSummary = (scene: any) => scene.options?.summary || `${t('IotSceneLinkage.rule.when')} ${triggerLabel(scene)}，${t('IotSceneLinkage.rule.then')} ${(scene.actions || []).map((a: any) => t(`IotSceneLinkage.action.${a.executor}`)).join('、')}`
@@ -255,15 +304,12 @@ const expandScopeSummaryTitle = (scene: any, source: string) => {
     return replaceAllText(replaceAllText(text, shortTarget, fullTarget), shortScope, fullScope)
   }, source)
 }
-const sceneSummaryTitle = (scene: any) => expandScopeSummaryTitle(scene, scene.options?.summaryTitle || sceneSummary(scene))
-const splitSceneSummaryParts = (text: string) => {
-  const matches = [...text.matchAll(/(?:^|[，。\s])([当且就则])\s*(.*?)(?=[，。\s]+[且就则]|$)/g)]
-  return matches.length ? matches.map((item, index) => ({ keyword: item[1], value: item[2].replace(/[，。]\s*$/, '').trim(), kind: item[1] === '就' || item[1] === '则' ? 'action' : index ? 'condition' : 'trigger' })) : [{ keyword: t('IotSceneLinkage.rule.when'), value: text, kind: 'trigger' }]
-}
+// 旧详细摘要的连接冒号只在展示时规整，避免批量修改已保存规则。
+const sceneSummaryTitle = (scene: any) => formatSceneSummaryClauses(splitSceneSummaryParts(expandScopeSummaryTitle(scene, scene.options?.summaryTitle || sceneSummary(scene)), t).map(part => ({ label: part.keyword, value: part.value })))
 const sceneSummaryParts = (scene: any) => {
   const title = sceneSummaryTitle(scene)
-  const titleParts = splitSceneSummaryParts(title)
-  return splitSceneSummaryParts(sceneSummary(scene)).map((part, index) => ({ ...part, title: titleParts[index]?.value || title }))
+  const titleParts = splitSceneSummaryParts(title, t)
+  return splitSceneSummaryParts(sceneSummary(scene), t).map((part, index) => ({ ...part, title: titleParts[index]?.value || title }))
 }
 function reload(payload?: ConditionFilterChangePayload) {
   if (payload) {
@@ -324,11 +370,14 @@ function confirmToggle(scene: any) {
   })
 }
 async function execute(scene: any) {
+  // 禁用场景不可手动执行，确认弹窗打开后也再次检查状态。
+  if (stateValue(scene) !== 'started') return
   await executeScene(scene.id)
   onlyMessage(t('IotSceneLinkage.message.executed', { name: scene.name }), 'success')
   reload()
 }
 function confirmExecute(scene: any) {
+  if (stateValue(scene) !== 'started') return
   Modal.confirm({
     title: t('IotSceneLinkage.confirm.executeTitle'),
     content: t('IotSceneLinkage.confirm.executeContent', { name: scene.name }),
@@ -379,13 +428,51 @@ const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 }
 
 .scene-list__trigger-tag {
+  flex: none;
   display: inline-flex;
-  margin-top: var(--space-2);
+  margin: 0;
   padding: 1px 6px !important;
   color: var(--ant-color-primary) !important;
   background: #eef4ff !important;
   border: 1px solid #d6e4ff !important;
   border-radius: 3px;
+}
+
+.scene-list__name-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.scene-list__name {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ant-color-text);
+  font-weight: 600;
+}
+
+.scene-list__name-wrap {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 72px);
+}
+
+.scene-list__name:hover {
+  color: var(--ant-color-primary);
+}
+
+.scene-list__column-help {
+  margin-left: var(--space-1);
+  color: var(--ant-color-text-tertiary);
+  font-size: 12px;
+  cursor: help;
+}
+
+.scene-list__record-link {
+  height: auto;
+  padding: 0;
 }
 
 .scene-list__summary {

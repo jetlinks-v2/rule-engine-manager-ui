@@ -53,12 +53,12 @@
               :fieldNames="{ key: valueName }"
               @select="treeSelect"
             >
-              <template #title="{ column, name, fullName, description }">
+              <template #title="{ column, name, fullName, description, children }">
                 <template v-if="slots.includes('title')">
                   <slot name="title" :data="{column, name, fullName}"></slot>
                 </template>
                 <a-space v-else>
-                  {{ name || fullName }}
+                  <span :class="{ 'scene-param-group': children?.length }">{{ name || fullName }}</span>
                   <span v-if="description" class="tree-title-description">{{
                     description
                   }}</span>
@@ -76,7 +76,7 @@
   </a-dropdown>
 </template>
 
-<script lang="ts" setup name="DropdownButton">
+<script lang="ts" setup>
 import type { PropType } from "vue";
 import { cloneDeep } from "lodash-es";
 import { useI18n } from "vue-i18n";
@@ -84,6 +84,8 @@ import DropMenus from "./Menus.vue";
 import DropdownTimePicker from "./Time.vue";
 import { getOption } from "./util";
 import type { DropdownButtonOptions } from "./util";
+
+defineOptions({ name: 'DropdownButton' })
 
 type LabelType = string | number | boolean | undefined;
 

@@ -23,7 +23,8 @@ export function mergeNotifyUsersById<T extends NotifyUser>(previous: T[], incomi
  */
 export function canReceiveProfileBackedNotification(user: NotifyUser, channelProvider: string): boolean {
   if (!user.id) return false
-  if (channelProvider === 'inside-mail') return true
+  // 站内信不依赖邮箱或手机号，任一可选平台用户都可以作为收信人。
+  if (['inside-mail', 'inbox'].includes(channelProvider)) return true
   if (channelProvider === 'notifier-email') return Boolean(user.email)
   return ['notifier-sms', 'notifier-voice'].includes(channelProvider) && Boolean(user.telephone)
 }
