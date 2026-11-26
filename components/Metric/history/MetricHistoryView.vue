@@ -2,11 +2,11 @@
   <div ref="element" class="metric-history-view">
     <div class="metric-history-view__tools">
       <slot name="tools" />
-      <a-select v-if="available && (!aggregate.operation.value || aggregate.operations.value.length)" :value="aggregate.operation.value" :aria-label="t('historyAggregation')" :loading="aggregate.loading.value" :bordered="false" :dropdown-match-select-width="false" :virtual="false" :list-height="320" size="small" @keydown.esc.stop @dropdownVisibleChange="($event:boolean) => $event && aggregate.describe()" @change="aggregate.operation.value = $event">
+      <a-select v-if="available && (!aggregate.operation.value || aggregate.operations.value.length)" :value="aggregate.operation.value" :aria-label="t('historyAggregation')" :loading="aggregate.loading.value" option-label-prop="label" :bordered="false" :dropdown-match-select-width="false" :virtual="false" :list-height="320" size="small" @keydown.esc.stop @dropdownVisibleChange="($event:boolean) => $event && aggregate.describe()" @change="aggregate.operation.value = $event">
         <a-select-option value="" :label="t('historyRaw')"><SelectOption icon="HistoryOutlined" :label="t('historyRaw')" :description="t('historyRawHint')" /></a-select-option>
         <a-select-option v-for="option in aggregate.operations.value" :key="option.id" :value="option.id" :label="option.name"><SelectOption :icon="option.icon" :label="option.name" :description="t('historyOperationHint_'+option.id)" /></a-select-option>
       </a-select>
-      <a-select v-if="aggregate.operation.value" v-model:value="aggregate.interval.value" :aria-label="t('historyBucket')" :bordered="false" :dropdown-match-select-width="false" :virtual="false" :list-height="320" size="small" @keydown.esc.stop>
+      <a-select v-if="aggregate.operation.value" v-model:value="aggregate.interval.value" :aria-label="t('historyBucket')" option-label-prop="label" :bordered="false" :dropdown-match-select-width="false" :virtual="false" :list-height="320" size="small" @keydown.esc.stop>
         <a-select-option :value="0" :label="t('historyBucketAuto')"><SelectOption icon="CompressOutlined" :label="t('historyBucketAuto')" :description="t('historyBucketAutoHint')" /></a-select-option>
         <a-select-option v-for="option in intervals" :key="option.value" :value="option.value" :label="t('historyBucketEvery',{value:t(option.label)})" :disabled="!bounds || option.value > bounds[1]-bounds[0] || Math.ceil((bounds[1]-bounds[0])/option.value)>256"><SelectOption icon="ClockCircleOutlined" :label="t('historyBucketEvery',{value:t(option.label)})" :description="t('historyBucketHint')" /></a-select-option>
       </a-select>
@@ -57,6 +57,6 @@ defineExpose({refresh:() => { if (aggregate.operation.value) void aggregate.refr
 .metric-history-view { min-width:0 }
 .metric-history-view__tools { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px }
 .metric-history-view__tools :deep(.ant-select) { min-width:104px; font-size:12px }
-.metric-history-view__tools :deep(.metric-chart-tools) { flex:1; min-width:132px; margin-bottom:0 }
+.metric-history-view__tools :deep(.metric-chart-tools) { flex:0 0 auto; margin:0 0 0 auto }
 .metric-history-view__caption { display:flex; justify-content:space-between; gap:8px; color:var(--ink-3); font-size:12px; margin:4px 0 }
 </style>

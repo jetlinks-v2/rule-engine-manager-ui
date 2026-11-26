@@ -32,7 +32,7 @@ const { t }=useI18n({useScope:'local',messages:metricMessages})
 <style scoped>
 .metric-chart-tools { display:flex; align-items:center; justify-content:space-between; gap:4px 12px; flex-wrap:wrap; min-height:28px; margin-bottom:4px }
 .metric-chart-tools__query,.metric-chart-tools__actions { display:flex; align-items:center; gap:4px; flex-wrap:wrap }
-.metric-chart-tools__actions { margin-left:auto }
+.metric-chart-tools__actions { margin-left:auto; flex-wrap:nowrap; flex-shrink:0 }
 .metric-chart-tools :deep(.ant-btn) { display:inline-flex; align-items:center; justify-content:center; height:28px; min-width:28px; padding-inline:6px; font-size:12px; line-height:20px; color:var(--ink-3) }
 .metric-chart-tools__actions :deep(.is-active) { color:var(--accent); background:var(--accent-soft) }
 .metric-chart-tools__limit { font-size:12px; color:var(--ink-3) }
