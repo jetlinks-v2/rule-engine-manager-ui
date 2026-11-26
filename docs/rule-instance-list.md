@@ -55,7 +55,9 @@ Pending 使用已有 `Scannable` 主订阅父链，最多扫描64层，不递归
 
 不增加逐次执行记录、历史存储、定时器线程、全局指标注册表或新依赖。每个 Output 在自身继承字段中维护发出累计及速率，同时供入口/末端两种角色读取；Pending 只在查询时扫描。
 
-JDK21、256MiB 堆的 Instrumentation 对照原 QPS 版本：继承统计字段后的默认 Output 为96B，不再单独分配80B meter。终端只保留16B writer，删除固定冷 Mono 及其 supplier；相较前一版168B降至112B，每个终端少56B。有下游对象由40B+80B meter降至96B，少24B。相对原 QPS 版本，无下游 Output 新增80B（1万个约0.76MiB），有下游新增64B。执行监控器同样继承 RateMeter，自身对象由原监控器及独立 meter 合计112B降至96B，每任务少一个对象、节省16B。执行指标快照56B，查询 Output 时另分配32B只读快照，不在写出热路径分配。
+JDK21、256MiB堆的Instrumentation测量：默认Output对象88B，统计字段继承自RateMeter，不单独分配meter。Output直接保存预编译路由，由write执行终端及有下游逻辑，移除聚合writer lambda和仅用于组装的outputs/evaluator字段。相对此次精简前，终端Output及聚合函数112→88B，有下游120→88B；不含两版相同的预编译Flux、路由函数及共享类元数据。相对原QPS版本，仅Output部分的增量分别为终端56B、有下游32B。执行监控器由原监控器及独立meter合计112B降至96B，每任务少一个对象、节省16B。执行指标快照56B，查询Output另分配32B只读快照，不在写出热路径分配。
+
+对同一Output.write(data).block探针，终端分配维持约0B/次；单路本地EventBus写出的分配1872→1760B/次，耗时439.58±84.79→438.79±6.85ns/op；终端耗时均约10.69ns/op。JDK21/256MiB、单线程单fork、预热2轮/测量3轮、每轮1秒。分配量仅描述该探针及JIT结果，不能据此推导所有条件路由或业务图每条数据均节省112B。
 
 Input 保留原确认和回调适配，不新增接收计数器。数据及监听器通过惰性载体交给原 `observeExecution(Mono)` 扩展入口，默认监控器将其融合成一个订阅边界；自定义上下文装饰或透传该入口仍生效，不提前调用监听器。
 
@@ -73,7 +75,7 @@ Input 保留原确认和回调适配，不新增接收计数器。数据及监�
 
 JDK21/256MiB堆，每项单线程单fork，预热2轮/测量3轮、每轮1秒，启用GC profiler。另对单层执行、空输入和跨恢复路径反转顺序，以预热3轮/测量5轮复核；单层执行与空输入的耗时和基线误差区间重叠，嵌套耗时存在大幅波动，不作生产吞吐或时延改善承诺。没有新增逐消息统计状态、全局缓存或对象池。
 
-验证结果：引擎34项定向测试、reactor编译及本地install通过，覆盖相邻观察幂等、动态相邻观察的Context/背压/取消、重复订阅及恢复前错误独立计量，以及真实双节点RPC、EventBus缓冲2→0、Output计数、同步异常/null返回、不同监控器隔离和原观测入口覆盖。QueueInput使用真实实现及可控队列流验证原处理与取消路径，不等同于外部队列集群测试。core4项、管理层7项、前端11项测试复用相关源码及协议未改变的前阶段证据，未重复执行。`git diff --check` 通过。
+验证结果：引擎35项定向测试、reactor编译及本地install通过，新增条件输出只投递匹配数据、过滤前计数及终端空配置/并发共享返回值验证；相邻观察幂等、动态相邻Context/背压/取消、重复订阅及恢复前错误独立计量、真实双节点RPC、EventBus缓冲2→0、不同监控器隔离和原扩展入口仍通过。QueueInput使用真实实现及可控队列流，不等同于外部队列集群测试。core4项、管理层7项、前端11项测试复用相关源码及协议未改变的前阶段证据，未重复执行。`git diff --check` 通过。
 
 内置浏览器已确认真实三列列表、独立预览、禁用不显示指标、输入/输出/缓冲图标气泡和真实 WebSocket 缺测处理；点击卡片进入原抽屉并恢复 `editorId`，关闭后回到列表，菜单仅保留启停/删除。760px视口重排为单列、内容区无横向溢出；一次刷新列表/预览响应头约51ms/177ms，数值不代表生产延迟。
 
@@ -89,6 +91,6 @@ JDK21/256MiB堆，每项单线程单fork，预热2轮/测量3轮、每轮1秒，
 ## 关联交付
 
 - core继承支持：[jetlinks-core #130](https://github.com/jetlinks/jetlinks-core/pull/130)，已合并至 `9bad5a4c6882d1029b759a8f51590f7f9a88292d`，运行构件须包含该变更。
-- 引擎实现 `e26d1fb2635265afa179f8e41d37e72ad3eb63f9`：[rule-engine #17](https://github.com/jetlinks/rule-engine/pull/17)，基于原 QPS [#16](https://github.com/jetlinks/rule-engine/pull/16)，并依赖 core继承支持。
+- 引擎实现 `22a5ff10e21089bcc02cda502c7ee6c1de8607de`：[rule-engine #17](https://github.com/jetlinks/rule-engine/pull/17)，基于原 QPS [#16](https://github.com/jetlinks/rule-engine/pull/16)，并依赖 core继承支持。
 - 管理入口 `b2f1874ea7a1e96f646faff8b88ef9f4eecccbe1`：[rule-engine-manager #294](https://github.com/jetlinks-v2/rule-engine-manager/pull/294)，Draft，等待完整依赖验证。
 - 页面实现 `91ba2aadf5a2bfc70b5ed66a96e806e66c76ed24`：[rule-engine-manager-ui #164](https://github.com/jetlinks-v2/rule-engine-manager-ui/pull/164)，Draft，等待完整构建与新宿主数值联调。
