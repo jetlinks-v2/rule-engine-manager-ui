@@ -52,6 +52,35 @@ test('create draft compiles as a defineClientTool write with state-change produc
   assert.equal(report.summary.malformedContract, 0);
 });
 
+test('agent templates open optional setup or create the shared flow with its thumbnail', async () => {
+  const draft = toolById(createRuleInstanceTools(), 'rule_engine_create_rule_draft');
+  const writes: Record<string, any>[] = [], navigation: any[] = [];
+  const context = {
+    findMenu: () => ({ code: 'rule-engine/Instance', path: '/rule-engine/Instance' }),
+    navigateToMenu: (...args: any[]) => { navigation.push(args); return true; },
+  };
+  const globals = globalThis as any;
+  globals.__ruleEditorActionsTest = { request: (method: string, url: string, body: Record<string, any>) => {
+    if (method === 'get' && url === '/rule-editor/nodes') return { result: [{ enabled: true, types: ['rule-input', 'function', 'debug', 'rule-output'] }] };
+    assert.equal(method, 'post');
+    assert.equal(url, '/rule-editor/flows/_create');
+    writes.push(body);
+    return { status: 200, result: { id: 'template-rule' } };
+  } };
+  try {
+    await draft.execute({ templateId: 'event-action', templateParameters: { productId: 'p1' } }, context, {});
+    assert.equal(writes.length, 0);
+    assert.deepEqual(navigation[0][1].params.ruleTemplate.parameters, { productId: 'p1' });
+    assert.equal(navigation[0][1].params.ruleTemplate.templateId, 'event-action');
+    await draft.execute({ templateId: 'manual-transform' }, context, {});
+    assert.equal(writes.length, 1);
+    assert.match(writes[0].metadata.thumbnailSvg, /^<svg/);
+    assert.equal(JSON.parse(writes[0].modelMeta).flows.length, 4);
+    assert.equal(navigation[1][1].query.editorId, 'template-rule');
+    assert.ok(navigation[1][1].params.ruleTemplateInitialization.initialization.focusNodeId);
+  } finally { delete globals.__ruleEditorActionsTest; }
+});
+
 test('alarm analysis trend/rank/overview stay typed with temporal and aligned consumers', () => {
   const tools = createAlarmAnalysisTools();
   const report = reportFor(tools);

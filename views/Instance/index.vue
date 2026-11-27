@@ -1,7 +1,5 @@
 <template>
-  <j-page-container v-bind="$attrs">
-    <FullPage :padding="0">
-      <section class="rule-list">
+  <FullPage v-bind="$attrs" class="rule-list" :padding="0">
         <header class="rule-list__toolbar">
           <ConditionFilter class="rule-list__filter" :fields="filterFields" @change="({ filter }) => refresh(filter)" />
           <span class="rule-list__count">{{ t('RuleInstanceList.loaded', { n: items.length }) }}</span>
@@ -34,11 +32,10 @@
             <template v-else>{{ t('RuleInstanceList.end') }}</template>
           </div>
         </div>
-      </section>
-    </FullPage>
-    <Save v-if="visible" :data="current" @success="refresh()" @close-save="visible = false" />
-    <RuleEditorDrawer v-if="ruleEditor.visible" :open="ruleEditor.visible" :rule="ruleEditor.current" @updated="updated" @close="closeRuleEditor" />
-  </j-page-container>
+  </FullPage>
+  <Save v-if="visible && current?.id" :data="current" @success="refresh()" @close-save="visible = false" />
+  <CreateRule v-else-if="visible" :initial-request="templateRequest" @created="created" @close="visible = false" />
+  <RuleEditorDrawer v-if="ruleEditor.visible" :open="ruleEditor.visible" :rule="ruleEditor.current" :initialization="templateInitialization" @updated="updated" @close="closeRuleEditor" />
 </template>
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
@@ -47,6 +44,7 @@ import ConditionFilter, { type ConditionFilterField } from '@jetlinks-web-core/c
 import Save from './Save/index.vue'
 import RuleEditorDrawer from './RuleEditor/index.vue'
 import RuleInstanceCard from './RuleInstanceCard.vue'
+import CreateRule from './Templates/CreateRule.vue'
 import { useRulePermission } from '../../hook/usePermission'
 import { useRuleInstanceList } from './useRuleInstanceList'
 import { useRuleInstanceActions } from './useRuleInstanceActions'
@@ -55,7 +53,7 @@ const { t } = useI18n({ useScope: 'local', messages: ruleListMessages })
 const permissionKey = useRulePermission()
 const suspended = ref(false)
 const { viewport, items, visibleItems, layout, loading, error, more, runtime, stale, previews, observationFailed, observationPending, refresh, loadMore } = useRuleInstanceList(suspended)
-const { visible, current, pending, ruleEditor, closeRuleEditor, add, open, execute, updated } = useRuleInstanceActions(() => refresh())
+const { visible, current, pending, ruleEditor, closeRuleEditor, templateInitialization, templateRequest, add, created, open, execute, updated } = useRuleInstanceActions(() => refresh())
 watch(() => ruleEditor.visible, value => { suspended.value = value })
 const filterFields: ConditionFilterField[] = [
   { title: t('Instance.index.020452-3'), dataIndex: 'name', search: { type: 'string' } },
@@ -67,7 +65,7 @@ const filterFields: ConditionFilterField[] = [
 onMounted(() => refresh())
 </script>
 <style scoped>
-.rule-list{height:100%;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:var(--panel-background)}
+.rule-list{min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
 .rule-list__toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:16px;border-bottom:1px solid var(--line)}
 .rule-list__filter{width:40rem;max-width:100%;flex:1;min-width:200px}
 .rule-list__count{font-size:12px;color:var(--ink-3);white-space:nowrap;margin-inline-start:auto}

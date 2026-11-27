@@ -5,6 +5,7 @@
   "description": "规则引擎",
   "main": "index.js",
   "scripts": {
+    "test:rule-templates": "node --test tests/ruleTemplates.test.mjs",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:scene-triggers": "node scripts/run-scene-trigger-tests.mjs",
     "test:agent-tools": "node scripts/run-agent-tool-tests.mjs",

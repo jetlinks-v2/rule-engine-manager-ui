@@ -76,8 +76,9 @@ const register = () => {
     moduleRegistry.register(name, registerSetting)
 }
 
-/** 仪表盘沿用资源中心的页面背景，整页不额外包裹统一内容面板。 */
+/** 列表复用壳层表面，仪表盘沿用资源中心背景。 */
 const getContentPanelOverrides = () => ({
+    'rule-engine/Instance': { padding: 0 },
     'rule-engine/DashBoard': false,
     'AlarmDashboard': false,
     '/alarms/dashboard': false,

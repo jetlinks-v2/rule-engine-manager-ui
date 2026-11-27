@@ -1,4 +1,221 @@
 {
+  "RuleTemplates": {
+    "summaryDescription": "{scope}の{fields}を{window}ごとに集計し、{aggregate}などの結果を{target}に送信します。",
+    "normalizeDescription": "{scope}が報告した{fields}を、プロパティごとのレコードに整えます。",
+    "metadataDescription": "プロパティの説明と単位を含めます。",
+    "eventActionDescription": "{scope}から{event}イベントが報告されると、選択した対象デバイスに操作を実行します。",
+    "templateHelp": "内蔵カタログのtemplateIdを指定します。名前は自動生成されます。templateParametersには確認済みの業務設定のみを指定し、リソースの選択が必要な場合は設定画面を開きます。",
+    "zoomIn": "フロー図を拡大",
+    "zoomOut": "フロー図を縮小",
+    "fitDiagram": "全体を表示",
+    "previewFailed": "フロー図を生成できません",
+    "search": "テンプレート名、用途、処理手順で検索",
+    "resetSearch": "絞り込みを解除",
+    "viewFlow": "フロー図を見る",
+    "useTemplate": "このテンプレートを使う",
+    "diagram": "ルールのフロー図",
+    "all": "すべてのテンプレート",
+    "choose": "テンプレートからルールを作成",
+    "back": "テンプレートに戻る",
+    "create": "作成して編集",
+    "configureLater": "後で設定",
+    "optionalSetup": "基本設定を選ぶか、スキップしてエディターで設定できます。",
+    "configureSource": "デバイスと処理するデータを選択",
+    "cancel": "キャンセル",
+    "retry": "再試行",
+    "loading": "利用可能なテンプレートを読み込み中…",
+    "loadFailed": "利用可能なコンポーネントを読み込めません。再試行してください。",
+    "missingNodes": "必要なコンポーネントがありません：{nodes}",
+    "createFailed": "ルールを作成できませんでした。選択内容は保持されています。",
+    "created": "ルールを作成しました",
+    "details": "このルールの用途",
+    "flow": "処理の流れ",
+    "configure": "業務設定を選択",
+    "noTemplates": "該当するテンプレートがありません",
+    "blankShortcut": "空のルールから始める",
+    "examples": "入門サンプル",
+    "required": "必要な項目を選択してください",
+    "resourceFailed": "リソースを読み込めません。再試行してください。",
+    "more": "さらに読み込む",
+    "noResources": "選択できる項目がありません",
+    "product": "製品",
+    "productPlaceholder": "デバイスの製品を選択",
+    "scope": "デバイスの範囲",
+    "allDevices": "すべてのデバイス",
+    "selectedDevices": "指定デバイス",
+    "devices": "デバイス",
+    "devicePlaceholder": "デバイスを選択",
+    "message": "処理するデータ",
+    "propertyMessage": "プロパティ",
+    "eventMessage": "イベント",
+    "properties": "プロパティ",
+    "propertyPlaceholder": "処理するプロパティを選択",
+    "event": "イベント",
+    "eventPlaceholder": "デバイスイベントを選択",
+    "eventFields": "イベントの項目",
+    "format": "送信データの形式",
+    "messageFormat": "メッセージ全体",
+    "fieldsFormat": "選択した項目のみ",
+    "recordsFormat": "プロパティごとに1件",
+    "includeMetadata": "プロパティの説明と単位を含める",
+    "metadataHelp": "デバイスモデルからプロパティ情報を取得します",
+    "target": "データの送信先",
+    "url": "送信先URL",
+    "urlPlaceholder": "https://example.com/data",
+    "topic": "送信先トピック",
+    "cron": "実行スケジュール",
+    "cronHelp": "6項目のスケジュール式を指定します。エディターで変更できます。",
+    "window": "集計する間隔",
+    "aggregate": "集計方法",
+    "comparison": "通知する条件",
+    "threshold": "しきい値",
+    "singleDevice": "デバイスを1台選択",
+    "numericRequired": "数値型のプロパティを選択してください",
+    "selectionChanged": "範囲が変わりました。プロパティまたはイベントを選び直してください。",
+    "invalidUrl": "有効なHTTPまたはHTTPSのURLを入力してください",
+    "invalidCron": "有効な6項目のスケジュール式を入力してください",
+    "finishInEditor": "エディターで設定を続ける",
+    "sourceNeeded": "デバイスの範囲と処理するデータを選択してください",
+    "configureTarget": "送信先を設定",
+    "configureAction": "デバイス操作を設定",
+    "configureNotice": "通知先を設定",
+    "configureQuery": "照会する情報とパラメーターを選択",
+    "queryInput": "受け取るパラメーター",
+    "aggregateResults": "結果をまとめる",
+    "inputData": "入力データ",
+    "inputSummary": "データの概要",
+    "pendingTitle": "ルールの設定を完了する",
+    "focus": "設定を表示",
+    "allProperties": "すべてのプロパティ",
+    "scopeProduct": "{product}のすべてのデバイス",
+    "scopeSingle": "{device}",
+    "scopeDevices": "選択した{count}台のデバイス",
+    "dataProperties": "プロパティデータ",
+    "dataEvent": "{event}イベントのデータ",
+    "dataFields": "{fields}",
+    "targetSystem": "送信先システム",
+    "forwardDescription": "{scope}が報告した{data}を{target}に送信します。",
+    "sourceDescription": "{scope}が報告した{data}を処理します。",
+    "scheduleDescription": "設定したスケジュールで{device}の{fields}を読み取ります。",
+    "thresholdDescription": "{scope}の{property}が{value}{unit}を{comparison}ときに、選択した通知先に通知します。",
+    "schemaUnavailable": "選択したデバイスに互換性のあるモデル定義がありません",
+    "agentTemplate": "内蔵の業務テンプレート",
+    "agentParameters": "テンプレートの業務設定",
+    "agentMissing": "このテンプレートにはデバイスの範囲やプロパティの選択が必要です。業務設定を指定してください。",
+    "agentUnknown": "この内蔵テンプレートが見つかりません",
+    "agentCatalog": "利用可能な内蔵ルールテンプレート",
+    "categories": {
+      "data-forwarding": "データ転送",
+      "data-preparation": "データ整形",
+      "data-query": "データ照会",
+      "device-actions": "デバイス操作",
+      "anomaly-notifications": "異常通知",
+      "examples": "入門サンプル"
+    },
+    "targets": {
+      "http request": "HTTPエンドポイント",
+      "mqtt out": "MQTTサービス",
+      "kafka-producer": "Kafkaトピック"
+    },
+    "windows": {
+      "1m": "1分",
+      "5m": "5分",
+      "15m": "15分",
+      "1h": "1時間"
+    },
+    "aggregates": {
+      "avg": "平均",
+      "sum": "合計",
+      "min": "最小値",
+      "max": "最大値"
+    },
+    "comparisons": {
+      ">": "超えた",
+      ">=": "達した、または超えた",
+      "<": "下回った",
+      "<=": "達した、または下回った"
+    },
+    "steps": {
+      "source": "デバイスデータを受信",
+      "prepareData": "データを整える",
+      "destination": "送信先に送る",
+      "summarize": "一定期間のデータを集計",
+      "viewResult": "結果を確認",
+      "receive": "呼び出しパラメーターを受信",
+      "returnResult": "結果を返す",
+      "processTogether": "入力をそれぞれ処理",
+      "combineResults": "結果をまとめる",
+      "queryDevice": "デバイス情報を照会",
+      "queryTogether": "デバイス情報とプロパティを照会",
+      "schedule": "スケジュールに従って実行",
+      "readProperties": "デバイスプロパティを読み取る",
+      "eventSource": "デバイスイベントを受信",
+      "operateDevice": "デバイスを操作",
+      "checkThreshold": "しきい値を確認",
+      "sendNotice": "通知を送る",
+      "enterData": "データを入力",
+      "mapInput": "入力データを整える",
+      "summarizeInput": "入力の概要を作成"
+    },
+    "named": {
+      "device-forward": "{object}のデータを転送",
+      "device-summary": "{object}のデータを集計して転送",
+      "device-normalize": "{object}のデータ形式を統一",
+      "scheduled-read": "{object}のプロパティを定期的に読み取る",
+      "event-action": "{object}のイベントに応じて操作する",
+      "threshold-notify": "{object}のデータがしきい値を超えたら通知"
+    },
+    "templates": {
+      "blank": {
+        "title": "カスタムルール",
+        "description": "空のルールにデータの取得元、処理手順、実行する操作を追加します。"
+      },
+      "device-forward": {
+        "title": "デバイスデータを転送",
+        "description": "指定したデバイスが報告するプロパティやイベントのデータを別のシステムに送信します。"
+      },
+      "device-summary": {
+        "title": "データを集計して転送",
+        "description": "一定期間のデバイスデータを集計し、その結果を送信先システムに送ります。"
+      },
+      "device-normalize": {
+        "title": "デバイスデータの形式を統一",
+        "description": "デバイスから報告されたデータを統一した形式に整え、後の処理で使いやすくします。"
+      },
+      "transform-response": {
+        "title": "データを処理して結果を返す",
+        "description": "受け取ったデータを設定に従って変換し、呼び出し元に結果を返します。"
+      },
+      "parallel-response": {
+        "title": "複数の結果をまとめて返す",
+        "description": "同じ入力に対して複数の独立した処理を行い、結果をまとめて返します。"
+      },
+      "device-query": {
+        "title": "デバイス情報を照会",
+        "description": "デバイスIDなどの条件でデバイス情報を検索し、必要な情報を返します。"
+      },
+      "device-query-all": {
+        "title": "デバイス情報とプロパティをまとめて照会",
+        "description": "1回の呼び出しでデバイスの基本情報と選択したプロパティを取得し、まとめて返します。"
+      },
+      "scheduled-read": {
+        "title": "デバイスプロパティを定期的に読み取る",
+        "description": "指定した時刻にデバイスのプロパティを読み取り、状態を定期的に確認できます。"
+      },
+      "event-action": {
+        "title": "デバイスイベントに応じて操作する",
+        "description": "指定したイベントが設定した条件を満たすと、対象のデバイスに操作を実行します。"
+      },
+      "threshold-notify": {
+        "title": "デバイスデータがしきい値を超えたら通知",
+        "description": "デバイスのプロパティが設定した範囲を超えると、選択した通知先に通知します。"
+      },
+      "manual-transform": {
+        "title": "データを手動で処理",
+        "description": "データを手動で入力し、処理後の結果を確認します。"
+      }
+    }
+  },
   "Save.index.551009-0": "OK",
   "Save.index.551009-1": "キャンセル",
   "DeviceAccess.index.551011-12": "選択してください",

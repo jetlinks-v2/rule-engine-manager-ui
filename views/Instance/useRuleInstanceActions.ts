@@ -1,11 +1,14 @@
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useRouterParams } from '@jetlinks-web/hooks'
+import { setParamsValue, useRouterParams } from '@jetlinks-web/hooks'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { deleteRule, getRuleDetail, startRule, stopRule } from '../../api/instance'
 import { useRuleEditorRouteState } from './useRuleEditorRouteState'
 import type { RuleListItem } from './listTypes'
+import type { CreatedTemplateRule } from './Templates/useRuleTemplateCreation'
+import type { TemplateCreationRequest, TemplateInitialization } from './Templates/types'
+import { getRuleTemplate } from './Templates/catalog'
 
 export function useRuleInstanceActions(refresh: () => void) {
   const { t } = useI18n()
@@ -14,6 +17,8 @@ export function useRuleInstanceActions(refresh: () => void) {
   const visible = ref(false)
   const current = ref<Record<string, unknown>>()
   const pending = ref('')
+  const templateInitialization = ref<TemplateInitialization>()
+  const templateRequest = ref<TemplateCreationRequest>()
   const ruleEditor = reactive<{ visible: boolean; current?: Record<string, unknown> }>({ visible: false })
   const { openRuleEditor, closeRuleEditor } = useRuleEditorRouteState({ route, router, ruleEditor, t })
 
@@ -23,6 +28,7 @@ export function useRuleInstanceActions(refresh: () => void) {
     try {
       const response = await getRuleDetail(item.id, true)
       if (response.status !== 200 || !response.result?.id) throw new Error('rule detail unavailable')
+      templateInitialization.value = undefined
       // A projected list row must never become the full configuration sent to the editor or save action.
       openRuleEditor(response.result)
     } catch { onlyMessage(t('RuleEditor.index.restoreFailed'), 'error') }
@@ -40,8 +46,23 @@ export function useRuleInstanceActions(refresh: () => void) {
     } finally { pending.value = '' }
   }
 
-  const add = () => { current.value = { name: '', description: '' }; visible.value = true }
+  const add = () => { templateRequest.value=undefined;current.value = { name: '', description: '' }; visible.value = true }
+  const created = (result: CreatedTemplateRule) => {
+    visible.value = false
+    templateInitialization.value = result.initialization
+    // Query navigation may remount the page; retain the same initialization handoff used by agent creation.
+    setParamsValue(route.name, {ruleTemplateInitialization:{ruleId:result.rule.id,initialization:result.initialization}})
+    openRuleEditor(result.rule)
+    refresh()
+  }
   const updated = (rule: Record<string, unknown>) => { Object.assign(ruleEditor.current || {}, rule); refresh() }
-  onMounted(() => { if (routerParams.params.value?.save) add() })
-  return { visible, current, pending, ruleEditor, closeRuleEditor, add, open, execute, updated }
+  onMounted(() => { if (routerParams.params.value?.save && !routerParams.params.value?.ruleTemplate) add() })
+  watch(()=>routerParams.params.value?.ruleTemplate,request=>{
+    if(!request || !getRuleTemplate(String(request.templateId)))return
+    add();templateRequest.value=request as TemplateCreationRequest
+  },{immediate:true})
+  watch(()=>[routerParams.params.value?.ruleTemplateInitialization,route.query.editorId] as const,([value])=>{
+    if(value?.ruleId && value.ruleId===route.query.editorId)templateInitialization.value=value.initialization
+  },{immediate:true})
+  return { visible, current, pending, ruleEditor, closeRuleEditor, templateInitialization, templateRequest, add, created, open, execute, updated }
 }

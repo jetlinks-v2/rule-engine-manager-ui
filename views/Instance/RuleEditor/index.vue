@@ -57,7 +57,6 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch, type PropType } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAIStore } from '@jetlinks-web-core/store';
-import { getBaseApi, isFromCloud } from '@jetlinks-web-core/utils';
 import type { GeneralAgentConversationChatPayload } from '@jetlinks-web-core/layout/components/AiChat/generalAgentExtensions';
 import RuleEditorHeader from './RuleEditorHeader.vue';
 import { useRuleEditorActions } from './useRuleEditorActions';
@@ -67,7 +66,8 @@ import {
 } from './ruleEditorAgentProfile';
 import { useRuleEditorAgentBridge } from './useRuleEditorAgentBridge';
 import { useRuleEditorAgentComposerExtensions } from './useRuleEditorAgentComposerExtensions';
-import { RULE_EDITOR_RESOURCE_VERSION } from './toolRuntimeContracts';
+import type { TemplateInitialization } from '../Templates/types';
+import { buildRuleEditorUrl } from './editorUrl';
 
 const RULE_EDITOR_CLIENT_ID = 'ruleEditorChat';
 const RULE_EDITOR_SUBJECT_TYPE = 'ruleInstance';
@@ -79,6 +79,10 @@ const props = defineProps({
   },
   rule: {
     type: Object as PropType<Record<string, any> | undefined>,
+    default: undefined,
+  },
+  initialization: {
+    type: Object as PropType<TemplateInitialization | undefined>,
     default: undefined,
   },
 });
@@ -96,6 +100,15 @@ const ruleDescription = computed(() => String(props.rule?.description || '').tri
 const iframeRef = ref<HTMLIFrameElement>();
 const frameLoaded = ref(false);
 const bridge = useRuleEditorAgentBridge({ ruleId });
+let initialFocusApplied = false;
+watch(ruleId, () => { initialFocusApplied = false; });
+// The bridge can register while the saved flow is still loading into an empty canvas.
+watch(() => [bridge.ready.value, frameLoaded.value, props.initialization?.focusNodeId, bridge.context.value?.nodeCount] as const, ([ready, loaded, nodeId, nodeCount]) => {
+  if (!ready || !loaded || !nodeCount || !nodeId || initialFocusApplied) return;
+  initialFocusApplied = true;
+  const selected = bridge.context.value?.selectedNodeIds;
+  if (!Array.isArray(selected) || selected.length === 0) void bridge.focusNode(nodeId);
+}, { flush: 'post' });
 const bridgeStatus = computed(() => bridge.status.value);
 const bridgeActions = computed<Record<'deploy' | 'save' | 'import' | 'export', boolean | undefined>>(() => ({
   deploy: bridge.context.value?.actions?.deploy,
@@ -110,29 +123,12 @@ watch(iframeRef, (value) => {
   bridge.iframeRef.value = value;
 });
 
-const normalizeBaseUrl = (value: unknown) => String(value || '').replace(/\/$/, '');
-
 const editorUrl = computed(() => {
   if (!props.open || !ruleId.value) {
     return '';
   }
 
-  const query = new URLSearchParams();
-  query.set('v', RULE_EDITOR_RESOURCE_VERSION);
-  query.set('_parentOrigin', window.location.origin);
-  query.set('hideHeader', 'true');
-  let baseUrl = normalizeBaseUrl(getBaseApi());
-
-  if (isFromCloud()) {
-    baseUrl = normalizeBaseUrl(localStorage.getItem('proxy'));
-    const thingId = localStorage.getItem('thingId');
-    if (thingId) {
-      query.set('_agent', `device:${thingId}`);
-    }
-  }
-
-  // Node-RED 会重写 hash，嵌入态参数必须放在 search 中才能跨 hash 更新保留。
-  return `${baseUrl}/rule-editor/index.html?${query.toString()}#flow/${encodeURIComponent(ruleId.value)}`;
+  return buildRuleEditorUrl(ruleId.value);
 });
 
 const bridgeStatusText = computed(() => {

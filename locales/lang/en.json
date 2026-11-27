@@ -1,4 +1,221 @@
 {
+  "RuleTemplates": {
+    "summaryDescription": "Summarize {fields} from {scope} every {window} and send the {aggregate} and other results to {target}.",
+    "normalizeDescription": "Create one record per property from {fields} reported by {scope}.",
+    "metadataDescription": " Include property descriptions and units.",
+    "eventActionDescription": "Run an action on the selected target device when {scope} reports the {event} event.",
+    "templateHelp": "Use templateId from the built-in catalog. Names are generated automatically. Only supply known business settings in templateParameters; missing resource selections open the settings panel.",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fitDiagram": "Fit to view",
+    "previewFailed": "The flow preview is unavailable",
+    "search": "Search names, purposes, or processing steps",
+    "resetSearch": "Clear filters",
+    "viewFlow": "View flow diagram",
+    "useTemplate": "Use template",
+    "diagram": "Rule flow diagram",
+    "all": "All templates",
+    "choose": "Create a rule from a template",
+    "back": "Back to templates",
+    "create": "Create and edit",
+    "configureLater": "Set up later",
+    "optionalSetup": "Choose the basic settings now, or skip and finish them in the editor.",
+    "configureSource": "Choose devices and data to process",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "loading": "Loading available templates…",
+    "loadFailed": "Could not load available components. Try again.",
+    "missingNodes": "Required components are unavailable: {nodes}",
+    "createFailed": "Could not create the rule. Your selections have been kept.",
+    "created": "Rule created",
+    "details": "What this rule does",
+    "flow": "Processing steps",
+    "configure": "Choose business settings",
+    "noTemplates": "No matching templates",
+    "blankShortcut": "Start from scratch",
+    "examples": "Getting started",
+    "required": "Complete the required selections",
+    "resourceFailed": "Could not load resources. Try again.",
+    "more": "Load more",
+    "noResources": "No available items",
+    "product": "Product",
+    "productPlaceholder": "Choose the device product",
+    "scope": "Device scope",
+    "allDevices": "All devices",
+    "selectedDevices": "Selected devices",
+    "devices": "Devices",
+    "devicePlaceholder": "Choose devices",
+    "message": "Data",
+    "propertyMessage": "Properties",
+    "eventMessage": "Events",
+    "properties": "Properties",
+    "propertyPlaceholder": "Choose properties to process",
+    "event": "Event",
+    "eventPlaceholder": "Choose a device event",
+    "eventFields": "Event fields",
+    "format": "Data format",
+    "messageFormat": "Complete message",
+    "fieldsFormat": "Selected fields only",
+    "recordsFormat": "One record per property",
+    "includeMetadata": "Include property descriptions and units",
+    "metadataHelp": "Read property information from the device model",
+    "target": "Destination",
+    "url": "URL",
+    "urlPlaceholder": "https://example.com/data",
+    "topic": "Topic",
+    "cron": "Schedule",
+    "cronHelp": "Use a six-field schedule expression. You can adjust it in the editor.",
+    "window": "Interval",
+    "aggregate": "Calculation",
+    "comparison": "Notify when",
+    "threshold": "Threshold",
+    "singleDevice": "Device",
+    "numericRequired": "Choose numeric properties",
+    "selectionChanged": "The scope changed. Choose properties or an event again.",
+    "invalidUrl": "Enter a valid HTTP or HTTPS URL",
+    "invalidCron": "Enter a valid six-field schedule expression",
+    "finishInEditor": "Continue configuring in the editor",
+    "sourceNeeded": "Choose a device scope and data to process",
+    "configureTarget": "Set up the destination",
+    "configureAction": "Set up the device action",
+    "configureNotice": "Set up the notification channel",
+    "configureQuery": "Choose query data and parameters",
+    "queryInput": "Incoming parameters",
+    "aggregateResults": "Combine the results",
+    "inputData": "Input data",
+    "inputSummary": "Data summary",
+    "pendingTitle": "Finish setting up this rule",
+    "focus": "View settings",
+    "allProperties": "All properties",
+    "scopeProduct": "all devices in {product}",
+    "scopeSingle": "{device}",
+    "scopeDevices": "the {count} selected devices",
+    "dataProperties": "property data",
+    "dataEvent": "{event} event data",
+    "dataFields": "{fields}",
+    "targetSystem": "the destination system",
+    "forwardDescription": "Send {data} reported by {scope} to {target}.",
+    "sourceDescription": "Process {data} reported by {scope}.",
+    "scheduleDescription": "Read {fields} from {device} on the configured schedule.",
+    "thresholdDescription": "Notify through the selected channel when {property} from {scope} is {comparison} {value}{unit}.",
+    "schemaUnavailable": "The selected devices have no compatible model definitions",
+    "agentTemplate": "Built-in business template",
+    "agentParameters": "Business settings for the template",
+    "agentMissing": "This template needs a device scope or properties. Supply the business settings.",
+    "agentUnknown": "This built-in template could not be found",
+    "agentCatalog": "Available built-in rule templates",
+    "categories": {
+      "data-forwarding": "Data forwarding",
+      "data-preparation": "Data preparation",
+      "data-query": "Data queries",
+      "device-actions": "Device actions",
+      "anomaly-notifications": "Anomaly notifications",
+      "examples": "Getting started"
+    },
+    "targets": {
+      "http request": "HTTP endpoint",
+      "mqtt out": "MQTT service",
+      "kafka-producer": "Kafka topic"
+    },
+    "windows": {
+      "1m": "1 minute",
+      "5m": "5 minutes",
+      "15m": "15 minutes",
+      "1h": "1 hour"
+    },
+    "aggregates": {
+      "avg": "Average",
+      "sum": "Sum",
+      "min": "Minimum",
+      "max": "Maximum"
+    },
+    "comparisons": {
+      ">": "above",
+      ">=": "at or above",
+      "<": "below",
+      "<=": "at or below"
+    },
+    "steps": {
+      "source": "Receive device data",
+      "prepareData": "Prepare the data",
+      "destination": "Send to the destination",
+      "summarize": "Summarize a period of data",
+      "viewResult": "View the result",
+      "receive": "Receive input parameters",
+      "returnResult": "Return the result",
+      "processTogether": "Process the input independently",
+      "combineResults": "Combine the results",
+      "queryDevice": "Look up device information",
+      "queryTogether": "Look up device information and properties",
+      "schedule": "Run on schedule",
+      "readProperties": "Read device properties",
+      "eventSource": "Receive device events",
+      "operateDevice": "Run the device action",
+      "checkThreshold": "Check the threshold",
+      "sendNotice": "Send a notification",
+      "enterData": "Enter some data",
+      "mapInput": "Prepare the input",
+      "summarizeInput": "Summarize the input"
+    },
+    "named": {
+      "device-forward": "Forward data from {object}",
+      "device-summary": "Summarize and forward data from {object}",
+      "device-normalize": "Prepare data from {object}",
+      "scheduled-read": "Read properties from {object} on a schedule",
+      "event-action": "Act on events from {object}",
+      "threshold-notify": "Notify about data thresholds for {object}"
+    },
+    "templates": {
+      "blank": {
+        "title": "Custom rule",
+        "description": "Start from scratch and add data sources, processing steps, and actions."
+      },
+      "device-forward": {
+        "title": "Forward device data",
+        "description": "Send property or event data from selected devices to another system."
+      },
+      "device-summary": {
+        "title": "Summarize and forward data",
+        "description": "Summarize device data over a set period, then send the results to a destination system."
+      },
+      "device-normalize": {
+        "title": "Use a consistent device data format",
+        "description": "Put reported device data into a consistent format for further use."
+      },
+      "transform-response": {
+        "title": "Process data and return the result",
+        "description": "Transform incoming data and return the result to the caller."
+      },
+      "parallel-response": {
+        "title": "Return several results at once",
+        "description": "Process the same input in several independent ways and return the results together."
+      },
+      "device-query": {
+        "title": "Look up device information",
+        "description": "Find device information using a device ID or other conditions and return the details you need."
+      },
+      "device-query-all": {
+        "title": "Look up device information and properties",
+        "description": "Get device information and selected properties in one call and return the results together."
+      },
+      "scheduled-read": {
+        "title": "Read device properties on a schedule",
+        "description": "Read properties from a selected device at scheduled times to check its status."
+      },
+      "event-action": {
+        "title": "Act when a device reports an event",
+        "description": "Run an action on a target device when a selected event meets the configured conditions."
+      },
+      "threshold-notify": {
+        "title": "Notify when device data crosses a threshold",
+        "description": "Send a notification through a selected channel when a device property crosses a threshold."
+      },
+      "manual-transform": {
+        "title": "Process a data item manually",
+        "description": "Enter a data item manually and view the result."
+      }
+    }
+  },
 	"Save.index.551009-0": "Confirm",
 	"Save.index.551009-1": "Cancel",
 	"DeviceAccess.index.551011-12": "Please Select",
