@@ -58,7 +58,8 @@ test('all template, category, parameter and node text has the same complete lang
       assert.match(draft.payload.metadata.thumbnailSvg,/^<svg/)
       assert.doesNotMatch(draft.payload.metadata.thumbnailSvg,/\{\{|RuleTemplates\./)
       assert.ok(draft.payload.metadata.thumbnailSvg.includes(dictionaries[lang].steps[template.steps[0]]))
-    }else assert.equal(draft.payload.metadata,undefined)
+    }else assert.equal(draft.payload.metadata.thumbnailSvg,undefined)
+    assert.equal(draft.payload.metadata.icon,template.icon)
   }
 })
 
@@ -75,6 +76,7 @@ test('exported SVG nodes and links match every template and forwarding target',(
     const edges=[...svg.matchAll(/<path\b(?=[^>]*class="[^"]*\bred-ui-flow-link-line\b)[^>]*data-source="([^"]+)" data-target="([^"]+)"/g)].map(([,from,to])=>`${from}->${to}`).sort()
     assert.deepEqual(edges,flow.flatMap(node=>node.wires.flat().map(id=>`${node.id}->${id}`)).sort())
     assert.doesNotMatch(svg,/<script|<foreignObject|(?:href|src)="(?:https?:|blob:)/i)
+    assert.doesNotMatch(svg,/class="[^"]*\bred-ui-flow-node-(?:error|status-group|changed)\b/)
   }
   for(const template of api.ruleTemplates.filter(item=>item.setup)){
     const draft=api.buildTemplateFlow(template.id,api.defaultTemplateParameters(),translator('en'),'en')

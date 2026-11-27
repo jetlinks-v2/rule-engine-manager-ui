@@ -1,7 +1,7 @@
 <template>
   <article class="rule-card" @click="!busy && canOpen && emit('open')">
     <header class="rule-card__head">
-      <AIcon class="rule-card__icon" type="BranchesOutlined" />
+      <AIcon class="rule-card__icon" :type="preview?.icon || 'BranchesOutlined'" />
       <div class="rule-card__title">
         <a-tooltip :title="rule.name" :trigger="['hover', 'focus']">
           <j-permission-button type="link" :style="{ width: '100%', padding: 0, color: 'inherit', font: 'inherit', textAlign: 'inherit' }"

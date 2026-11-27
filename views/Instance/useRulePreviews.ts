@@ -3,7 +3,7 @@ import { watchDebounced } from '@vueuse/core'
 import { loadRulePreviews } from '../../api/instanceObservation'
 import type { RuleListItem } from './listTypes'
 
-export interface RulePreview { url?: string; status: 'loading' | 'ready' | 'failed' }
+export interface RulePreview { url?: string; icon?: string; status: 'loading' | 'ready' | 'failed' }
 
 /** Batch visible thumbnails separately; release blobs when cards leave the window. */
 export function useRulePreviews(items: Ref<RuleListItem[]>, active: Ref<boolean>) {
@@ -26,7 +26,8 @@ export function useRulePreviews(items: Ref<RuleListItem[]>, active: Ref<boolean>
       next(item) {
         if (!current.has(item.id)) return
         const svg = item.metadata?.thumbnailSvg?.trim()
-        current.set(item.id, { status: 'ready', url: svg?.startsWith('<svg')
+        const icon = typeof item.metadata?.icon === 'string' ? item.metadata.icon.trim() : undefined
+        current.set(item.id, { status: 'ready', icon, url: svg?.startsWith('<svg')
           ? URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })) : undefined })
         previews.value = new Map(current)
       },

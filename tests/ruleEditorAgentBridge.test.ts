@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
-import { computed, createRenderer, defineComponent, markRaw, nextTick } from 'vue';
+import { computed, createRenderer, defineComponent, markRaw, nextTick, reactive } from 'vue';
 import {
   createAiClientToolRuntime,
   type AiClientToolCall,
@@ -301,6 +301,7 @@ const createActionHarness = (
   const previousFixture = testGlobals.__ruleEditorActionsTest;
   const messages: Array<{ message: string; type: string }> = [];
   const updates: Record<string, unknown>[] = [];
+  const currentRule = reactive<Record<string, any>>({ id: 'rule-1' });
   testGlobals.__ruleEditorActionsTest = { messages, request };
   let actions!: ReturnType<typeof useRuleEditorActions>;
   const app = renderer.createApp(defineComponent({
@@ -310,10 +311,10 @@ const createActionHarness = (
         bridgeStatus: computed(() => bridge.status.value),
         bridgeActions: computed(() => ({ save: true, deploy: true, import: true, export: true })),
         ruleId: computed(() => 'rule-1'),
-        ruleName: computed(() => 'Rule'),
-        ruleDescription: computed(() => ''),
-        getRule: () => ({ id: 'rule-1' }),
-        onRuleUpdated: (rule) => updates.push(rule),
+        ruleName: computed(() => currentRule.name || 'Rule'),
+        ruleDescription: computed(() => currentRule.description || ''),
+        getRule: () => currentRule,
+        onRuleUpdated: (rule) => { Object.assign(currentRule, rule); updates.push(rule); },
         t: (key) => key,
       });
       return () => null;
@@ -324,7 +325,7 @@ const createActionHarness = (
     app.unmount();
     testGlobals.__ruleEditorActionsTest = previousFixture;
   });
-  return { actions, messages, updates };
+  return { actions, messages, updates, currentRule };
 };
 
 for (const action of ['save', 'deploy'] as const) {
@@ -427,6 +428,63 @@ test('thumbnail synchronization keeps its own warning without turning a successf
   assert.deepEqual(messages, [{ message: 'Thumbnail synchronization failed', type: 'warning' }]);
   assert.equal(actions.editorActionDone.value, 'save');
   assert.equal(actions.editorActioning.value, '');
+});
+
+test('inline text saves acknowledge failures and only send the changed field', async (testContext) => {
+  const harness = createBridgeHarness(testContext);
+  let fail = false;
+  const writes: unknown[] = [];
+  const { actions, currentRule } = createActionHarness(testContext, harness.bridge, async (_method, _url, value) => {
+    writes.push(value);
+    if (fail) throw new Error('failed');
+    return { status: 200 };
+  });
+  currentRule.modelMeta = 'unsaved canvas'; currentRule.metadata = { icon: 'BranchesOutlined' };
+  assert.equal(await actions.handleRuleRename(' New name '), true);
+  assert.deepEqual(writes[0], { name: 'New name' });
+  assert.equal(currentRule.name, 'New name');
+  fail = true;
+  assert.equal(await actions.handleRuleDescriptionChange('Retry me'), false);
+  assert.equal(currentRule.description, undefined);
+  fail = false;
+  assert.equal(await actions.handleRuleDescriptionChange('Retry me'), true);
+  assert.deepEqual(writes[2], { description: 'Retry me' });
+  assert.equal(currentRule.modelMeta, 'unsaved canvas');
+});
+
+test('icon and thumbnail writes serialize and preserve other metadata', async (testContext) => {
+  const harness = createBridgeHarness(testContext, { autoRespondExecute: false });
+  let finishIcon!: () => void;
+  const writes: Record<string, unknown>[] = [];
+  const { actions, currentRule } = createActionHarness(testContext, harness.bridge, async (_method, _url, metadata) => {
+    writes.push({ ...(metadata as Record<string, unknown>) });
+    if (writes.length === 1) await new Promise<void>(resolve => { finishIcon = resolve; });
+    return { status: 200 };
+  });
+  currentRule.metadata = { icon: 'BranchesOutlined', custom: 'keep' };
+  const icon = actions.handleRuleIconChange('SendOutlined');
+  await nextTick();
+  const save = actions.handleEditorAction('save');
+  await harness.waitForRequests(1);
+  harness.emit('action-result', { ok: true, result: { ok: true, action: 'save', thumbnailSvg: '<svg />' } }, harness.requests[0]!.requestId);
+  await nextTick();
+  assert.equal(writes.length, 1);
+  finishIcon();
+  assert.equal(await icon, true); await save;
+  assert.deepEqual(writes[1], { icon: 'SendOutlined', custom: 'keep', thumbnailSvg: '<svg />' });
+  assert.deepEqual(currentRule.metadata, writes[1]);
+});
+
+test('a failed icon save remains retryable and does not publish the rejected value', async (testContext) => {
+  const harness = createBridgeHarness(testContext);
+  let fail = true;
+  const { actions, currentRule } = createActionHarness(testContext, harness.bridge, async () => ({ status: fail ? 500 : 200 }));
+  currentRule.metadata = { icon: 'BranchesOutlined' };
+  assert.equal(await actions.handleRuleIconChange('SendOutlined'), false);
+  assert.equal(currentRule.metadata.icon, 'BranchesOutlined');
+  fail = false;
+  assert.equal(await actions.handleRuleIconChange('SendOutlined'), true);
+  assert.equal(currentRule.metadata.icon, 'SendOutlined');
 });
 
 test('normalization preserves the v3 orchestration phase only', () => {

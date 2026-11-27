@@ -125,7 +125,7 @@ test('disabled rules never start an observation sampler', async t => {
   } finally { close() }
 })
 
-test('thumbnail blobs are held only for the visible scope and released on disposal', async () => {
+test('visible previews carry metadata icons without requiring a thumbnail and release their blobs', async () => {
   const { state, reads, close } = mount()
   const images = new Subject()
   globalThis.__previewRules = () => images
@@ -134,10 +134,16 @@ test('thumbnail blobs are held only for the visible scope and released on dispos
   URL.revokeObjectURL = url => { revoked.push(url); original.call(URL, url) }
   let url
   try {
-    state.refresh(); reads[0].stream.next(row(1)); reads[0].stream.complete(); await flush()
-    images.next({ id: '1', metadata: { thumbnailSvg: '<svg xmlns="http://www.w3.org/2000/svg"/>' } }); images.complete()
+    state.refresh(); [1,2,3].forEach(id => reads[0].stream.next(row(id))); reads[0].stream.complete(); await flush()
+    images.next({ id: '1', metadata: { thumbnailSvg: '<svg xmlns="http://www.w3.org/2000/svg"/>', icon: 'SendOutlined' } })
+    images.next({ id: '2', metadata: { icon: 'ClockCircleOutlined' } })
+    images.next({ id: '3', metadata: { icon: 42 } }); images.complete()
     url = state.previews.value.get('1').url
     assert.match(url, /^blob:/)
+    assert.equal(state.previews.value.get('1').icon, 'SendOutlined')
+    assert.equal(state.previews.value.get('2').icon, 'ClockCircleOutlined')
+    assert.equal(state.previews.value.get('2').url, undefined)
+    assert.equal(state.previews.value.get('3').icon, undefined)
   } finally { close(); URL.revokeObjectURL = original }
   assert.ok(revoked.includes(url))
 })

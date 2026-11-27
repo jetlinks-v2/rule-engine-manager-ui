@@ -16,6 +16,11 @@
         :rule-id="ruleId"
         :rule-name="ruleName"
         :rule-description="ruleDescription"
+        :rule-icon="ruleIcon"
+        :icon-loading="ruleIconSaving"
+        :save-name="handleRuleRename"
+        :save-description="handleRuleDescriptionChange"
+        :save-icon="handleRuleIconChange"
         :status-color="bridgeStatusColor"
         :status-text="bridgeStatusText"
         :actioning="editorActioning"
@@ -29,8 +34,6 @@
         :export-disabled="isEditorActionDisabled('export')"
         @execute="handleEditorAction"
         @transfer="handleEditorTransfer"
-        @rename="handleRuleRename"
-        @description-change="handleRuleDescriptionChange"
         @close="handleClose"
       />
       <div class="rule-editor-shell__body">
@@ -97,6 +100,7 @@ const aiStore = useAIStore();
 const ruleId = computed(() => String(props.rule?.id || ''));
 const ruleName = computed(() => String(props.rule?.name || props.rule?.id || '--'));
 const ruleDescription = computed(() => String(props.rule?.description || '').trim());
+const ruleIcon = computed(() => typeof props.rule?.metadata?.icon === 'string' && props.rule.metadata.icon.trim() || 'BranchesOutlined');
 const iframeRef = ref<HTMLIFrameElement>();
 const frameLoaded = ref(false);
 const bridge = useRuleEditorAgentBridge({ ruleId });
@@ -159,11 +163,13 @@ const {
   editorTransferActioning,
   ruleNameSaving,
   ruleDescriptionSaving,
+  ruleIconSaving,
   clearEditorActionDone,
   handleEditorAction,
   handleEditorTransfer,
   handleRuleRename,
   handleRuleDescriptionChange,
+  handleRuleIconChange,
 } = useRuleEditorActions({
   bridge,
   bridgeStatus,

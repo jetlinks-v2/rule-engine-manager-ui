@@ -23,7 +23,7 @@ export function streamRuleInstances(query: RuleListQuery, cursor?: RuleListCurso
 }
 
 let subscriptionId = 0
-export const loadRulePreviews = (ids: string[]) => postRuntimeNdJson<{ id: string; metadata?: { thumbnailSvg?: string } }>(
+export const loadRulePreviews = (ids: string[]) => postRuntimeNdJson<{ id: string; metadata?: { thumbnailSvg?: string; icon?: unknown } }>(
   '/rule-engine/instance/_query/no-paging', {
     terms: [{ column: 'id', termType: 'in', value: ids }], includes: ['id', 'metadata'], paging: true, pageSize: 64,
   },

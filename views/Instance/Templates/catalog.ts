@@ -2,7 +2,7 @@ import type { RuleTemplate, TemplateCategory, TemplateId, TemplateParameters, Tr
 
 export const templateCategories: TemplateCategory[] = ['data-forwarding', 'data-preparation', 'data-query', 'device-actions', 'anomaly-notifications', 'examples']
 export const ruleTemplates: RuleTemplate[] = [
-  { id:'blank', icon:'PlusOutlined', nodes:[], steps:[] },
+  { id:'blank', icon:'BranchesOutlined', nodes:[], steps:[] },
   { id:'device-forward', category:'data-forwarding', icon:'SendOutlined', nodes:['reactor-ql','function'], setup:'device-source', steps:['source','prepareData','destination'] },
   { id:'device-summary', category:'data-forwarding', icon:'BarChartOutlined', nodes:['reactor-ql','function'], setup:'device-source', steps:['source','summarize','destination'] },
   { id:'device-normalize', category:'data-preparation', icon:'FormatPainterOutlined', nodes:['reactor-ql','debug'], setup:'device-source', steps:['source','prepareData','viewResult'] },

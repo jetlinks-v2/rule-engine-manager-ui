@@ -67,7 +67,7 @@ export interface TemplateInitialization {
   source?: DeviceSource
 }
 export interface TemplateDraft {
-  payload: { name: string; description: string; modelMeta: string; metadata?: { thumbnailSvg: string } }
+  payload: { name: string; description: string; modelMeta: string; metadata: { icon: string; thumbnailSvg?: string } }
   initialization: TemplateInitialization
 }
 export interface TemplateCreationRequest { templateId:TemplateId; parameters?:Record<string,unknown>; userGoal?:string }

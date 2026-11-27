@@ -152,7 +152,7 @@ export function buildTemplateFlow(id: TemplateId, parameters: TemplateParameters
   }
   const thumbnailSvg=localizedTemplateIllustration({id,target:parameters.target,message:source?.message},t)
   return {
-    payload:{name:Array.from(name).slice(0,64).join(''),description:Array.from(description).slice(0,200).join(''),modelMeta:JSON.stringify({rev:nextId(),flows:nodes}),...(thumbnailSvg ? {metadata:{thumbnailSvg}} : {})},
+    payload:{name:Array.from(name).slice(0,64).join(''),description:Array.from(description).slice(0,200).join(''),modelMeta:JSON.stringify({rev:nextId(),flows:nodes}),metadata:{icon:template.icon,...(thumbnailSvg ? {thumbnailSvg} : {})}},
     initialization:{templateId:id,focusNodeId:pending[0]?.nodeId || focus?.id,pending,source:source ? JSON.parse(JSON.stringify(source)) as DeviceSource : undefined},
   }
 }

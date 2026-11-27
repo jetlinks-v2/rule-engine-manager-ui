@@ -45,6 +45,10 @@
 
 共用流程工厂将当前语言及目标类型的静态图例写入 `metadata.thumbnailSvg`，与规则在同一次创建请求中保存，列表首次读取即可显示缩略图。页面、智能体及跳过配置均沿用此契约；空白规则没有虚构流程图。后续编辑保存继续由现有画布缩略图更新链路接管。
 
+静态图例只保留节点、图标与连线，不携带导出时的校验角标、运行状态或修改标记。所有模板同时写入语义匹配的 `metadata.icon`，空白规则使用编排图标；历史规则没有配置图标时沿用默认值。列表从已有可见范围预览请求读取图标，不扩大摘要查询或另发全量详情请求。
+
+编排头部的名称、说明使用平台 `InputEditable`；图标使用支持紧凑尺寸与异步回执的 `IconLibrary`。字段保存失败保留草稿；文字请求只提交对应字段。图标和画布缩略图更新在客户端串行合并最新 metadata，保留彼此及其他展示字段。说明的保存、取消与错误显示在字段旁浮层，不撑高头部。
+
 中英日覆盖分类、标题、说明、选择项、提示、图例及生成节点名称。创建后的名称与说明按当前语言保存，带入已经明确选择的对象和条件；切换语言不会改写已保存规则或业务 ID、SQL 和返回字段。静态图例与流程工厂的节点、连线一致性由测试覆盖。
 
 ## 编辑定位与智能体
@@ -67,7 +71,7 @@ ReactorQL 复用设备 owner 的 `JetLinksRuleEditorThingResources.search`。通
 
 ## 验证与限制
 
-本次候选的模板、列表与观测测试 26 项通过，完整智能体工具测试 176 项通过，两个资源 owner 的独立测试共 4 项通过。卡片名称单行省略、右侧操作对齐及底部状态的启停确认沿用列表契约。
+卡片名称单行省略、右侧操作对齐及底部状态的启停确认沿用列表契约。
 
 定向验证覆盖独立身份与连线、创建请求携带缩略图、静态图例、多语言、XML 转义、范围切换、延迟加载、分页、跳过、失败重试、校验恢复与路由重建交接。前端命令为 `pnpm test:rule-templates`、`pnpm test:instance-list`、`node scripts/run-agent-tool-tests.mjs`；设备 owner 的完整 schema 测试位于 `modules/device-manager/src/test/js/rule-editor-thing-resources.test.mjs`，ReactorQL 委派与多语言测试位于 `modules/jetlinks-components/rule-engine-component/src/test/js/reactor-ql-resources.test.mjs`，均可在所属仓库用 `node --test` 独立执行。
 
