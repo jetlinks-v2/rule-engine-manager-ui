@@ -147,6 +147,10 @@
       "combineResults": "Combine the results",
       "queryDevice": "Look up device information",
       "queryTogether": "Look up device information and properties",
+      "executeCommand": "Execute a command",
+      "queryData": "Query data",
+      "queryFirst": "Query the first dataset",
+      "querySecond": "Query the second dataset",
       "schedule": "Run on schedule",
       "readProperties": "Read device properties",
       "eventSource": "Receive device events",
@@ -197,6 +201,14 @@
       "device-query-all": {
         "title": "Look up device information and properties",
         "description": "Get device information and selected properties in one call and return the results together."
+      },
+      "scheduled-query": {
+        "title": "Query and process data on a schedule",
+        "description": "Query data through a command on a schedule, then process and inspect the result. Configure the service, parameters and schedule in the editor."
+      },
+      "scheduled-query-all": {
+        "title": "Query multiple datasets on a schedule",
+        "description": "Run two command queries in parallel on a schedule, then combine and inspect the results. Configure each service and its parameters in the editor."
       },
       "scheduled-read": {
         "title": "Read device properties on a schedule",

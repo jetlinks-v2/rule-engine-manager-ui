@@ -7,6 +7,8 @@ import parallel from '../../../assets/rule-templates/parallel.svg?raw'
 import query from '../../../assets/rule-templates/query.svg?raw'
 import queryAll from '../../../assets/rule-templates/query-all.svg?raw'
 import scheduledRead from '../../../assets/rule-templates/scheduled-read.svg?raw'
+import scheduledQuery from '../../../assets/rule-templates/scheduled-query.svg?raw'
+import scheduledQueryAll from '../../../assets/rule-templates/scheduled-query-all.svg?raw'
 import eventAction from '../../../assets/rule-templates/event-action.svg?raw'
 import thresholdNotify from '../../../assets/rule-templates/threshold-notify.svg?raw'
 import manualTransform from '../../../assets/rule-templates/manual-transform.svg?raw'
@@ -20,6 +22,7 @@ export interface TemplateIllustration {
 const illustrations: Partial<Record<TemplateId, string>> = {
   'device-normalize': normalize, 'transform-response': transform, 'parallel-response': parallel,
   'device-query': query, 'device-query-all': queryAll, 'scheduled-read': scheduledRead,
+  'scheduled-query': scheduledQuery, 'scheduled-query-all': scheduledQueryAll,
   'event-action': eventAction, 'threshold-notify': thresholdNotify, 'manual-transform': manualTransform,
 }
 const forwarding = { 'http request': forwardHttp, 'mqtt out': forwardMqtt, 'kafka-producer': forwardKafka }

@@ -147,6 +147,10 @@
       "combineResults": "整理各项结果",
       "queryDevice": "查询设备信息",
       "queryTogether": "查询设备信息和属性",
+      "executeCommand": "执行命令",
+      "queryData": "查询数据",
+      "queryFirst": "查询第一项数据",
+      "querySecond": "查询第二项数据",
       "schedule": "按时间触发",
       "readProperties": "读取设备属性",
       "eventSource": "接收设备事件",
@@ -197,6 +201,14 @@
       "device-query-all": {
         "title": "同时查询设备信息与属性",
         "description": "一次获取设备的基本信息和选定属性，并一起返回查询结果。"
+      },
+      "scheduled-query": {
+        "title": "定时查询并处理数据",
+        "description": "按设定时间通过命令查询数据，整理后查看处理结果。查询服务、参数和执行时间可在编排中配置。"
+      },
+      "scheduled-query-all": {
+        "title": "定时查询多项数据",
+        "description": "按设定时间并行执行两项命令查询，合并后查看结果。每项查询可选择不同服务和参数。"
       },
       "scheduled-read": {
         "title": "定时读取设备属性",

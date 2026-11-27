@@ -147,6 +147,10 @@
       "combineResults": "結果をまとめる",
       "queryDevice": "デバイス情報を照会",
       "queryTogether": "デバイス情報とプロパティを照会",
+      "executeCommand": "コマンドを実行",
+      "queryData": "データを取得",
+      "queryFirst": "1つ目のデータを取得",
+      "querySecond": "2つ目のデータを取得",
       "schedule": "スケジュールに従って実行",
       "readProperties": "デバイスプロパティを読み取る",
       "eventSource": "デバイスイベントを受信",
@@ -197,6 +201,14 @@
       "device-query-all": {
         "title": "デバイス情報とプロパティをまとめて照会",
         "description": "1回の呼び出しでデバイスの基本情報と選択したプロパティを取得し、まとめて返します。"
+      },
+      "scheduled-query": {
+        "title": "定期的にデータを取得・処理",
+        "description": "設定した時刻にコマンドでデータを取得し、処理結果を確認します。サービス、パラメーター、実行時刻はエディターで設定できます。"
+      },
+      "scheduled-query-all": {
+        "title": "定期的に複数のデータを取得",
+        "description": "設定した時刻に2つのコマンドで並行してデータを取得し、結果をまとめて確認します。各サービスとパラメーターは個別に設定できます。"
       },
       "scheduled-read": {
         "title": "デバイスプロパティを定期的に読み取る",

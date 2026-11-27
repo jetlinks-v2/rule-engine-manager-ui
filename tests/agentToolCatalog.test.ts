@@ -61,7 +61,7 @@ test('agent templates open optional setup or create the shared flow with its thu
   };
   const globals = globalThis as any;
   globals.__ruleEditorActionsTest = { request: (method: string, url: string, body: Record<string, any>) => {
-    if (method === 'get' && url === '/rule-editor/nodes') return { result: [{ enabled: true, types: ['rule-input', 'function', 'debug', 'rule-output'] }] };
+    if (method === 'get' && url === '/rule-editor/nodes') return { result: [{ enabled: true, types: ['rule-input', 'function', 'debug', 'rule-output', 'timer', 'command-support', 'zip-input', 'zip-output'] }] };
     assert.equal(method, 'post');
     assert.equal(url, '/rule-editor/flows/_create');
     writes.push(body);
@@ -78,6 +78,16 @@ test('agent templates open optional setup or create the shared flow with its thu
     assert.equal(JSON.parse(writes[0].modelMeta).flows.length, 4);
     assert.equal(navigation[1][1].query.editorId, 'template-rule');
     assert.ok(navigation[1][1].params.ruleTemplateInitialization.initialization.focusNodeId);
+    for (const templateId of ['scheduled-query', 'scheduled-query-all']) {
+      await draft.execute({ templateId }, context, {});
+      const flow = JSON.parse(writes.at(-1)!.modelMeta).flows;
+      assert.equal(flow[0].type, 'timer');
+      assert.equal(flow.filter((node: any) => node.type === 'command-support').length, templateId === 'scheduled-query' ? 1 : 2);
+      assert.match(writes.at(-1)!.metadata.thumbnailSvg, /^<svg/);
+      assert.equal(navigation.at(-1)[1].query.editorId, 'template-rule');
+      assert.equal(navigation.at(-1)[1].params.ruleTemplate, undefined);
+    }
+    assert.equal(writes.length, 3);
   } finally { delete globals.__ruleEditorActionsTest; }
 });
 

@@ -1,5 +1,5 @@
 export type TemplateCategory = 'data-forwarding' | 'data-preparation' | 'data-query' | 'device-actions' | 'anomaly-notifications' | 'examples'
-export type TemplateId = 'blank' | 'device-forward' | 'device-summary' | 'device-normalize' | 'transform-response' | 'parallel-response' | 'device-query' | 'device-query-all' | 'scheduled-read' | 'event-action' | 'threshold-notify' | 'manual-transform'
+export type TemplateId = 'blank' | 'device-forward' | 'device-summary' | 'device-normalize' | 'transform-response' | 'parallel-response' | 'device-query' | 'device-query-all' | 'scheduled-query' | 'scheduled-query-all' | 'scheduled-read' | 'event-action' | 'threshold-notify' | 'manual-transform'
 export type Translate = (key: string, values?: Record<string, string | number>) => string
 export interface ModelValueType {
   type?: string

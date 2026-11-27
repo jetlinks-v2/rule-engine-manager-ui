@@ -102,6 +102,44 @@ test('static SVG localization replaces every label, escapes XML, and preserves e
   assert.ok(api.localizedTemplateIllustration({id:'device-forward',message:'event'},translator('en')).includes(dictionaries.en.steps.eventSource))
 })
 
+test('scheduled query templates use configurable commands without a business scope and keep finite branch results',()=>{
+  for(const id of ['scheduled-query','scheduled-query-all']){
+    const p={...api.defaultTemplateParameters(),cron:'0 0 8 * * ?'}
+    assert.equal(api.validateTemplateParameters(id,p),undefined)
+    const draft=api.buildTemplateFlow(id,p,translator('en'),'en'),flow=nodes(draft)
+    const timer=flow.find(node=>node.type==='timer'),queries=flow.filter(node=>node.type==='command-support')
+    assert.equal(timer.cron,p.cron);assert.equal(timer.singleton,'true')
+    assert.equal(queries.length,id==='scheduled-query' ? 1 : 2)
+    for(const query of queries){
+      assert.equal(query.source,'fixed');assert.equal(query.serviceId,'');assert.equal(query.command,'')
+      assert.equal(query.parameter,'{}');assert.equal(query.streamOut,'false')
+    }
+    assert.equal(draft.initialization.source,undefined)
+    assert.deepEqual(draft.initialization.pending.map(item=>item.nodeId),queries.map(node=>node.id))
+    assert.equal(draft.initialization.focusNodeId,queries[0].id)
+    assert.equal(api.getRuleTemplate(id).setup,undefined)
+    assert.equal(flow.some(node=>node.type==='device-message-sender' || node.type==='reactor-ql'),false)
+    const output=flow.find(node=>node.type==='debug')
+    if(id==='scheduled-query'){
+      const transform=flow.find(node=>node.type==='function')
+      let handler;vm.runInNewContext(decode(transform.func),{handler:{onMessage(fn){handler=fn}}})
+      const data={rows:[{value:42}]};assert.equal(handler({data}),data)
+      assert.deepEqual(timer.wires[0],[queries[0].id]);assert.deepEqual(queries[0].wires[0],[transform.id]);assert.deepEqual(transform.wires[0],[output.id])
+    }else{
+      const parallel=flow.find(node=>node.type==='zip-input'),combine=flow.find(node=>node.type==='zip-output')
+      assert.equal(combine.flatWhenSingle,true)
+      assert.deepEqual(combine.mapping,{[queries[0].id]:{alias:'firstResult'},[queries[1].id]:{alias:'secondResult'}})
+      assert.deepEqual(timer.wires[0],[parallel.id]);assert.deepEqual(parallel.wires[0],queries.map(node=>node.id))
+      queries.forEach(query=>assert.deepEqual(query.wires[0],[combine.id]))
+      assert.deepEqual(combine.wires[0],[output.id])
+    }
+    const template=api.getRuleTemplate(id),available=new Set(template.nodes)
+    available.delete('command-support');assert.deepEqual(api.missingTemplateNodes(template,available),['command-support'])
+    assert.equal(api.validateTemplateParameters(id,{...p,cron:'invalid'}),'invalidCron')
+  }
+  assert.equal(api.templateNodeLabel('command-support',translator('zh')),'执行命令')
+})
+
 test('parallel calls share input, return the named finite branch results, and remap all references on each creation',()=>{
   const first=api.buildTemplateFlow('parallel-response',parameters('parallel-response'),translator('en'),'en')
   const second=api.buildTemplateFlow('parallel-response',parameters('parallel-response'),translator('en'),'en')

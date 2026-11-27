@@ -12,6 +12,7 @@ export const isNumericProperty = (property: { valueType?: { type?: string } }) =
 export function validateTemplateParameters(id: TemplateId, parameters: TemplateParameters): string | undefined {
   const template = getRuleTemplate(id)
   if (!template) return 'agentUnknown'
+  if (template.nodes.includes('timer') && parameters.cron.trim().split(/\s+/).length !== 6) return 'invalidCron'
   if (isForwardingTemplate(id) && !forwardingTargets.includes(parameters.target)) return 'required'
   if (id === 'device-summary' && (!['1m','5m','15m','1h'].includes(parameters.window) || !['avg','sum','min','max'].includes(parameters.aggregate))) return 'required'
   if (id === 'threshold-notify' && !['>','>=','<','<='].includes(parameters.comparison)) return 'required'
@@ -26,7 +27,6 @@ export function validateTemplateParameters(id: TemplateId, parameters: TemplateP
   if (id === 'event-action' && source.message !== 'event') return 'sourceNeeded'
   if (id === 'scheduled-read') {
     if (source.scope !== 'devices' || source.devices.length !== 1 || source.message !== 'property') return 'singleDevice'
-    if (parameters.cron.trim().split(/\s+/).length !== 6) return 'invalidCron'
   }
   if (isForwardingTemplate(id) && parameters.target === 'http request' && parameters.url) {
     try { if (!['http:', 'https:'].includes(new URL(parameters.url).protocol)) return 'invalidUrl' } catch { return 'invalidUrl' }
@@ -94,6 +94,24 @@ export function buildTemplateFlow(id: TemplateId, parameters: TemplateParameters
   } else if (id === 'device-query') {
     const input = node('rule-input','receive',{executePayload:'{}'}), lookup = query('queryDevice'), output = node('rule-output','returnResult')
     output.wires=[]; link(input,lookup); link(lookup,output); focus=lookup
+  } else if (id === 'scheduled-query' || id === 'scheduled-query-all') {
+    const timer = node('timer','schedule',{cron:parameters.cron,singleton:'true'})
+    let result: FlowNode
+    if (id === 'scheduled-query-all') {
+      const parallel = node('zip-input','processTogether')
+      const first = query('queryFirst'), second = query('querySecond')
+      first.x = second.x = 820; first.y = 100; second.y = 280
+      result = node('zip-output','combineResults',{flatWhenSingle:true,maxBufferSize:10000,
+        mapping:{[first.id]:{alias:'firstResult'},[second.id]:{alias:'secondResult'}}})
+      result.x = 1160
+      link(timer,parallel); link(parallel,first); link(parallel,second); link(first,result); link(second,result)
+    } else {
+      const lookup = query('queryData')
+      result = func('prepareData','return data;')
+      link(timer,lookup); link(lookup,result)
+    }
+    const output = debug(); output.x = result.x + 300
+    link(result,output)
   } else if (id === 'scheduled-read') {
     const source = parameters.source
     const timer = node('timer','schedule',{cron:parameters.cron,singleton:'true'})
