@@ -4,13 +4,13 @@
       <IconLibrary size="small" :type="ruleIcon" :disabled="iconLoading" :save="saveIcon" :label="$t('components.IconLibrary.title')" />
       <div class="rule-editor-shell__copy">
         <InputEditable class="rule-editor-shell__name" :value="ruleName" trigger="text" size="small"
-          :max-length="64" :disabled="renameLoading" :save="saveName"
+          :max-length="64" :disabled="renameLoading" :save="saveName" save-feedback
           :label="$t('RuleEditor.index.renameRule')" :placeholder="$t('RuleEditor.index.renamePlaceholder')" />
         <div class="rule-editor-shell__meta">
           <span class="rule-editor-shell__id">{{ $t('RuleEditor.index.ruleId', [ruleId]) }}</span>
           <span class="rule-editor-shell__meta-separator" />
           <InputEditable class="rule-editor-shell__description" :value="ruleDescription" trigger="text" size="small"
-            :max-length="256" :disabled="descriptionLoading" :save="saveDescription"
+            :max-length="256" :disabled="descriptionLoading" :save="saveDescription" save-feedback
             :label="$t('RuleEditor.index.editDescription')" :placeholder="$t('RuleEditor.index.descriptionEmpty')" />
         </div>
       </div>
