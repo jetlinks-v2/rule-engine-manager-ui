@@ -48,9 +48,9 @@ export function useBusinessSources(request:Ref<MetricSourceRequest | undefined>,
       command = {...command,inputs:(command.inputs || []).filter(input=>!capability.configurableParameters || capability.configurableParameters.includes(input.id))}
     }
     const kind = event ? 'businessEvent' as const : 'businessQuery' as const
-    return outputs(schema,capability.name,'$',{...schema.expands as Record<string,unknown>,...command?.expands}).map(field=>({
+    return outputs(schema,capability.name,'$',command?.expands).map(field=>({
       key:`${kind}:${capability.id}:${field.path}`,kind,id:capability.id,name:field.name,group:capability.name,
-      description:command?.description,capability,command,valuePath:field.path,valueType:field.schema,unit:typeof field.schema.unit === 'string' ? field.schema.unit : undefined,expands:field.expands,
+      description:command?.description,capability,command,valuePath:field.path,valueType:field.schema,expands:field.expands,
       capabilities:event ? ['subscribe'] : history(capability) ? ['history'] : hasTimeWindow(capability) ? [] : ['current'],
     }))
   }

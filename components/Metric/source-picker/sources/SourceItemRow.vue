@@ -15,7 +15,7 @@ import { parameterTypeKeys } from '../../parameterPresentation'
 import { sourceKindIcon, type SourceItem } from './catalog'
 const props=defineProps<{item:SourceItem;selected:boolean;declaration?:boolean;reference?:boolean}>()
 defineEmits<{(event:'select'):void}>()
-const {t,locale}=useI18n({useScope:'local',messages:{zh:{...metricMessages.zh,...metricHostMessages.zh},en:{...metricMessages.en,...metricHostMessages.en}}})
+const {t,locale}=useI18n({useScope:'local',messages:{ja:{...metricMessages.ja,...metricHostMessages.ja},zh:{...metricMessages.zh,...metricHostMessages.zh},en:{...metricMessages.en,...metricHostMessages.en}}})
 const preview=computed(()=>props.item.methods[0].preview)
 const previewTime=computed(()=>preview.value?.value?.evaluationTime || preview.value?.value?.eventTime)
 const summary=computed(()=>{

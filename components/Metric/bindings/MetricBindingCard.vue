@@ -1,6 +1,6 @@
 <template>
   <MetricCardShell :title="card.title || t(card.unavailable ? 'unavailable' : card.failed ? 'failed' : 'title')" :icon="metricConfigurationIcon(card.template,card.config)">
-    <template #actions><template v-if="managing"><a-popconfirm v-for="link in removable" :key="link.id" :title="t('removeConfirm')" @confirm="$emit('remove',link.id)"><a-button type="text" size="small" :disabled="busy" :aria-label="t('remove')" :title="t('remove')"><AIcon type="DeleteOutlined" /></a-button></a-popconfirm></template></template>
+    <template #actions><MetricStar :featured="metricFeatured(card.config)" /><a-dropdown v-if="removable.length || inherited.length" :trigger="['click']"><a-button type="text" size="small" :disabled="busy" :aria-label="t('actions')"><AIcon type="MoreOutlined" /></a-button><template #overlay><a-menu><MetricBindingActions :links="[...removable,...inherited]" :context="context" :busy="busy" @remove="$emit('remove',$event)" @manage-location="$emit('manageLocation',$event)" /></a-menu></template></a-dropdown></template>
     <button type="button" class="binding-card__body" :disabled="card.failed || card.unavailable || !card.output" @click="card.links[0].reference && $emit('inspect',card.links[0].reference)">
       <span v-if="card.failed || card.unavailable" class="binding-card__unavailable">—<small>{{ t(card.unavailable ? 'unavailable' : 'failed') }}</small></span>
       <MetricCardContent v-else-if="card.config && card.template && card.output" :context="sourceContext" :configuration="card.config" :template="card.template" :output="card.output" :value="card.value" :runtime="card.runtime" :history="history" />
@@ -15,6 +15,9 @@ import {computed} from 'vue'
 import {useI18n} from 'vue-i18n'
 import MetricCardShell from '../MetricCardShell.vue'
 import MetricCardContent from '../extensions/MetricCardContent.vue'
+import MetricBindingActions from './MetricBindingActions.vue'
+import MetricStar from '../MetricStar.vue'
+import {metricFeatured} from '../featured'
 import {metricConfigurationIcon} from '../extensions/presentationSettings'
 import type {MetricHistoryState} from '../useMetricTrends'
 import {bindingMessages} from './messages'

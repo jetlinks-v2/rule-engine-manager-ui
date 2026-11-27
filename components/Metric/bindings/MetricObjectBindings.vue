@@ -26,8 +26,8 @@ const {t,locale}=useI18n({useScope:'local',messages:bindingMessages})
 const results=useMetricBindingResults(computed(()=>props.state.page.data.value?.items || []),computed(()=>String(locale.value)))
 const parentHistory=inject(metricHistoryKey,undefined)
 // 外部来源不能借用宿主对象按configId索引的快照；详情按原对象授权读取。
-// 查看结果时去重；管理时仍须能移除重复添加的关系，不能把隐藏卡片当作事实不存在。
-const visibleCards=computed(()=>{const excluded=new Set(props.exclude?.map(ref=>JSON.stringify([ref.configId,ref.outputId,ref.targetType,ref.targetId])));return results.cards.value.filter(card=>props.managing || !excluded.has(card.key))})
+// 重复关联由原卡片的关联来源菜单维护，结果始终只呈现一次。
+const visibleCards=computed(()=>{const excluded=new Set(props.exclude?.map(ref=>JSON.stringify([ref.configId,ref.outputId,ref.targetType,ref.targetId])));return results.cards.value.filter(card=>!excluded.has(card.key))})
 const selected=ref<MetricObjectBinding>()
 const selectedCard=computed(()=>selected.value && visibleCards.value.find(card=>card.key===JSON.stringify([selected.value!.configId,selected.value!.outputId,selected.value!.targetType,selected.value!.targetId])))
 const selectedLatest=computed<MetricLatest | undefined>(()=>selected.value && selectedCard.value && !selectedCard.value.unavailable ? {

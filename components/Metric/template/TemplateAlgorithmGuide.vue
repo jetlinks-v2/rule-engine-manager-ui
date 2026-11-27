@@ -46,7 +46,7 @@ import { metricMessages } from '../messages'
 import { algorithmGuideMessages } from './algorithmGuideMessages'
 
 const props = defineProps<{ descriptor?:Pick<MetricCalculatorDescriptor,'description'|'documentation'> & Partial<Pick<MetricCalculatorDescriptor,'configuration'|'inputNames'|'parameterDefinitions'>>; invalid?:boolean }>()
-const { t, locale } = useI18n({ useScope:'local', messages:{ zh:{...metricMessages.zh,...algorithmGuideMessages.zh}, en:{...metricMessages.en,...algorithmGuideMessages.en} } })
+const { t, locale } = useI18n({ useScope:'local', messages:{ ja:{...metricMessages.ja,...algorithmGuideMessages.ja}, zh:{...metricMessages.zh,...algorithmGuideMessages.zh}, en:{...metricMessages.en,...algorithmGuideMessages.en} } })
 const documentation = computed(() => props.descriptor?.documentation)
 const exampleIndex = ref(0)
 const example = computed(() => documentation.value?.examples?.[exampleIndex.value] || documentation.value?.examples?.[0])

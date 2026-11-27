@@ -29,10 +29,11 @@ const resourceLabel = (label: MetricLabel) => typeof label === 'function' ? labe
 </script>
 <style scoped>
 .metric-navigation { height:100%; min-height:0; display:flex; flex-direction:column }
-.metric-navigation__heading { display:flex; align-items:center; flex:none; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line) }
-.metric-navigation__type { position:relative; flex:1; min-width:0 }
-.metric-navigation__icon { position:absolute; inset-inline-start:8px; top:50%; transform:translateY(-50%); color:var(--accent); font-size:16px; pointer-events:none }
-.metric-navigation__dimension { flex:none; width:100%; min-height:32px; font-weight:600 }
+.metric-navigation__heading { display:flex; align-items:center; justify-content:space-between; flex:none; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line) }
+.metric-navigation__type { position:relative; min-width:0; max-width:calc(100% - 40px); border-radius:6px; transition:background .15s }
+.metric-navigation__type:hover, .metric-navigation__type:focus-within { background:var(--bg-hover) }
+.metric-navigation__icon { position:absolute; inset-inline-start:8px; top:50%; transform:translateY(-50%); color:var(--ink-3); font-size:16px; pointer-events:none }
+.metric-navigation__dimension { width:auto; min-width:108px; max-width:100%; min-height:32px; font-weight:600 }
 .metric-navigation__dimension :deep(.ant-select-selector) { padding-inline:32px 8px !important }
 .metric-navigation__objects { flex:1; min-height:0; box-sizing:border-box; overflow:hidden; padding:12px 16px 16px }
 .metric-navigation__objects > :deep(*) { height:100% }

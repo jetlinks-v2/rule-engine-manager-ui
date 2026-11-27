@@ -185,6 +185,10 @@ export function useMetricEditor(
   }
   watch(initial, value => { cancelChoice(); draft.value = copy(value || createConfig(context.value)); clean.value = JSON.stringify(draft.value); void load() }, { immediate: true })
   watch(() => [context.value.ownerType, context.value.ownerId, context.value.editable, loading.value, draft.value.scope, JSON.stringify(draft.value.inputMappings), picker.value], refreshSources, { immediate:true })
+  watch(() => errorKind.value === 'binding' && !sourcesLoading.value && bindingsReady()
+    && !Object.values(sourceDescriptions.value).some(item => item.error), resolved => {
+    if (resolved) { errorKind.value = ''; error.value = '' }
+  })
   watch(() => context.value.editable, editable => { if (!editable) cancelChoice() })
   onScopeDispose(() => { generation++; sourceVersion++; cancelChoice() })
   return { draft, dirty, templates, categories, selectedTemplate, templateSelection, parameters, missingInputs, loading, saving, choosing,

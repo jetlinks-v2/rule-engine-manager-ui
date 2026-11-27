@@ -4,6 +4,7 @@ import { createRuntimeNdJson } from '@jetlinks-web-core/utils/ndjson'
 import { parseJsonResponseWithPrecision } from '@jetlinks-web-core/utils/json'
 import { map } from 'rxjs'
 import { createMetricResultStreams, type MetricWatchFrame } from './resultStreams'
+import {compareMetricPresentation} from './featured'
 import type { MetricReadApi, MetricBuiltinItem, MetricCalculatorDescriptor, MetricAggregationDescriptor, MetricConfig, MetricLatest, MetricTemplate, MetricTemplateEntity, MetricTemplateRevision, MetricValue, MetricSimulationResponse, MetricResultFrame } from './types'
 
 const options = { hiddenError: true, transformResponse: [parseJsonResponseWithPrecision] }
@@ -49,7 +50,7 @@ export const metricApi: MetricReadApi = {
   getConfig: async (configId, target) => result(await http.get<MetricConfig>(`/metric/configs/${id(configId)}`, target, options)),
   getResultConfig: async (configId, target) => result(await http.get<MetricConfig>(`/metric/configs/${id(configId)}/result`, target, options)),
   resultTemplate: async (configId, target) => result(await http.get<MetricTemplate>(`/metric/configs/${id(configId)}/result/template`, target, options)),
-  byOwner: async (type, ownerId) => result(await http.get<MetricConfig[]>(`/metric/configs/owner/${id(type)}/${id(ownerId)}`, undefined, options)),
+  byOwner: async (type, ownerId) => result(await http.get<MetricConfig[]>(`/metric/configs/owner/${id(type)}/${id(ownerId)}`, undefined, options)).sort(compareMetricPresentation),
   configTemplate: async (configId, target) => result(await http.get<MetricTemplate>(`/metric/configs/${id(configId)}/template`, target, options)),
   latest: async (configIds, target) => result(await http.post<MetricLatest[]>('/metric/configs/_latest', { configIds, ...target }, options)),
   watchResults: (configId, query, next, error) => {

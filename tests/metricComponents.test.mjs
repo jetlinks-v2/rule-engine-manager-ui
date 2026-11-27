@@ -8,6 +8,7 @@ import { createMetricLoader, createMetricRenderer, flush, walk, textContent, sou
 const api = {}
 const confirmations = []
 const workspaceWidth = ref(1200)
+const editorNarrow = ref(false)
 const navigationCollapsed = ref(false)
 const navigationCompact = ref(false)
 const navigationCloses = []
@@ -31,7 +32,7 @@ const componentStubs = {
         'aria-label': props.label || 'collapsePanel', onClick: () => emit('toggle') }),
     }),
   },
-  '@vueuse/core': { useEventListener, onClickOutside, useIntervalFn, useElementSize: () => ({ width:workspaceWidth, height:ref(800) }) },
+  '@vueuse/core': { useEventListener, onClickOutside, useIntervalFn, useMediaQuery: () => editorNarrow, useElementSize: () => ({ width:workspaceWidth, height:ref(800) }) },
   '@jetlinks-web/vite/dist/dynamic-remote': { dynamicRemoteManager: {} },
   '@jetlinks-web-core/utils/consts': { isSubApp: false },
   'vue-i18n': { useI18n: () => ({ t: key => key, locale: ref('zh') }) },
@@ -516,7 +517,7 @@ test('相同对象上下文重新渲染保留结果、草稿与在途请求，�
     assert.equal(queries, 1)
     release([config]); await flush()
     assert.equal(nodes(view.root, 'article').length, 1)
-    await click(findText(view.root, 'a-button', 'edit'))
+    await click(findText(view.root, 'a-menu-item', 'edit'))
     const editor = nodes(view.root, 'external-shell').find(node => node.props.open)
     assert.equal(editor.props.open, true)
     props.context = { ...props.context }; await flush()
@@ -1071,7 +1072,7 @@ test('卡片与编辑使用配置名称和模板图标，实时值类型变化�
     await click(card)
     const drawer = nodes(view.root, 'external-shell').find(node => node.props.open)
     assert.equal(drawer.props.title, 'Room'); assert.equal(drawer.props.sub, 'Room')
-    await click(findText(header(), 'a-button', 'edit'))
+    await click(findText(header(), 'a-menu-item', 'edit'))
     const title = walk(view.root, node => node.props.class === 'config-head__title')[0]
     assert.ok(walk(title, node => node.props.type === 'DashboardOutlined').length)
     assert.ok(nodes(title, 'external-shell').some(node => node.props.value === 'Room'))
@@ -1195,6 +1196,20 @@ test('主要结果编辑保留已有显示扩展与数值精度', async () => {
     select.props['onUpdate:value']('quality')
     assert.deepEqual(changes.at(-1), { decimals: 0, custom: false, primaryOutput: 'quality' })
   } finally { view.close() }
+})
+
+test('小数位数按结果语义显露，纯开关和文本隐藏，数值、混合及未知声明保留',async()=>{
+  for(const [outputs,definitions,visible] of [
+    [[{metricId:'value',valueType:'boolean'}],[],false],
+    [[{metricId:'value',valueType:'string'}],[],false],
+    [[{metricId:'value',valueType:'double'}],[],true],
+    [[{metricId:'value'}],[],true],
+    [[{metricId:'value'}],[{id:'value',temporalCondition:{enterExpression:'true',exitExpression:'false'}}],false],
+    [[{metricId:'value',valueType:'boolean'},{metricId:'number',valueType:'long'}],[],true],
+  ]) {
+    const view=mount(DisplayFields,{modelValue:{decimals:2,custom:false},template:{...template,outputs,definitions}})
+    try {await flush();assert.equal(nodes(view.root,'a-input-number').length>0,visible)}finally{view.close()}
+  }
 })
 
 test('状态卡收敛为主结果与两项摘要，完整输出仍可在原详情切换并回焦', async () => {
@@ -1458,6 +1473,21 @@ test('配置空白区返回指标设置并取消来源选择，试算及定位�
     await click(findText(view.root,'button','configMissingSources'))
     assert.equal(findText(view.root,'button','bindingGraph').props['aria-pressed'],true)
   }finally{view.close()}
+})
+
+test('配置属性按钮展开同时切换到属性内容，返回后能再次展开；无参数模板同样可操作',async()=>{
+  defaults();moduleRegistry.clear()
+  api.configTemplate=async()=>({...template,parameterDefinitions:[],options:{}})
+  const view=mount(Editor,{context:{ownerType:'line',ownerId:'a',editable:true},configuration:config})
+  const action=label=>nodes(view.root,'a-button').find(node=>node.props['aria-label']===label)
+  const workspace=()=>walk(view.root,node=>String(node.props.class).split(' ').includes('config-workspace'))[0]
+  try {
+    await flush();await click(action('configCollapse'));assert.equal(walk(view.root,node=>node.type==='aside' && node.props.class==='config-properties').length,0)
+    editorNarrow.value=true;await flush()
+    await click(action('configExpand'));assert.ok(String(workspace().props.class).includes('show-properties'))
+    await click(findText(view.root,'a-button','returnToDiagram'));assert.ok(action('configExpand'))
+    await click(action('configExpand'));assert.ok(String(workspace().props.class).includes('show-properties'))
+  }finally{view.close();editorNarrow.value=false}
 })
 
 test('真实Editor恢复参数默认值后保存不携带覆盖，继续跟随绑定模板', async () => {
@@ -1953,7 +1983,7 @@ test('常驻属性面板保留错误YAML，折叠不卸载，空白切换受保�
     assert.equal(yaml(), field, '错误未修正时保留当前编辑器')
     await click(action('expandProperties'))
     assert.equal(yaml().props['model-value'], '{')
-    await click(findText(view.root,'a-menu-item','revertNode'))
+    await click(findText(view.root,'a-button','revertNode'))
     assert.notEqual(yaml(), field); assert.equal(states.at(-1), false)
     assert.equal(props.template.definitions[0].calculator.parameters.flag, false)
     await blank(); assert.ok(textContent(view.root).includes('scopeAndReference'))

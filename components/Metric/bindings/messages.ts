@@ -1,5 +1,17 @@
 export const bindingMessages={
+  ja:{
+    linkedSources:'関連付けた参照元',actions:'指標の操作',removeNamed:'関連付けを解除：{name}',
+    title:'既存の指標',add:'既存の指標を追加',hint:'元の計算結果を使用します。計算を変更するには元の指標を開いてください。',
+    pending:'結果を更新中',remove:'ここから削除',removeConfirm:'ここから削除しますか？元の指標とデータは保持されます。',
+    empty:'指標はまだありません',more:'指標をさらに表示',refresh:'更新',failed:'指標の結果を取得できませんでした',retry:'再試行',
+    addFailed:'選択した指標を追加できませんでした',retryAdd:'追加を再試行',cancel:'キャンセル',
+    concrete:'具体的な対象の指標を選択してください',detail:'元の指標を表示',
+    descendants:'下位に追加された指標を含める',from:'参照元：{name}',addedBy:'追加元：{name}',
+    sourceObject:'参照元の対象',childObject:'下位の対象',unavailable:'この指標は利用できません',openLocation:'追加した場所を表示',
+  },
   zh:{
+    linkedSources:'关联来源',actions:'指标操作',
+    removeNamed:'解除关联：{name}',
     title:'已有指标',add:'添加已有指标',hint:'使用原来的计算结果。修改计算请前往原指标。',
     pending:'正在更新结果',remove:'从这里移除',removeConfirm:'从这里移除？原指标及数据仍会保留。',
     empty:'这里还没有指标',more:'查看更多指标',refresh:'刷新',failed:'未能读取指标结果',retry:'重试',
@@ -9,6 +21,8 @@ export const bindingMessages={
     sourceObject:'来源对象',childObject:'下级对象',unavailable:'此指标暂不可访问',openLocation:'查看添加位置',
   },
   en:{
+    linkedSources:'Linked sources',actions:'Metric actions',
+    removeNamed:'Unlink: {name}',
     title:'Existing metrics',add:'Add an existing metric',hint:'Uses the original results. Open the source metric to change its calculation.',
     pending:'Updating results',remove:'Remove from here',removeConfirm:'Remove from here? The original metric and its data will remain.',
     empty:'No metrics here yet',more:'Show more metrics',refresh:'Refresh',failed:'Could not read metric results',retry:'Retry',
