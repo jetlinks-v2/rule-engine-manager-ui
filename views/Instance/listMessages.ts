@@ -1,6 +1,9 @@
 export const ruleListMessages = {
   zh: { RuleInstanceList: {
     enableHint: '点击启用', disableHint: '点击禁用',
+    emptyTitle: '创建你的第一条规则', emptyDescription: '从业务模板开始，快速搭建设备数据处理与自动化流程。',
+    createFromTemplate: '从模板创建', createBlank: '从空白开始', clearSearch: '清除筛选',
+    createHint: '创建后不会立即执行，可在编排中继续调整。',
     transferCount: '总流转数量', observedReplicas: '已观测运行副本',
     transferHelp: '当前运行 Output 的累计发出条数之和，包含内部节点；同一数据经过多个节点会计多次，Output 重建后归零。',
     partialHelp: '部分节点缺测，以下数字仅汇总已观测节点，不代表完整集群总量。',
@@ -21,6 +24,9 @@ export const ruleListMessages = {
   } },
   en: { RuleInstanceList: {
     enableHint: 'Click to enable', disableHint: 'Click to disable',
+    emptyTitle: 'Create your first rule', emptyDescription: 'Start with a template to build a data processing or automation flow.',
+    createFromTemplate: 'Create from template', createBlank: 'Start from scratch', clearSearch: 'Clear filters',
+    createHint: 'New rules do not run immediately. You can continue configuring them in the editor.',
     transferCount: 'Total transfers', observedReplicas: 'Observed running tasks',
     transferHelp: 'Sum of cumulative normal Output emissions in current instances, including internal nodes. Each hop can count the same data again; rebuilding an Output resets its count.',
     partialHelp: 'Some nodes are unavailable. Values cover observed nodes only, not the complete cluster.',
@@ -41,6 +47,9 @@ export const ruleListMessages = {
   } },
   ja: { RuleInstanceList: {
     enableHint: 'クリックして有効化', disableHint: 'クリックして無効化',
+    emptyTitle: '最初のルールを作成', emptyDescription: '業務テンプレートから、データ処理や自動化のフローを作成できます。',
+    createFromTemplate: 'テンプレートから作成', createBlank: '空白から開始', clearSearch: '絞り込みをクリア',
+    createHint: '作成したルールはすぐに実行されません。エディターで設定を続けられます。',
     transferCount: '総流通件数', observedReplicas: '観測済み実行タスク',
     transferHelp: '現在の Output の累計発出数の合計。内部ノードを含み、同じデータを複数回計数します。Output 再生成時にリセットします。',
     partialHelp: '一部ノードが欠測しています。数値は観測できたノードの合計であり、クラスタ全体の総数ではありません。',

@@ -8,6 +8,7 @@ import {createRenderer,nextTick,ref} from 'vue'
 import {createI18n} from 'vue-i18n'
 
 const root=new URL('..',import.meta.url)
+const core=process.env.JETLINKS_WEB_CORE_ROOT || resolve(root.pathname,'../../jetlinks-web-core')
 const dictionaries=Object.fromEntries(await Promise.all(['zh','en','ja'].map(async lang=>[lang,JSON.parse(await readFile(new URL(`../locales/lang/${lang}.json`,import.meta.url),'utf8')).RuleTemplates])))
 const temporary=new URL(`../.rule-templates-test-${process.pid}.mjs`,import.meta.url)
 const bundled=await build({stdin:{contents:[
@@ -23,7 +24,7 @@ const bundled=await build({stdin:{contents:[
   b.onResolve({filter:/^@jetlinks-web\/utils$/},()=>({path:'messages',namespace:'mock'}))
   b.onResolve({filter:/^@jetlinks-web\/hooks$/},()=>({path:'router-params',namespace:'mock'}))
   b.onResolve({filter:/^vue-router$/},()=>({path:'router',namespace:'mock'}))
-  b.onResolve({filter:/^@jetlinks-web-core\/components\/I18n\/text$/},()=>({path:new URL('../../jetlinks-web-core/src/components/I18n/text.ts',root).pathname}))
+  b.onResolve({filter:/^@jetlinks-web-core\/components\/I18n\/text$/},()=>({path:resolve(core,'src/components/I18n/text.ts')}))
   b.onResolve({filter:/\.svg\?raw$/},args=>({path:resolve(args.resolveDir,args.path.replace(/\?raw$/,'')),namespace:'svg'}))
   b.onLoad({filter:/.*/,namespace:'svg'},async args=>({contents:await readFile(args.path,'utf8'),loader:'text'}))
   b.onLoad({filter:/.*/,namespace:'mock'},args=>({contents:args.path==='router-params'
@@ -215,6 +216,22 @@ test('skip creates an unconfigured draft without carrying selected resources or 
   assert.equal(result.initialization.source,undefined)
   assert.equal(result.initialization.focusNodeId,result.initialization.pending[0].nodeId)
   assert.equal(writes,1);mounted.close()
+})
+
+test('empty-state blank creation reuses template handoff and the ordinary entry resets it',async()=>{
+  const {reactive}=await import('vue')
+  const i18n=createI18n({legacy:false,locale:'en',messages:{en:{RuleTemplates:dictionaries.en}}})
+  globalThis.__ruleParams={}
+  globalThis.__ruleRoute=reactive({name:'rule-engine/Instance',query:{}})
+  globalThis.__ruleRouter={replace:async()=>{}}
+  const mounted=mount(()=>api.useRuleInstanceActions(()=>{}),i18n)
+  mounted.state.addBlank()
+  assert.equal(mounted.state.visible.value,true)
+  assert.deepEqual(mounted.state.templateRequest.value,{templateId:'blank'})
+  mounted.state.add()
+  assert.equal(mounted.state.visible.value,true)
+  assert.equal(mounted.state.templateRequest.value,undefined)
+  mounted.close();delete globalThis.__ruleParams
 })
 
 test('created template initialization survives query navigation and does not reopen the creation panel',async()=>{

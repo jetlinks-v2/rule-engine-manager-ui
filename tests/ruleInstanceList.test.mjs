@@ -66,6 +66,22 @@ test('records appear before completion, filter replacement cancels and isolates 
   } finally { close() }
 })
 
+test('empty-state search terms follow the effective query through refresh, failure and clearing', async () => {
+  const { state, reads, close } = mount()
+  try {
+    const terms = [{ column: 'name', value: 'missing' }]
+    state.refresh({ terms }); reads[0].stream.complete(); await flush()
+    assert.deepEqual(state.searchTerms.value, terms)
+    assert.equal(state.items.value.length, 0)
+    state.refresh(); assert.deepEqual(reads[1].query.terms, terms)
+    reads[1].stream.error(new Error('offline'))
+    assert.deepEqual(state.searchTerms.value, terms)
+    state.refresh({ terms: [] })
+    assert.deepEqual(state.searchTerms.value, [])
+    assert.deepEqual(reads[2].query.terms, [])
+  } finally { close() }
+})
+
 test('failed segments retain rows, retry from the last completed cursor and deduplicate', async () => {
   const { state, reads, close } = mount()
   try {

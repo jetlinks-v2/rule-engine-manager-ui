@@ -1,7 +1,7 @@
 <template>
   <FullPage v-bind="$attrs" class="rule-list" :padding="0">
         <header class="rule-list__toolbar">
-          <ConditionFilter class="rule-list__filter" :fields="filterFields" @change="({ filter }) => refresh(filter)" />
+          <ConditionFilter ref="conditionFilter" class="rule-list__filter" :fields="filterFields" @change="({ filter }) => refresh(filter)" />
           <span class="rule-list__count">{{ t('RuleInstanceList.loaded', { n: items.length }) }}</span>
           <a-button :title="t('RuleInstanceList.refresh')" :aria-label="t('RuleInstanceList.refresh')" @click="refresh()"><AIcon type="ReloadOutlined" /></a-button>
           <j-permission-button type="primary" :hasPermission="`${permissionKey}:add`" @click="add">
@@ -22,9 +22,8 @@
           <a-result v-else-if="error && !items.length" status="warning" :title="t('RuleInstanceList.loadFailed')">
             <template #extra><a-button @click="loadMore">{{ t('RuleInstanceList.retry') }}</a-button></template>
           </a-result>
-          <CloudEmpty v-else-if="!items.length" :search="[]" :search-name="t('EmptyCreate.names.rules')">
-            <j-permission-button type="primary" :hasPermission="`${permissionKey}:add`" @click="add">{{ t('Instance.index.020452-0') }}</j-permission-button>
-          </CloudEmpty>
+          <RuleListEmpty v-else-if="!items.length" :search="searchTerms" :permission-key="permissionKey"
+            @templates="add" @blank="addBlank" @clear-search="conditionFilter?.clear()" />
           <div v-if="items.length" class="rule-list__tail">
             <template v-if="error">{{ t('RuleInstanceList.loadFailed') }} <a-button type="link" @click="loadMore">{{ t('RuleInstanceList.retry') }}</a-button></template>
             <template v-else-if="loading"><a-spin size="small" /> {{ t('RuleInstanceList.loadingMore') }}</template>
@@ -40,10 +39,11 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import ConditionFilter, { type ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
+import ConditionFilter, { type ConditionFilterField, type ConditionFilterExpose } from '@jetlinks-web-core/components/ConditionFilter'
 import Save from './Save/index.vue'
 import RuleEditorDrawer from './RuleEditor/index.vue'
 import RuleInstanceCard from './RuleInstanceCard.vue'
+import RuleListEmpty from './RuleListEmpty.vue'
 import CreateRule from './Templates/CreateRule.vue'
 import { useRulePermission } from '../../hook/usePermission'
 import { useRuleInstanceList } from './useRuleInstanceList'
@@ -52,8 +52,9 @@ import { ruleListMessages } from './listMessages'
 const { t } = useI18n({ useScope: 'local', messages: ruleListMessages })
 const permissionKey = useRulePermission()
 const suspended = ref(false)
-const { viewport, items, visibleItems, layout, loading, error, more, runtime, stale, previews, observationFailed, observationPending, refresh, loadMore } = useRuleInstanceList(suspended)
-const { visible, current, pending, ruleEditor, closeRuleEditor, templateInitialization, templateRequest, add, created, open, execute, updated } = useRuleInstanceActions(() => refresh())
+const conditionFilter = ref<ConditionFilterExpose>()
+const { viewport, items, searchTerms, visibleItems, layout, loading, error, more, runtime, stale, previews, observationFailed, observationPending, refresh, loadMore } = useRuleInstanceList(suspended)
+const { visible, current, pending, ruleEditor, closeRuleEditor, templateInitialization, templateRequest, add, addBlank, created, open, execute, updated } = useRuleInstanceActions(() => refresh())
 watch(() => ruleEditor.visible, value => { suspended.value = value })
 const filterFields: ConditionFilterField[] = [
   { title: t('Instance.index.020452-3'), dataIndex: 'name', search: { type: 'string' } },

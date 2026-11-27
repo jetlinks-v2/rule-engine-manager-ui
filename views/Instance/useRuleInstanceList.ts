@@ -17,6 +17,7 @@ export function useRuleInstanceList(suspended: Ref<boolean> = ref(false)) {
   const error = ref(false)
   const more = ref(true)
   const query = shallowRef<RuleListQuery>({ terms: [] })
+  const searchTerms = computed(() => query.value.terms || [])
   let cursor: RuleListCursor | undefined
   let reader: Subscription | undefined
   let generation = 0
@@ -109,6 +110,6 @@ export function useRuleInstanceList(suspended: Ref<boolean> = ref(false)) {
   onDeactivated(() => { active.value = false; reader?.unsubscribe(); loading.value = false })
   onScopeDispose(() => { generation++; reader?.unsubscribe() })
 
-  return { viewport, items, visibleItems, layout, loading, error, more, runtime, stale, now, previews,
+  return { viewport, items, searchTerms, visibleItems, layout, loading, error, more, runtime, stale, now, previews,
     observationFailed, observationPending, refresh, loadMore }
 }

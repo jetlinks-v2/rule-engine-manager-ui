@@ -47,6 +47,7 @@ export function useRuleInstanceActions(refresh: () => void) {
   }
 
   const add = () => { templateRequest.value=undefined;current.value = { name: '', description: '' }; visible.value = true }
+  const addBlank = () => { add(); templateRequest.value = { templateId: 'blank' } }
   const created = (result: CreatedTemplateRule) => {
     visible.value = false
     templateInitialization.value = result.initialization
@@ -64,5 +65,5 @@ export function useRuleInstanceActions(refresh: () => void) {
   watch(()=>[routerParams.params.value?.ruleTemplateInitialization,route.query.editorId] as const,([value])=>{
     if(value?.ruleId && value.ruleId===route.query.editorId)templateInitialization.value=value.initialization
   },{immediate:true})
-  return { visible, current, pending, ruleEditor, closeRuleEditor, templateInitialization, templateRequest, add, created, open, execute, updated }
+  return { visible, current, pending, ruleEditor, closeRuleEditor, templateInitialization, templateRequest, add, addBlank, created, open, execute, updated }
 }
