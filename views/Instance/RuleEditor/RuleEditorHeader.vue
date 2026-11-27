@@ -9,7 +9,7 @@
         <div class="rule-editor-shell__meta">
           <span class="rule-editor-shell__id">{{ $t('RuleEditor.index.ruleId', [ruleId]) }}</span>
           <span class="rule-editor-shell__meta-separator" />
-          <InputEditable class="rule-editor-shell__description" :value="ruleDescription" textarea trigger="text" size="small"
+          <InputEditable class="rule-editor-shell__description" :value="ruleDescription" trigger="text" size="small"
             :max-length="256" :disabled="descriptionLoading" :save="saveDescription"
             :label="$t('RuleEditor.index.editDescription')" :placeholder="$t('RuleEditor.index.descriptionEmpty')" />
         </div>
