@@ -32,21 +32,23 @@
     </j-permission-button>
     <footer class="rule-card__footer">
       <div class="rule-card__state" @click.stop>
-        <a-tooltip :title="`${stateText} · ${toggleText}`" :trigger="['hover', 'focus']">
-          <j-permission-button type="text" :disabled="busy" :hasPermission="`${permissionKey}:action`"
-            :aria-label="`${stateText} · ${toggleText}`"
-            :style="{ width: '24px', height: '24px', padding: 0, color: enabled ? token.colorSuccess : token.colorTextTertiary }"
-            :popConfirm="{ title: t('Instance.index.020452-10', [toggleText]), onConfirm: () => emit('toggle') }">
-            <AIcon :type="enabled ? 'PlayCircleOutlined' : rule.state?.value === 'disable' ? 'StopOutlined' : 'QuestionCircleOutlined'" aria-hidden="true" />
-          </j-permission-button>
-        </a-tooltip>
+        <a-popconfirm v-model:open="confirmOpen" :title="t('Instance.index.020452-10', [toggleText])" :disabled="busy || !canToggle"
+          placement="topLeft" @confirm="emit('toggle')">
+          <a-tooltip :title="toggleHint" :trigger="['hover', 'focus']" :open="confirmOpen ? false : undefined">
+            <j-permission-button type="text" :disabled="busy" :hasPermission="`${permissionKey}:action`"
+              :aria-label="`${stateText} · ${toggleHint}`"
+              :style="{ width: '24px', height: '24px', padding: 0, color: enabled ? token.colorSuccess : token.colorTextTertiary }">
+              <AIcon :type="enabled ? 'PlayCircleOutlined' : rule.state?.value === 'disable' ? 'StopOutlined' : 'QuestionCircleOutlined'" aria-hidden="true" />
+            </j-permission-button>
+          </a-tooltip>
+        </a-popconfirm>
       </div>
       <RuleObservation v-if="enabled" :runtime="runtime" :stale="stale" :failed="failed" :loading="loading" />
     </footer>
   </article>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { theme } from 'ant-design-vue'
 import { useRulePermission } from '../../hook/usePermission'
@@ -60,11 +62,14 @@ const { t } = useI18n({ useScope: 'parent' })
 const permissionKey = useRulePermission()
 const auth = useAuthStore()
 const canOpen = computed(() => auth.hasPermission(`${permissionKey}:view`))
+const canToggle = computed(() => auth.hasPermission(`${permissionKey}:action`))
 const enabled = computed(() => props.rule.state?.value === 'started')
+const confirmOpen = ref(false)
 const { token } = theme.useToken()
 const stateText = computed(() => enabled.value ? t('RuleInstanceList.enabled') : props.rule.state?.value === 'disable'
   ? t('RuleInstanceList.disabled') : props.rule.state?.text || t('RuleInstanceList.status.unavailable'))
 const toggleText = computed(() => t(enabled.value ? 'Instance.index.020452-2' : 'Instance.index.020452-9'))
+const toggleHint = computed(() => t(enabled.value ? 'RuleInstanceList.disableHint' : 'RuleInstanceList.enableHint'))
 const stopMenuClick = ({ domEvent }: { domEvent: Event }) => domEvent.stopPropagation()
 </script>
 <style scoped>

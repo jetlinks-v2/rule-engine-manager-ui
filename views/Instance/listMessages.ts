@@ -1,5 +1,6 @@
 export const ruleListMessages = {
   zh: { RuleInstanceList: {
+    enableHint: '点击启用', disableHint: '点击禁用',
     transferCount: '总流转数量', observedReplicas: '已观测运行副本',
     transferHelp: '当前运行 Output 的累计发出条数之和，包含内部节点；同一数据经过多个节点会计多次，Output 重建后归零。',
     partialHelp: '部分节点缺测，以下数字仅汇总已观测节点，不代表完整集群总量。',
@@ -19,6 +20,7 @@ export const ruleListMessages = {
       unknown: '状态未知', unavailable: '观测不可用', observationPartial: '部分节点缺测', stale: '观测已过期' },
   } },
   en: { RuleInstanceList: {
+    enableHint: 'Click to enable', disableHint: 'Click to disable',
     transferCount: 'Total transfers', observedReplicas: 'Observed running tasks',
     transferHelp: 'Sum of cumulative normal Output emissions in current instances, including internal nodes. Each hop can count the same data again; rebuilding an Output resets its count.',
     partialHelp: 'Some nodes are unavailable. Values cover observed nodes only, not the complete cluster.',
@@ -38,6 +40,7 @@ export const ruleListMessages = {
       unknown: 'Unknown', unavailable: 'Observation unavailable', observationPartial: 'Incomplete coverage', stale: 'Observation expired' },
   } },
   ja: { RuleInstanceList: {
+    enableHint: 'クリックして有効化', disableHint: 'クリックして無効化',
     transferCount: '総流通件数', observedReplicas: '観測済み実行タスク',
     transferHelp: '現在の Output の累計発出数の合計。内部ノードを含み、同じデータを複数回計数します。Output 再生成時にリセットします。',
     partialHelp: '一部ノードが欠測しています。数値は観測できたノードの合計であり、クラスタ全体の総数ではありません。',
