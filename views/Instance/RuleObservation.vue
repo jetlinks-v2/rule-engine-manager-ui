@@ -17,7 +17,7 @@
       </div>
     </template>
     <button type="button" class="rule-observation" :style="{ color }" :aria-label="`${t('RuleInstanceList.runtimeDetails')}: ${statusText}`" @click.stop>
-      <AIcon :type="icon" :spin="loading" :style="{ color }" />
+      <AIcon v-if="state !== 'running'" :type="icon" :spin="loading" :style="{ color }" />
       <template v-if="available">
         <span :title="t('RuleInstanceList.inputRate')"><AIcon type="DownloadOutlined" /> {{ rate(runtime?.inputRate) }}<small>/s</small></span>
         <span :title="t('RuleInstanceList.outputRate')"><AIcon type="UploadOutlined" /> {{ rate(runtime?.outputRate) }}<small>/s</small></span>
