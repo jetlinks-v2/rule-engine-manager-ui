@@ -7,7 +7,7 @@
         @close="emit('close')"
     >
         <JProTable
-            modeValue="TABLE"
+            mode="TABLE"
             :columns="columns"
             :request="requestLogs"
             :defaultParams="defaultParams"

@@ -7,17 +7,35 @@
         />
         <FullPage>
             <JProTable
-                ref="tableRef"
                 modeValue="CARD"
                 :columns="columns"
                 :request="queryTasks"
                 :params="params"
                 :defaultParams="defaultParams"
             >
-                <template #headerLeftRender>
-                    <a-button @click="refresh">
-                        <template #icon><AIcon type="ReloadOutlined" /></template>
-                        {{ $t('TaskCenter.index.refresh') }}
+                <template #executeState="task">
+                    <JBadgeStatus
+                        :status="task.executeState?.value"
+                        :text="task.executeState?.text || '--'"
+                        :statusNames="executeStatusNames"
+                    />
+                </template>
+                <template #enabledState="task">
+                    <JBadgeStatus
+                        :status="task.enabledState?.value"
+                        :text="task.enabledState?.text || '--'"
+                        :statusNames="enabledStatusNames"
+                    />
+                </template>
+                <template #nodeCount="task">
+                    {{ task.nodeCount ?? 0 }}
+                </template>
+                <template #runningNodeCount="task">
+                    {{ task.runningNodeCount ?? 0 }}
+                </template>
+                <template #action="task">
+                    <a-button type="link" size="small" @click="openLogs(task)">
+                        {{ $t('TaskCenter.index.viewLogs') }}
                     </a-button>
                 </template>
                 <template #card="task">
@@ -87,7 +105,6 @@ import { queryTasks, type TaskCenterTask } from '../../api/taskCenter';
 import LogDrawer from './LogDrawer.vue';
 
 const { t: $t } = useI18n();
-const tableRef = ref<Record<string, any>>();
 const params = ref<Record<string, unknown>>({});
 const currentTask = ref<TaskCenterTask>();
 
@@ -97,6 +114,11 @@ const executeStatusNames: Record<string, string> = {
     running: 'processing',
     paused: 'warning',
     abnormal: 'error',
+};
+
+const enabledStatusNames = {
+    started: 'success',
+    disable: 'default',
 };
 
 const defaultParams = {
@@ -126,9 +148,22 @@ const searchColumns = [
 
 const columns = [
     { title: $t('TaskCenter.index.name'), dataIndex: 'name', key: 'name' },
-    { title: $t('TaskCenter.index.executeState'), dataIndex: 'executeState', key: 'executeState' },
-    { title: $t('TaskCenter.index.enabledState'), dataIndex: 'enabledState', key: 'enabledState' },
-    { title: $t('TaskCenter.index.nodeCount'), dataIndex: 'nodeCount', key: 'nodeCount' },
+    { title: $t('TaskCenter.index.executeState'), dataIndex: 'executeState', key: 'executeState', scopedSlots: true },
+    { title: $t('TaskCenter.index.taskState'), dataIndex: 'enabledState', key: 'enabledState', scopedSlots: true },
+    { title: $t('TaskCenter.index.nodeCount'), dataIndex: 'nodeCount', key: 'nodeCount', scopedSlots: true },
+    {
+        title: $t('TaskCenter.index.runningCount'),
+        dataIndex: 'runningNodeCount',
+        key: 'runningNodeCount',
+        scopedSlots: true,
+    },
+    {
+        title: $t('TaskCenter.index.action'),
+        key: 'action',
+        fixed: 'right' as const,
+        width: 200,
+        scopedSlots: true,
+    },
 ];
 
 const getActions = () => [
@@ -145,7 +180,6 @@ const handleSearch = (value: Record<string, unknown>) => {
     params.value = value;
 };
 
-const refresh = () => tableRef.value?.reload();
 const openLogs = (task: TaskCenterTask) => {
     currentTask.value = task;
 };
