@@ -8,6 +8,9 @@
       <p v-if="identityIssue" class="node-editor__identity-error" role="alert">{{ t(identityIssue) }}</p>
       <div v-if="node.kind === 'input' && $slots['input-reference']" class="node-editor__reference"><slot name="input-reference" /></div>
     </header>
+    <a-alert v-if="pendingKind" class="node-editor__confirmation" type="warning" show-icon :message="t('calculationChangeConfirm', { method:t(pendingKind) })">
+      <template #description><a-space><a-button size="small" :disabled="disabled" @click="pendingKind && changeKind(pendingKind, true)">{{ t('changeCalculation') }}</a-button><a-button size="small" @click="pendingKind = undefined">{{ t('cancel') }}</a-button></a-space></template>
+    </a-alert>
     <TemplateRuleEditor v-if="node.kind === 'rule'" :template="template" :rule="rule" :disabled="disabled" :calculators="calculators" @patch="emit('patch', $event)" @invalid="emit('invalid', $event)">
       <template #method>
       <div class="node-editor__method">
@@ -107,6 +110,8 @@ function changeInputId(value:string) {
   if (!identityIssue.value) emit('patch',{id:value})
 }
 const kind = computed(() => props.node.kind === 'rule' ? calculationKind(rule.value) : 'expression')
+const pendingKind = ref<CalculationKind>()
+watch([() => props.template, () => props.node, () => props.disabled], () => { pendingKind.value = undefined })
 const methods = computed(() => [
   { value: 'expression', label: t('expression'), icon: 'FunctionOutlined', description: t('expressionMethodHint') },
   { value: 'statistics', label: t('statistics'), icon: 'BarChartOutlined', description: t('statisticsMethodHint') },
@@ -132,12 +137,19 @@ function toggleOutput(field: 'publish') {
   emit('patch', { [field]:output.value.publish !== true })
 }
 function setOutputInvalid(value:boolean) { outputInvalid.value=value;emit('invalid',value) }
-function changeKind(value: CalculationKind) { if (!props.disabled && value !== kind.value) emit('patch', calculationFields(value)) }
+function changeKind(value: CalculationKind, confirmed = false) {
+  if (props.disabled || value === kind.value) return
+  const fields = calculationFields(value)
+  if (!confirmed && Object.keys(fields).some(key => key !== 'type' && rule.value[key] != null && rule.value[key] !== '')) { pendingKind.value = value; return }
+  pendingKind.value = undefined
+  emit('patch', fields)
+}
 function chooseKind({ key }: { key: string | number }) { changeKind(key as CalculationKind) }
 </script>
 <style scoped>
 .node-editor__identity-error { grid-column:1/-1; margin:4px 0; font-size:12px; color:var(--ant-error-color,#ff4d4f); line-height:1.6 }
 .node-editor { min-width:0; container-type:inline-size; font-size:var(--fs-14,14px) }
+.node-editor__confirmation { margin-bottom:16px }
 .node-editor__identity { display:grid; grid-template-columns:minmax(0,1fr) minmax(64px,40%); align-items:center; gap:4px 12px; margin-bottom:16px }
 .node-editor__reference { grid-column:1/-1; justify-self:start }
 .node-editor__name { min-width:0 }

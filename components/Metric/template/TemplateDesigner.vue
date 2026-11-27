@@ -33,6 +33,7 @@
         <component v-if="referencing && pickSource?.editor" :is="pickSource.editor" />
         <template v-else>
         <a-alert v-if="referenceError" type="error" show-icon :message="t('inputReferenceFailed')" closable @close="referenceError = false" />
+        <a-button v-if="selection && invalid && !disabled" type="link" size="small" @click="revert"><AIcon type="UndoOutlined" />{{ t('revertNode') }}</a-button>
         <TemplateNodeEditor v-if="selection" :key="`${nodeKey(selection)}-${editorVersion}`" :template="view" :node="selection" :disabled="disabled" :published="published" :calculators="calculators" @patch="patch" @invalid="invalid = $event" @messages="setMessages">
           <template v-if="pickSource && !published && selection.kind === 'input'" #input-reference><a-button type="link" size="small" :disabled="disabled || invalid" :loading="referencing" @click="referenceInput"><AIcon type="CopyOutlined" />{{ t('inputReference') }}</a-button></template>
         </TemplateNodeEditor>

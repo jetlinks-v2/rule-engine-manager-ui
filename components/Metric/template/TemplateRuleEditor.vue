@@ -13,11 +13,13 @@
     </template>
     <template v-else-if="kind === 'temporal'">
       <section v-for="phase in temporalPhases" :key="phase.field" class="rule-editor__phase">
-        <div class="rule-editor__phase-title"><AIcon :type="phase.icon" /><span>{{ t('sentenceWhen') }}</span><small>{{ t(phase.label) }}</small></div>
-        <TemplateFormulaEditor :model-value="rule.temporalCondition?.[phase.field] || ''" :tree="phase.field === 'enterExpression' ? rule.temporalCondition?.enterTree : rule.temporalCondition?.exitTree" :references="formulaReferences" :disabled="disabled" conditions @change="updateCondition(phase.field, $event)" @invalid="setConditionInvalid(phase.key, $event)" />
+        <div class="rule-editor__phase-title"><AIcon :type="phase.icon" /><span>{{ t('sentenceWhen') }}</span><small>{{ t(phase.label) }}</small><a-button v-if="!disabled" type="text" size="small" :aria-label="`${t('editCondition')} · ${t(phase.label)}`" :aria-expanded="editingPhase === phase.field" :disabled="invalidConditions.size > 0" @click="editingPhase = editingPhase === phase.field ? undefined : phase.field">{{ t(editingPhase === phase.field ? 'collapseEditor' : 'editCondition') }}</a-button></div>
+        <TemplateFormulaEditor v-if="editingPhase === phase.field" :model-value="rule.temporalCondition?.[phase.field] || ''" :tree="phase.field === 'enterExpression' ? rule.temporalCondition?.enterTree : rule.temporalCondition?.exitTree" :references="formulaReferences" :disabled="disabled" conditions @change="updateCondition(phase.field, $event)" @invalid="setConditionInvalid(phase.key, $event)" />
+        <div v-else class="rule-editor__phase-summary"><TemplateFormulaDisplay v-if="ruleExpression(rule,phase.field).trim()" :template="displayTemplate" :rule="rule" :expression="ruleExpression(rule,phase.field)" :calculators="calculators" compact /><span v-else class="rule-editor__muted">{{ t('notConfigured') }}</span></div>
         <div class="rule-editor__timing"><span>{{ t('conditionHeldFor') }}</span><TemplateDuration :model-value="rule.temporalCondition?.[phase.duration]" :disabled="disabled" @update:model-value="temporal(phase.duration, $event)" /><span>{{ t(phase.result) }}{{ t('sentenceEnd') }}</span></div>
       </section>
-      <div class="rule-editor__timing"><AIcon type="DisconnectOutlined" /><span>{{ t('sentenceNoDataFor') }}</span><TemplateDuration :model-value="rule.temporalCondition?.maxNoData" :disabled="disabled" @update:model-value="temporal('maxNoData', $event)" /><span>{{ t('sentenceInterrupted') }}{{ t('sentenceEnd') }}</span></div>
+      <div class="rule-editor__timing"><AIcon type="DisconnectOutlined" /><span>{{ t(rule.temporalCondition?.maxNoData ? 'sentenceNoDataFor' : 'maxNoData') }}</span><TemplateDuration :model-value="rule.temporalCondition?.maxNoData" :min="0.001" :empty-label="t('requiredDuration')" :disabled="disabled" @update:model-value="temporal('maxNoData', $event)" /><span v-if="rule.temporalCondition?.maxNoData">{{ t('sentenceInterrupted') }}{{ t('sentenceEnd') }}</span></div>
+      <small v-if="!rule.temporalCondition?.maxNoData">{{ t('noDataTimeoutRequired') }}</small>
     </template>
     <TemplateAlgorithmEditor v-else :template="template" :rule="rule" :disabled="disabled" :calculators="calculators"
       @patch="emit('patch', $event)" @invalid="setCalculatorInvalid" />
@@ -95,6 +97,7 @@ const referenceOptions = computed(() => references.value.map(item => referenceCh
 const calculatorInvalid = ref(false)
 const formulaInvalid = ref(false)
 const invalidConditions = reactive(new Set<string>())
+const editingPhase = ref<'enterExpression' | 'exitExpression' | undefined>(kind.value === 'temporal' && !ruleExpression(props.rule,'enterExpression').trim() ? 'enterExpression' : undefined)
 const conditionEditing = ref(false)
 const dependenciesEditing = ref(false)
 const hasCondition = computed(() => !!ruleExpression(props.rule,'applicabilityExpression').trim())
@@ -110,6 +113,7 @@ watch(kind, () => {
   calculatorInvalid.value = false
   invalidConditions.delete('enter')
   invalidConditions.delete('exit')
+  editingPhase.value = kind.value === 'temporal' && !ruleExpression(props.rule,'enterExpression').trim() ? 'enterExpression' : undefined
   reportInvalid()
 }, { flush: 'sync' })
 function clearCondition() {
@@ -156,6 +160,8 @@ function changeTiming(value: 'onEvent' | 'onSchedule') {
 .rule-editor__phase + .rule-editor__phase { margin-top:16px }
 .rule-editor__phase-title { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:13px }
 .rule-editor__phase-title small { margin-left:auto; color:var(--ink-3); font-size:12px }
+.rule-editor__phase-title > .ant-btn { margin-left:auto; padding:0 }
+.rule-editor__phase-summary { min-width:0; line-height:1.8 }
 .rule-editor__timing { display:flex; align-items:center; gap:var(--space-2,8px); flex-wrap:wrap; margin:var(--space-3,12px) 0 }
 .rule-editor__timing > .rule-editor__trigger { width:auto; flex:0 1 auto; max-width:100%; color:var(--accent) }
 .rule-editor__timing > .anticon,.rule-editor__condition-summary > :first-child,.rule-editor__dependencies > :first-child { color:var(--ink-3); flex:none }

@@ -1,5 +1,11 @@
+import { metricJapaneseMessages } from './ja'
+
 export const metricMessages = {
+  ja: metricJapaneseMessages,
   zh: {
+    actionFailed:'操作未完成',
+    featureMetric:'设为共享重点',unfeatureMetric:'取消共享重点',featuredMetric:'共享重点指标',dragMetric:'拖动调整同组指标顺序',adjustOrder:'调整顺序',moveUp:'上移',moveDown:'下移',
+    calculationChangeConfirm:'切换为“{method}”将清空当前方式的公式、窗口及状态配置。', changeCalculation:'切换并重置', parameterUnused:'尚未用于计算', requiredDuration:'设置时长', noDataTimeoutRequired:'请填写大于 0 的中断时长，发布时需要此项。',
     liveUpdates:'实时更新', liveUpdatesHint:'收到新结果即更新', updateSeconds:'每 {seconds} 秒更新', updateSecondsHint:'将 {seconds} 秒内的变化合并展示',
     historyRawHint:'查看实际保存的结果，记录频率由历史记录设置决定', historyOperationHint_avg:'各时段内已保存有效结果的平均值', historyOperationHint_min:'各时段内已保存结果的最低值', historyOperationHint_max:'各时段内已保存结果的最高值', historyOperationHint_last:'各时段内最后一条已保存的有效结果', historyBucketAutoHint:'随查看时段自动调整间隔', historyBucketHint:'每个时段展示一个统计结果',
     intervalStartUnknownHint:'开始时间未知，暂无法计算完整时长',
@@ -216,7 +222,7 @@ export const metricMessages = {
     templates: '指标模板', newTemplate: '创建模板', published: '已发布', draft: '草稿', release: '发布',
     searchTemplates: '搜索模板，或添加筛选条件', allCategories: '全部', publicationStatus: '发布状态', noMatchingTemplates: '没有匹配的模板', clearFilters: '清除筛选',
     newVersion: '创建新版本', selectable: '可用于新配置', notSelectable: '不再用于新配置',
-    available: '设为可选', unavailableAction: '设为不可选', templateName: '模板名称', templateId: '模板标识',
+    available: '允许用于新配置', unavailableAction: '不再用于新配置', templateName: '模板名称', templateId: '模板标识',
     version: '版本', inputs: '输入', rules: '计算规则', outputs: '输出', basic: '基本信息',
     declarationId: '标识', label: '名称', unit: '单位', property: '结果属性', required: '数据必需', optional: '可选',
     addItem: '添加', remove: '移除', editableParameter: '业务可修改', parameterType: '类型',
@@ -237,6 +243,9 @@ export const metricMessages = {
     discardEdits: '离开后将放弃未保存的修改，是否继续？', continue: '继续', rangeStart: '开始时间', rangeEnd: '结束时间'
   },
   en: {
+    actionFailed:'Could not complete the action',
+    featureMetric:'Mark as a shared priority',unfeatureMetric:'Remove shared priority',featuredMetric:'Shared priority metric',dragMetric:'Drag to reorder metrics in this group',adjustOrder:'Reorder',moveUp:'Move up',moveDown:'Move down',
+    calculationChangeConfirm:'Switching to “{method}” clears the current formula, window and state configuration.', changeCalculation:'Switch and reset', parameterUnused:'Not used in calculations', requiredDuration:'Set duration', noDataTimeoutRequired:'Enter a timeout greater than zero. This is required for publishing.',
     liveUpdates:'Live updates', liveUpdatesHint:'Update as new results arrive', updateSeconds:'Update every {seconds}s', updateSecondsHint:'Combine changes within {seconds}s',
     historyRawHint:'View stored results at the configured recording frequency', historyOperationHint_avg:'Average stored valid results in each interval', historyOperationHint_min:'Lowest stored value in each interval', historyOperationHint_max:'Highest stored value in each interval', historyOperationHint_last:'Last stored valid result in each interval', historyBucketAutoHint:'Adjust intervals to the selected period', historyBucketHint:'Show one result per interval',
     intervalStartUnknownHint:'Start time is unknown; full duration is unavailable',
@@ -456,7 +465,7 @@ export const metricMessages = {
     templates: 'Metric templates', newTemplate: 'Create template', published: 'Published', draft: 'Draft',
     searchTemplates: 'Search templates or add filters', allCategories: 'All', publicationStatus: 'Publication status', noMatchingTemplates: 'No matching templates', clearFilters: 'Clear filters',
     release: 'Publish', newVersion: 'Create new version', selectable: 'Available for new configurations',
-    notSelectable: 'Unavailable for new configurations', available: 'Make available', unavailableAction: 'Make unavailable',
+    notSelectable: 'Unavailable for new configurations', available: 'Allow new configurations', unavailableAction: 'Stop use in new configurations',
     templateName: 'Template name', templateId: 'Template ID', version: 'Version', inputs: 'Inputs', rules: 'Calculation rules',
     outputs: 'Outputs', basic: 'Basic information', declarationId: 'ID', label: 'Name', unit: 'Unit',
     property: 'Result property', required: 'Data required', optional: 'Optional', addItem: 'Add', remove: 'Remove',

@@ -19,6 +19,8 @@ export const metricApi: MetricApi = {
   simulateConfig: async simulation => result(await http.post<MetricSimulationResponse>('/metric/configs/simulate', simulation, options)),
   selectable: async () => result(await http.get<MetricTemplateEntity[]>('/metric/configs/templates', undefined, options)),
   saveConfig: async config => result(await http.post<MetricConfig>('/metric/configs', config, options)),
+  setFeatured: async (configId, revision, featured) => result(await http.post<MetricConfig>(`/metric/configs/${id(configId)}/featured`, { revision, featured }, options)),
+  orderConfigs: async request => result(await http.post<MetricConfig[]>('/metric/configs/_order', request, options)),
   removeConfig: async configId => { result(await http.remove(`/metric/configs/${id(configId)}`, undefined, options)) },
   queryTemplates: async query => result(await http.post<{ data: MetricTemplateEntity[]; total: number }>('/metric/templates/_query', query, options)),
   saveTemplate: async (template, editRevision) => result(await http.post<MetricTemplateEntity>(`/metric/templates${editRevision === undefined ? '' : `?editRevision=${editRevision}`}`, template, options)),

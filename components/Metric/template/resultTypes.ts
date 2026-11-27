@@ -15,7 +15,7 @@ function scalar(schema:ResultSchema):ResultSchema {
   const value=(schema.elements as {value:unknown}[] | undefined)?.[0]?.value
   return type(typeof value === 'number' ? 'double' : typeof value === 'boolean' ? 'boolean' : 'string')
 }
-const numericType = (schema:ResultSchema) => numeric.includes(String(scalar(schema).type))
+export const numericType = (schema:ResultSchema) => numeric.includes(String(scalar(schema).type))
 type Family={ranges?:{outputs?:{id:string;aggregation?:string;timeAggregation?:string}[]}[]}
 const familyOutput=(rule:TemplateRule,id:string)=>(rule.windowFamily as Family | undefined)?.ranges?.flatMap(range=>range.outputs || []).find(output=>output.id === id)
 function aggregated(source:ResultSchema | undefined,aggregation?:string,timeAggregation?:string):ResultSchema | undefined {

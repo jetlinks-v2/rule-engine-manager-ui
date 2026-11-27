@@ -3,6 +3,7 @@ import { metricApi } from './api'
 import { copy, errorText, outputId, metricDataTarget, metricValueMatches, newerMetricValue } from './service'
 import { loadMetricLatest, metricLatestBatches } from './extensions/latestBatch'
 import { presentationSettings, primaryMetricOutput, summaryMetricOutputs } from './extensions/presentationSettings'
+import { compareMetricPresentation, metricFeatured } from './featured'
 import type { MetricApi, MetricConfig, MetricContext, MetricLatest, MetricReference, MetricResultFrame, MetricRuntime, MetricTemplate, MetricValue } from './types'
 
 const templateRevisionKey = (config: MetricConfig) => JSON.stringify([config.templateId, config.templateVersion, config.templateRevision || 1])
@@ -20,6 +21,8 @@ export function useMetricPanel(context: Ref<MetricContext>, api: MetricApi = met
   const loading = ref(false)
   const error = ref('')
   const busyId = ref('')
+  const busyAction = ref<'config' | 'featured' | 'order'>('config')
+  const stableOrder = ref<string[]>()
   const selectedId = ref('')
   const selectedOutputId = ref('')
   const editorOpen = ref(false)
@@ -46,7 +49,13 @@ export function useMetricPanel(context: Ref<MetricContext>, api: MetricApi = met
   const selectedLatest = computed<MetricLatest | undefined>(() => reference.value ? {
     configId: reference.value.configId, outputs: outputs.value[reference.value.configId] || {}, runtime: runtimes.value[reference.value.configId]
   } : undefined)
-  const cards = computed(() => configurations.value.flatMap(config => config.id
+  const displayedConfigurations = computed(() => {
+    const sorted = [...configurations.value].sort(compareMetricPresentation)
+    if (!stableOrder.value) return sorted
+    const positions = new Map(stableOrder.value.map((id, index) => [id, index]))
+    return sorted.sort((a, b) => (positions.get(a.id!) ?? positions.size) - (positions.get(b.id!) ?? positions.size))
+  })
+  const cards = computed(() => displayedConfigurations.value.flatMap(config => config.id
     ? (templates.value[config.id]?.outputs || (api.watchResults && !itemErrors.value[config.id] ? [{ metricId: '' }] : [])).map(output => ({ config, output, reference: { configId: config.id!, outputId: outputId(output) } })) : []))
   const cardGroups = computed(() => {
     const groups = new Map<string, typeof cards.value>()
@@ -113,28 +122,66 @@ export function useMetricPanel(context: Ref<MetricContext>, api: MetricApi = met
   }
 
   /** 写入只属于发起时的对象与操作；轮询不改变该身份，退场和对象切换会撤销它。 */
-  async function writeConfig(config: MetricConfig, action: (id: string) => Promise<unknown>, feedback = error, onSaved?: () => void): Promise<boolean> {
+  async function writeConfig<T>(config: MetricConfig, action: (id: string) => Promise<T>, feedback = error,
+    afterSaved?: (saved: T, current: () => boolean) => void | Promise<void>, kind: typeof busyAction.value = 'config'): Promise<boolean> {
     if (!active || !canManage(config) || !config.id) return false
     const epoch = ownerEpoch
     const operation = ++writeSequence
     const current = () => active && epoch === ownerEpoch && operation === writeSequence
     busyId.value = config.id
+    busyAction.value = kind
     feedback.value = ''
     try {
-      await action(config.id)
+      const saved = await action(config.id)
       if (current()) {
-        onSaved?.()
-        await refreshAfterWrite(current)
+        if (afterSaved) await afterSaved(saved, current)
+        else await refreshAfterWrite(current)
       }
       return true
     } catch (cause) {
       if (current()) feedback.value = errorText(cause)
       return false
-    } finally { if (current()) busyId.value = '' }
+    } finally { if (current()) { busyId.value = ''; busyAction.value = 'config' } }
   }
-  function invalidateWrites() { ownerEpoch++; busyId.value = '' }
+  function invalidateWrites() { ownerEpoch++; busyId.value = ''; busyAction.value = 'config' }
+
+  function applyPresentation(saved: MetricConfig[]) {
+    if (busyAction.value === 'order' && stableOrder.value) {
+      const ids = saved.map(config => config.id!), changed = new Set(ids)
+      let index = 0
+      stableOrder.value = displayedConfigurations.value.map(config => changed.has(config.id!) ? ids[index++] : config.id!)
+    }
+    const byId = new Map(saved.map(config => [config.id, config]))
+    configurations.value = configurations.value.map(config => {
+      const next = byId.get(config.id)
+      return next && next.revision >= config.revision
+        ? { ...config, presentation: next.presentation, revision: next.revision } : config
+    })
+    // 保存前发起的读取可能仍持有旧展示声明；重新读取不阻塞已确认的保存。
+    if (inFlight) { generation++; inFlight = undefined; void refresh(false) }
+  }
+
+  const canFeature = (config: MetricConfig) => canManage(config) && !!api.setFeatured
+  const orderGroup = (config: MetricConfig) => displayedConfigurations.value.filter(item => canManage(item)
+    && metricFeatured(item) === metricFeatured(config))
+  const canOrder = (config: MetricConfig) => canManage(config) && !!api.orderConfigs
+    && orderGroup(config).length > 1 && orderGroup(config).length <= 200
+  function setFeatured(config: MetricConfig) {
+    if (!canFeature(config) || busyId.value) return Promise.resolve(false)
+    stableOrder.value ??= displayedConfigurations.value.map(item => item.id!)
+    return writeConfig(config, id => api.setFeatured!(id, config.revision, !metricFeatured(config)), actionError,
+      saved => applyPresentation([saved]), 'featured')
+  }
+  function reorder(config: MetricConfig, ids: string[]) {
+    if (!canOrder(config) || busyId.value) return Promise.resolve(false)
+    const group = orderGroup(config), byId = new Map(group.map(item => [item.id!, item]))
+    if (ids.length !== group.length || new Set(ids).size !== ids.length || ids.some(id => !byId.has(id))) return Promise.resolve(false)
+    return writeConfig(config, () => api.orderConfigs!({ ownerType: context.value.ownerType, ownerId: context.value.ownerId,
+      featured: metricFeatured(config), items: ids.map(id => ({ id, revision: byId.get(id)!.revision || 0 })) }), actionError, applyPresentation, 'order')
+  }
 
   /** Manual refresh, activation and poll share one owner request; an owner switch detaches the old task. */
+  function resetPresentationOrder() { stableOrder.value = undefined }
   function refresh(readValues = true): Promise<void> {
     if (inFlight) return inFlight
     const task = readSnapshot(readValues)
@@ -234,8 +281,9 @@ export function useMetricPanel(context: Ref<MetricContext>, api: MetricApi = met
     await writeConfig(config, id => api.getConfig(id).then(saved => api.saveConfig({ ...saved, state: enabled ? 'enabled' : 'disabled' })))
   }
   async function remove(config: MetricConfig): Promise<boolean> {
-    return writeConfig(config, id => api.removeConfig(id), actionError, () => {
+    return writeConfig(config, id => api.removeConfig(id), actionError, (_saved, current) => {
       if (selectedId.value === config.id || editing.value?.id === config.id) closeDrawer()
+      return refreshAfterWrite(current)
     })
   }
   function stop() { scheduleGeneration++; if (timer) clearTimeout(timer); timer = undefined }
@@ -327,6 +375,7 @@ export function useMetricPanel(context: Ref<MetricContext>, api: MetricApi = met
   watch(refreshInterval, () => { stopSubscriptions(); synchronizeSubscriptions() })
   watch([() => context.value.ownerType, () => context.value.ownerId], () => {
     generation++
+    resetPresentationOrder()
     stopSubscriptions()
     invalidateWrites()
     inFlight = undefined
@@ -346,11 +395,11 @@ export function useMetricPanel(context: Ref<MetricContext>, api: MetricApi = met
   watch(() => context.value.editable, editable => { if (!editable && editorOpen.value) closeDrawer() }, { flush: 'sync' })
   onMounted(() => { document.addEventListener('visibilitychange', visibility); void poll() })
   onActivated(() => { if (!active) { active = true; void poll() } })
-  onDeactivated(() => { active = false; generation++; invalidateWrites(); stop(); stopSubscriptions() })
+  onDeactivated(() => { active = false; generation++; invalidateWrites(); resetPresentationOrder(); stop(); stopSubscriptions() })
   onScopeDispose(() => { active = false; generation++; invalidateWrites(); stop(); stopSubscriptions(); document.removeEventListener('visibilitychange', visibility) })
   async function rename(config: MetricConfig, name: string) {
     await writeConfig(config, id => api.getConfig(id).then(saved => api.saveConfig({ ...saved, name })))
   }
-  return { configurations, templates, outputs, runtimes, selectedLatest, itemErrors, inaccessibleIds, latestErrors, actionError, loading, error, busyId, selectedId, selectedOutputId,
-    selected, selectedOutput, reference, cards, cardGroups, select, closeDetail, editorOpen, editing, openEditor, closeDrawer, dismissDrawer, takeFocusReference, saved, refresh, setEnabled, rename, remove, canManage, refreshInterval, receiveResult }
+  return { configurations, templates, outputs, runtimes, selectedLatest, itemErrors, inaccessibleIds, latestErrors, actionError, loading, error, busyId, busyAction, selectedId, selectedOutputId,
+    selected, selectedOutput, reference, cards, cardGroups, select, closeDetail, editorOpen, editing, openEditor, closeDrawer, dismissDrawer, takeFocusReference, saved, refresh, resetPresentationOrder, setEnabled, rename, remove, canManage, canFeature, canOrder, orderGroup, setFeatured, reorder, refreshInterval, receiveResult }
 }

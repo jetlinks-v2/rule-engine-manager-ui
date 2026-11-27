@@ -421,8 +421,47 @@ function mountRule(rule) {
   app.config.warnHandler = () => {}; app.mount(root)
   return { root, props, patches, invalid, close: () => app.unmount() }
 }
-const switchKind = (editor, key) => walk(editor.root, node => node.type === 'a-menu' && node.props['aria-label'] === 'calculationMethod')[0].props.onClick({ key })
+const requestKind = (editor, key) => walk(editor.root, node => node.type === 'a-menu' && node.props['aria-label'] === 'calculationMethod')[0].props.onClick({ key })
+const switchKind = async (editor, key) => {
+  requestKind(editor, key); await flush()
+  const confirm = walk(editor.root, node => node.type === 'a-button' && textContent(node) === 'changeCalculation')[0]
+  if (confirm) { confirm.props.onClick(); await flush() }
+}
 const inlineField = (root, label) => walk(root, node => node.type === 'external-shell' && node.props['component-props']?.['aria-label'] === label)[0]
+test('切换计算方式先确认，取消保留条件，确认清理互斥字段，撤权后旧确认无效', async () => {
+  const original = { id:'r', temporalCondition:{ enterExpression:'temperature >= 80', exitExpression:'temperature <= 75', dwell:'PT10S', recovery:'PT5S', maxNoData:'PT30S' }, custom:false }
+  const editor = mountRule(structuredClone(original))
+  const action = label => walk(editor.root,node=>node.type === 'a-button' && textContent(node) === label)[0]
+  try {
+    requestKind(editor,'expression'); await flush()
+    assert.deepEqual(editor.props.rule,original); assert.ok(action('changeCalculation'))
+    action('cancel').props.onClick(); await flush()
+    assert.deepEqual(editor.props.rule,original); assert.equal(action('changeCalculation'),undefined)
+    await switchKind(editor,'expression')
+    assert.equal(editor.props.rule.temporalCondition,undefined); assert.equal(editor.props.rule.expression,''); assert.equal(editor.props.rule.custom,false)
+    editor.props.rule.expression='temperature + 1'; await flush()
+    requestKind(editor,'statistics'); await flush()
+    const stale=action('changeCalculation').props.onClick
+    editor.props.disabled=true; await flush(); stale(); await flush()
+    assert.equal(editor.props.rule.expression,'temperature + 1'); assert.equal(editor.props.rule.aggregation,undefined)
+  } finally { editor.close() }
+})
+
+test('持续条件以摘要核对，按需编辑单项，无效公式保留编辑且缺数时长明确必填', async () => {
+  const editor=mountRule({id:'r',temporalCondition:{enterExpression:'temperature > 80',exitExpression:'temperature < 75',dwell:'PT10S',recovery:'PT5S'}})
+  const formulas=()=>walk(editor.root,node=>node.type === 'formula-boundary')
+  const action=field=>walk(editor.root,node=>node.type === 'a-button' && node.props['aria-label'] === `editCondition · ${field}`)[0]
+  try {
+    assert.equal(formulas().length,0);assert.ok(textContent(editor.root).includes('noDataTimeoutRequired'))
+    action('enterCondition').props.onClick();await flush();assert.equal(formulas().length,1)
+    assert.equal(formulas()[0].props['model-value'],'temperature > 80')
+    formulas()[0].props.onInvalid(true);await flush();assert.equal(action('exitCondition').props.disabled,true)
+    formulas()[0].props.onInvalid(false);await flush();action('exitCondition').props.onClick();await flush()
+    assert.equal(formulas().length,1);assert.equal(formulas()[0].props['model-value'],'temperature < 75')
+    assert.equal(editor.props.rule.temporalCondition.dwell,'PT10S');assert.equal(editor.props.rule.temporalCondition.recovery,'PT5S')
+  } finally {editor.close()}
+})
+
 test('公式编辑边界复用别名，显式输入与依赖同步，保留输入约束，禁用不提交', async () => {
   const editor = mountRule({ id: 'rise', expression: '#t + 1', dependsOn: ['temperature'], inputs: [{ id: 't', metricId: 'temperature', maxAge: 'PT10S' }] })
   try {
@@ -437,7 +476,7 @@ test('公式编辑边界复用别名，显式输入与依赖同步，保留输�
     assert.deepEqual(editor.props.rule.dependsOn, ['temperature', 'ambient'])
     assert.equal(editor.props.rule.inputs[0].maxAge, 'PT10S'); assert.equal(editor.props.rule.inputs[1].metricId, 'ambient')
     formula().props.onInvalid(true); await flush()
-    switchKind(editor, 'temporal'); await flush()
+    await switchKind(editor, 'temporal'); await flush()
     assert.equal(editor.patches.length, 2); assert.equal(editor.invalid.at(-1), false)
     assert.equal(editor.props.rule.expression, undefined)
     assert.ok(editor.props.rule.temporalCondition)
@@ -471,7 +510,7 @@ test('未完成输入关联仍可更换计算方式，避免困在算法编辑�
   try {
     await flush()
     assert.equal(editor.invalid.at(-1), false)
-    switchKind(editor, 'expression')
+    await switchKind(editor, 'expression')
     await flush()
     assert.equal(editor.props.rule.calculator, undefined)
   } finally { editor.close() }
@@ -482,18 +521,19 @@ test('持续条件未完成时仍可切换算法，旧错误清除且引用和�
     temporalCondition:{enterExpression:'',exitExpression:'',dwell:'PT3M',recovery:'PT1M'}})
   try {
     const formulas=walk(editor.root,node=>node.type==='formula-boundary')
-    formulas[0].props.onInvalid(true);formulas[1].props.onInvalid(true);await flush()
+    assert.equal(formulas.length,1)
+    formulas[0].props.onInvalid(true);await flush()
     assert.equal(editor.invalid.at(-1),true)
     const method=walk(editor.root,node=>node.type==='a-button' && node.props['aria-label']==='calculationMethod')[0]
     assert.equal(method.props.disabled,false)
-    switchKind(editor,'calculator');await flush()
+    await switchKind(editor,'calculator');await flush()
     assert.equal(editor.props.rule.temporalCondition,undefined)
     assert.equal(editor.props.rule.calculator.provider,'')
     assert.equal(editor.invalid.at(-1),false)
     assert.equal(editor.props.rule.name,'内存一分钟均值')
     assert.deepEqual(editor.props.rule.dependsOn,['temperature'])
     assert.equal(editor.props.rule.maxInputSkew,'PT10S')
-    switchKind(editor,'statistics');await flush()
+    await switchKind(editor,'statistics');await flush()
     assert.equal(editor.props.rule.aggregation,'avg')
     assert.equal(editor.props.rule.calculator,undefined)
   } finally {editor.close()}
@@ -504,11 +544,11 @@ test('算法YAML无效时可更换计算方式，禁用态仍不能切换', asyn
   try {
     walk(editor.root,node=>node.type==='external-shell' && node.props.language==='yaml')[0].props['onUpdate:modelValue']('{');await flush()
     assert.equal(editor.invalid.at(-1),true)
-    switchKind(editor,'statistics');await flush()
+    await switchKind(editor,'statistics');await flush()
     assert.equal(editor.invalid.at(-1),false)
     assert.equal(editor.props.rule.calculator,undefined)
     const count=editor.patches.length
-    editor.props.disabled=true;await flush();switchKind(editor,'temporal');await flush()
+    editor.props.disabled=true;await flush();await switchKind(editor,'temporal');await flush()
     assert.equal(editor.patches.length,count)
     assert.equal(editor.props.rule.aggregation,'avg')
   } finally {editor.close()}
@@ -521,7 +561,7 @@ test('更换计算方式不清除仍适用的附加条件草稿错误', async ()
     walk(summary,node=>node.type==='a-button')[0].props.onClick();await flush()
     const formulas=walk(editor.root,node=>node.type==='formula-boundary')
     formulas[1].props.onInvalid(true);await flush()
-    switchKind(editor,'statistics');await flush()
+    await switchKind(editor,'statistics');await flush()
     assert.equal(editor.props.rule.aggregation,'avg')
     assert.equal(editor.props.rule.applicabilityExpression,'temperature > 0')
     assert.equal(editor.invalid.at(-1),true)
@@ -705,13 +745,13 @@ test('已发布输出类型和汇总只读，未声明类型的旧输出不会�
 test('窗口统计通过来源/时长/统计方式组装真实规则；切回公式无残留字段', async () => {
   const editor = mountRule({ id: 'average', type: 'composite', expression: 'temperature', dependsOn: ['temperature'], window: { mode: 'none' } })
   try {
-    switchKind(editor, 'statistics'); await flush()
+    await switchKind(editor, 'statistics'); await flush()
     assert.equal(editor.props.rule.type, 'feature'); assert.equal(editor.props.rule.window.timeMode, 'event')
     inlineField(editor.root, 'statisticSource').props.onChange('ambient'); await flush()
     assert.equal(editor.props.rule.sourceMetric, 'ambient'); assert.deepEqual(editor.props.rule.dependsOn, ['ambient'])
     inlineField(editor.root, 'windowRange').props.onChange('latestN'); await flush()
     assert.equal(editor.props.rule.window.size, '5'); assert.equal(editor.props.rule.window.emitPolicy, 'onEvent')
-    switchKind(editor, 'expression'); await flush()
+    await switchKind(editor, 'expression'); await flush()
     assert.equal(editor.props.rule.window, undefined); assert.equal(editor.props.rule.aggregation, undefined)
   } finally { editor.close() }
 })
@@ -722,7 +762,7 @@ test('公式和算法可定时；随数据的算法不残留不支持的window�
     const trigger = () => inlineField(editor.root, 'calculationTrigger')
     trigger().props.onChange('onSchedule'); await flush()
     assert.equal(editor.props.rule.window.mode, 'none'); assert.equal(editor.props.rule.window.emitInterval, 'PT5M')
-    switchKind(editor, 'calculator'); await flush()
+    await switchKind(editor, 'calculator'); await flush()
     trigger().props.onChange('onSchedule'); await flush(); trigger().props.onChange('onEvent'); await flush()
     assert.equal(editor.props.rule.window, undefined)
     editor.props.disabled = true; await flush(); trigger().props.onChange('onSchedule'); assert.equal(editor.props.rule.window, undefined)
@@ -775,10 +815,10 @@ test('节点名称与标识首行，计算方式归入用途标题，类型切�
     assert.equal(walk(editor.root, node => node.type === 'a-menu-item').length, 4)
     assert.equal(walk(editor.root, node => node.props.description && node.props.icon).length, 4, 'all method choices reuse the icon and description component')
     const count = editor.patches.length
-    switchKind(editor, 'expression'); await flush()
+    await switchKind(editor, 'expression'); await flush()
     assert.equal(editor.patches.length, count)
     assert.equal(editor.props.rule.expression, 'temperature')
-    switchKind(editor, 'statistics'); await flush()
+    await switchKind(editor, 'statistics'); await flush()
     assert.equal(editor.props.rule.aggregation, 'avg')
     assert.equal(editor.props.rule.expression, undefined)
   } finally { editor.close() }

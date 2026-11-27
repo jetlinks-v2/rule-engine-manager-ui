@@ -5,6 +5,7 @@ import {collectMetricResources} from '../extensions/registry'
 import {metricOutputName} from '../presentation'
 import {localizedTemplate} from '../template/text'
 import { metricValueMatches, newerMetricValue } from '../service'
+import {compareMetricPresentation} from '../featured'
 import type {MetricApi,MetricConfig,MetricContext,MetricLatest,MetricObjectBindingView,MetricResultFrame,MetricTemplate,MetricTemplateOutput,MetricValue} from '../types'
 
 export interface MetricBindingCard {
@@ -115,5 +116,7 @@ export function useMetricBindingResults(links:Ref<MetricObjectBindingView[]>,loc
     })
   }
   watch([links,locale],refresh,{immediate:true})
-  return {query,cards:computed(()=>query.data.value||[]),refresh,receiveResult}
+  const cards=computed(()=>[...(query.data.value || [])].sort((a,b)=>
+    compareMetricPresentation(a.config || {id:a.key},b.config || {id:b.key})))
+  return {query,cards,refresh,receiveResult}
 }

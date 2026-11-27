@@ -12,7 +12,7 @@
   <MetricExtension v-if="provider?.presentationFields" :content="provider.presentationFields" :content-props="{ modelValue, defaults, disabled }" @update:model-value="change" @failed="emit('failed')">
     <template #fallback><a-alert type="warning" show-icon :message="t('presentationFailed')" /></template>
   </MetricExtension>
-  <div v-else class="metric-display-clause">
+  <div v-else-if="showDecimals" class="metric-display-clause">
       <AIcon type="NumberOutlined" /><span>{{ t('decimals') }}</span>
       <a-space>
         <a-input-number :value="decimals" :min="0" :max="8" :precision="0" :disabled="disabled" :placeholder="inherited" @update:value="setDecimals" />
@@ -21,7 +21,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
+import { metricCalculatorsKey } from '../calculatorContext'
+import { metricValueSchema } from '../valueSemantics'
+import { numericType } from '../template/resultTypes'
 import { useI18n } from 'vue-i18n'
 import MetricExtension from './MetricExtension.vue'
 import SelectOption from '@jetlinks-web-core/components/SelectOption/index.vue'
@@ -33,6 +36,11 @@ import type { MetricPresentationProvider, MetricTemplate } from '../types'
 const props = withDefaults(defineProps<{ modelValue: Readonly<Record<string, unknown>>; defaults?: Readonly<Record<string, unknown>>; disabled?: boolean; provider?: MetricPresentationProvider; template?: MetricTemplate }>(), { defaults: () => ({}) })
 const emit = defineEmits<{ (event: 'update:modelValue', value: Record<string, unknown>): void; (event: 'failed'): void }>()
 const { t } = useI18n({ useScope: 'local', messages: metricMessages })
+const calculators = inject(metricCalculatorsKey, undefined)
+const showDecimals = computed(() => !props.template || props.template.outputs.some(output => {
+  const schema = output.valueType ? { type:output.valueType } : metricValueSchema(props.template!, output.metricId, calculators?.value)
+  return !schema?.type || schema.type !== 'enum' && numericType(schema)
+}))
 const decimals = computed(() => typeof props.modelValue.decimals === 'number' ? props.modelValue.decimals : undefined)
 const inherited = computed(() => typeof props.defaults.decimals === 'number' ? String(props.defaults.decimals) : t('automaticDisplay'))
 const outputOptions = computed(() => props.template?.outputs.map(output => ({ value:outputId(output), label:metricOutputName(output, props.template) || t('unnamedOutput'), icon:'ExportOutlined', description:[outputId(output), output.unit].filter(Boolean).join(' · ') })) || [])

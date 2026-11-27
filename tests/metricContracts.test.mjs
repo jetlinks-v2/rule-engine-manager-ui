@@ -29,6 +29,26 @@ const template = () => ({
   outputs: [{ metricId: 'hourEnergy', property: 'stored_energy', label: '小时电量', unit: 'kWh' }]
 })
 
+test('来源全部绑定并解析成功后清除旧绑定错误，解析失败和独立保存错误保留', async () => {
+  const scope=effectScope(),raw=template(),initial={...config(),inputMappings:{}}
+  let finishDescription
+  const picker=Object.assign(async()=>({mapping:config().inputMappings.meter,label:'电表'}),{describe:()=>new Promise(resolve=>{finishDescription=resolve})})
+  const editor=scope.run(()=>useMetricEditor(ref({ownerType:'space',ownerId:'floor2',editable:true}),ref(initial),ref(picker),{
+    getConfig:async()=>initial,selectable:async()=>[],configTemplate:async()=>raw,
+  }))
+  try {
+    await flush();assert.equal(editor.ready(),false);assert.equal(editor.errorKind.value,'binding')
+    await editor.choose(raw.inputDefinitions[0]);await flush()
+    assert.equal(editor.sourcesLoading.value,true);assert.equal(editor.errorKind.value,'binding')
+    finishDescription({meter:{error:'来源不可用'}});await flush();assert.equal(editor.errorKind.value,'binding')
+    const retry=editor.refreshSources();finishDescription({meter:{label:'电表'}});await retry;await flush()
+    assert.equal(editor.missingInputs.value.length,0);assert.equal(editor.errorKind.value,'');assert.equal(editor.error.value,'')
+    editor.errorKind.value='save';editor.error.value='修订冲突'
+    const reload=editor.refreshSources();finishDescription({meter:{label:'电表'}});await reload;await flush()
+    assert.equal(editor.errorKind.value,'save');assert.equal(editor.error.value,'修订冲突')
+  } finally {scope.stop()}
+})
+
 test('旧模板缺类型时按已绑定来源声明筛选，不改写模板；失效来源不提供类型', async () => {
   const scope=effectScope(), requests=[], raw=template()
   const picker=Object.assign(async request=>{requests.push(request)}, {describe:async()=>({meter:{valueType:{type:'double'}}})})
