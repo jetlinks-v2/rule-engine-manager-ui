@@ -1,4 +1,4 @@
-import { onBeforeUnmount, ref, type ComputedRef } from 'vue';
+import { computed, onBeforeUnmount, ref, type ComputedRef } from 'vue';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { modify, updateRuleMetadata } from '../../../api/instance';
 
@@ -21,6 +21,7 @@ interface RuleEditorActionsOptions {
   ruleId: ComputedRef<string>;
   ruleName: ComputedRef<string>;
   ruleDescription: ComputedRef<string>;
+  hasPermission: (action: 'update' | 'action' | EditorTransferAction) => boolean;
   getRule: () => Record<string, any> | undefined;
   onRuleUpdated: (rule: Record<string, any>) => void;
   t: (key: string) => string;
@@ -32,7 +33,17 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
   const editorTransferActioning = ref<EditorTransferAction | ''>('');
   const ruleNameSaving = ref(false);
   const ruleDescriptionSaving = ref(false);
+  const canEdit = computed(() => options.hasPermission('update'));
   let editorActionDoneTimer: ReturnType<typeof window.setTimeout> | undefined;
+
+  // 入口状态与执行前检查共用当前菜单授权，避免抽屉打开后授权撤回仍可操作。
+  const isEditorActionDisabled = (action: EditorAction | EditorTransferAction) => (
+    !options.hasPermission(action === 'deploy' ? 'action' : action === 'save' ? 'update' : action)
+    || options.bridgeStatus.value !== 'ready'
+    || !!editorActioning.value
+    || !!editorTransferActioning.value
+    || options.bridgeActions.value[action] === false
+  );
 
   const clearEditorActionDone = () => {
     if (editorActionDoneTimer) {
@@ -79,7 +90,7 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
   };
 
   const handleEditorAction = async (action: EditorAction) => {
-    if (options.bridgeStatus.value !== 'ready' || !!editorActioning.value || options.bridgeActions.value[action] === false) {
+    if (isEditorActionDisabled(action)) {
       return;
     }
     clearEditorActionDone();
@@ -108,12 +119,7 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
   };
 
   const handleEditorTransfer = async (action: EditorTransferAction) => {
-    if (
-      options.bridgeStatus.value !== 'ready'
-      || !!editorActioning.value
-      || !!editorTransferActioning.value
-      || options.bridgeActions.value[action] === false
-    ) {
+    if (isEditorActionDisabled(action)) {
       return;
     }
     editorTransferActioning.value = action;
@@ -131,7 +137,7 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
 
   const handleRuleRename = async (value: string) => {
     const nextName = value.trim();
-    if (!options.ruleId.value || !nextName || nextName === options.ruleName.value || ruleNameSaving.value) {
+    if (!canEdit.value || !options.ruleId.value || !nextName || nextName === options.ruleName.value || ruleNameSaving.value) {
       return;
     }
 
@@ -158,7 +164,7 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
 
   const handleRuleDescriptionChange = async (value: string) => {
     const nextDescription = value.trim();
-    if (!options.ruleId.value || nextDescription === options.ruleDescription.value || ruleDescriptionSaving.value) {
+    if (!canEdit.value || !options.ruleId.value || nextDescription === options.ruleDescription.value || ruleDescriptionSaving.value) {
       return;
     }
 
@@ -186,6 +192,8 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
   onBeforeUnmount(clearEditorActionDone);
 
   return {
+    canEdit,
+    isEditorActionDisabled,
     editorActioning,
     editorActionDone,
     editorTransferActioning,

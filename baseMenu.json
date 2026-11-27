@@ -264,6 +264,94 @@
                 ]
               }
             ]
+          },
+          {
+            "id": "import",
+            "name": "导入",
+            "i18nMessages": {
+              "zh_CN": "导入",
+              "en_US": "Import",
+              "en": "Import",
+              "ja": "インポート",
+              "ja_JP": "インポート"
+            },
+            "permissions": [
+              {
+                "permission": "template",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "network-config",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "rule-instance",
+                "actions": [
+                  "query",
+                  "save",
+                  "execute"
+                ]
+              },
+              {
+                "permission": "notifier",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "datasource-config",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "export",
+            "name": "导出",
+            "i18nMessages": {
+              "zh_CN": "导出",
+              "en_US": "Export",
+              "en": "Export",
+              "ja": "エクスポート",
+              "ja_JP": "エクスポート"
+            },
+            "permissions": [
+              {
+                "permission": "template",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "network-config",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "rule-instance",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "notifier",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "datasource-config",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
           }
         ],
         "accessSupport": {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
-import { computed, createRenderer, defineComponent, markRaw, nextTick } from 'vue';
+import { computed, createRenderer, defineComponent, markRaw, nextTick, reactive } from 'vue';
 import {
   createAiClientToolRuntime,
   type AiClientToolCall,
@@ -297,6 +297,7 @@ const createActionHarness = (
   testContext: TestContext,
   bridge: ReturnType<typeof useRuleEditorAgentBridge>,
   request: (method: string, ...args: unknown[]) => Promise<unknown> = async () => ({ status: 200 }),
+  hasPermission: (action: 'update' | 'action' | 'import' | 'export') => boolean = () => true,
 ) => {
   const previousFixture = testGlobals.__ruleEditorActionsTest;
   const messages: Array<{ message: string; type: string }> = [];
@@ -312,6 +313,7 @@ const createActionHarness = (
         ruleId: computed(() => 'rule-1'),
         ruleName: computed(() => 'Rule'),
         ruleDescription: computed(() => ''),
+        hasPermission,
         getRule: () => ({ id: 'rule-1' }),
         onRuleUpdated: (rule) => updates.push(rule),
         t: (key) => key,
@@ -326,6 +328,60 @@ const createActionHarness = (
   });
   return { actions, messages, updates };
 };
+
+for (const granted of [[], ['view'], ['update'], ['action'], ['import'], ['export'], ['view', 'update', 'action'], ['view', 'update', 'action', 'import', 'export']]) {
+  test(`drawer actions enforce live menu permissions: ${granted.join(',') || 'none'}`, async (testContext) => {
+    const permissions = reactive(new Set(granted));
+    const harness = createBridgeHarness(testContext, { autoRespondExecute: false });
+    const writes: unknown[][] = [];
+    const { actions, messages, updates } = createActionHarness(testContext, harness.bridge, async (...args) => {
+      writes.push(args);
+      return { status: 200 };
+    }, action => permissions.has(action));
+
+    assert.equal(actions.canEdit.value, permissions.has('update'));
+    const expectedActions = { save: 'update', deploy: 'action', import: 'import', export: 'export' } as const;
+    for (const action of ['save', 'deploy', 'import', 'export'] as const) {
+      const allowed = permissions.has(expectedActions[action]);
+      assert.equal(actions.isEditorActionDisabled(action), !allowed, action);
+      const before = harness.requests.length;
+      const pending = action === 'save' || action === 'deploy'
+        ? actions.handleEditorAction(action) : actions.handleEditorTransfer(action);
+      assert.equal(harness.requests.length, before + Number(allowed), action);
+      if (allowed) {
+        const request = harness.requests.at(-1)!;
+        assert.equal(request.payload.action, action);
+        harness.emit('action-result', { ok: true }, request.requestId);
+      }
+      await pending;
+    }
+    await actions.handleRuleRename('Changed rule');
+    await actions.handleRuleDescriptionChange('Changed description');
+    assert.equal(writes.length, permissions.has('update') ? 2 : 0);
+    assert.equal(updates.length, writes.length);
+    if (permissions.has('update')) {
+      assert.equal(writes[0]![0], 'put');
+      assert.equal(writes[0]![1], '/rule-engine/instance/rule-1');
+      assert.deepEqual(writes[0]![2], { id: 'rule-1', name: 'Changed rule' });
+      assert.deepEqual(writes[1]![2], { id: 'rule-1', description: 'Changed description' });
+    }
+
+    const requestCount = harness.requests.length;
+    const writeCount = writes.length;
+    permissions.clear();
+    assert.equal(actions.canEdit.value, false);
+    for (const action of ['save', 'deploy', 'import', 'export'] as const) {
+      assert.equal(actions.isEditorActionDisabled(action), true, `revoked ${action}`);
+      await (action === 'save' || action === 'deploy'
+        ? actions.handleEditorAction(action) : actions.handleEditorTransfer(action));
+    }
+    await actions.handleRuleRename('Denied rule');
+    await actions.handleRuleDescriptionChange('Denied description');
+    assert.equal(harness.requests.length, requestCount);
+    assert.equal(writes.length, writeCount);
+    assert.deepEqual(messages, []);
+  });
+}
 
 for (const action of ['save', 'deploy'] as const) {
   for (const [shape, payload] of [

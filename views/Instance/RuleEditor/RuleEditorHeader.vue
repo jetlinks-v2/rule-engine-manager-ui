@@ -21,7 +21,7 @@
           v-else
           class="rule-editor-shell__name"
           type="button"
-          :disabled="renameLoading"
+          :disabled="editDisabled || renameLoading"
           :title="$t('RuleEditor.index.renameRule')"
           @click="startNameEdit"
         >
@@ -35,7 +35,7 @@
             class="rule-editor-shell__description"
             :class="{ 'rule-editor-shell__description--empty': !ruleDescription }"
             type="button"
-            :disabled="descriptionLoading"
+            :disabled="editDisabled || descriptionLoading"
             :title="$t('RuleEditor.index.editDescription')"
             @click="startDescriptionEdit"
           >
@@ -175,6 +175,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  editDisabled: {
+    type: Boolean,
+    default: true,
+  },
   deployDisabled: {
     type: Boolean,
     default: false,
@@ -209,7 +213,7 @@ const descriptionDraft = ref('');
 const descriptionInputRef = ref();
 
 const startNameEdit = async () => {
-  if (props.renameLoading) {
+  if (props.editDisabled || props.renameLoading) {
     return;
   }
   nameDraft.value = props.ruleName;
@@ -224,7 +228,7 @@ const cancelNameEdit = () => {
 };
 
 const commitNameEdit = () => {
-  if (!nameEditing.value) {
+  if (props.editDisabled || !nameEditing.value) {
     return;
   }
   const nextName = nameDraft.value.trim();
@@ -237,7 +241,7 @@ const commitNameEdit = () => {
 };
 
 const startDescriptionEdit = async () => {
-  if (props.descriptionLoading) {
+  if (props.editDisabled || props.descriptionLoading) {
     return;
   }
   descriptionDraft.value = props.ruleDescription;
@@ -252,7 +256,7 @@ const cancelDescriptionEdit = () => {
 };
 
 const commitDescriptionEdit = () => {
-  if (!descriptionModalOpen.value) {
+  if (props.editDisabled || !descriptionModalOpen.value) {
     return;
   }
   const nextDescription = descriptionDraft.value.trim();
@@ -263,6 +267,14 @@ const commitDescriptionEdit = () => {
   }
   emit('descriptionChange', nextDescription);
 };
+
+// 授权撤回时退出编辑，避免失焦或弹窗确认继续提交草稿。
+watch(() => props.editDisabled, (disabled) => {
+  if (disabled) {
+    cancelNameEdit();
+    cancelDescriptionEdit();
+  }
+});
 
 watch(
   () => props.ruleName,

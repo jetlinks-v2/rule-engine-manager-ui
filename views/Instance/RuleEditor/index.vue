@@ -23,6 +23,7 @@
         :transfer-actioning="editorTransferActioning"
         :rename-loading="ruleNameSaving"
         :description-loading="ruleDescriptionSaving"
+        :edit-disabled="!canEdit"
         :deploy-disabled="isEditorActionDisabled('deploy')"
         :save-disabled="isEditorActionDisabled('save')"
         :import-disabled="isEditorActionDisabled('import')"
@@ -56,7 +57,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch, type PropType } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useAIStore } from '@jetlinks-web-core/store';
+import { useAIStore, useAuthStore } from '@jetlinks-web-core/store';
+import { useRulePermission } from '@rule-engine-manager-ui/hook/usePermission';
 import { getBaseApi, isFromCloud } from '@jetlinks-web-core/utils';
 import type { GeneralAgentConversationChatPayload } from '@jetlinks-web-core/layout/components/AiChat/generalAgentExtensions';
 import RuleEditorHeader from './RuleEditorHeader.vue';
@@ -90,6 +92,8 @@ const emit = defineEmits<{
 
 const { t: $t } = useI18n();
 const aiStore = useAIStore();
+const authStore = useAuthStore();
+const permissionKey = useRulePermission();
 const ruleId = computed(() => String(props.rule?.id || ''));
 const ruleName = computed(() => String(props.rule?.name || props.rule?.id || '--'));
 const ruleDescription = computed(() => String(props.rule?.description || '').trim());
@@ -158,6 +162,8 @@ const bridgeStatusColor = computed(() => {
 });
 const showFrameLoading = computed(() => !frameLoaded.value && (bridgeStatus.value === 'loading' || bridgeStatus.value === 'idle'));
 const {
+  canEdit,
+  isEditorActionDisabled,
   editorActioning,
   editorActionDone,
   editorTransferActioning,
@@ -175,17 +181,11 @@ const {
   ruleId,
   ruleName,
   ruleDescription,
+  hasPermission: (action) => authStore.hasPermission(`${permissionKey}:${action}`),
   getRule: () => props.rule,
   onRuleUpdated: (rule) => emit('updated', rule),
   t: $t,
 });
-const isEditorActionDisabled = (action: 'deploy' | 'save' | 'import' | 'export') => (
-  bridgeStatus.value !== 'ready'
-  || !!editorActioning.value
-  || !!editorTransferActioning.value
-  || bridgeActions.value[action] === false
-);
-
 const buildSystemPrompt = () => bridge.systemPrompt.value;
 
 const buildAgentParameters = () => ({
