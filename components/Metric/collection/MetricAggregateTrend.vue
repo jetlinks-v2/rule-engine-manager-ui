@@ -25,7 +25,7 @@ import { collectionMessages } from './messages'
 import type { MetricAggregateGroup,ReadOperation } from './types'
 const props=defineProps<{group:MetricAggregateGroup;operation:ReadOperation;bounds:[number,number];interval:number;view?:[number,number];compact?:boolean}>()
 const emit=defineEmits<{(event:'update:view',value:[number,number] | undefined):void}>()
-const { t,locale }=useI18n({useScope:'local',messages:{zh:{...metricMessages.zh,...collectionMessages.zh},en:{...metricMessages.en,...collectionMessages.en}}})
+const { t,locale }=useI18n({useScope:'local',messages:{ja:{...metricMessages.ja,...collectionMessages.ja},zh:{...metricMessages.zh,...collectionMessages.zh},en:{...metricMessages.en,...collectionMessages.en}}})
 const {token}=theme.useToken()
 const zoom=useTimeZoom(toRef(props,'bounds'),toRef(props,'view'),value=>emit('update:view',value),t,true)
 const library=[BarChart,...zoom.library]

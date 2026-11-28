@@ -10,10 +10,31 @@ const alarmRecordPresentation = defineAsyncComponent(
 const openAlarmLog = async (query: Record<string, string>) => {
   const { useMenuStore } = await import('@jetlinks-web-core/store/menu')
   const menu = useMenuStore()
-  menu.jumpPage('rule-engine/Alarm/Log', { query })
+  const detail = ['iot-user-device-list/Detail', 'iot-user/device/list/Detail', 'device/Instance/Detail'].find((code) =>
+    menu.getMenu(code)
+  )
+  if (detail)
+    menu.jumpPage(detail, {
+      params: { id: query.targetId },
+      query: { tab: detail === 'device/Instance/Detail' ? 'Alarm' : 'alarm' }
+    })
+  else menu.jumpPage('rule-engine/Alarm/Log', { query })
 }
 
 export default {
+  metricAnalyses: {
+    typeId: '*',
+    fields: [],
+    sections: [{ id: 'metrics:results', label: () => i18n.global.t('ObjectPresentation.metricResults'), members: [
+      { providerId: 'metrics', kind: 'property' },
+      { providerId: 'metrics', kind: 'query', id: 'AggregateMetricResults' },
+      { providerId: 'metrics', kind: 'query', id: 'AggregateObjectMetrics' }
+    ] }],
+    members: ['AggregateMetricResults', 'AggregateObjectMetrics'].map(id => ({
+      ref: { providerId: 'metrics', kind: 'query' as const, id },
+      component: defineAsyncComponent(() => import('./components/Metric/ObjectAggregateResult.vue'))
+    }))
+  },
   alarmRecord: {
     typeId: 'alarmRecord',
     fields: [],
@@ -26,6 +47,23 @@ export default {
   },
   deviceAlarm: {
     typeId: 'device',
+    sections: [{ id: 'rule:alarms', label: () => i18n.global.t('ObjectPresentation.alarmRecords'),
+      members: [{ providerId: 'rule-alarm', kind: 'property', id: 'alarmSummary' }],
+      relations: [{ objectType: 'alarmRecord', id: 'target', targetType: 'device', reverse: true }]
+    }],
+    members: [{ ref: { providerId: 'rule-alarm', kind: 'property', id: 'alarmSummary' }, label: () => i18n.global.t('ObjectPresentation.alarmSummary'),
+      component: defineAsyncComponent(() => import('./views/Alarm/Log/components/ObjectAlarmSummary.vue')) }],
+    queries: {
+      alarmSummary: {
+        nodeField: 'alarmCount',
+        icon: 'AlertOutlined',
+        parameters: defineAsyncComponent(() => import('./views/Alarm/Log/components/ObjectAlarmFocus.vue')),
+        format: (value) => ({
+          text: value == null ? '—' : String(value),
+          tone: Number(value) > 0 ? 'error' : 'neutral'
+        })
+      }
+    },
     lineage: true,
     fields: [
       {

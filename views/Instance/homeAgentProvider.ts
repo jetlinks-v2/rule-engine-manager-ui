@@ -15,6 +15,10 @@ import {
 } from '@jetlinks-web-core/layout/components/AiChat/clientToolApi';
 import { saveAiAgentHandoff } from '@jetlinks-web-core/layout/components/AiChat/agentHandoff';
 import { saveRule } from '../../api/instance';
+import { loadRuleTemplateNodes } from '../../api/ruleTemplates';
+import { getRuleTemplate, missingTemplateNodes, ruleTemplates } from './Templates/catalog';
+import { buildTemplateFlow } from './Templates/buildFlow';
+import { defaultTemplateParameters } from './Templates/types';
 
 const RULE_INSTANCE_MENU_CODE = 'rule-engine/Instance';
 const RULE_INSTANCE_PATH = '/iot/rule-engine/Instance';
@@ -25,6 +29,8 @@ const MAX_RULE_NAME_LENGTH = 32;
 const MAX_RULE_DESCRIPTION_LENGTH = 200;
 
 const TOOL_INPUTS = [
+  'templateId',
+  'templateParameters',
   'name',
   'description',
   'summary',
@@ -260,9 +266,23 @@ const createDraftAndHandoff = async (
 
   try {
     const userGoal = resolveUserGoal(args, context);
-    const name = resolveRuleName(args);
+    const template = args.templateId ? getRuleTemplate(String(args.templateId)) : undefined;
+    if (args.templateId && !template) return toCreateDraftFailure('rule_engine.template.unknown', i18n.global.t('RuleTemplates.agentUnknown'), 'repair');
+    if (template?.setup) {
+      const navigated=context.navigateToMenu(menu.code,{params:{save:true,ruleTemplate:{templateId:template.id,parameters:toRecord(args.templateParameters),userGoal}}});
+      return {ok:navigated,ruleCreated:false,userInputRequired:true,templateId:template.id,
+        navigation:{menuCode:menu.code,routeName:menu.routeName || menu.code,path:menu.path},
+        summary:i18n.global.t('RuleTemplates.agentMissing')};
+    }
+    let templateDraft:ReturnType<typeof buildTemplateFlow>|undefined;
+    if (template) {
+      const missing=missingTemplateNodes(template,await loadRuleTemplateNodes());
+      if(missing.length)return toCreateDraftFailure('rule_engine.template.missing_components',i18n.global.t('RuleTemplates.missingNodes',{nodes:missing.join(', ')}));
+      templateDraft=buildTemplateFlow(template.id,defaultTemplateParameters(),i18n.global.t,String(i18n.global.locale.value));
+    }
+    const name = args.name ? resolveRuleName(args) : templateDraft?.payload.name || resolveRuleName(args);
     const description = resolveRuleDescription(args, userGoal);
-    const draft = { name, description };
+    const draft = templateDraft ? {...templateDraft.payload,name,...(args.description ? {description} : {})} : { name, description };
 
     const rule = resolveCreatedRule(await saveRule(draft), draft);
     const ruleId = String(rule.id);
@@ -270,7 +290,7 @@ const createDraftAndHandoff = async (
     const ruleDescription = normalizeText(rule.description);
     const query = { editorId: ruleId };
 
-    // The home agent only creates an empty draft. Canvas edits remain owned by ruleEditorChat.
+    // Only registered templates are instantiated here; subsequent canvas edits belong to the editor.
     const handoffPrepared = saveAiAgentHandoff({
       clientId: RULE_EDITOR_CLIENT_ID,
       subjectType: RULE_EDITOR_SUBJECT_TYPE,
@@ -281,9 +301,9 @@ const createDraftAndHandoff = async (
       prompt: userGoal || i18n.global.t('Instance.homeAgent.ruleDraft.continuePrompt', [ruleName]),
       label: i18n.global.t('Instance.homeAgent.ruleDraft.handoffLabel', [ruleName]),
       source: 'rule-instance-home',
-      context: createHandoffContext(args, context, rule, userGoal),
+      context: {...createHandoffContext(args, context, rule, userGoal),...(templateDraft ? {template:templateDraft.initialization} : {})},
     });
-    context.navigateToMenu(menu.code, { query });
+    context.navigateToMenu(menu.code, { query,...(templateDraft ? {params:{ruleTemplateInitialization:{ruleId,initialization:templateDraft.initialization}}} : {}) });
 
     const navigation = {
       menuCode: menu.code,
@@ -388,7 +408,7 @@ export const createRuleInstanceTools = () => defineClientTools<HomeAgentCapabili
       text: i18n.global.t('Instance.homeAgent.tool.create.description'),
       capabilities: ['rule-engine.instance.draft.create'],
       intents: ['创建规则草稿并进入编排画布', 'create a rule draft and open the editor'],
-      help: i18n.global.t('Instance.homeAgent.tool.create.help'),
+      help: `${i18n.global.t('Instance.homeAgent.tool.create.help')} ${i18n.global.t('RuleTemplates.templateHelp')}`,
     },
     presentation: {
       displayName: i18n.global.t('Instance.homeAgent.tool.create.displayName'),
@@ -397,9 +417,9 @@ export const createRuleInstanceTools = () => defineClientTools<HomeAgentCapabili
     inputs: TOOL_INPUTS.map((id) => ({
       id,
       name: id,
-      description: i18n.global.t(`Instance.homeAgent.tool.create.input.${id}`),
+      description: id==='templateId' ? i18n.global.t('RuleTemplates.agentTemplate') : id==='templateParameters' ? i18n.global.t('RuleTemplates.agentParameters') : i18n.global.t(`Instance.homeAgent.tool.create.input.${id}`),
       required: id === 'name' ? false : undefined,
-      valueType: ['product', 'event', 'action', 'kafka'].includes(id)
+      valueType: ['product', 'event', 'action', 'kafka','templateParameters'].includes(id)
         ? { type: 'object' }
         : id === 'missingItems'
           ? { type: 'array' }
@@ -412,7 +432,7 @@ export const createRuleInstanceTools = () => defineClientTools<HomeAgentCapabili
       confirmation: {
         title: i18n.global.t('Instance.homeAgent.tool.create.confirmTitle'),
         content: (toolArgs) => i18n.global.t('Instance.homeAgent.tool.create.confirmContent', [
-          resolveRuleName(toolArgs),
+          getRuleTemplate(String(toolArgs.templateId)) ? i18n.global.t(`RuleTemplates.templates.${toolArgs.templateId}.title`) : resolveRuleName(toolArgs),
         ]),
         okText: i18n.global.t('Instance.homeAgent.tool.create.confirmOk'),
         cancelText: i18n.global.t('verify.cancel'),
@@ -447,6 +467,10 @@ const createRuleInstanceCapabilities = (context: HomeAgentCapabilityContext) => 
     order: 20,
     keywords: ['rule', 'rule engine', 'orchestration', 'kafka', 'scene', '规则', '规则引擎', '规则编排', '转发'],
     metadata: {
+      templateCatalog:ruleTemplates.map(template=>({id:template.id,category:template.category,
+        name:i18n.global.t(`RuleTemplates.templates.${template.id}.title`),description:i18n.global.t(`RuleTemplates.templates.${template.id}.description`),
+        parameters:template.setup ? ['productId','scope','deviceIds','message','propertyIds','eventId','eventFieldIds','format','includeMetadata','target','url','topic','cron','window','aggregate','comparison','threshold'] : [],
+        configuration:template.setup ? 'business-parameter-panel' : 'direct-create'})),
       currentRoute: isRuleInstanceRoute(context),
       promptExamples: getPromptExamples(),
       continuation: {
@@ -455,9 +479,7 @@ const createRuleInstanceCapabilities = (context: HomeAgentCapabilityContext) => 
         targetMenuCode: menu.code,
         toolId: CREATE_RULE_DRAFT_TOOL,
         promptPolicy: i18n.global.t('Instance.homeAgent.continuation.promptPolicy'),
-        blockingFacts: [
-          i18n.global.t('Instance.homeAgent.continuation.blockingFact.name'),
-        ],
+        blockingFacts: [],
       },
     },
   }];

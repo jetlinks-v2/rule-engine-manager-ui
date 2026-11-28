@@ -5,13 +5,15 @@
   "description": "规则引擎",
   "main": "index.js",
   "scripts": {
+    "test:rule-templates": "node --test tests/ruleTemplates.test.mjs",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:scene-triggers": "node scripts/run-scene-trigger-tests.mjs",
     "test:agent-tools": "node scripts/run-agent-tool-tests.mjs",
     "test:alarm-agent": "node agentCapabilities/alarmAnalysis/visionSceneSearch.test.mjs && node agentCapabilities/alarmAnalysis/alarmData.test.mjs",
     "test:data-capabilities": "node dataCapabilities/dataCapabilities.test.mjs",
     "test:scene-notify": "node --test tests/sceneNotify.test.mjs",
-    "test:metric": "node scripts/run-metric-tests.mjs"
+    "test:metric": "node scripts/run-metric-tests.mjs",
+    "test:instance-list": "node --test tests/ruleInstanceList.test.mjs tests/ruleInstanceApi.test.mjs tests/ruleObservation.test.mjs tests/ruleListEmpty.test.mjs"
   },
   "repository": {
     "type": "git",

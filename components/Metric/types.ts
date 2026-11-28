@@ -514,6 +514,8 @@ export interface MetricApi {
   selectable(): Promise<MetricTemplateEntity[]>
   configTemplate(id: string, target?: MetricDataTarget): Promise<MetricTemplate>
   saveConfig(config: MetricConfig): Promise<MetricConfig>
+  setFeatured?(id: string, revision: number, featured: boolean): Promise<MetricConfig>
+  orderConfigs?(request: { ownerType: string; ownerId: string; featured: boolean; items: Array<{ id: string; revision: number }> }): Promise<MetricConfig[]>
   removeConfig(id: string): Promise<void>
   latest(ids: string[], target?: MetricDataTarget): Promise<MetricLatest[]>
   watchLatest?(ids: string[], target: MetricDataTarget | undefined, interval: number, onValue: (value: MetricLatest) => void, onError: (cause: unknown) => void): () => void

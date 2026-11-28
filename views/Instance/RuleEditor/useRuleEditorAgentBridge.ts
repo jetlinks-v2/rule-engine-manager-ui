@@ -865,6 +865,7 @@ export const useRuleEditorAgentBridge = (options: BridgeOptions) => {
     disposeBridge,
     executeEditorAction,
     executeEditorUtilityAction,
+    focusNode: (nodeId: string) => executeRemoteTool('rule_editor_focus_node', { nodeId }),
     executeProposalAction,
     previewNode,
     listNodesForReference,

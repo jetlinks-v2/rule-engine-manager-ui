@@ -26,7 +26,7 @@ const settings = computed(() => normalizePresentation(props.template.options?.pr
 const resourceLabel = (label: MetricLabel) => typeof label === 'function' ? label() : label
 const options = computed(() => [
   ...(missing.value ? [{ value:resolved.value.id, label:resolved.value.id, icon:'WarningOutlined', description:t('presentationMissing') }] : []),
-  ...resources.value.presentations.map(item => ({ value:item.id, label:item.id === DEFAULT_METRIC_PRESENTATION ? t('defaultPresentation') : resourceLabel(item.provider.label), icon:'AppstoreOutlined', description:`${t('presentationOptionHint')} · ${item.id}` })),
+  ...resources.value.presentations.map(item => ({ value:item.id, label:item.id === DEFAULT_METRIC_PRESENTATION ? t('defaultPresentation') : resourceLabel(item.provider.label), icon:'AppstoreOutlined', description:t('presentationOptionHint') })),
 ])
 function change(presentation: NonNullable<MetricTemplate['options']>['presentation']) {
   if (!props.disabled) emit('update:template', { ...props.template, options: { ...props.template.options, presentation } })
