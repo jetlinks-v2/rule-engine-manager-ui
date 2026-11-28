@@ -121,10 +121,11 @@ test('成立、恢复、适用条件共享引用且独立维护不完整草稿�
   app.config.warnHandler = () => {}
   try {
     app.mount(view.root); await flush()
-    assert.equal(walk(view.root, node => node.type === 'condition-editor').length, 2, '未配置适用条件时不展开空编辑器')
+    assert.equal(walk(view.root, node => node.type === 'condition-editor').length, 0, '已有条件默认显示摘要，不展开空编辑器')
+    await walk(view.root, node => node.props['aria-label'] === 'editCondition · enterCondition')[0].props.onClick(); await flush()
     await walk(view.root, node => node.type === 'a-button' && textContent(node).includes('addCondition'))[0].props.onClick(); await flush()
     const editors = walk(view.root, node => node.type === 'condition-editor')
-    assert.equal(editors.length, 3)
+    assert.equal(editors.length, 2)
     assert.ok(editors.every(editor => editor.props.conditions === true))
     editors[0].props.onInvalid(true); editors[1].props.onInvalid(false)
     assert.equal(invalid.at(-1), true)
@@ -132,5 +133,7 @@ test('成立、恢复、适用条件共享引用且独立维护不完整草稿�
     editors[0].props.onChange({ expression: '(ambient > 10)', metricIds: ['ambient'] })
     assert.deepEqual(changes.at(-1).dependsOn, ['temperature', 'ambient'])
     assert.equal(changes.at(-1).temporalCondition.exitExpression, 'temperature <= 8')
+    await walk(view.root, node => node.props['aria-label'] === 'editCondition · exitCondition')[0].props.onClick(); await flush()
+    assert.equal(walk(view.root, node => node.type === 'condition-editor')[0].props.value, 'temperature <= 8')
   } finally { app.unmount() }
 })

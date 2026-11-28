@@ -12,6 +12,8 @@ export interface MetricInputMapping {
   includeChildren?: boolean
   statistics?: MetricScopeStatistics
   providerSource?: MetricSourceReference
+  /** 相对来源实际返回值的对象路径；物理 id 保持不变。 */
+  valuePath?: string[]
   id: string
 }
 /** 业务选择器引用原事件/对象能力；公共组件只传递固定配置，不解释业务字段或执行查询。 */
@@ -146,6 +148,7 @@ export interface MetricHistoryPolicy {
   intervalMillis:number
   maxIntervalMillis:number
 }
+export type MetricOutputStorage = { mode:MetricHistoryPolicy['mode']|'latest' } & Partial<Omit<MetricHistoryPolicy,'mode'>>
 export interface MetricTemplateOutput {
   aggregatable?:boolean
   metricId: string
@@ -205,6 +208,7 @@ export interface MetricConfig {
   inputMappings: Record<string, MetricInputMapping>
   parameters: Record<string, unknown>
   presentation?: Record<string, unknown> | null
+  outputStorage?:Record<string,MetricOutputStorage> | null
   state: 'enabled' | 'disabled'
   revision: number
   enabledAt?: number
@@ -514,6 +518,7 @@ export interface MetricApi {
   selectable(): Promise<MetricTemplateEntity[]>
   configTemplate(id: string, target?: MetricDataTarget): Promise<MetricTemplate>
   saveConfig(config: MetricConfig): Promise<MetricConfig>
+  outputStorageConstraints?(id:string):Promise<string[]>
   setFeatured?(id: string, revision: number, featured: boolean): Promise<MetricConfig>
   orderConfigs?(request: { ownerType: string; ownerId: string; featured: boolean; items: Array<{ id: string; revision: number }> }): Promise<MetricConfig[]>
   removeConfig(id: string): Promise<void>
@@ -625,4 +630,4 @@ export interface MetricPresentationProvider {
 }
 
 /** 查询与展示只依赖读取能力；管理请求由业务模块实现。 */
-export type MetricReadApi = Omit<MetricApi, 'applyTemplateRevision' | 'bindObjectMetric' | 'discardTemplateDraft' | 'queryTemplates' | 'releaseTemplate' | 'removeConfig' | 'removeTemplate' | 'saveConfig' | 'saveTemplate' | 'selectable' | 'setAvailable' | 'simulate' | 'simulateConfig' | 'templateReferences' | 'templateRevisions' | 'unbindObjectMetric'>
+export type MetricReadApi = Omit<MetricApi, 'outputStorageConstraints' | 'applyTemplateRevision' | 'bindObjectMetric' | 'discardTemplateDraft' | 'queryTemplates' | 'releaseTemplate' | 'removeConfig' | 'removeTemplate' | 'saveConfig' | 'saveTemplate' | 'selectable' | 'setAvailable' | 'simulate' | 'simulateConfig' | 'templateReferences' | 'templateRevisions' | 'unbindObjectMetric'>

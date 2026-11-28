@@ -3,7 +3,7 @@ import { metricApi } from './api'
 import { errorText, newerMetricValue } from './service'
 import type { MetricReadApi, MetricConfig, MetricHistoryRequest, MetricReference, MetricResultFrame, MetricValue } from './types'
 
-export interface MetricTrendTarget { id: string; configId?: string; key: string; outputs: string[]; intervalOutputs?: string[]; targetType?: string; targetId?: string }
+export interface MetricTrendTarget { id: string; configId?: string; key: string; outputs: string[]; recordingOutputs?:string[]; intervalOutputs?: string[]; targetType?: string; targetId?: string }
 export interface MetricHistoryState {
   values: MetricValue[]
   bounds: [number, number]
@@ -107,6 +107,8 @@ export function useMetricTrends(targets: Ref<MetricTrendTarget[]>, selected: Ref
         const nextBounds: [number, number] = customRange.value ? state.bounds : [end - range.value, end]
         const values = new Map((historyStarted ? state.values : []).map(value => [value.resultId || JSON.stringify([value.metricId, value.evaluationTime, value.eventTime]), value]))
         for (const value of Object.values(frame.latest.outputs)) {
+          // 停录仍接收最新读数；不能把实时结果继续积累成页面内的历史记录。
+          if (target.recordingOutputs && !target.recordingOutputs.includes(value.metricId)) continue
           const time = value.evaluationTime || value.eventTime || 0
           if (time < nextBounds[0] || time > nextBounds[1]) continue
           const key = value.resultId || JSON.stringify([value.metricId, value.evaluationTime, value.eventTime])

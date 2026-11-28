@@ -56,8 +56,9 @@
           </div>
         </a-spin>
         <a-alert v-if="state.category.value === 'unsupported'" type="info" show-icon :message="t('unsupported')" />
-        <div v-if="state.request.value.purpose !== 'declaration' && state.selected.value && state.method.value" class="source-selection">
+        <div v-if="(state.request.value.purpose !== 'declaration' || state.method.value?.valueType?.type === 'object') && state.selected.value && state.method.value" class="source-selection">
           <b>{{ state.selected.value.name }}</b>
+          <a-select v-if="state.method.value.valueType?.type === 'object'" v-model:value="state.fieldKey.value" :aria-label="t('selectField')" :placeholder="t('selectField')" style="width:100%" :options="state.fieldOptions.value.map(field=>({value:JSON.stringify(field.path),label:field.label || t('wholeValue')}))" />
           <a-radio-group v-if="state.selected.value.methods.length > 1" :value="state.methodKey.value" size="small" @change="state.selectMethod(state.selected.value!.methods.find(method=>method.key === $event.target.value)!)"><a-radio-button v-for="method in state.selected.value.methods" :key="method.key" :value="method.key">{{ t(method.kind === 'businessEvent' ? 'readOnReport' : 'readOnQuery') }}</a-radio-button></a-radio-group>
           <p v-if="state.method.value.description" class="source-note">{{ state.method.value.description }}</p>
           <p v-if="state.issue(state.method.value)" class="source-note" role="status">{{ t(state.issue(state.method.value)!) }}</p>

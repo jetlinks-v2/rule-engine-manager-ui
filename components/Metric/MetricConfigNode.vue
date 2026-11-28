@@ -30,13 +30,14 @@
     </template>
     <template v-else-if="output">
       <p class="config-node__fixed"><AIcon type="FontSizeOutlined" />{{ output.unit || t('noUnit') }}</p>
-      <p><AIcon type="HistoryOutlined" />{{ t(output.persist !== false && !output.latestOnly ? 'outputHistory' : 'configLatestOnly') }}</p>
+      <MetricOutputStorageFields :template="template" :model-value="configuration.outputStorage" :output-id="output.metricId" :constraints="storageConstraints" :loading="storageLoading" :error="storageError" :disabled="disabled" @update:model-value="emit('storage',$event)" @retry="emit('retryStorage')" />
       <p><AIcon type="ThunderboltOutlined" />{{ t(output.publish ? 'outputEvents' : 'configNoEvent') }}</p>
     </template>
   </section>
 </template>
 <script setup lang="ts">
 import { computed, inject } from 'vue'
+import MetricOutputStorageFields from './MetricOutputStorageFields.vue'
 import { useI18n } from 'vue-i18n'
 import { i18nText } from '@jetlinks-web-core/components/I18n/text'
 import TemplateFormulaDisplay from './template/formula/TemplateFormulaDisplay.vue'
@@ -51,8 +52,8 @@ import TemplateWindowDescription from './template/TemplateWindowDescription.vue'
 import { simulationDuration } from './template/simulationFlow'
 import { sourceScheduleMissing } from './sourcePolicy'
 import type { MetricConfig, MetricSourceDescription, MetricSourcePicker, MetricStateLabel, MetricTemplate, MetricTemplateInput } from './types'
-const props = defineProps<{ template:MetricTemplate; configuration:MetricConfig; node?:TemplateNode; sourceLabel?:string; description?:MetricSourceDescription; picker?:MetricSourcePicker; disabled?:boolean }>()
-const emit = defineEmits<{ (event:'choose', input:MetricTemplateInput):void; (event:'locate', id:string):void }>()
+const props = defineProps<{ template:MetricTemplate; configuration:MetricConfig; node?:TemplateNode; sourceLabel?:string; description?:MetricSourceDescription; picker?:MetricSourcePicker; disabled?:boolean; storageConstraints?:string[]; storageLoading?:boolean; storageError?:string }>()
+const emit = defineEmits<{ (event:'choose', input:MetricTemplateInput):void; (event:'locate', id:string):void; (event:'storage',value:NonNullable<MetricConfig['outputStorage']>):void; (event:'retryStorage'):void }>()
 const { t, locale } = useI18n({ useScope:'local', messages:metricMessages })
 const input = computed(() => props.node?.kind === 'input' ? props.template.inputDefinitions[props.node.index] : undefined)
 const mapping = computed(() => input.value && props.configuration.inputMappings[input.value.id])

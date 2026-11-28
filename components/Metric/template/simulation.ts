@@ -2,6 +2,7 @@ import type { MetricConfig, MetricInputMapping, MetricTemplate } from '../types'
 import type { TemplateRule } from './designer'
 import { durationSeconds } from './window'
 import { isEqual } from 'lodash-es'
+import { metricSourceValue } from '../sourceSchema'
 
 export interface SimulationSample extends Record<string, unknown> {
   thingType?: string; thingId?: string; metricId?: string; value?: unknown
@@ -35,6 +36,18 @@ export function sampleInputs(template: MetricTemplate, facts: SimulationFacts, s
   }).map(input => input.id)
 }
 export const sampleInput = (template:MetricTemplate, facts:SimulationFacts, sample:SimulationSample) => sampleInputs(template, facts, sample)[0]
+
+export const simulationInputValue = (facts:SimulationFacts, sample:SimulationSample, input:string) => metricSourceValue(sample.value,facts.configuration.inputMappings[input]?.valuePath)
+
+/** 编辑逻辑字段仍保存完整物理事实，保留同一来源其他字段。 */
+export function patchSimulationInput(facts:SimulationFacts, index:number, input:string, value:unknown):SimulationFacts {
+  const path=facts.configuration.inputMappings[input]?.valuePath || []
+  const replace=(current:unknown, position:number):unknown=>position === path.length ? value : {
+    ...(current && typeof current === 'object' && !Array.isArray(current) ? current : {}),
+    [path[position]]:replace(metricSourceValue(current,[path[position]]),position+1),
+  }
+  return patchSimulationSample(facts,index,{value:replace(facts.samples[index].value,0),...(path.length ? {unit:undefined} : {})})
+}
 export function visualSamples(template: MetricTemplate, value: Record<string, unknown>): value is SimulationFacts {
   const facts = value as SimulationFacts
   return !!facts.configuration?.inputMappings && Array.isArray(facts.samples) && facts.samples.every(sample => !!sample && typeof sample === 'object'
@@ -78,7 +91,7 @@ export function simulationRange(template: MetricTemplate, facts: SimulationFacts
   const source = rule?.sourceMetric || rule?.dependsOn?.[0]
   const direct = template.inputDefinitions.some(input => input.id === source)
   const time = (sample: SimulationSample) => rule?.window?.timeMode === 'processing' ? sample.processTime ?? sample.eventTime! : sample.eventTime!
-  const points = facts.samples.flatMap((sample, index) => sampleInputs(template, facts, sample).map(input => ({ index, input, time:time(sample), value:sample.value })))
+  const points = facts.samples.flatMap((sample, index) => sampleInputs(template, facts, sample).map(input => ({ index, input, time:time(sample), value:simulationInputValue(facts,sample,input) })))
   const ordered = points.filter(point => !direct || point.input === source).sort((a, b) => a.time - b.time)
   if (!ordered.length) return undefined
   const end = ordered.at(-1)!.time

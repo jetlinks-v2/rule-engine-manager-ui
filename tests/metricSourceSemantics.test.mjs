@@ -4,6 +4,15 @@ import { createMetricLoader } from './helpers/metricRuntime.mjs'
 
 const { metricSourceMatchesInput: selectable, metricSourceMatchesType: typeMatches, metricSourceSchema: schema } = createMetricLoader()('components/Metric/sourceSchema.ts')
 
+test('字段路径按对象层级展开，保留点斜杠及叶子单位，不展开数组',()=>{
+  const {metricSourceFields}=createMetricLoader()('components/Metric/sourceSchema.ts')
+  const fields=metricSourceFields({type:'object',unit:'parent',properties:[{id:'motor.rpm',name:'电机',valueType:{type:'object',properties:[{id:'a/b',name:'转速',valueType:{type:'double',unit:'rpm'}}]}},{id:'samples',valueType:{type:'array',elementType:{type:'double'}}}]})
+  const leaf=fields.find(field=>field.label === '电机 / 转速')
+  assert.deepEqual(leaf.path,['motor.rpm','a/b']);assert.equal(leaf.unit,'rpm')
+  assert.equal(fields.length,4)
+  assert.equal(selectable({id:'rpm',valueType:{type:'double'}},leaf),true)
+})
+
 test('通用JSON Schema映射器的x扩展保留到原字段和单位',()=>{
   const converted=schema({type:'object',properties:{reading:{type:'number','x-unit':'Pa','x-semanticId':'urn:example:pressure'}}})
   assert.equal(converted.properties[0].expands.semanticId,'urn:example:pressure')

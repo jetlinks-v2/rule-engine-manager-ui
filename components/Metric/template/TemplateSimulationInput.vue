@@ -2,7 +2,7 @@
   <span class="trial-input">
     <template v-if="snapshot?.entry?.sample && snapshot.entry.sampleIndex !== undefined">
       <AIcon type="ExperimentOutlined" :title="t('simulationInput')" /><small class="trial-input__label">{{ t('semanticSample') }}</small>
-      <TemplateSampleValue v-if="simple" class="trial-input__value" :template="template" :input="input" :value="snapshot.entry.sample.value" :disabled="disabled" @change="trial.patchValue(snapshot!.entry!.sampleIndex!, $event)" />
+      <TemplateSampleValue v-if="simple" class="trial-input__value" :template="template" :input="input" :value="snapshot.entry.sample.value" :disabled="disabled" @change="trial.patchValue(snapshot!.entry!.sampleIndex!, $event,input.id)" />
       <button v-else type="button" class="trial-input__complex" :disabled="disabled" @click="emit('details')">{{ simulationValueText(snapshot.entry.sample.value, t) }}</button>
       <small>{{ snapshot.entry.sample.unit || input.unit }}</small>
       <button type="button" class="trial-input__details" :aria-label="`${input.name || input.id} · ${t('simulationInput')}`" :title="`${t('simulationInput')} · ${sampleDate(snapshot.entry.time).replace('T',' ')}`" @click="emit('details')"><AIcon type="UnorderedListOutlined" /><small v-if="snapshot.alternatives.length > 1">{{ snapshot.alternatives.length }}</small></button>

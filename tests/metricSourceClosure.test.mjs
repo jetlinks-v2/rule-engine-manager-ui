@@ -34,6 +34,27 @@ const {sourceItems,mappingSourceKind}=load(fileURLToPath(new URL('../components/
 const context={ownerType:'device',ownerId:'D1',targetType:'device',targetId:'D1',label:'当前设备'}
 function fixture(){const scope=effectScope();return {scope,state:scope.run(useMetricSourcePicker)}}
 
+test('数值输入选择对象叶子，物理来源不变且重开能恢复路径',async()=>{
+  const {scope,state}=fixture()
+  const property={id:'telemetry',name:'遥测',valueType:{type:'object',properties:[{id:'motor.rpm',name:'电机',valueType:{type:'object',properties:[{id:'a/b',name:'转速',valueType:{type:'double',unit:'rpm'}}]}}]}}
+  const request={context,input:{id:'rpm',valueType:{type:'double'}}}
+  try {
+    const pending=state.pickSource(request)
+    await flush();state.properties.value=[property];await flush()
+    const root=state.items.value.flatMap(item=>item.methods).find(item=>item.id === 'telemetry')
+    assert.ok(root);state.chooseMethod(root)
+    assert.equal(state.open.value,true);assert.equal(state.canConfirm.value,false);assert.equal(state.fieldKey.value,undefined)
+    state.fieldKey.value=JSON.stringify(['motor.rpm','a/b']);assert.equal(state.canConfirm.value,true)
+    state.confirm();const selection=await pending
+    assert.equal(selection.mapping.id,'telemetry');assert.deepEqual(selection.mapping.valuePath,['motor.rpm','a/b'])
+    assert.equal(selection.declaration.unit,'rpm');assert.match(selection.label,/电机 \/ 转速/)
+    const reopened=state.pickSource({...request,mapping:selection.mapping})
+    await flush();state.properties.value=[property];await flush()
+    assert.equal(state.canConfirm.value,true);assert.deepEqual(state.selectedField.value.path,['motor.rpm','a/b'])
+    state.cancel();await reopened
+  } finally {scope.stop()}
+})
+
 test('扩展来源通过管理目录反显，不按本体或其他提供者名称分支',()=>{
   for(const provider of ['ontology','objects','custom-domain']) {
     assert.equal(mappingSourceKind({kind:'provider',providerSource:{provider,sourceType:'domain-query',configuration:{}}}),'businessQuery')

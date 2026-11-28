@@ -17,6 +17,7 @@ import {bindingMessages} from './messages'
 import {bindingHistoryKey,bindingSourceContext,useMetricBindingResults,type MetricBindingCard as BindingCard} from './useMetricBindingResults'
 import {metricHistoryKey,useMetricTrends,type MetricHistoryScope,type MetricTrendTarget} from '../useMetricTrends'
 import { metricResultKey } from '../service'
+import {metricRecordingOutputIds} from '../outputStorage'
 import {tracksStateIntervals} from '../stateIntervals'
 import type {useMetricBindings} from './useMetricBindings'
 import type {MetricContext,MetricLatest,MetricObjectBinding,MetricReference,MetricWorkspaceSelection} from '../types'
@@ -39,11 +40,12 @@ const trendTargets=computed(()=>{
     if(!card.config || !card.template || !card.output || card.failed)continue
     const reference=card.links[0].reference!,id=bindingHistoryKey(card.links[0])
     let target=targets.get(id)
-    if(!target){target={id,configId:reference.configId,key:metricResultKey(card.config,''),outputs:[],intervalOutputs:[],targetType:reference.targetType,targetId:reference.targetId};targets.set(id,target)}
+    if(!target){target={id,configId:reference.configId,key:metricResultKey(card.config,''),outputs:[],recordingOutputs:[],intervalOutputs:[],targetType:reference.targetType,targetId:reference.targetId};targets.set(id,target)}
     target.outputs.push(reference.outputId)
+    target.recordingOutputs!.push(...metricRecordingOutputIds([card.output],card.config.outputStorage || {}))
     if(tracksStateIntervals(card.template,reference.outputId))target.intervalOutputs!.push(reference.outputId)
   }
-  return [...targets.values()].map(target=>({...target,key:JSON.stringify([target.key,target.outputs,target.intervalOutputs])}))
+  return [...targets.values()].map(target=>({...target,key:JSON.stringify([target.key,target.outputs,target.recordingOutputs,target.intervalOutputs])}))
 })
 const selectedHistoryId=computed(()=>selected.value && JSON.stringify([selected.value.configId,selected.value.targetType,selected.value.targetId]))
 const selectedTrend=computed(()=>selected.value && selectedHistoryId.value ? {configId:selectedHistoryId.value,outputId:selected.value.outputId} : undefined)

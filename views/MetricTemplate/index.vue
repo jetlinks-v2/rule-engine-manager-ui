@@ -19,7 +19,7 @@ const editable = computed(() => auth.hasPermission('rule-engine/MetricTemplate:s
 const provider = collectMetricResources().dimensions[0]?.provider
 const sourceContext = ref<MetricContext>({ownerType:provider?.ownerType || '',ownerId:'',targetType:provider?.ownerType || ''})
 const source = provider ? (provider.useSourcePicker || useMetricSourceAdapter)(sourceContext) : undefined
-const starters = [...moduleRegistry.getAllModules().values()].flatMap(module => Object.values(module.metricTemplateStarters || {}).flatMap(load => load()))
+const starters = [...moduleRegistry.getAllModules().values()].flatMap(module => Object.values(module.metricTemplateStarters || {}).flatMap(load => typeof load === 'function' ? load() : []))
 const router = useProjectRouter()
 function applyTemplate(template:{id:string;version:string}) {
   void router.push({path:'/rule-engine/metrics',query:{metricApplyTemplate:template.id,metricApplyVersion:template.version}})

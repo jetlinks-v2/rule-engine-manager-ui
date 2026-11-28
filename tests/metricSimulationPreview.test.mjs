@@ -12,6 +12,21 @@ const { simulationIndex, simulationNodeAt, simulationUnit } = load('components/M
 const { addSimulationSample, patchSimulationSample, sampleExecutionTime } = load('components/Metric/template/simulation.ts')
 const {sampleInputs}=load('components/Metric/template/simulation.ts')
 
+test('字段试算编辑保留同根兄弟值，预览投影且不修改物理样本',()=>{
+  const {patchSimulationInput,simulationInputValue}=load('components/Metric/template/simulation.ts')
+  const value={...template(),inputDefinitions:[{id:'rpm',valueType:{type:'double'}},{id:'load',valueType:{type:'double'}}]}
+  const source={kind:'property',id:'telemetry',thingType:'device',thingId:'sample'}
+  const facts={configuration:{targetType:'device',targetId:'sample',inputMappings:{rpm:{...source,valuePath:['motor.rpm','a/b']},load:{...source,valuePath:['load']}}},
+    samples:[{thingType:'device',thingId:'sample',metricId:'telemetry',eventTime:1000,value:{'motor.rpm':{'a/b':0},load:8}}]}
+  const changed=patchSimulationInput(facts,0,'rpm',12)
+  assert.equal(simulationInputValue(changed,changed.samples[0],'rpm'),12)
+  assert.equal(simulationInputValue(changed,changed.samples[0],'load'),8)
+  assert.equal(simulationInputValue(facts,facts.samples[0],'rpm'),0)
+  const index=simulationIndex(value,changed,[])
+  assert.equal(index.series.get('input-0')[0].sample.value,12)
+  assert.equal(index.series.get('input-1')[0].sample.value,8)
+})
+
 test('通用来源样本保留引用并隔离同名属性和其他业务配置',()=>{
   const value=template()
   const reference={provider:'objects',sourceType:'query',configuration:{parameters:{zone:'A'}}}

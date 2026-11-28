@@ -9,6 +9,7 @@
         <MetricStateDuration v-if="intervals" detail :labels="labels" :value="processValue" :disabled="configuration?.state === 'disabled'" :live="!pinned && configuration?.state === 'enabled'"><template #label><MetricOutputSwitch :template="template" :output="output" :output-id="reference.outputId" @change="emit('selectOutput',$event)" /></template></MetricStateDuration>
         <template v-else><div class="metric-result__reading"><MetricOutputSwitch :template="template" :output="output" :output-id="reference.outputId" @change="emit('selectOutput',$event)" /><MetricValueView v-if="processValue || configuration?.state === 'disabled' || runtime?.state === 'loaded'" summary :hide-feedback="sourceFeedback && configuration?.state !== 'disabled'" :hide-quality="processValue?.quality?.valid === true" :value="processValue" :template="template" :output="output" :unit="output?.unit" :disabled="configuration?.state === 'disabled'" :settings="settings" :labels="labels" /><strong v-else>—</strong></div><small v-if="summaryTime" class="metric-result__stamp" :title="t('updatedAtHint')">{{ t('updatedAt') }} <time>{{ time(summaryTime) }}</time></small></template>
       </div>
+      <p v-if="historyStopped" class="metric-result__storage"><AIcon type="HistoryOutlined" />{{ t('storageStopped') }}</p>
       <a-alert v-if="missing || extensionFailed" type="warning" show-icon :message="t(missing ? 'presentationMissing' : 'presentationFailed')" />
       <MetricHistoryView ref="historyView" :reference="reference" :output="output" :bounds="bounds" :inaccessible="inaccessible || !configuration" :state-output="recordHistory" :intervals="intervals" :labels="labels" :data-version="configuration?.dataVersion" :query-key="historyQueryKey" @drilldown="customRange=$event">
       <template #tools><MetricTimeRange v-model:range="range" v-model:custom-range="customRange" /><a-button type="text" size="small" :aria-label="t('refresh')" @click="refresh"><AIcon type="ReloadOutlined" />{{ t('refresh') }}</a-button></template>
@@ -63,6 +64,7 @@ import { useMetricResult } from './useMetricResult'
 import { useMetricExecution } from './useMetricExecution'
 import { useMetricSourceTemplate } from './useMetricSourceTemplate'
 import { metricMessages } from './messages'
+import { metricOutputWithStorage, metricStorageMode } from './outputStorage'
 import { metricInputDiagnostics } from './sourceDiagnostics'
 import { resultTime, metricSampleInterval, metricState } from './presentation'
 import { metricDateText as time } from './time'
@@ -77,8 +79,9 @@ const { t, locale } = useI18n({ useScope: 'local', messages: metricMessages })
 const labels = computed(() => props.output ? stateLabels(props.template, props.output.metricId) : [])
 const presentation = computed(() => metricOutputPresentation(props.output,{template:props.template}))
 const intervals = computed(() => presentation.value.history === 'interval')
-const { current, runtime, configuration, inaccessible, values, loading, error, range, customRange, refresh:refreshRaw, bounds, limited } = useMetricResult(toRef(props, 'reference'), undefined, toRef(props, 'latest'), inject(metricHistoryKey, undefined), intervals)
+const { current, runtime, configuration, inaccessible, values, loading, error, range, customRange, refresh:refreshRaw, bounds, limited } = useMetricResult(toRef(props, 'reference'), undefined, toRef(props, 'latest'), inject(metricHistoryKey, undefined), intervals, toRef(props,'output'))
 const historyView = ref<InstanceType<typeof MetricHistoryView>>()
+const historyStopped = computed(()=>props.output && metricStorageMode(metricOutputWithStorage(props.output,configuration.value?.outputStorage?.[props.output.metricId])) === 'latest')
 function refresh() { void refreshRaw(); historyView.value?.refresh() }
 const canEdit = computed(()=>!!props.context?.editable && configuration.value?.ownerType === props.context.ownerType && configuration.value?.ownerId === props.context.ownerId)
 const sourceFeedback = computed(()=>!!metricInputDiagnostics(processValue.value).total || metricState(processValue.value).tone === 'error')
@@ -107,6 +110,7 @@ watch(provider, () => { extensionFailed.value = false })
 </script>
 <style scoped>
 .metric-result { display:grid; gap:8px; min-width:0 }
+.metric-result__storage { display:flex; align-items:center; gap:6px; margin:8px 0; font-size:12px; color:var(--ink-3) }
 .metric-result > div { min-width:0 }
 .metric-result__tools { display:flex; align-items:center; gap:var(--space-2,8px); flex-wrap:wrap; margin:8px 0 }
 .metric-result small { color:var(--ink-2) }

@@ -2,10 +2,12 @@ import { defineComponent, h, watch, type Ref } from 'vue'
 import type { MetricContext } from '../types'
 import { useI18n } from 'vue-i18n'
 import type { MetricInputMapping, MetricSourceDescription } from '../types'
-import { metricSourceSchema, metricSourceField } from '../sourceSchema'
+import { metricSourceSchema, metricSourceField, metricSourceFields } from '../sourceSchema'
+import { resolveMetricResultType } from '../template/resultTypes'
 import { loadMetricDevice, loadMetricProductSources, loadMetricProductName, loadMetricOutput, loadMetricBuiltins, describeMetricProvider, readMetricProvider } from '../../../api/metricSources'
 import { localizedTemplate } from '../template/text'
 import { metricOutputName } from '../presentation'
+import { metricOutputHasCompleteHistory } from '../outputStorage'
 import { durationParts } from '../template/window'
 import MetricSourceModal from './MetricSourceModal.vue'
 import MetricSourceFields from './MetricSourceFields.vue'
@@ -74,7 +76,7 @@ export function useMetricSourceAdapter(context: Ref<MetricContext>) {
             const spec = mapping.statistics
             const required = spec.period === 'current' ? [mapping.id] : [mapping.id, spec.periodMetricId, spec.coverageMetricId]
             if (!output || config.state !== 'enabled' || config.scope !== 'children' || config.ownerType !== spec.sourceType
-              || config.ownerId !== spec.sourceId || config.targetType !== spec.memberType || required.some(id => !template.outputs.some(item => item.metricId === id && item.persist && !item.latestOnly))) {
+              || config.ownerId !== spec.sourceId || config.targetType !== spec.memberType || required.some(id => !template.outputs.some(item => item.metricId === id && metricOutputHasCompleteHistory(item)))) {
               return [id, { error:t('metricMissing') }]
             }
             if (mapping.sourceDataVersion && mapping.sourceDataVersion !== config.dataVersion) return [id, { error:t('metricChanged') }]
@@ -92,7 +94,8 @@ export function useMetricSourceAdapter(context: Ref<MetricContext>) {
             || config.targetId !== (mapping.thingId || owner.targetId || owner.ownerId)) return [id, { error:t('metricMissing') }]
           if (mapping.sourceDataVersion && mapping.sourceDataVersion !== config.dataVersion) return [id, { error:t('metricChanged') }]
           return [id, { label:`${config.name || template.name} / ${metricOutputName(output, template) || output.metricId}`,
-            detail:output.metricId, unit:output.unit, valueType:output.valueType ? { type:output.valueType } : undefined }]
+            detail:output.metricId, unit:output.unit, valueType:resolveMetricResultType(template,output.metricId).schema || (output.valueType ? { type:output.valueType } : undefined),
+            capabilities:['current','subscribe',...(metricOutputHasCompleteHistory(output) ? ['history' as const] : [])] }]
         }
         const deviceId = mapping.thingId || owner.targetId || owner.ownerId
         const member = currentMember(mapping)
@@ -106,7 +109,12 @@ export function useMetricSourceAdapter(context: Ref<MetricContext>) {
           unit:property?.unit, valueType:property?.valueType }]
       } catch { return [id, { error:t('failed') }] }
     }))
-    return Object.fromEntries(entries)
+    return Object.fromEntries(entries.map(([id,description])=>{
+      const path=mappings[id].valuePath
+      if (!path?.length || description.error) return [id,description]
+      const field=metricSourceFields(description.valueType).find(field=>JSON.stringify(field.path) === JSON.stringify(path))
+      return [id,field ? {...description,label:`${description.label} / ${field.label}`,valueType:field.valueType,unit:field.unit} : {error:t('sourceMissing')}]
+    }))
   }
   const readCurrent = (owner:MetricContext,mapping:MetricInputMapping) => {
     const reference = mapping.providerSource

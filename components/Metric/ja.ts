@@ -1,4 +1,5 @@
 export const metricJapaneseMessages = {
+  storageInheritTemplate:'テンプレートの既定値 · {policy}', storageOverride:'この設定で上書き', storageCount:'{total} 個の出力のうち {stored} 個が履歴を記録', storageIntervalSummary:'{seconds} 秒ごとに記録', storageChangeSummary:'{value}{unit} を超える変化を記録', storageHistoryRequired:'他の指標が履歴を参照しているため、完全な履歴が必要です', storageStopped:'現在は履歴を記録していません。保存済みの記録は引き続き参照できます', storageLoadFailed:'履歴の依存関係を取得できません。再試行してください。',
   actionFailed:'操作を完了できませんでした',
   featureMetric:'共有の優先指標に設定',
   unfeatureMetric:'共有の優先指定を解除',

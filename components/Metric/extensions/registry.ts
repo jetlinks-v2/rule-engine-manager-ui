@@ -11,6 +11,12 @@ const component = (value: unknown) => typeof value === 'function' || (typeof val
 const label = (value: unknown) => typeof value === 'string' || typeof value === 'function'
 export const DEFAULT_METRIC_PRESENTATION = 'builtin/default'
 const defaultProvider: MetricPresentationProvider = { label: 'Default' }
+const record = (value: unknown): value is Record<string, unknown> => value !== null && (typeof value === 'object' || typeof value === 'function')
+const dimensionProvider = (value: unknown, key: string): value is MetricDimensionProvider => record(value)
+  && !!key && value.ownerType === key && label(value.label) && component(value.navigator)
+  && ['useSourcePicker', 'available', 'canEdit', 'toBusiness'].every(field => value[field] === undefined || typeof value[field] === 'function')
+const presentationProvider = (value: unknown): value is MetricPresentationProvider => record(value) && label(value.label)
+  && ['card', 'detail', 'configFields', 'presentationFields'].every(slot => value[slot] === undefined || component(value[slot]))
 
 /** Collect installed resources only. Conflicting dimensions are isolated instead of depending on load order. */
 export function collectMetricResources(registry: Registry = moduleRegistry): MetricResources {
@@ -19,16 +25,13 @@ export function collectMetricResources(registry: Registry = moduleRegistry): Met
   const issues: MetricResourceIssue[] = []
   for (const [moduleId, resources] of registry.getAllModules()) {
     for (const [key, provider] of Object.entries(resources.metricDimensions || {})) {
-      if (!provider || provider.ownerType !== key || !key || !label(provider.label) || !component(provider.navigator)
-        || (provider.useSourcePicker !== undefined && typeof provider.useSourcePicker !== 'function') || (provider.available !== undefined && typeof provider.available !== 'function')
-        || (provider.canEdit !== undefined && typeof provider.canEdit !== 'function') || (provider.toBusiness !== undefined && typeof provider.toBusiness !== 'function')) {
+      if (!dimensionProvider(provider, key)) {
         issues.push({ type: 'invalid-dimension', moduleId, key }); continue
       }
       candidates.push({ moduleId, provider })
     }
     for (const [key, provider] of Object.entries(resources.metricPresentations || {})) {
-      if (!key || key.includes('/') || moduleId === 'builtin' || !provider || !label(provider.label)
-        || ['card', 'detail', 'configFields', 'presentationFields'].some(slot => provider[slot as keyof MetricPresentationProvider] !== undefined && !component(provider[slot as keyof MetricPresentationProvider]))) {
+      if (!key || key.includes('/') || moduleId === 'builtin' || !presentationProvider(provider)) {
         issues.push({ type: 'invalid-presentation', moduleId, key }); continue
       }
       presentations.push({ id: `${moduleId}/${key}`, moduleId, provider })
