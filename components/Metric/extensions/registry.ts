@@ -20,7 +20,7 @@ export function collectMetricResources(registry: Registry = moduleRegistry): Met
   for (const [moduleId, resources] of registry.getAllModules()) {
     for (const [key, provider] of Object.entries(resources.metricDimensions || {})) {
       if (!provider || provider.ownerType !== key || !key || !label(provider.label) || !component(provider.navigator)
-        || typeof provider.useSourcePicker !== 'function' || (provider.available !== undefined && typeof provider.available !== 'function')
+        || (provider.useSourcePicker !== undefined && typeof provider.useSourcePicker !== 'function') || (provider.available !== undefined && typeof provider.available !== 'function')
         || (provider.canEdit !== undefined && typeof provider.canEdit !== 'function') || (provider.toBusiness !== undefined && typeof provider.toBusiness !== 'function')) {
         issues.push({ type: 'invalid-dimension', moduleId, key }); continue
       }

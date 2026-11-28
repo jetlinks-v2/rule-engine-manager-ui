@@ -585,7 +585,7 @@ export interface MetricDimensionProvider {
   navigator: Component<MetricNavigatorProps>
   /** 通过所属业务的授权批量查询补充可见引用名称；未返回的对象保留标识，不授予导航或读取权限。 */
   resolveObjects?: (ownerIds: string[]) => Promise<MetricObjectSelection[]>
-  useSourcePicker: (context: Ref<MetricContext>) => MetricSourcePickerBinding
+  useSourcePicker?: (context: Ref<MetricContext>) => MetricSourcePickerBinding
   canEdit?: (selection: MetricObjectSelection) => boolean
   toBusiness?: (selection: MetricObjectSelection) => RouteLocationRaw | undefined
 }

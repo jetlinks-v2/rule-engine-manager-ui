@@ -24,6 +24,9 @@ const splitBoundary = defineComponent({
 })
 let discoverObjectTypes=async()=>[...moduleRegistry.getAllModules().values()].flatMap(module=>Object.keys(module.metricDimensions || {}).map(id=>({id})))
 const componentStubs = {
+  [resolve(sourceRoot, 'components/Metric/source-picker/useMetricSourceAdapter.ts')]: {
+    useMetricSourceAdapter: () => ({ pickSource: async () => undefined })
+  },
   '@jetlinks-web-core/components': {
     ResponsiveSplitter: splitBoundary,
     PanelCollapseButton: defineComponent({

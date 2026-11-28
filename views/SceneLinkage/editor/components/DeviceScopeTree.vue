@@ -20,11 +20,13 @@
         @select="select" @check="check" @expand="expand">
         <template #leafIcon><AIcon class="ant-tree-switcher-line-icon" type="FileOutlined" /></template>
         <template #title="node">
-          <IotTreeNodeRow :count="showCounts ? countsLoading ? '…' : counts[node.key] ?? '—' : ''"
-            :count-tooltip="!showCounts || counts[node.key] === undefined ? '' : $t('IotSceneLinkage.scope.deviceCount', { count: counts[node.key] })">
-            <template #icon><AIcon :type="node.icon || icon" /></template>
-            <template #label>{{ node.title }}</template>
-          </IotTreeNodeRow>
+          <span class="device-scope-tree__row">
+            <AIcon :type="node.icon || icon" />
+            <j-ellipsis>{{ node.title }}</j-ellipsis>
+            <a-tooltip v-if="showCounts" :title="counts[node.key] === undefined ? undefined : $t('IotSceneLinkage.scope.deviceCount', { count: counts[node.key] })">
+              <span class="device-scope-tree__count">{{ countsLoading ? '…' : counts[node.key] ?? '—' }}</span>
+            </a-tooltip>
+          </span>
         </template>
       </a-tree>
       <CloudEmpty v-else-if="!loading" :description="$t('IotSceneLinkage.scope.noTreeMatches')" />
@@ -34,7 +36,6 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import IotTreeNodeRow from '@device-manager-ui/components/IotTreeNodeRow.vue'
 import { filterScopeTree, type SpaceNode } from '../deviceScopeTree'
 
 const props = withDefaults(defineProps<{
@@ -67,6 +68,8 @@ function check(_keys: unknown, info: { node: { key: string | number }; checked: 
 
 <style scoped>
 .device-scope-tree { display: flex; flex: 1; flex-direction: column; gap: var(--space-4, 16px); min-height: 0; }
+.device-scope-tree__row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-1, 4px); }
+.device-scope-tree__count { color: var(--ant-color-text-tertiary); }
 .device-scope-tree header strong { color: var(--jet-theme-text-title); font-size: var(--fs-18, 18px); font-weight: 600; line-height: var(--lh-24, 24px); }
 .device-scope-tree__hint { margin: 0; color: var(--ant-color-text-tertiary); font-size: 12px; line-height: 1.5; }
 .device-scope-tree__body { flex: 1; min-height: 0; overflow: auto; }

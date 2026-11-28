@@ -5,6 +5,7 @@
 
 <script setup lang="ts">
 import MetricTemplateManager from '../../components/Metric/template/MetricTemplateManager.vue'
+import { useMetricSourceAdapter } from '../../components/Metric/source-picker/useMetricSourceAdapter'
 import { computed, ref } from 'vue'
 import { type MetricContext } from '@rule-engine-manager-ui/components/Metric'
 import { collectMetricResources } from '../../components/Metric/extensions/registry'
@@ -17,7 +18,7 @@ const auth = useAuthStore()
 const editable = computed(() => auth.hasPermission('rule-engine/MetricTemplate:save'))
 const provider = collectMetricResources().dimensions[0]?.provider
 const sourceContext = ref<MetricContext>({ownerType:provider?.ownerType || '',ownerId:'',targetType:provider?.ownerType || ''})
-const source = provider?.useSourcePicker(sourceContext)
+const source = provider ? (provider.useSourcePicker || useMetricSourceAdapter)(sourceContext) : undefined
 const starters = [...moduleRegistry.getAllModules().values()].flatMap(module => Object.values(module.metricTemplateStarters || {}).flatMap(load => load()))
 const router = useProjectRouter()
 function applyTemplate(template:{id:string;version:string}) {
