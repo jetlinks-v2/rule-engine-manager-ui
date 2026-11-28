@@ -76,9 +76,10 @@ const register = () => {
     moduleRegistry.register(name, registerSetting)
 }
 
-/** 列表复用壳层表面，仪表盘沿用资源中心背景。 */
+/** 规则列表与指标工作台复用壳层表面，仪表盘沿用资源中心背景。 */
 const getContentPanelOverrides = () => ({
     'rule-engine/Instance': { padding: 0 },
+    '/rule-engine/metrics': { padding: 0 },
     'rule-engine/DashBoard': false,
     'AlarmDashboard': false,
     '/alarms/dashboard': false,

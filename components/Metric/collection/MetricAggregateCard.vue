@@ -34,7 +34,7 @@ import {collectionMessages} from './messages'
 import type {MetricAggregateGroup,ReadOperation} from './types'
 const props=defineProps<{groups:MetricAggregateGroup[];bounds:[number,number];interval:number;visible:boolean;preferenceKey?:string;variantLabel?:string;hideMembers?:boolean}>()
 defineEmits<{(event:'members'):void}>()
-const {t,locale}=useI18n({useScope:'local',messages:{zh:{...metricMessages.zh,...collectionMessages.zh},en:{...metricMessages.en,...collectionMessages.en}}})
+const {t,locale}=useI18n({useScope:'local',messages:{ja:{...metricMessages.ja,...collectionMessages.ja},zh:{...metricMessages.zh,...collectionMessages.zh},en:{...metricMessages.en,...collectionMessages.en}}})
 const selected=ref(props.groups.find(item=>item.output.metricId===item.displaySettings?.primaryOutput)?.output.metricId || props.groups[0].output.metricId)
 // Retain user zoom when an offscreen chart is disposed or another output is inspected.
 const views=ref<Record<string,[number,number] | undefined>>({})

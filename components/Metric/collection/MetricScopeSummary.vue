@@ -31,7 +31,7 @@ import { collectionMessages } from './messages'
 import type { MetricScopeOverviewState } from './useMetricScopeOverview'
 const props=defineProps<{state?:MetricScopeOverviewState}>()
 const emit=defineEmits<{(event:'inspect',group?:string):void;(event:'refresh'):void}>()
-const {t,locale}=useI18n({useScope:'local',messages:{zh:{...metricMessages.zh,...collectionMessages.zh},en:{...metricMessages.en,...collectionMessages.en}}})
+const {t,locale}=useI18n({useScope:'local',messages:{ja:{...metricMessages.ja,...collectionMessages.ja},zh:{...metricMessages.zh,...collectionMessages.zh},en:{...metricMessages.en,...collectionMessages.en}}})
 const coverage=computed(()=>props.state?.data?.coverage)
 const output=computed(()=>props.state?.data?.outputs.length===1 ? props.state.data.outputs[0] : undefined)
 const labels=computed(()=>output.value?.group.stateLabels || [])

@@ -1,5 +1,5 @@
 <template>
-  <section class="metric-source-fields">
+  <section class="metric-source-fields" :class="{'metric-source-fields--inline':inline}">
     <header v-if="inline && !state.statistics.active.value"><b>{{ t(state.request.value?.purpose === 'declaration' ? 'referenceTitle' : 'sourceTitle') }}</b><a-button type="text" size="small" @click="state.cancel"><AIcon type="ArrowLeftOutlined" />{{ t('back') }}</a-button></header>
     <p v-if="state.request.value?.purpose === 'declaration'" class="source-note">{{ t('referenceHelp') }}</p>
     <template v-if="state.request.value">
@@ -16,14 +16,14 @@
         <a-alert v-if="state.objectTypesError.value" type="warning" :message="t('objectTypesFailed')"><template #action><a-button type="link" size="small" @click="state.loadObjectTypes">{{ t('retry') }}</a-button></template></a-alert>
         <div v-if="state.objectType.value === 'device'" class="source-scope"><a-button v-for="value in [true,false]" :key="String(value)" type="text" size="small" :class="{active:state.scoped.value === value}" @click="state.changeScope(value)">{{ t(value ? 'scope' : 'all') }}</a-button></div>
         <a-alert v-if="state.error.value" type="error" show-icon :message="t('failed')"><template #action><a-button type="link" @click="state.search">{{ t('retry') }}</a-button></template></a-alert>
-        <a-spin :spinning="state.loading.value"><div class="source-objects">
+        <a-spin wrapper-class-name="source-results" :spinning="state.loading.value"><div class="source-objects">
           <button v-if="state.request.value.context.ownerId" type="button" @click="state.useOwner"><AIcon type="EnvironmentOutlined" /><span>{{ state.request.value.context.label || t('scope') }}<small>{{ t('scope') }}</small></span></button>
           <button v-for="item in state.devices.value" :key="item.id" type="button" @click="state.selectObject(item.id,item.name)"><AIcon :type="objectIcon" /><span>{{ item.name }}<small>{{ item.id }}</small></span><AIcon type="RightOutlined" /></button>
           <a-empty v-if="!state.loading.value && !state.error.value && !state.devices.value.length" :description="t('noObjects')" :image-style="{height:'36px'}" />
         </div></a-spin>
         <a-pagination v-if="state.total.value > 20" size="small" :current="state.page.value" :total="state.total.value" :page-size="20" :show-size-changer="false" @change="state.changePage" />
       </template>
-      <MetricMemberStatistics v-else-if="state.statistics.active.value" :state="state.statistics" :scope-label="state.object.value.name" :include-children="state.includeChildren.value" />
+      <MetricMemberStatistics v-else-if="state.statistics.active.value" class="source-statistics" :state="state.statistics" :scope-label="state.object.value.name" :include-children="state.includeChildren.value" />
       <template v-else>
         <template v-if="state.request.value.purpose==='reference'">
           <p class="source-note">{{ t('existingMetricHelp') }}</p>
@@ -39,14 +39,14 @@
         <a-alert v-if="state.builtinError.value" type="warning" show-icon :message="t('builtinFailed')"><template #action><a-button type="link" size="small" @click="state.loadBuiltins">{{ t('retry') }}</a-button></template></a-alert>
         <a-alert v-if="state.business.failed.value" type="warning" show-icon :message="t('businessFailed')"><template #action><a-button type="link" size="small" @click="state.business.load">{{ t('retry') }}</a-button></template></a-alert>
         <a-alert v-if="state.metricSources.error.value" type="warning" show-icon :message="t('metricsFailed')"><template #action><a-button type="link" size="small" @click="state.metricSources.load">{{ t('retry') }}</a-button></template></a-alert>
-        <a-spin :spinning="state.propertyLoading.value">
+        <a-spin wrapper-class-name="source-results" :spinning="state.propertyLoading.value">
           <div class="source-catalog">
             <div v-if="state.builtinLoading.value || state.business.loading.value" class="source-note" role="status"><a-spin size="small" /> {{ t('sourceLoading') }}</div>
             <section v-for="group in mainGroups" :key="group.name" class="source-group">
               <h4><AIcon type="FolderOutlined" />{{ group.name || t('ungrouped') }}<small>{{ group.items.length }}</small></h4>
               <SourceItemRow v-for="item in group.items" :key="item.key" :item="item" :declaration="state.request.value.purpose === 'declaration'" :selected="state.selectedKey.value === item.key" @select="selectItem(item)" />
             </section>
-            <a-empty v-if="!state.groups.value.length && !state.business.loading.value" :description="t(state.inputUndeclared.value ? 'inputUndeclared' : 'noData')" :image-style="{height:'36px'}" />
+            <a-empty v-if="!state.groups.value.length && !state.business.loading.value" :description="t('noData')" :image-style="{height:'36px'}" />
             <details v-if="!state.inherited.value && state.request.value.purpose !== 'declaration' && showKind('metric')" :open="state.metricsExpanded.value" class="source-service" @toggle="state.metricsExpanded.value = ($event.target as HTMLDetailsElement).open">
               <summary><AIcon type="NodeIndexOutlined" />{{ t('metrics') }}</summary>
               <a-spin v-if="state.metricSources.loading.value" size="small" />
@@ -122,6 +122,12 @@ onScopeDispose(()=>clearTimeout(timer))
 .source-objects button:hover { background:var(--bg-sunken) }
 button:focus-visible,summary:focus-visible { outline:2px solid var(--accent); outline-offset:1px }
 .source-catalog { display:grid; gap:12px; max-height:min(360px,42vh); overflow:auto; scrollbar-gutter:stable }
+.metric-source-fields--inline { display:flex; flex-direction:column; height:100%; min-height:0; overflow:hidden }
+.metric-source-fields--inline>* { flex:none }
+.metric-source-fields--inline>.source-results,.metric-source-fields--inline>.source-catalog,.metric-source-fields--inline>.source-statistics { flex:1; min-height:0 }
+.metric-source-fields--inline .source-results :deep(.ant-spin-container) { height:100%; overflow:hidden }
+.metric-source-fields--inline .source-catalog,.metric-source-fields--inline .source-objects { height:100%; min-height:0; max-height:none; overflow:auto; align-content:start; overscroll-behavior:contain }
+.metric-source-fields--inline>.source-statistics { overflow:auto; overscroll-behavior:contain }
 .source-group { min-width:0 }
 .source-group h4 { display:flex; align-items:center; gap:6px; margin:0 0 4px; font-size:12px; color:var(--ink-3); font-weight:500 }
 .source-group h4 small { margin-left:auto; font-weight:400 }

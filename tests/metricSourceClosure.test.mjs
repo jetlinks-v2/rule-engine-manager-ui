@@ -135,7 +135,7 @@ test('声明目录排除动作；查询输出保留类型语义，参数只开�
     const pending=state.pickSource({context,input:{id:'value',valueType:{type:'double'},semantics:{semanticId:'urn:temperature'}}});await flush()
     assert.deepEqual(metadataReads,[['device','D1','summary']])
     assert.deepEqual(state.business.methods.value.find(item=>item.valuePath==='temperature').command.inputs.map(item=>item.id),['limit'])
-    assert.deepEqual(state.items.value.flatMap(item=>item.methods).filter(item=>item.kind==='businessQuery').map(item=>item.valuePath),['temperature'])
+    assert.deepEqual(state.items.value.flatMap(item=>item.methods).filter(item=>item.kind==='businessQuery').map(item=>item.valuePath),['temperature','count'])
     state.chooseMethod(method(state,'summary','temperature'));state.business.parameters.value={limit:0};state.confirm()
     const result=await pending
     assert.equal(result.mapping.providerSource.provider,'ontology');assert.equal(result.mapping.providerSource.sourceType,'summary')
@@ -239,27 +239,27 @@ test('权限撤销后目录及选择清空，重试不复用旧授权',async()=>
   }finally{denied=false;scope.stop()}
 })
 
-test('未声明输入不开放目录，导入声明仍开放且保留原语义',async()=>{
+test('未声明类型不额外过滤目录，导入声明保留原语义',async()=>{
   const {scope,state}=fixture()
   try{
     const pending=state.pickSource({context,input:{id:'value',valueType:{},semantics:{}}});await flush()
-    assert.equal(state.inputUndeclared.value,true);assert.equal(state.items.value.length,0)
-    state.showAllSources.value=true;await flush();assert.equal(state.groups.value.length,0)
+    assert.ok(method(state,'temperature'))
+    state.showAllSources.value=true;await flush();assert.ok(state.groups.value.length > 0)
     state.propertyId.value='temperature';state.confirm();assert.equal(state.canConfirm.value,false);assert.equal(state.open.value,true)
     state.cancel();await pending
     const reference=state.pickSource({context,input:{id:'value'},purpose:'declaration'});await state.selectObject('D1');await flush()
-    assert.equal(state.inputUndeclared.value,false);assert.ok(method(state,'temperature'))
+    assert.ok(method(state,'temperature'))
     state.chooseMethod(method(state,'temperature'))
     assert.deepEqual((await reference).declaration.semantics,{semanticId:'urn:temperature'})
   }finally{scope.stop()}
 })
 
-test('只有语义声明可选同语义数据，查看全部来源也不能绕过类型和语义',async()=>{
+test('语义不限制来源选择，查看全部来源仍保留类型约束',async()=>{
   const {scope,state}=fixture()
   try{
     const pending=state.pickSource({context,input:{id:'value',semantics:{semanticId:'urn:temperature'}}});await flush()
-    assert.ok(method(state,'temperature'));assert.ok(method(state,'summary','temperature'));assert.equal(method(state,'summary','count'),undefined)
-    state.showAllSources.value=true;await flush();assert.equal(method(state,'summary','count'),undefined)
+    assert.ok(method(state,'temperature'));assert.ok(method(state,'summary','temperature'));assert.ok(method(state,'summary','count'))
+    state.showAllSources.value=true;await flush();assert.ok(method(state,'summary','count'))
     state.chooseMethod(method(state,'summary','temperature'));state.confirm()
     assert.deepEqual((await pending).declaration.semantics,{semanticId:'urn:temperature'})
     const invalid=state.pickSource({context,input:{id:'value',valueType:{type:'boolean'}},mapping:{kind:'property',thingType:'device',thingId:'D1',id:'temperature'}});await flush()

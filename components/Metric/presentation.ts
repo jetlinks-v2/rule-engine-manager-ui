@@ -57,8 +57,13 @@ export function metricSampleInterval(template:MetricTemplate | undefined,outputI
 }
 export function metricChartPoints(values: MetricValue[],sampleInterval?:number): Array<[number, number | null]> {
   const points = values.filter(value => Number.isFinite(resultTime(value)))
-    .map(value => [resultTime(value)!, ['valid', 'unknownQuality', 'estimatedInput', 'optionalInputMissing'].includes(metricState(value).key)
-      && typeof value.value === 'number' && Number.isFinite(value.value) ? value.value : null] as [number, number | null])
+    .map(value => {
+      // 精确 JSON 解析会将高精度小数保留为字符串，仅绘图坐标转换为 number。
+      const reading = typeof value.value === 'number' || typeof value.value === 'string' && value.value.trim() !== ''
+        ? Number(value.value) : NaN
+      return [resultTime(value)!, ['valid', 'unknownQuality', 'estimatedInput', 'optionalInputMissing'].includes(metricState(value).key)
+        && Number.isFinite(reading) ? reading : null] as [number, number | null]
+    })
     .sort((left, right) => left[0] - right[0])
   const deltas = points.slice(1).map((point,index)=>point[0] - points[index][0]).filter(delta=>delta > 0).sort((a,b)=>a-b)
   const median = deltas[Math.floor(deltas.length / 2)]

@@ -91,6 +91,13 @@ test('source descriptions merge into an existing host composer and follow its lo
     assert.match(localized.count.detail,/10 分钟内更新/)
     assert.doesNotMatch(localized.count.detail,/PT10M/)
     assert.match(counts.stale.error,/changed/)
+    host.locale.value = 'ja'
+    await nextTick()
+    const japanese = await adapter.pickSource.describe(context.value, {count:statistical})
+    assert.match(japanese.count.detail,/一致するデバイス数.*より大きい 0.*本日/)
+    assert.match(japanese.count.detail,/10 分以内に更新/)
+    assert.equal(adapter.pickSource.sourceOptions.find(option=>option.value === 'businessQuery').description,'計算時に関連する業務データを取得')
+    host.locale.value = 'zh'
     const modelReads=[]
     api.loadMetricDevice=async id=>{modelReads.push(id);return {device:{id,name:'外部设备'},properties:[{id:'power',name:'外部功率'}],events:[{id:'alarm',name:'外部事件'}]}}
     api.loadMetricProductSources=async id=>{modelReads.push(id);return {properties:[{id:'power',name:'产品功率'}],events:[{id:'alarm',name:'产品事件'}]}}

@@ -11,7 +11,7 @@
     <a-spin v-if="loading" class="config-loading" :spinning="true" />
     <MetricConfigCatalog v-else-if="selecting || !selectedTemplate" :templates="templates" :categories="categories" @select="selectTemplate" />
     <template v-else>
-      <div class="config-tools"><span>{{ t('sourcesAndCalculation') }}</span><a-button v-if="parameters.length" type="text" size="small" @click="showParameters">{{ t('parameters') }} · {{ parameters.length }}</a-button><a-tooltip :title="!configTrial.supported.value ? t('configTrialUnsupported') : t('configTrialHint')"><a-button type="text" size="small" :aria-pressed="configTrial.active.value" :disabled="!configTrial.supported.value || saving" @click="toggleTrial"><AIcon type="ExperimentOutlined" />{{ t('simulate') }}</a-button></a-tooltip><a-button type="text" size="small" :aria-label="t(panelOpen ? 'configCollapse' : 'configExpand')" @click="panelOpen = !panelOpen"><AIcon :type="panelOpen ? 'MenuFoldOutlined' : 'MenuUnfoldOutlined'" /></a-button></div>
+      <div class="config-tools"><span>{{ t('sourcesAndCalculation') }}</span><a-button v-if="parameters.length" type="text" size="small" @click="showParameters">{{ t('parameters') }} · {{ parameters.length }}</a-button><a-tooltip :title="!configTrial.supported.value ? t('configTrialUnsupported') : t('configTrialHint')"><a-button type="text" size="small" :aria-pressed="configTrial.active.value" :disabled="!configTrial.supported.value || saving" @click="toggleTrial"><AIcon type="ExperimentOutlined" />{{ t('simulate') }}</a-button></a-tooltip><a-button type="text" size="small" :aria-label="t(propertiesVisible ? 'configCollapse' : 'configExpand')" @click="toggleProperties"><AIcon :type="propertiesVisible ? 'MenuFoldOutlined' : 'MenuUnfoldOutlined'" /></a-button></div>
       <div ref="workspace" class="config-workspace" :style="{ '--properties-width': `${panelWidth}px` }" :class="{ 'panel-open':panelOpen, 'show-properties':showProperties }">
         <main class="config-diagram" @click.self="background">
           <nav class="config-view" :aria-label="t('sourcesAndCalculation')"><button v-for="mode in ['bindings','graph'] as const" :key="mode" type="button" :aria-pressed="viewMode === mode" @click="viewMode = mode">{{ t(mode === 'bindings' ? 'bindingList' : 'bindingGraph') }}</button></nav>
@@ -30,8 +30,8 @@
           </TemplateGraph>
         </main>
         <PanelResizeHandle v-if="panelOpen" class="config-resize" v-model="panelWidth" :container="workspace" :limits="{ initial:320 }" :aria-label="t('resizeProperties')" />
-        <aside v-if="panelOpen" class="config-properties">
-          <a-button class="config-properties__back" type="text" size="small" @click="showProperties = false"><AIcon type="ArrowLeftOutlined" />{{ t('returnToDiagram') }}</a-button>
+        <aside v-if="panelOpen" class="config-properties" :class="{'is-choosing-source':choosing}">
+          <a-button v-if="!choosing" class="config-properties__back" type="text" size="small" @click="hideProperties"><AIcon type="ArrowLeftOutlined" />{{ t('returnToDiagram') }}</a-button>
           <component :is="pickSource.editor" v-if="choosing && pickSource?.editor" :key="choosing" />
           <template v-else>
             <a-button v-if="selected" class="config-properties__subject-link" type="text" size="small" @click="background"><AIcon type="SettingOutlined" />{{ t('configSubject') }}</a-button>
@@ -79,6 +79,7 @@
 <script setup lang="ts">
 import { computed, nextTick, readonly, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useMediaQuery } from '@vueuse/core'
 import { sourceScheduleMissing } from './sourcePolicy'
 import { parameterTypeKeys } from './parameterPresentation'
 import { Modal } from 'ant-design-vue'
@@ -114,6 +115,8 @@ const selectedTemplate = computed(() => rawTemplate.value && localizedTemplate(r
 const templates = computed(() => rawTemplates.value.map(item => ({ ...item, template:localizedTemplate(item.template,String(locale.value)) })))
 const parameters = computed(() => rawParameters.value.map(item => selectedTemplate.value?.parameterDefinitions.find(value => value.id === item.id) || item))
 const selected = ref<TemplateNode>(), panelOpen = ref(true), showProperties = ref(false), selecting = ref(!props.configuration)
+const narrow = useMediaQuery('(max-width:800px)')
+const propertiesVisible = computed(() => panelOpen.value && (!narrow.value || showProperties.value))
 const graph = ref<InstanceType<typeof TemplateGraph>>()
 const viewMode = ref<'bindings'|'graph'>('bindings')
 const simulationPanel = ref<InstanceType<typeof TemplateSimulation>>()
@@ -147,9 +150,11 @@ function sourceText(id:string) { return sourceDescriptions.value[id]?.error || s
 function selectNode(node:TemplateNode) { cancelChoice(); selected.value = node; panelOpen.value = true; showProperties.value = true }
 async function showSamples(node:TemplateNode, editValue = false) { panelOpen.value = true; showProperties.value = true; await nextTick(); await simulationPanel.value?.focusSamples(editValue, selectedTemplate.value?.inputDefinitions[node.index]?.id) }
 function background() { cancelChoice(); selected.value = undefined; panelOpen.value = true; showProperties.value = true }
+function hideProperties() { panelOpen.value = false; showProperties.value = false }
+function toggleProperties() { if (propertiesVisible.value) hideProperties(); else { panelOpen.value = true; showProperties.value = true } }
 function toggleTrial() {
   configTrial.active.value = !configTrial.active.value
-  if (configTrial.active.value) { cancelChoice(); viewMode.value = 'graph'; panelOpen.value = true }
+  if (configTrial.active.value) { cancelChoice(); viewMode.value = 'graph'; panelOpen.value = true; showProperties.value = true }
 }
 function showParameters() { background() }
 const pendingLocation = ref<string>()
@@ -217,6 +222,7 @@ defineExpose({ canLeave, locate })
 .config-diagram__source,.config-diagram__meaning { display:flex; align-items:center; min-height:30px; height:30px; max-width:100%; font-size:12px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .config-diagram__source.missing { color:var(--accent) }
 .config-properties { grid-column:2; grid-row:1; min-height:0; min-width:0; overflow:auto; overscroll-behavior:contain; padding:16px; border-left:1px solid var(--line); background:var(--panel-background); scrollbar-gutter:stable }
+.config-properties.is-choosing-source { overflow:hidden }
 .config-properties__back { display:none }
 .config-properties__subject-link { margin-bottom:12px; padding:0; color:var(--ink-3) }
 .config-properties__subject { display:grid; gap:12px; font-size:12px }

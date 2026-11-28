@@ -1,9 +1,18 @@
 <template>
-  <div class="metric-scope-panel">
+  <div class="metric-scope-panel" :class="{ 'metric-scope-panel--fill': fill }">
     <header class="metric-scope-panel__head">
-      <div class="metric-scope-panel__identity"><slot name="object-heading"><strong>{{ context.label }}</strong></slot><slot name="object-actions" /></div>
+      <div class="metric-scope-panel__identity">
+        <slot name="object-heading"><strong>{{ context.label }}</strong></slot><slot name="object-actions" />
+        <a-dropdown v-if="summaryScopes.length" :trigger="['click']">
+          <a-button type="text" size="small" class="metric-scope-panel__view-switch"><AIcon :type="mode==='metrics' ? 'DashboardOutlined' : 'BarChartOutlined'" />{{ t(mode==='metrics' ? 'metric' : 'overview') }}<AIcon type="DownOutlined" /></a-button>
+          <template #overlay><a-menu class="metric-scope-panel__view-menu" :selected-keys="[mode==='metrics' ? 'metrics' : 'overview']" @click="setMode(String($event.key))">
+            <a-menu-item key="metrics"><SelectOption :label="t('metric')" icon="DashboardOutlined" /></a-menu-item>
+            <a-menu-item key="overview"><SelectOption :label="t('overview')" icon="BarChartOutlined" /></a-menu-item>
+          </a-menu></template>
+        </a-dropdown>
+      </div>
+      <a-tooltip v-if="mode==='metrics' && context.readScopes?.some(scope=>scope.tree)" :title="t('linkedDescendantsHint')"><a-checkbox v-model:checked="bindings.includeDescendants.value" class="metric-scope-panel__range">{{ t('linkedDescendants') }}</a-checkbox></a-tooltip>
       <div v-if="context.editable && mode==='metrics'" class="metric-scope-panel__actions">
-        <a-button v-if="mode==='metrics'" type="text" :aria-pressed="managing" @click="managing=!managing"><AIcon :type="managing ? 'CheckOutlined' : 'SettingOutlined'" />{{ t(managing ? 'finishManage' : 'manage') }}</a-button>
         <a-dropdown v-model:open="addOpen" :trigger="['click']" placement="bottomRight">
           <a-button type="primary" :loading="bindings.busy.value"><AIcon type="PlusOutlined" />{{ t('addMetric') }}</a-button>
           <template #overlay><a-menu class="metric-scope-panel__add" @click="addMetric(String($event.key))">
@@ -12,14 +21,12 @@
         </a-dropdown>
       </div>
     </header>
-    <div v-if="summaryScopes.length" class="metric-scope-panel__views">
-      <a-tabs class="metric-scope-panel__tabs" :active-key="mode==='metrics' ? 'metrics' : 'overview'" @change="setMode(String($event))">
-        <a-tab-pane key="metrics"><template #tab><AIcon type="DashboardOutlined" />{{ t('metric') }}</template></a-tab-pane>
-        <a-tab-pane key="overview"><template #tab><AIcon type="BarChartOutlined" />{{ t('overview') }}</template></a-tab-pane>
-      </a-tabs>
-      <a-tooltip v-if="mode==='metrics' && context.readScopes?.some(scope=>scope.tree)" :title="t('linkedDescendantsHint')"><a-checkbox v-model:checked="bindings.includeDescendants.value" class="metric-scope-panel__range">{{ t('linkedDescendants') }}</a-checkbox></a-tooltip>
-    </div>
-    <MetricPanel v-show="mode==='metrics'" ref="panel" :context="context" :pick-source="pickSource" :initial-reference="initialReference" :initial-template="initialTemplate" :detail-link-label="detailLinkLabel" hide-identity hide-add :managing="managing" :suppress-empty="hasLinkedContent" @apply-started="$emit('applyStarted')" @refresh="bindings.refresh()" @inspect-scope="inspectScope" @open-detail-link="$emit('openDetailLink',$event)">
+    <div class="metric-scope-panel__body">
+    <MetricPanel :class="{ 'is-fill': fill }" v-show="mode==='metrics'" ref="panel" :context="context" :pick-source="pickSource" :initial-reference="initialReference" :initial-template="initialTemplate" :detail-link-label="detailLinkLabel" hide-identity hide-add :suppress-empty="hasLinkedContent" @apply-started="$emit('applyStarted')" @refresh="bindings.refresh()" @inspect-scope="inspectScope" @open-detail-link="$emit('openDetailLink',$event)">
+      <template #card-actions="{configuration,template}">
+        <a-menu-item v-if="configuration.ownerType!==context.ownerType || configuration.ownerId!==context.ownerId" key="source" @click="$emit('openObject',{ownerType:configuration.ownerType,ownerId:configuration.ownerId})"><AIcon type="ExportOutlined" />{{ t('openSource') }}</a-menu-item>
+        <MetricBindingActions :links="configurationBindings(configuration)" :template="template" :context="context" :busy="bindings.busy.value" @remove="bindings.remove" @manage-location="$emit('openObject',$event)" />
+      </template>
       <template #empty>
         <section class="metric-scope-panel__welcome">
           <h3>{{ t('welcomeTitle') }}</h3><p>{{ t('welcomeHint') }}</p>
@@ -30,11 +37,12 @@
           </div>
         </section>
       </template>
-      <template #default="{references}"><MetricObjectBindings :context="context" :state="bindings" :managing="managing" :exclude="references" @manage-location="$emit('openObject',$event)" /></template>
+      <template #default="{references}"><MetricObjectBindings :context="context" :state="bindings" :exclude="references" @manage-location="$emit('openObject',$event)" /></template>
     </MetricPanel>
     <a-skeleton v-if="mode==='overview' && !summaryReady" active :paragraph="{rows:5}" />
-    <KeepAlive :max="1"><MetricAggregateOverview v-if="mode==='overview' && summaryReady && activeScope" :key="JSON.stringify([context.preferenceScope,context.ownerType,context.ownerId])" :context="context" :scope="activeScope" :scopes="summaryScopes" @scope="scopeKey=$event" @members="openMembers" @metrics="mode='metrics'" /></KeepAlive>
-    <MetricCollection v-if="mode==='members' && activeScope" :key="context.ownerType+':'+context.ownerId+':'+activeScope.memberType" :context="context" :scope="activeScope" :selection="selection" @clear-selection="mode='overview';selection=undefined" />
+    <KeepAlive :max="1"><MetricAggregateOverview :class="{ 'is-fill': fill }" v-if="mode==='overview' && summaryReady && activeScope" :key="JSON.stringify([context.preferenceScope,context.ownerType,context.ownerId])" :context="context" :scope="activeScope" :scopes="summaryScopes" @scope="scopeKey=$event" @members="openMembers" @metrics="mode='metrics'" /></KeepAlive>
+    <MetricCollection :class="{ 'is-fill': fill }" v-if="mode==='members' && activeScope" :key="context.ownerType+':'+context.ownerId+':'+activeScope.memberType" :context="context" :scope="activeScope" :selection="selection" @clear-selection="mode='overview';selection=undefined" />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -44,21 +52,32 @@ import MetricPanel from '../MetricPanel.vue'
 import MetricCollection from './MetricCollection.vue'
 import MetricAggregateOverview from './MetricAggregateOverview.vue'
 import MetricObjectBindings from '../bindings/MetricObjectBindings.vue'
+import MetricBindingActions from '../bindings/MetricBindingActions.vue'
+import {bindingLocation} from '../bindings/useMetricBindingResults'
 import SelectOption from '@jetlinks-web-core/components/SelectOption/index.vue'
 import {useMetricBindings} from '../bindings/useMetricBindings'
 import {collectionMessages} from './messages'
 import {collectMetricResources} from '../extensions/registry'
 import {aggregateScopeKey} from './aggregatePresentation'
 import {metricSourcePickerKey} from '../useMetricSourceTemplate'
-import type {MetricAlarmReference,MetricTemplateReference,MetricContext,MetricReference,MetricSourcePicker,MetricWorkspaceSelection} from '../types'
+import type {MetricAlarmReference,MetricTemplateReference,MetricContext,MetricConfig,MetricReference,MetricSourcePicker,MetricWorkspaceSelection} from '../types'
 import type {MetricAggregateScope,MetricCollectionSelection} from './types'
-const props=defineProps<{context:MetricContext;pickSource?:MetricSourcePicker;initialReference?:MetricReference;initialTemplate?:MetricTemplateReference;detailLinkLabel?:string}>()
+const props=defineProps<{fill?:boolean;context:MetricContext;pickSource?:MetricSourcePicker;initialReference?:MetricReference;initialTemplate?:MetricTemplateReference;detailLinkLabel?:string}>()
 provide(metricSourcePickerKey,toRef(props,'pickSource'))
 defineEmits<{(event:'applyStarted'):void;(event:'openDetailLink',reference:MetricAlarmReference):void;(event:'openObject',value:MetricWorkspaceSelection):void}>()
 const {t}=useI18n({useScope:'local',messages:collectionMessages})
-const mode=ref('metrics'),managing=ref(false),addOpen=ref(false),scopeKey=ref(''),selection=ref<MetricCollectionSelection>()
+const mode=ref('metrics'),addOpen=ref(false),scopeKey=ref(''),selection=ref<MetricCollectionSelection>()
 const panel=ref<InstanceType<typeof MetricPanel>>()
 const bindings=useMetricBindings(toRef(props,'context'),toRef(props,'pickSource'))
+function configurationBindings(config:MetricConfig){
+  const inherited=config.scope==='children'
+  return (bindings.page.data.value?.items || []).filter(link=>{
+    const ref=link.reference,at=bindingLocation(link)
+    return ref && ref.configId===config.id && ref.targetType===(inherited ? props.context.ownerType : config.targetType)
+      && ref.targetId===(inherited ? props.context.ownerId : config.targetId)
+      && (props.context.editable || at?.type!==props.context.ownerType || at?.id!==props.context.ownerId)
+  })
+}
 const summaryReady=computed(()=>!!bindings.page.data.value || bindings.page.state.value.status!=='loading')
 const addChoices=computed(()=>[
   {kind:'new',icon:'FunctionOutlined',label:'newMetric',hint:'newMetricHint',description:'newMetricDescription'},
@@ -93,7 +112,7 @@ function inspectScope(value:MetricCollectionSelection & {memberType:string}){
 }
 function openMembers(value:MetricCollectionSelection){selection.value=value;mode.value='members'}
 watch([()=>props.context.preferenceScope,()=>props.context.ownerType,()=>props.context.ownerId],()=>{
-  selection.value=undefined;managing.value=false;addOpen.value=false;mode.value='metrics'
+  selection.value=undefined;addOpen.value=false;mode.value='metrics'
   scopeKey.value=''
 },{immediate:true})
 // 能力热变更后只保留仍可读的范围，避免旧成员明细继续停留在已移除的入口。
@@ -107,11 +126,15 @@ watch(summaryScopes,scopes=>{
 watch([()=>props.initialReference,()=>props.initialTemplate],values=>{if(values.some(Boolean))mode.value='metrics'})
 </script>
 <style scoped>
+.metric-scope-panel__body{display:flex;flex-direction:column;gap:var(--space-4,16px);min-height:0}
+.metric-scope-panel.metric-scope-panel--fill{flex:1;height:100%;min-height:0;overflow:hidden;gap:0}
+.metric-scope-panel--fill>.metric-scope-panel__head{flex:none;box-sizing:border-box;min-height:57px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.metric-scope-panel--fill>.metric-scope-panel__body{flex:1;overflow:hidden;gap:0}
+
 .metric-scope-panel{display:flex;flex-direction:column;gap:var(--space-4,16px);min-width:0}.metric-scope-panel__head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3,12px)}
 .metric-scope-panel__identity,.metric-scope-panel__actions{display:flex;align-items:center;gap:8px;min-width:0;max-width:100%}.metric-scope-panel__identity{flex:1 1 180px}.metric-scope-panel__actions{margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
-.metric-scope-panel__views{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;border-bottom:1px solid var(--line)}
-.metric-scope-panel__tabs{flex:1;min-width:180px}.metric-scope-panel__tabs :deep(.ant-tabs-nav){margin:0}.metric-scope-panel__tabs :deep(.ant-tabs-nav::before){border-bottom:0}.metric-scope-panel__tabs :deep(.ant-tabs-content-holder){display:none}
-.metric-scope-panel__range{flex:none;margin:0 0 8px;color:var(--ink-2);font-size:var(--fs-12,12px)}
+.metric-scope-panel__view-switch{flex:none;color:var(--ink-2)}
+.metric-scope-panel__range{flex:none;margin:0;color:var(--ink-2);font-size:var(--fs-12,12px)}
 .metric-scope-panel :deep(.aggregate-overview),.metric-scope-panel :deep(.metric-collection){padding:0}
 .metric-scope-panel__add{max-width:min(360px,calc(100vw - 32px))}
 .metric-scope-panel__welcome{width:100%;max-width:680px;margin-inline:auto;padding-block:var(--space-8,32px)}

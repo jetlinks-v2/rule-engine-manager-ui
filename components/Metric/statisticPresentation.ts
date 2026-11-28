@@ -4,6 +4,7 @@ import { durationParts } from './template/window'
 import { durationUnitText } from './template/durationPresentation'
 
 export const statisticMessages = {
+  ja:{...metricMessages.ja,statistic_level:'数値集計',statistic_total:'合計',statistic_count:'サンプル件数',statistic_extent:'範囲',statistic_variance:'母分散',statistic_deviation:'母標準偏差',statistic_rate:'変化速度',statisticPoints:'直近 {count} 件',statisticRecent:'直近 {duration}',statisticPp:'パーセントポイント',statisticZero:'ゼロ基準'},
   zh:{...metricMessages.zh,statistic_level:'数值统计',statistic_total:'合计',statistic_count:'样本计数',statistic_extent:'极差',statistic_variance:'总体方差',statistic_deviation:'总体标准差',statistic_rate:'变化速度',statisticPoints:'最近 {count} 条',statisticRecent:'最近 {duration}',statisticPp:'百分点',statisticZero:'零基线'},
   en:{...metricMessages.en,statistic_level:'Value statistic',statistic_total:'Total',statistic_count:'Sample count',statistic_extent:'Range',statistic_variance:'Population variance',statistic_deviation:'Population standard deviation',statistic_rate:'Rate of change',statisticPoints:'Last {count} readings',statisticRecent:'Last {duration}',statisticPp:'pp',statisticZero:'Zero baseline'},
 }

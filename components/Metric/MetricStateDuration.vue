@@ -1,11 +1,13 @@
 <template>
   <div class="state-duration" :class="{ 'is-compact': compact, 'is-detail': detail }">
-    <div class="state-duration__head"><slot v-if="detail" name="label" /><span v-else>{{ t('intervalCurrent') }}</span><span class="state-duration__status"><IconValueView v-if="!disabled && summary.interval && appearance.icon" :value="appearance.icon" :size="16" indicator :fallback-text="stateLabel(summary.interval.value,labels || [],String(locale))" /><i v-else-if="!disabled && summary.interval" :style="{ background:appearance.color }" /><strong>{{ !disabled && summary.interval ? stateLabel(summary.interval.value, labels || [], String(locale)) : t(disabled ? 'disabled' : `intervalState_${summary.state}`) }}</strong></span></div>
+    <div class="state-duration__head"><slot v-if="detail" name="label" /><span v-else-if="!compact">{{ t('intervalCurrent') }}</span><span class="state-duration__status"><IconValueView v-if="!disabled && summary.interval && appearance.icon" :value="appearance.icon" :size="16" indicator :fallback-text="stateLabel(summary.interval.value,labels || [],String(locale))" /><i v-else-if="!disabled && summary.interval" :style="{ background:appearance.color }" /><strong>{{ !disabled && summary.interval ? stateLabel(summary.interval.value, labels || [], String(locale)) : t(disabled ? 'disabled' : `intervalState_${summary.state}`) }}</strong></span></div>
     <div class="state-duration__value"><small v-if="detail">{{ t('intervalElapsed') }}</small><small v-if="!disabled && summary.duration !== undefined && summary.interval && !summary.interval.startKnown">{{ t('intervalAtLeast') }}</small><strong>{{ disabled || summary.duration === undefined ? '—' : duration(summary.duration) }}</strong></div>
+    <div class="state-duration__facts">
     <p v-if="summary.interval && !disabled"><template v-if="summary.interval.startKnown">{{ time(summary.interval.startTime) }} {{ t('intervalStarted') }}</template><a-tooltip v-else :title="t('intervalObservedHint')"><span>{{ t('intervalObserved', {time:time(summary.interval.startTime)}) }}</span></a-tooltip><template v-if="summary.interval.endTime != null"> · {{ time(summary.interval.endTime) }} {{ t(summary.interval.endKnown ? 'intervalEnded' : 'intervalInterrupted') }}</template><template v-if="detail && summary.cutoff"> · {{ t('readAt') }} {{ time(summary.cutoff) }}</template></p>
     <p v-else-if="summary.state === 'unknown'">{{ t('intervalUnknownHint') }}<template v-if="value?.inputTimeEnd"> · {{ time(value.inputTimeEnd) }}</template></p>
     <p v-else>{{ t('intervalWaitingHint') }}</p>
-    <small v-if="summary.last && !detail" class="state-duration__last">{{ t('intervalLast') }} · {{ stateLabel(summary.last.value, labels || [], String(locale)) }} {{ !summary.last.startKnown || !summary.last.endKnown ? t('intervalAtLeast') : '' }}{{ duration(intervalDuration(summary.last, summary.cutoff)) }}<span v-if="!summary.last.endKnown"> · {{ t('intervalInterrupted') }}</span></small>
+    <small v-if="summary.last && !detail" class="state-duration__last"><span>{{ t('intervalPreviousState',{state:stateLabel(summary.last.value, labels || [], String(locale))}) }}</span><strong>{{ !summary.last.startKnown || !summary.last.endKnown ? t('intervalAtLeast') : '' }}{{ duration(intervalDuration(summary.last, summary.cutoff)) }}</strong><span v-if="!summary.last.endKnown"> · {{ t('intervalInterrupted') }}</span></small>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -44,14 +46,21 @@ const time = (millis: number) => new Date(millis).toLocaleString(String(locale.v
 .state-duration__value strong { color:var(--ink-1); font-size:var(--fs-28,28px); font-weight:600; line-height:1.4; font-variant-numeric:tabular-nums }
 .state-duration__value small,.state-duration p,.state-duration__last { color:var(--ink-2); font-size:var(--fs-12,12px) }
 .state-duration p { margin:4px 0; line-height:1.7; overflow-wrap:anywhere }
-.state-duration__last { display:block; margin-top:4px }
-.is-compact .state-duration__value strong { font-size:var(--fs-24,24px) }
-.is-compact { min-height:106px }
+.state-duration__last { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 8px; margin-top:4px }
+.state-duration__last strong { font-size:inherit; font-weight:500 }
+.is-compact:not(.is-detail) { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:4px 8px }
+.is-compact:not(.is-detail) .state-duration__head { display:contents }
+.is-compact:not(.is-detail) .state-duration__status { grid-column:2; grid-row:1 }
+.is-compact:not(.is-detail) .state-duration__value { grid-column:1; grid-row:1; min-height:46px; padding:0 }
+.is-compact:not(.is-detail) .state-duration__value strong { font-size:var(--fs-32,32px); overflow-wrap:anywhere }
+.is-compact:not(.is-detail) .state-duration__facts { grid-column:1/-1; display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 12px }
+.is-compact:not(.is-detail) p,.is-compact:not(.is-detail) .state-duration__last { margin:0; color:var(--ink-3); font-size:11px }
 .is-detail { display:grid; grid-template-columns:auto auto; justify-content:start; gap:4px 24px; align-items:center }
 .is-detail .state-duration__status { font-size:var(--fs-24,24px) }
 .is-detail .state-duration__head { justify-content:flex-start; flex-wrap:wrap; gap:8px 20px }
 .is-detail .state-duration__value { min-height:0; padding:0 }
 .is-detail .state-duration__value strong { font-size:var(--fs-24,24px) }
-.is-detail p { grid-column:1 / -1; color:var(--ink-3); margin:0 }
+.is-detail .state-duration__facts { grid-column:1 / -1 }
+.is-detail p { color:var(--ink-3); margin:0 }
 @media(max-width:480px) { .is-detail { grid-template-columns:1fr } .is-detail p { grid-column:auto } }
 </style>

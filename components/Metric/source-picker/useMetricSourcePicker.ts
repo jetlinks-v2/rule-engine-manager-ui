@@ -2,7 +2,7 @@ import { computed, onScopeDispose, ref, shallowRef, watch, type Ref } from 'vue'
 import { localizedTemplate } from '../template/text'
 import { metricOutputName } from '../presentation'
 import { resolveMetricResultType } from '../template/resultTypes'
-import { metricSourceHasInputConstraint, metricSourceMatchesInput, metricSourceSemantics } from '../sourceSchema'
+import { metricSourceMatchesInput, metricSourceSemantics } from '../sourceSchema'
 import { queryMetricDevices, queryMetricProducts, loadMetricObjectSources, loadMetricBuiltins, type MetricOutputSource } from '../../../api/metricSources'
 import { loadMetricObjectTypes, queryMetricBusinessObjects, type SourceObjectType } from '../../../api/metricBusinessSources'
 import type { MetricInputMapping, MetricSourcePicker, MetricSourceSelection } from '../types'
@@ -46,7 +46,6 @@ export function useMetricSourcePicker(locale:Ref<string> = ref('zh')) {
   const business = useBusinessSources(request,businessObject,queriesVisible)
   const metricSources = useMetricOutputSources(request,deviceId,computed(()=>open.value && !choosingObject.value && metricsExpanded.value),object)
   const statistics = useMetricMemberStatistics(request,builtinScope,includeChildren,finish)
-  const inputUndeclared = computed(()=>!!request.value && !['declaration','reference'].includes(request.value.purpose || '') && !metricSourceHasInputConstraint(request.value.input))
   const methods = computed<SourceMethod[]>(()=>([
     ...properties.value.map(item=>propertyMethod(item)), ...events.value.map(item=>propertyMethod(item,true)),
     ...builtins.value.map(item=>({...item,key:`builtin:${item.id}`,kind:'builtin' as const,valueType:{type:item.valueType || 'long'},capabilities:['current' as const]})),
@@ -253,7 +252,7 @@ export function useMetricSourcePicker(locale:Ref<string> = ref('zh')) {
   return {request,open,inherited,currentMember,object,objectType,objectTypes,objectId,objectName,devices,properties,events,builtins,builtinScope,includeChildren,
     deviceId,propertyId,category,keyword,dataKeyword,scoped,page,total,loading,propertyLoading,builtinLoading,builtinError,error,propertyError,
     choosingObject,canChangeObject,showAllSources,suggestedSources,historyInput,hasOwnerBuiltins,ownerBuiltin,canConfirm,requiresConfirmation,statistics,metricSources,business,
-    items,groups,selected,method,selectedKey,methodKey,inputUndeclared,issue,selectMethod,chooseMethod,pickSource,selectObject,selectDevice:selectObject,changeObjectType,changeObject,useOwner,objectTypesError,loadObjectTypes,metricsExpanded,
+    items,groups,selected,method,selectedKey,methodKey,issue,selectMethod,chooseMethod,pickSource,selectObject,selectDevice:selectObject,changeObjectType,changeObject,useOwner,objectTypesError,loadObjectTypes,metricsExpanded,
     changeScope:(value:boolean)=>{scoped.value=value;page.value=1;void search()},changePage:(value:number)=>{page.value=value;void search()},
     search,loadObject,loadProduct:loadObject,loadBuiltins,confirmMetric,confirm,cancel,finish}
 }
