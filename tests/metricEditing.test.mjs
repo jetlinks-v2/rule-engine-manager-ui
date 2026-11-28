@@ -6,6 +6,8 @@ import { createMetricLoader, createMetricRenderer, flush, walk, textContent, sou
 
 const load = createMetricLoader({ 'vue-i18n': { useI18n: () => ({ t: key => key }) } })
 const Editable = load('components/Editable/InputEditable.vue').default
+const focusOutEvent = () => ({ relatedTarget: null, currentTarget: { contains: () => false, ownerDocument: { activeElement: null } } })
+const editableShell = root => walk(root, node => node.props.class?.split(' ').includes('input-editable'))[0]
 
 test('从画布添加样本时统一在右栏交接编辑，简单值和复杂值行为一致', async () => {
   const Input=load('components/Metric/template/TemplateSimulationInput.vue').default
@@ -46,7 +48,7 @@ test('图文选项只用于显式元数据，选中态保留图标和简短名�
     assert.equal(field.props['dropdown-match-select-width'], false)
     assert.equal(textContent(walk(root, node => node.type === 'small')[0]), '来源最近的可用值')
     assert.equal(walk(root, node => node.type === 'icon')[0].props.type, 'ThunderboltOutlined')
-    field.props['onUpdate:value'](1); field.props.onChange(); await flush()
+    field.props['onUpdate:value'](1); field.props.onChange(1); await flush()
     assert.equal(props.value, 1)
     assert.equal(textContent(walk(root, node => node.props.role === 'button')[0]).trim(), '历史序列')
     assert.equal(walk(walk(root, node => node.props.role === 'button')[0],node=>node.type==='icon')[0].props.type,'HistoryOutlined')
@@ -79,21 +81,21 @@ test('共享句内编辑默认展示文本，键盘进入、提交、取消和�
   try {
     assert.equal(field(), undefined); assert.equal(text().props['aria-label'], '句内值')
     key('Enter'); await flush()
-    field().props['onUpdate:value']('新值'); const staleBlur = field().props.onBlur
-    key('Enter'); staleBlur(); await flush()
+    field().props['onUpdate:value']('新值'); const staleBlur = shell().props.onFocusout
+    key('Enter'); await staleBlur(focusOutEvent()); await flush()
     assert.deepEqual(changes, ['新值']); assert.equal(field(), undefined)
     text().props.onClick(); await flush()
     field().props['onUpdate:value']('取消值'); key('Escape'); await flush()
     assert.equal(props.value, '新值'); assert.equal(field(), undefined)
     text().props.onClick(); await flush()
     assert.equal(field().props.value, '新值')
-    field().props['onUpdate:value']('撤权值'); const pendingBlur = field().props.onBlur
-    props.componentProps.disabled = true; await flush(); pendingBlur(); await flush()
+    field().props['onUpdate:value']('撤权值'); const pendingBlur = shell().props.onFocusout
+    props.componentProps.disabled = true; await flush(); await pendingBlur(focusOutEvent()); await flush()
     assert.equal(field(), undefined); assert.deepEqual(changes, ['新值'])
     props.componentProps.disabled = false; props.type = 'select'
     props.componentProps.options = [{ value: 0, label: '停机' }, { value: 1, label: '运行' }]
     props.value = 0; await flush(); text().props.onClick(); await flush()
-    field().props['onUpdate:value'](1); field().props.onChange(); await flush()
+    field().props['onUpdate:value'](1); field().props.onChange(1); await flush()
     assert.equal(props.value, 1); assert.deepEqual(changes, ['新值', 1])
   } finally { app.unmount() }
 })
@@ -126,9 +128,10 @@ test('共享原位编辑保留操作槽，Enter与失焦只提交一次，Esc和
   const start = async () => { walk(root, node => node.type === 'a-button')[0].props.onClick(); await flush() }
   const field = () => walk(root, node => node.type === 'editable-input')[0]
   try {
-    await start(); field().props['onUpdate:value']('新名称'); field().props.onPressEnter(); field().props.onBlur(); await flush()
+    await start(); field().props['onUpdate:value']('新名称'); field().props.onPressEnter({ isComposing: false })
+    await editableShell(root).props.onFocusout(focusOutEvent()); await flush()
     assert.deepEqual(changes, ['新名称'])
-    await start(); field().props['onUpdate:value']('取消内容'); field().props.onKeydown({ key: 'Escape', stopPropagation() {} }); await flush()
+    await start(); field().props['onUpdate:value']('取消内容'); field().props.onKeydown({ key: 'Escape', preventDefault() {}, stopPropagation() {} }); await flush()
     assert.equal(props.value, '新名称')
     await start(); field().props['onUpdate:value']('撤权后内容'); props.disabled = true; await flush()
     assert.equal(walk(root, node => node.type === 'editable-input').length, 0)
@@ -154,13 +157,16 @@ test('名称异步保存拒绝时保留文本和错误，重复失焦不重发�
     assert.equal(walk(root, node => node.type === 'a-button').length, 0)
     walk(root, node => node.type === 'button')[0].props.onClick(); await flush()
     field().props['onUpdate:value']('重复名称')
-    const pending = field().props.onPressEnter(); field().props.onBlur(); await flush()
+    const pending = field().props.onPressEnter({ isComposing: false })
+    const blur = editableShell(root).props.onFocusout
+    await blur(focusOutEvent()); await flush()
     assert.deepEqual(requests, ['重复名称']); assert.equal(field().props.disabled, true)
     props.error = '名称已存在'; complete(false); await pending; await flush()
     assert.equal(field().props.value, '重复名称'); assert.deepEqual(changes, [])
     assert.equal(textContent(walk(root, node => node.props.role === 'alert')[0]), '名称已存在')
     props.error = ''; field().props['onUpdate:value']('可用名称')
-    const accepted = field().props.onBlur(); complete(true); await accepted; await flush()
+    const accepted = editableShell(root).props.onFocusout(focusOutEvent())
+    await flush(); complete(true); await accepted; await flush()
     assert.deepEqual(changes, ['可用名称']); assert.equal(field(), undefined)
   } finally { app.unmount() }
 })

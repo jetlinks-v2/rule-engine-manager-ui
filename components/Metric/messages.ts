@@ -3,6 +3,7 @@ import { metricJapaneseMessages } from './ja'
 export const metricMessages = {
   ja: metricJapaneseMessages,
   zh: {
+    storageInheritTemplate:'继承模板 · {policy}', storageOverride:'当前配置覆盖', storageCount:'{stored} / {total} 个输出记录历史', storageIntervalSummary:'每 {seconds} 秒记录', storageChangeSummary:'变化超过 {value}{unit} 时记录', storageHistoryRequired:'已被其他指标用作历史来源，需要保留完整历史', storageStopped:'当前未记录历史；已有记录仍可查看', storageLoadFailed:'无法读取历史依赖，请重试',
     actionFailed:'操作未完成',
     featureMetric:'设为共享重点',unfeatureMetric:'取消共享重点',featuredMetric:'共享重点指标',dragMetric:'拖动调整同组指标顺序',adjustOrder:'调整顺序',moveUp:'上移',moveDown:'下移',
     calculationChangeConfirm:'切换为“{method}”将清空当前方式的公式、窗口及状态配置。', changeCalculation:'切换并重置', parameterUnused:'尚未用于计算', requiredDuration:'设置时长', noDataTimeoutRequired:'请填写大于 0 的中断时长，发布时需要此项。',
@@ -243,6 +244,7 @@ export const metricMessages = {
     discardEdits: '离开后将放弃未保存的修改，是否继续？', continue: '继续', rangeStart: '开始时间', rangeEnd: '结束时间'
   },
   en: {
+    storageInheritTemplate:'Template default · {policy}', storageOverride:'Overridden in this configuration', storageCount:'{stored} / {total} outputs record history', storageIntervalSummary:'Record every {seconds} seconds', storageChangeSummary:'Record changes above {value}{unit}', storageHistoryRequired:'Another metric uses this history; complete history is required', storageStopped:'History recording is off; existing records remain available', storageLoadFailed:'Unable to read history dependencies. Try again.',
     actionFailed:'Could not complete the action',
     featureMetric:'Mark as a shared priority',unfeatureMetric:'Remove shared priority',featuredMetric:'Shared priority metric',dragMetric:'Drag to reorder metrics in this group',adjustOrder:'Reorder',moveUp:'Move up',moveDown:'Move down',
     calculationChangeConfirm:'Switching to “{method}” clears the current formula, window and state configuration.', changeCalculation:'Switch and reset', parameterUnused:'Not used in calculations', requiredDuration:'Set duration', noDataTimeoutRequired:'Enter a timeout greater than zero. This is required for publishing.',

@@ -1,7 +1,7 @@
 import type { MetricActionRecord, MetricSimulationResponse, MetricTemplate, MetricValue } from '../types'
 import { nodeKey, type TemplateNode } from './designer'
 import { evaluationTime } from './simulationFlow'
-import { sampleExecutionTime, sampleInputs, type SimulationFacts, type SimulationSample } from './simulation'
+import { sampleExecutionTime, sampleInputs, simulationInputValue, type SimulationFacts, type SimulationSample } from './simulation'
 import { metricValueLabels, metricValueSchema, metricValueUnit } from '../valueSemantics'
 import { metricState } from '../presentation'
 import type { MetricCalculatorDescriptor } from '../types'
@@ -99,7 +99,9 @@ export function simulationIndex(template: MetricTemplate, facts: SimulationFacts
     if (Number.isFinite(time)) times.add(time)
     for (const id of sampleInputs(template, facts, sample)) {
       const input = template.inputDefinitions.findIndex(item => item.id === id)
-      put(`input-${input}`, { key:`sample-${index}`, time, order:index, sample, sampleIndex:index })
+      const projected = facts.configuration.inputMappings[id]?.valuePath?.length
+        ? {...sample,value:simulationInputValue(facts,sample,id),unit:undefined} : sample
+      put(`input-${input}`, { key:`sample-${index}`, time, order:index, sample:projected, sampleIndex:index })
     }
   })
   for (const values of series.values()) values.sort((a, b) => a.time - b.time || a.order - b.order)

@@ -1,8 +1,9 @@
 import { computed, onScopeDispose, ref, shallowRef, watch, type Ref } from 'vue'
 import { localizedTemplate } from '../template/text'
 import { metricOutputName } from '../presentation'
+import { metricOutputHasCompleteHistory } from '../outputStorage'
 import { resolveMetricResultType } from '../template/resultTypes'
-import { metricSourceMatchesInput, metricSourceSemantics } from '../sourceSchema'
+import { metricSourceFields, metricSourceMatchesInput, metricSourceSemantics } from '../sourceSchema'
 import { queryMetricDevices, queryMetricProducts, loadMetricObjectSources, loadMetricBuiltins, type MetricOutputSource } from '../../../api/metricSources'
 import { loadMetricObjectTypes, queryMetricBusinessObjects, type SourceObjectType } from '../../../api/metricBusinessSources'
 import type { MetricInputMapping, MetricSourcePicker, MetricSourceSelection } from '../types'
@@ -28,6 +29,8 @@ export function useMetricSourcePicker(locale:Ref<string> = ref('zh')) {
   const queryError = ref(false), propertyError = ref(false), builtinError = ref(false)
   const category = ref<SourceMethod['kind']|'unsupported'>('property'), propertyId = ref('')
   const selectedKey = ref(''), methodKey = ref('')
+  const valuePath = ref<string[]>([])
+  const fieldKey = computed({get:()=>fieldOptions.value.some(field=>JSON.stringify(field.path) === JSON.stringify(valuePath.value)) ? JSON.stringify(valuePath.value) : undefined,set:(key:string)=>{valuePath.value=JSON.parse(key)}})
   let queryVersion = 0, propertyVersion = 0, builtinVersion = 0, objectTypesVersion = 0, restore = true
   let resolveSelection:((selection?:MetricSourceSelection)=>void) | undefined
   let lastDeclaration:{session:string;type:string;id:string;name:string} | undefined
@@ -55,27 +58,31 @@ export function useMetricSourcePicker(locale:Ref<string> = ref('zh')) {
       return {key:`metric:${item.config.id}:${item.output.metricId}`,kind:'metric' as const,id:item.output.metricId,name:metricOutputName(item.output,localizedTemplate(item.template,locale.value)) || item.output.metricId,
         group:item.config.name || item.template.name,unit:item.output.unit || (typeof schema?.unit === 'string' ? schema.unit : undefined),icon:'NodeIndexOutlined',valueType:schema,expands:schema?.expands as Record<string,unknown> | undefined,
         preview:{template:item.template,output:item.output,value:item.latest},
-        capabilities:['current' as const,'subscribe' as const,...(item.output.persist && !item.output.latestOnly ? ['history' as const] : [])]}
+        capabilities:['current' as const,'subscribe' as const,...(metricOutputHasCompleteHistory(item.output) ? ['history' as const] : [])]}
     }),
     ...business.methods.value,
   ] as SourceMethod[]).filter(item=>!!request.value && (request.value.purpose === 'reference' ? item.kind === 'metric'
-    : request.value.purpose === 'declaration' || metricSourceMatchesInput(request.value.input,item) && !issue(item))))
+    : request.value.purpose === 'declaration' || (metricSourceMatchesInput(request.value.input,item) || ['property','event','metric','builtin'].includes(item.kind)
+      && metricSourceFields(item.valueType).some(field=>metricSourceMatchesInput(request.value!.input,field))) && !issue(item))))
   const items = computed(()=>sourceItems(methods.value))
   const groups = computed(()=>sourceGroups(items.value,dataKeyword.value,suggestedSources.value,showAllSources.value,selectedKey.value))
   const selected = computed(()=>items.value.find(item=>item.key === selectedKey.value))
   const method = computed(()=>selected.value?.methods.find(item=>item.key === methodKey.value))
+  const fieldOptions = computed(()=>metricSourceFields(method.value?.valueType).filter(field=>request.value?.purpose === 'declaration' || !!request.value && metricSourceMatchesInput(request.value.input,field)))
+  const selectedField = computed(()=>fieldOptions.value.find(field=>JSON.stringify(field.path) === JSON.stringify(valuePath.value)))
   const selectedProperty = computed(()=>properties.value.find(item=>item.id === propertyId.value && (category.value === 'property' ? !item.platform : category.value === 'builtin' && item.platform)))
   const propertyAllowed = computed(()=>objectType.value === 'device' || currentMember.value || objectType.value === 'product' && request.value?.purpose === 'declaration')
   const canConfirm = computed(()=>{
     if (!request.value || choosingObject.value || statistics.active.value || category.value === 'unsupported') return false
     if (!method.value || method.value.kind !== category.value || method.value.id !== propertyId.value) return false
+    if (method.value.valueType && !selectedField.value) return false
     if (category.value === 'businessEvent' || category.value === 'businessQuery') return business.canConfirm.value
     if (category.value === 'metric') return !!method.value && !metricSources.loading.value && !metricSources.error.value
     if (category.value === 'event') return !propertyLoading.value && !propertyError.value && events.value.some(item=>item.id === propertyId.value) && propertyAllowed.value
     if (category.value === 'property' || selectedProperty.value?.platform) return !propertyLoading.value && !propertyError.value && !!selectedProperty.value && propertyAllowed.value && (!historyInput.value || !selectedProperty.value.platform || selectedProperty.value.history)
     return !builtinLoading.value && !builtinError.value && !historyInput.value && (request.value.purpose === 'declaration' || request.value.scheduled !== false) && builtins.value.some(item=>item.id === propertyId.value && (request.value?.purpose === 'declaration' || !item.configurationRequired))
   })
-  const requiresConfirmation = computed(()=>request.value?.purpose === 'reference' || request.value?.purpose !== 'declaration' && !!method.value && (selected.value!.methods.length > 1 || category.value === 'businessQuery'
+  const requiresConfirmation = computed(()=>method.value?.valueType?.type === 'object' || request.value?.purpose === 'reference' || request.value?.purpose !== 'declaration' && !!method.value && (selected.value!.methods.length > 1 || category.value === 'businessQuery'
     || category.value === 'businessEvent'
     || category.value === 'builtin' && !!builtins.value.find(item=>item.id === propertyId.value)?.supportsChildren))
 
@@ -106,17 +113,29 @@ export function useMetricSourcePicker(locale:Ref<string> = ref('zh')) {
       && (currentMember.value ? !mapping.thingId : (mapping.thingId || mapping.providerSource?.configuration.thingId || context.targetId || context.ownerId) === objectId.value)
   }
   function finish(selection:MetricSourceSelection) {
+    if (method.value && selection.mapping.id === method.value.id) {
+      if (valuePath.value.length && selectedField.value) {
+        selection.label += ` / ${selectedField.value.label}`
+        if (selection.declaration) selection.declaration = {...selection.declaration,valueType:selectedField.value.valueType,
+          name:`${selection.declaration.name} / ${selectedField.value.label}`,unit:selectedField.value.unit,
+          semantics:metricSourceSemantics(selectedField.value.valueType.expands as Record<string,unknown> | undefined)}
+      }
+    }
     if (request.value?.purpose === 'declaration' && request.value.session && objectId.value) {
       lastDeclaration = {session:request.value.session,type:objectType.value,id:objectId.value,name:objectName.value}
     }
     const original = request.value?.mapping, next = selection.mapping
     if (original && sameObject(original) && original.kind === next.kind && original.id === next.id && original.configId === next.configId
       && original.providerSource?.provider === next.providerSource?.provider && original.providerSource?.sourceType === next.providerSource?.sourceType) selection.mapping = {...original,...next}
+    if (method.value && next.id === method.value.id) {
+      if (valuePath.value.length) selection.mapping.valuePath = [...valuePath.value]
+      else delete selection.mapping.valuePath
+    }
     resolveSelection?.(selection); resolveSelection = undefined; cancel()
   }
   const pickSource:MetricSourcePicker = next=>{
     cancel(); restore = true; request.value = next
-    selectedKey.value = ''; methodKey.value = ''; properties.value = []; events.value = []; builtins.value = []; devices.value = []
+    selectedKey.value = ''; methodKey.value = ''; valuePath.value = []; properties.value = []; events.value = []; builtins.value = []; devices.value = []
     showAllSources.value = false; keyword.value = ''; dataKeyword.value = ''; scoped.value = true; page.value = 1
     objectTypes.value = []; objectTypesError.value = false; metricsExpanded.value = next.purpose === 'reference' || next.mapping?.kind === 'metric' || next.input.source?.kind === 'metric'
     queryError.value = false; propertyError.value = false; builtinError.value = false
@@ -208,6 +227,7 @@ export function useMetricSourcePicker(locale:Ref<string> = ref('zh')) {
     restore = false
     selectedKey.value = items.value.find(value=>value.methods.some(value=>value.key === item.key))?.key || item.key
     methodKey.value = item.key; category.value = item.kind; propertyId.value = item.id
+    valuePath.value = restoring ? [...(request.value?.mapping?.valuePath || [])] : []
     if (item.kind === 'businessEvent' || item.kind === 'businessQuery') business.select(item,restoring)
     if (request.value?.purpose !== 'declaration' && item.kind === 'builtin' && builtins.value.find(value=>value.id === item.id)?.configurationRequired && !restoring) statistics.open()
   }
@@ -252,7 +272,7 @@ export function useMetricSourcePicker(locale:Ref<string> = ref('zh')) {
   return {request,open,inherited,currentMember,object,objectType,objectTypes,objectId,objectName,devices,properties,events,builtins,builtinScope,includeChildren,
     deviceId,propertyId,category,keyword,dataKeyword,scoped,page,total,loading,propertyLoading,builtinLoading,builtinError,error,propertyError,
     choosingObject,canChangeObject,showAllSources,suggestedSources,historyInput,hasOwnerBuiltins,ownerBuiltin,canConfirm,requiresConfirmation,statistics,metricSources,business,
-    items,groups,selected,method,selectedKey,methodKey,issue,selectMethod,chooseMethod,pickSource,selectObject,selectDevice:selectObject,changeObjectType,changeObject,useOwner,objectTypesError,loadObjectTypes,metricsExpanded,
+    items,groups,selected,method,selectedKey,methodKey,fieldKey,fieldOptions,selectedField,issue,selectMethod,chooseMethod,pickSource,selectObject,selectDevice:selectObject,changeObjectType,changeObject,useOwner,objectTypesError,loadObjectTypes,metricsExpanded,
     changeScope:(value:boolean)=>{scoped.value=value;page.value=1;void search()},changePage:(value:number)=>{page.value=value;void search()},
     search,loadObject,loadProduct:loadObject,loadBuiltins,confirmMetric,confirm,cancel,finish}
 }

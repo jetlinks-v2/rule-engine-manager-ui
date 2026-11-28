@@ -2,7 +2,7 @@ import { computed, reactive, ref, watch, type Ref } from 'vue'
 import type { MetricSimulationResponse, MetricTemplate, MetricValue } from '../types'
 import { nodeKey, nodeList } from './designer'
 import { configurationObject, encodeConfiguration, type ConfigurationFormat } from './configurationText'
-import { addSimulationSample, patchSimulationSample, visualSamples, type SimulationFacts } from './simulation'
+import { addSimulationSample, patchSimulationSample, patchSimulationInput, visualSamples, type SimulationFacts } from './simulation'
 import { simulationIndex, simulationNodeAt, type SimulationPreview } from './simulationPreview'
 import { useAutoSimulation } from './useAutoSimulation'
 
@@ -91,8 +91,9 @@ export function useTemplateSimulation(options: {
     const at = time.value ?? Date.now()
     updateFacts(addSimulationSample(options.template.value, facts.value, inputId, at)); selectTime(at)
   }
-  function patchValue(index:number, value:unknown) {
-    if (facts.value) updateFacts(patchSimulationSample(facts.value, index, { value:value ?? null }))
+  function patchValue(index:number, value:unknown, input?:string) {
+    if (facts.value) updateFacts(input ? patchSimulationInput(facts.value,index,input,value ?? null)
+      : patchSimulationSample(facts.value, index, { value:value ?? null }))
   }
   function reset() {
     automatic?.cancel()

@@ -121,6 +121,7 @@ import { useMetricScopeOverview } from './collection/useMetricScopeOverview'
 import MetricValueView from './MetricValue.vue'
 import { useMetricPanel } from './useMetricPanel'
 import { metricHistoryKey, useMetricTrends } from './useMetricTrends'
+import { metricRecordingOutputIds } from './outputStorage'
 import { tracksStateIntervals } from './stateIntervals'
 import { metricConfigurationIcon } from './extensions/presentationSettings'
 import { metricCalculatorsKey, metricAggregationsKey } from './calculatorContext'
@@ -164,9 +165,10 @@ const trendTargets = computed(() => error.value ? [] : configurations.value.flat
   const id = config.id, template = id ? rawTemplates.value[id] : undefined
   if (!id || !template || scopeDefinition(config)) return []
   const outputs = template.outputs.map(output => output.metricId)
+  const recordingOutputs = metricRecordingOutputIds(template.outputs,config.outputStorage || {})
   const intervalOutputs = outputs.filter(output => tracksStateIntervals(template, output))
   const target = metricDataTarget(config, props.context)
-  return [{ id, key: metricResultKey(config, '') + JSON.stringify([outputs, intervalOutputs, target]), outputs, intervalOutputs, ...target }]
+  return [{ id, key: metricResultKey(config, '') + JSON.stringify([outputs, recordingOutputs, intervalOutputs, target]), outputs, recordingOutputs, intervalOutputs, ...target }]
 }))
 function scopeDefinition(config: MetricConfig) { return config.scope === 'children' && config.ownerType === props.context.ownerType && config.ownerId === props.context.ownerId }
 const scopeConfigs = computed(() => configurations.value.filter(scopeDefinition))

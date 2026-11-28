@@ -5,7 +5,8 @@ import { createMetricLoader, createMetricRenderer, flush, walk } from './helpers
 
 test('共用分界线限制主区宽度，支持拖动取消、键盘与卸载释放', async () => {
   const width = ref(1000)
-  const Handle = createMetricLoader({ '@vueuse/core': { useElementSize: () => ({ width }) } })('components/PanelResizeHandle/index.vue').default
+  const Handle = createMetricLoader({ '@vueuse/core': { useElementSize: () => ({ width }) },
+    'vue-i18n': { useI18n: () => ({ t: key => key }) } })('components/PanelResizeHandle/index.vue').default
   const props = reactive({ modelValue:360, 'onUpdate:modelValue': value => { props.modelValue = value } })
   const { renderer, root } = createMetricRenderer()
   const app = renderer.createApp({ setup: () => () => h(Handle, props) }); app.mount(root)

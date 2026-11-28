@@ -27,6 +27,21 @@ export function useMetricEditor(
   const sourcesLoading = ref(false)
   const savedSnapshot = ref<MetricConfig>()
   const snapshotLoading = ref(false)
+  const storageConstraints = ref<string[]>([]), storageLoading = ref(false), storageError = ref('')
+  let storageGeneration = 0, storageIdentity = ''
+  async function loadStorageConstraints(force = false) {
+    const id = draft.value.id, identity = JSON.stringify([id,draft.value.revision])
+    if (!force && identity === storageIdentity && !storageError.value) return
+    const token = ++storageGeneration
+    storageConstraints.value = []; storageError.value = ''; storageLoading.value = false
+    if (!id || !api.outputStorageConstraints) return
+    storageLoading.value = true
+    try {
+      const values = await api.outputStorageConstraints(id)
+      if (token === storageGeneration && id === draft.value.id) { storageConstraints.value = values; storageIdentity = identity }
+    } catch (cause) { if (token === storageGeneration && id === draft.value.id) storageError.value = errorText(cause) }
+    finally { if (token === storageGeneration) storageLoading.value = false }
+  }
   const selectedTemplate = computed(() => templates.value.find(item =>
     item.template.id === draft.value.templateId && item.template.version === draft.value.templateVersion
     && (draft.value.templateRevision == null || item.revision === draft.value.templateRevision))?.template)
@@ -44,7 +59,7 @@ export function useMetricEditor(
       const template = entity.template
       cancelChoice()
       draft.value = { ...draft.value, templateId: template.id, templateVersion: template.version, templateRevision: entity.revision,
-        inputMappings: {}, parameters: {} }
+        inputMappings: {}, parameters: {}, outputStorage:{} }
       sourceLabels.value = {}
     }
   })
@@ -190,7 +205,8 @@ export function useMetricEditor(
     if (resolved) { errorKind.value = ''; error.value = '' }
   })
   watch(() => context.value.editable, editable => { if (!editable) cancelChoice() })
-  onScopeDispose(() => { generation++; sourceVersion++; cancelChoice() })
+  onScopeDispose(() => { generation++; sourceVersion++; storageGeneration++; cancelChoice() })
   return { draft, dirty, templates, categories, selectedTemplate, templateSelection, parameters, missingInputs, loading, saving, choosing,
-    error, errorKind, sourceLabels, sourceDescriptions, sourcesLoading, refreshSources, cancelChoice, savedSnapshot, snapshotLoading, presentation, extensionFailed, load, choose, ready, save, readSaved, useSaved, setScope }
+    error, errorKind, sourceLabels, sourceDescriptions, sourcesLoading, refreshSources, cancelChoice, savedSnapshot, snapshotLoading, presentation, extensionFailed, load, choose, ready, save, readSaved, useSaved, setScope,
+    storageConstraints, storageLoading, storageError, loadStorageConstraints }
 }

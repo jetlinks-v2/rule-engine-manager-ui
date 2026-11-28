@@ -1,5 +1,5 @@
 <template>
-  <TemplateClause stacked icon="HistoryOutlined" :title="t('historyRecording')">
+  <TemplateClause stacked icon="HistoryOutlined" :title="title || t('historyRecording')">
     <div class="history-recording">
       <span>{{ t('historyRecordAs') }}</span>
       <Editable type="select" :value="mode" :component-props="{ disabled, bordered:false, defaultOpen:true, dropdownMatchSelectWidth:false, 'aria-label':t('historyRecording'), options:choices }" @change="choose($event as Mode)" />
@@ -14,7 +14,7 @@
         <TemplateDuration :model-value="duration(output.history?.maxIntervalMillis || 0)" :disabled="disabled" :empty-label="t('historyNoHeartbeat')" @update:model-value="setDuration('maxIntervalMillis',$event)" />
       </template>
     </div>
-    <small v-if="mode === 'interval'">{{ t('historyRecordingIntervalHint') }}</small>
+    <small v-if="mode === 'interval' || mode === 'onChange' && output.history?.maxIntervalMillis">{{ t('historyRecordingIntervalHint') }}</small>
   </TemplateClause>
 </template>
 <script setup lang="ts">
@@ -26,19 +26,23 @@ import TemplateDuration from './TemplateDuration.vue'
 import { durationSeconds } from './window'
 import { metricMessages } from '../messages'
 import type { MetricTemplateOutput, MetricHistoryPolicy } from '../types'
-const props = defineProps<{ output:MetricTemplateOutput; disabled?:boolean }>()
-const emit = defineEmits<{ (event:'patch', value:Partial<MetricTemplateOutput>):void }>()
+import { metricStorageMode, metricStorageSummary } from '../outputStorage'
+const props = defineProps<{ output:MetricTemplateOutput; disabled?:boolean; title?:string; defaultOutput?:MetricTemplateOutput; inherited?:boolean; completeHistory?:boolean }>()
+const emit = defineEmits<{ (event:'patch', value:Partial<MetricTemplateOutput>):void; (event:'inherit'):void }>()
 const { t } = useI18n({ useScope:'local', messages:metricMessages })
-type Mode = MetricHistoryPolicy['mode'] | 'latest'
-const mode = computed<Mode>(()=>props.output.persist === false || props.output.latestOnly ? 'latest' : props.output.history?.mode || 'all')
+type Mode = MetricHistoryPolicy['mode'] | 'latest' | 'inherit'
+const mode = computed<Mode>(()=>props.inherited ? 'inherit' : metricStorageMode(props.output))
 const choices = computed(()=>[
+  ...(props.defaultOutput ? [{ value:'inherit', label:t('storageInheritTemplate',{ policy:metricStorageSummary(props.defaultOutput,t) }), icon:'BranchesOutlined', disabled:props.completeHistory && metricStorageMode(props.defaultOutput) !== 'all' }] : []),
   { value:'all', label:t('historyAllResults'), icon:'UnorderedListOutlined' },
-  { value:'onChange', label:t('historyOnChange'), icon:'SwapOutlined' },
-  { value:'interval', label:t('historyInterval'), icon:'ClockCircleOutlined' },
-  { value:'latest', label:t('configLatestOnly'), icon:'DashboardOutlined' },
+  { value:'onChange', label:t('historyOnChange'), icon:'SwapOutlined', disabled:props.completeHistory },
+  { value:'interval', label:t('historyInterval'), icon:'ClockCircleOutlined', disabled:props.completeHistory },
+  { value:'latest', label:t('configLatestOnly'), icon:'DashboardOutlined', disabled:props.completeHistory },
 ])
 function choose(value:Mode) {
   if (props.disabled) return
+  if (props.completeHistory && (value === 'inherit' ? !props.defaultOutput || metricStorageMode(props.defaultOutput) !== 'all' : value !== 'all')) return
+  if (value === 'inherit') { emit('inherit'); return }
   emit('patch',{ persist:value !== 'latest', latestOnly:value === 'latest', history:value === 'all' || value === 'latest' ? undefined : { mode:value, deadband:0, intervalMillis:value === 'interval' ? 60000 : 0, maxIntervalMillis:value === 'onChange' ? 60000 : 0 } })
 }
 function patch(fields:Partial<MetricHistoryPolicy>) { if (!props.disabled && props.output.history) emit('patch',{ history:{ ...props.output.history, ...fields } }) }

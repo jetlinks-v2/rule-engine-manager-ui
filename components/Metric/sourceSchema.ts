@@ -63,3 +63,18 @@ export function metricSourceField(schema:Record<string,unknown>,path:string):Rec
   for (const id of path.split('.')) field = Array.isArray(field?.properties) ? field.properties.find(item=>item.id === id)?.valueType : undefined
   return field
 }
+
+/** 只展开对象字段；段列表保留字段标识中的点和斜杠，不隐式展开数组。 */
+export function metricSourceFields(schema:Record<string,unknown> | undefined, path:string[] = [], names:string[] = []):{path:string[];label:string;valueType:Record<string,unknown>;unit?:string}[] {
+  if (!schema) return []
+  const result:ReturnType<typeof metricSourceFields> = [{path,label:names.join(' / '),valueType:schema,unit:typeof schema.unit === 'string' ? schema.unit : undefined}]
+  if (schema.type === 'object' && Array.isArray(schema.properties)) for (const field of schema.properties) {
+    if (typeof field.id === 'string' && field.id) result.push(...metricSourceFields(field.valueType,[...path,field.id],[...names,String(field.name || field.id)]))
+  }
+  return result
+}
+
+export function metricSourceValue(value:unknown, path:readonly string[] = []):unknown {
+  for (const field of path) value = value && typeof value === 'object' && !Array.isArray(value) && Object.prototype.hasOwnProperty.call(value,field) ? (value as Record<string,unknown>)[field] : undefined
+  return value
+}

@@ -4,10 +4,10 @@
     <div v-if="selectedInput" class="sample-editor__filter"><AIcon type="FilterOutlined" />{{ inputName(selectedInput) }}<a-button type="text" size="small" :aria-label="t('trialAllInputs')" @click="emit('clear-input')"><AIcon type="CloseOutlined" /></a-button></div>
     <section v-for="moment in moments" :key="moment.time" class="sample-editor__moment" :class="{ selected:moment.time === selectedTime }">
       <button type="button" class="sample-editor__moment-time" :aria-pressed="moment.time === selectedTime" @click="emit('select-time', moment.time)"><AIcon :type="moment.hasInput ? 'ImportOutlined' : 'ClockCircleOutlined'" /><time>{{ sampleDate(moment.time).replace('T',' ') }}</time><small v-if="!moment.entries.length">{{ t(moment.hasInput ? 'trialOtherInputs' : 'trialEvaluation') }}</small></button>
-      <div v-for="entry in moment.entries" :key="entry.index" class="sample-editor__row" :class="{ incomplete:entry.sample.value == null }">
+      <div v-for="entry in moment.entries" :key="`${entry.index}:${entry.input.id}`" class="sample-editor__row" :class="{ incomplete:entry.value == null }">
         <div class="sample-editor__sentence">
           <TemplateReference :metric-id="entry.input.id"><span>{{ entry.input.name || entry.input.id }}</span></TemplateReference><span class="sample-editor__is">{{ t('sentenceValue') }}</span>
-          <TemplateSampleValue :ref="editor => setValueEditor(entry.index, editor)" class="sample-editor__value" :template="template" :input="entry.input" :value="entry.sample.value" :disabled="loading" show-hint @change="patch(entry.index, { value:$event })" />
+          <TemplateSampleValue :ref="editor => setValueEditor(entry.index, editor)" class="sample-editor__value" :template="template" :input="entry.input" :value="entry.value" :disabled="loading" show-hint @change="emit('change',patchSimulationInput(facts,entry.index,entry.input.id,$event))" />
           <small>{{ entry.sample.unit || entry.input.unit }}</small>
           <a-popover trigger="click" placement="bottom">
             <template #content><a-input type="datetime-local" :value="sampleDate(entry.sample.eventTime)" :disabled="loading" :aria-label="`${entry.input.name || entry.input.id} · ${t('sampleTime')}`" step="1" @change="changeTime(entry.index, $event.target.value)" /></template>
@@ -36,7 +36,7 @@ import { useI18n } from 'vue-i18n'
 import TemplateSampleValue from './TemplateSampleValue.vue'
 import SelectOption from '@jetlinks-web-core/components/SelectOption/index.vue'
 import TemplateReference from './TemplateReference.vue'
-import { sampleInput, sampleInputs, sampleExecutionTime, sampleDate, addSimulationSample, patchSimulationSample, type SimulationFacts, type SimulationSample } from './simulation'
+import { sampleInputs, simulationInputValue, patchSimulationInput, sampleExecutionTime, sampleDate, addSimulationSample, patchSimulationSample, type SimulationFacts, type SimulationSample } from './simulation'
 import type { MetricTemplate, MetricTemplateInput } from '../types'
 import { metricMessages } from '../messages'
 const props = defineProps<{ template:MetricTemplate; facts:SimulationFacts; loading?:boolean; times?:number[]; selectedTime?:number; selectedInput?:string }>()
@@ -57,17 +57,22 @@ const invalid = computed(() => timeErrors.value.size > 0 || props.facts.samples.
 watch(invalid, value => emit('invalid', value), { immediate:true, flush:'sync' })
 const inputName = (id:string) => props.template.inputDefinitions.find(input => input.id === id)?.name || id
 const moments = computed(() => {
-  type Entry = { sample:SimulationSample; index:number; input:MetricTemplateInput }
+  type Entry = { sample:SimulationSample; index:number; input:MetricTemplateInput; value:unknown }
   const inputTimes = new Set(props.facts.samples.map(sampleExecutionTime))
   const groups = new Map<number, Entry[]>((props.times || []).map(time => [time, []]))
   props.facts.samples.forEach((sample, index) => {
-    const id = props.selectedInput && sampleInputs(props.template, props.facts, sample).includes(props.selectedInput)
-      ? props.selectedInput : sampleInput(props.template, props.facts, sample)
-    const input = props.template.inputDefinitions.find(input => input.id === id)
     const time = sampleExecutionTime(sample)
-    if (!input || time === undefined || props.selectedInput && props.selectedInput !== id) return
+    if (time === undefined) return
     const entries = groups.get(time) || []
-    entries.push({ sample, index, input }); groups.set(time, entries)
+    const paths = new Set<string>()
+    for (const id of sampleInputs(props.template, props.facts, sample)) {
+      if (props.selectedInput && props.selectedInput !== id) continue
+      const input = props.template.inputDefinitions.find(input => input.id === id)!
+      const path=JSON.stringify(props.facts.configuration.inputMappings[id]?.valuePath || [])
+      if (paths.has(path)) continue
+      paths.add(path); entries.push({sample,index,input,value:simulationInputValue(props.facts,sample,id)})
+    }
+    groups.set(time, entries)
   })
   return [...groups].sort(([a], [b]) => a - b).map(([time, entries]) => ({ time, entries, hasInput:inputTimes.has(time) }))
 })

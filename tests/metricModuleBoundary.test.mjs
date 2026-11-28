@@ -21,7 +21,10 @@ test('metric implementation and HTTP belong to the rule module while core stays 
 
 test('management routes and the public object panel load their owning module', () => {
   const registration=readFileSync(new URL('register.ts',root),'utf8')
-  assert.match(registration,/MetricScopePanel:\s*defineAsyncComponent\(\(\) => import\('\.\/components\/Metric\/collection\/MetricScopePanel.vue'\)\)/)
+  assert.match(registration,/MetricScopePanel:\s*defineAsyncComponent\(\(\) => import\('\.\/components\/Metric\/collection\/MetricScopeHost.vue'\)\)/)
+  const host=readFileSync(new URL('components/Metric/collection/MetricScopeHost.vue',root),'utf8')
+  assert.match(host, /useMetricSourceAdapter/)
+  assert.match(host, /<MetricScopePanel/)
   for (const [view,component] of [['Metric','workspace/MetricWorkspace.vue'],['MetricTemplate','template/MetricTemplateManager.vue']]) {
     assert.ok(readFileSync(new URL(`views/${view}/index.vue`,root),'utf8').includes(`../../components/Metric/${component}`))
   }
