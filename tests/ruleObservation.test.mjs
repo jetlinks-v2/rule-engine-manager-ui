@@ -29,10 +29,12 @@ const render = props => {
 }
 const runtime = { id:'rule', observationStatus:'partial', runtimeState:'unknown', runningReplicas:2, totalReplicas:3,
   inputRate:12.5, outputRate:3.5, buffered:'2', transferCount:'9007199254740993', errorCount:'1' }
+const trigger = html => html.match(/<button\b[^>]*class="rule-observation"[\s\S]*?<\/button>/)?.[0] || ''
 
 test('partial coverage renders observed values with warning and preserves the exact transfer count', async () => {
   const html = await render({ runtime })
   assert.match(html, /data-icon="WarningOutlined"/)
+  assert.match(trigger(html), /data-icon="WarningOutlined"/)
   assert.match(html, /12\.5<small>\/s/)
   assert.match(html, /3\.5<small>\/s/)
   assert.ok(html.includes('9007199254740993'))
@@ -51,4 +53,15 @@ test('a measured zero remains visible', async () => {
   const html=await render({runtime:{...runtime,observationStatus:'ready',runtimeState:'running',inputRate:0,outputRate:0,transferCount:'0'}})
   assert.match(html,/data-icon="PlayCircleOutlined"/)
   assert.ok((html.match(/0<small>\/s/g)||[]).length>=2)
+})
+test('healthy summaries omit the duplicate run icon while details and attention states keep theirs', async () => {
+  const healthy = await render({runtime:{...runtime,observationStatus:'ready',runtimeState:'running'}})
+  assert.doesNotMatch(trigger(healthy), /data-icon="PlayCircleOutlined"/)
+  assert.match(healthy, /data-icon="PlayCircleOutlined"/)
+  assert.match(trigger(healthy), /aria-label="[^"]*RuleInstanceList.status.running/)
+  for (const [props, icon] of [[{loading:true,runtime},'SyncOutlined'],
+    [{runtime:{...runtime,observationStatus:'ready',runtimeState:'paused'}},'PauseCircleOutlined'],
+    [{stale:true,runtime},'QuestionCircleOutlined']]) {
+    assert.match(trigger(await render(props)),new RegExp(`data-icon="${icon}"`))
+  }
 })

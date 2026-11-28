@@ -1,4 +1,233 @@
 {
+  "RuleTemplates": {
+    "summaryDescription": "每{window}汇总一次{scope}的{fields}，将{aggregate}等结果发送到{target}。",
+    "normalizeDescription": "将{scope}上报的{fields}整理成每个属性一条记录。",
+    "metadataDescription": "附带属性说明和单位。",
+    "eventActionDescription": "当{scope}上报{event}事件时，对选定目标设备执行操作。",
+    "templateHelp": "使用 templateId 选择真实内置模板。名称自动生成；templateParameters 只填写已明确的业务参数，缺少资源选择时打开参数面板。",
+    "zoomIn": "放大流程图",
+    "zoomOut": "缩小流程图",
+    "fitDiagram": "适应窗口",
+    "previewFailed": "流程图暂时无法生成",
+    "search": "搜索模板名称、用途或处理步骤",
+    "resetSearch": "清除筛选",
+    "viewFlow": "查看流程图",
+    "useTemplate": "使用模板",
+    "diagram": "规则流程图",
+    "all": "全部模板",
+    "choose": "从模板创建规则",
+    "back": "返回模板",
+    "create": "创建并编辑",
+    "configureLater": "稍后配置",
+    "optionalSetup": "可以先选择常用设置，也可以跳过，进入编排后再完善。",
+    "configureSource": "选择设备和需要处理的数据",
+    "cancel": "取消",
+    "retry": "重试",
+    "loading": "正在读取可用模板…",
+    "loadFailed": "无法读取可用组件，请重试",
+    "missingNodes": "缺少所需组件：{nodes}",
+    "createFailed": "创建失败，已保留你的选择，请重试",
+    "created": "规则已创建",
+    "details": "适用场景",
+    "flow": "处理步骤",
+    "configure": "选择业务参数",
+    "noTemplates": "没有匹配的模板",
+    "blankShortcut": "从空白开始",
+    "examples": "入门示例",
+    "required": "请完成必要的选择",
+    "resourceFailed": "无法读取资源，请重试",
+    "more": "继续加载",
+    "noResources": "没有可选内容",
+    "product": "产品",
+    "productPlaceholder": "选择设备所属产品",
+    "scope": "设备范围",
+    "allDevices": "产品下所有设备",
+    "selectedDevices": "指定设备",
+    "devices": "设备",
+    "devicePlaceholder": "选择设备",
+    "message": "需要处理的数据",
+    "propertyMessage": "属性上报",
+    "eventMessage": "事件上报",
+    "properties": "属性",
+    "propertyPlaceholder": "选择需要处理的属性",
+    "event": "事件",
+    "eventPlaceholder": "选择设备事件",
+    "eventFields": "事件字段",
+    "format": "发送的数据格式",
+    "messageFormat": "完整消息",
+    "fieldsFormat": "只保留选定字段",
+    "recordsFormat": "每个属性一条记录",
+    "includeMetadata": "附带属性说明和单位",
+    "metadataHelp": "从设备物模型补充属性信息",
+    "target": "发送到哪里",
+    "url": "目标地址",
+    "urlPlaceholder": "https://example.com/data",
+    "topic": "目标主题",
+    "cron": "执行时间",
+    "cronHelp": "使用六段时间表达式，可在编辑器继续调整",
+    "window": "每隔多久汇总一次",
+    "aggregate": "汇总方式",
+    "comparison": "提醒条件",
+    "threshold": "阈值",
+    "singleDevice": "选择一台设备",
+    "numericRequired": "请选择数值类型的属性",
+    "selectionChanged": "范围已变化，请重新选择属性或事件",
+    "invalidUrl": "请输入有效的 HTTP 或 HTTPS 地址",
+    "invalidCron": "请输入有效的六段时间表达式",
+    "finishInEditor": "进入编辑器后继续配置",
+    "sourceNeeded": "请选择设备范围和需要处理的数据",
+    "configureTarget": "设置转发目标",
+    "configureAction": "设置设备操作",
+    "configureNotice": "设置提醒渠道",
+    "configureQuery": "选择查询内容和参数",
+    "queryInput": "传入的参数",
+    "aggregateResults": "整理各项结果",
+    "inputData": "待处理的数据",
+    "inputSummary": "数据摘要",
+    "pendingTitle": "继续完成配置",
+    "focus": "查看配置",
+    "allProperties": "全部属性",
+    "scopeProduct": "{product}下所有设备",
+    "scopeSingle": "{device}",
+    "scopeDevices": "所选的{count}台设备",
+    "dataProperties": "属性数据",
+    "dataEvent": "{event}事件数据",
+    "dataFields": "{fields}",
+    "targetSystem": "目标系统",
+    "forwardDescription": "将{scope}上报的{data}发送到{target}。",
+    "sourceDescription": "处理{scope}上报的{data}。",
+    "scheduleDescription": "按设定的时间读取{device}的{fields}。",
+    "thresholdDescription": "当{scope}的{property}{comparison}{value}{unit}时，通过选定渠道发送提醒。",
+    "schemaUnavailable": "所选设备没有兼容的物模型定义",
+    "agentTemplate": "内置业务模板",
+    "agentParameters": "模板的业务参数",
+    "agentMissing": "此模板还需要选择设备范围或属性，请补充业务参数",
+    "agentUnknown": "找不到这个内置模板",
+    "agentCatalog": "可用的内置规则模板",
+    "categories": {
+      "data-forwarding": "数据转发",
+      "data-preparation": "数据整理",
+      "data-query": "数据查询",
+      "device-actions": "设备操作",
+      "anomaly-notifications": "异常提醒",
+      "examples": "入门示例"
+    },
+    "targets": {
+      "http request": "HTTP 接口",
+      "mqtt out": "MQTT 消息服务",
+      "kafka-producer": "Kafka 消息队列"
+    },
+    "windows": {
+      "1m": "1 分钟",
+      "5m": "5 分钟",
+      "15m": "15 分钟",
+      "1h": "1 小时"
+    },
+    "aggregates": {
+      "avg": "平均值",
+      "sum": "合计",
+      "min": "最小值",
+      "max": "最大值"
+    },
+    "comparisons": {
+      ">": "超过",
+      ">=": "达到或超过",
+      "<": "低于",
+      "<=": "达到或低于"
+    },
+    "steps": {
+      "source": "接收设备数据",
+      "prepareData": "整理数据",
+      "destination": "发送到目标系统",
+      "summarize": "汇总一段时间的数据",
+      "viewResult": "查看处理结果",
+      "receive": "接收调用参数",
+      "returnResult": "返回结果",
+      "processTogether": "分别处理传入的数据",
+      "combineResults": "整理各项结果",
+      "queryDevice": "查询设备信息",
+      "queryTogether": "查询设备信息和属性",
+      "executeCommand": "执行命令",
+      "queryData": "查询数据",
+      "queryFirst": "查询第一项数据",
+      "querySecond": "查询第二项数据",
+      "schedule": "按时间触发",
+      "readProperties": "读取设备属性",
+      "eventSource": "接收设备事件",
+      "operateDevice": "执行设备操作",
+      "checkThreshold": "检查数据是否超限",
+      "sendNotice": "发送提醒",
+      "enterData": "输入一条数据",
+      "mapInput": "整理传入数据",
+      "summarizeInput": "生成数据摘要"
+    },
+    "named": {
+      "device-forward": "转发{object}的数据",
+      "device-summary": "汇总{object}的数据后转发",
+      "device-normalize": "统一{object}的数据格式",
+      "scheduled-read": "定时读取{object}的属性",
+      "event-action": "收到{object}的事件时执行操作",
+      "threshold-notify": "{object}的数据超限时提醒"
+    },
+    "templates": {
+      "blank": {
+        "title": "自定义规则",
+        "description": "从空白开始，添加数据来源、处理步骤和执行动作。"
+      },
+      "device-forward": {
+        "title": "转发设备数据",
+        "description": "将指定设备上报的属性或事件数据发送到其他系统。"
+      },
+      "device-summary": {
+        "title": "汇总数据后转发",
+        "description": "按设定的时间汇总设备数据，再将汇总结果发送到目标系统。"
+      },
+      "device-normalize": {
+        "title": "统一设备数据格式",
+        "description": "将设备上报的数据整理成统一格式，便于后续查看和使用。"
+      },
+      "transform-response": {
+        "title": "处理数据并返回结果",
+        "description": "按设置转换传入的数据，并将处理结果返回给调用方。"
+      },
+      "parallel-response": {
+        "title": "一次返回多项结果",
+        "description": "对传入的数据完成多项独立处理，并将各项结果一起返回。"
+      },
+      "device-query": {
+        "title": "查询设备信息",
+        "description": "根据设备编号等条件查询设备信息，并返回需要的内容。"
+      },
+      "device-query-all": {
+        "title": "同时查询设备信息与属性",
+        "description": "一次获取设备的基本信息和选定属性，并一起返回查询结果。"
+      },
+      "scheduled-query": {
+        "title": "定时查询并处理数据",
+        "description": "按设定时间通过命令查询数据，整理后查看处理结果。查询服务、参数和执行时间可在编排中配置。"
+      },
+      "scheduled-query-all": {
+        "title": "定时查询多项数据",
+        "description": "按设定时间并行执行两项命令查询，合并后查看结果。每项查询可选择不同服务和参数。"
+      },
+      "scheduled-read": {
+        "title": "定时读取设备属性",
+        "description": "按设定的时间读取指定设备的属性，便于定期了解设备状态。"
+      },
+      "event-action": {
+        "title": "设备发生事件时执行操作",
+        "description": "当指定设备上报选定事件并满足条件时，对目标设备执行相应操作。"
+      },
+      "threshold-notify": {
+        "title": "设备数据超限时提醒",
+        "description": "当设备的指定属性超出设定范围时，通过选定渠道发送提醒。"
+      },
+      "manual-transform": {
+        "title": "手动处理一条数据",
+        "description": "手动输入一条数据，查看处理后的结果。"
+      }
+    }
+  },
 	"Save.index.551009-0": "确定",
 	"Save.index.551009-1": "取消",
 	"DeviceAccess.index.551011-12": "请选择",

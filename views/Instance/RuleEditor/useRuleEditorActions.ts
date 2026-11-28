@@ -32,6 +32,7 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
   const editorTransferActioning = ref<EditorTransferAction | ''>('');
   const ruleNameSaving = ref(false);
   const ruleDescriptionSaving = ref(false);
+  const ruleIconSaving = ref(false);
   let editorActionDoneTimer: ReturnType<typeof window.setTimeout> | undefined;
 
   const clearEditorActionDone = () => {
@@ -57,25 +58,24 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
       : {}
   );
 
+  let metadataUpdate: Promise<void> = Promise.resolve();
+  const persistMetadata = (patch: Record<string, unknown>) => {
+    const id = options.ruleId.value;
+    const update = metadataUpdate.then(async () => {
+      if (!id || id !== options.ruleId.value) throw new Error(options.t('RuleEditor.index.actionFailed'));
+      const currentRule = options.getRule() || {};
+      const metadata = { ...toPlainRecord(currentRule.metadata), ...patch };
+      const response = await updateRuleMetadata(id, metadata);
+      if (response?.status !== 200) throw new Error(options.t('RuleEditor.index.actionFailed'));
+      if (id === options.ruleId.value) options.onRuleUpdated({ ...options.getRule(), metadata });
+    });
+    metadataUpdate = update.catch(() => {});
+    return update;
+  };
+
   const syncRuleThumbnail = async (thumbnailSvg?: string) => {
     const svg = typeof thumbnailSvg === 'string' ? thumbnailSvg.trim() : '';
-    if (!options.ruleId.value || !svg) {
-      return;
-    }
-
-    const currentRule = options.getRule() || {};
-    const metadata = {
-      ...toPlainRecord(currentRule.metadata),
-      thumbnailSvg: svg,
-    };
-    const response = await updateRuleMetadata(options.ruleId.value, metadata);
-    if (response?.status !== 200) {
-      throw new Error(options.t('RuleEditor.index.thumbnailSaveFailed'));
-    }
-    options.onRuleUpdated({
-      ...currentRule,
-      metadata,
-    });
+    if (options.ruleId.value && svg) await persistMetadata({ thumbnailSvg: svg });
   };
 
   const handleEditorAction = async (action: EditorAction) => {
@@ -129,58 +129,42 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
     }
   };
 
-  const handleRuleRename = async (value: string) => {
+  const handleRuleRename = async (value: string): Promise<boolean> => {
     const nextName = value.trim();
-    if (!options.ruleId.value || !nextName || nextName === options.ruleName.value || ruleNameSaving.value) {
-      return;
-    }
-
+    if (!options.ruleId.value || !nextName || ruleNameSaving.value) return false;
+    if (nextName === options.ruleName.value) return true;
     ruleNameSaving.value = true;
     try {
-      const response = await modify(options.ruleId.value, {
-        ...options.getRule(),
-        name: nextName,
-      });
-      if (response?.status !== 200) {
-        throw new Error(options.t('RuleEditor.index.renameFailed'));
-      }
-      options.onRuleUpdated({
-        ...options.getRule(),
-        ...(response?.result || {}),
-        name: nextName,
-      });
-    } catch (error) {
-      onlyMessage(error instanceof Error ? error.message : options.t('RuleEditor.index.renameFailed'), 'error');
-    } finally {
-      ruleNameSaving.value = false;
-    }
+      const response = await modify(options.ruleId.value, { name: nextName });
+      if (response?.status !== 200) return false;
+      options.onRuleUpdated({ ...options.getRule(), ...(response?.result || {}), name: nextName });
+      return true;
+    } catch { return false; }
+    finally { ruleNameSaving.value = false; }
   };
 
-  const handleRuleDescriptionChange = async (value: string) => {
+  const handleRuleDescriptionChange = async (value: string): Promise<boolean> => {
     const nextDescription = value.trim();
-    if (!options.ruleId.value || nextDescription === options.ruleDescription.value || ruleDescriptionSaving.value) {
-      return;
-    }
-
+    if (!options.ruleId.value || ruleDescriptionSaving.value) return false;
+    if (nextDescription === options.ruleDescription.value) return true;
     ruleDescriptionSaving.value = true;
     try {
-      const response = await modify(options.ruleId.value, {
-        ...options.getRule(),
-        description: nextDescription,
-      });
-      if (response?.status !== 200) {
-        throw new Error(options.t('RuleEditor.index.descriptionSaveFailed'));
-      }
-      options.onRuleUpdated({
-        ...options.getRule(),
-        ...(response?.result || {}),
-        description: nextDescription,
-      });
-    } catch (error) {
-      onlyMessage(error instanceof Error ? error.message : options.t('RuleEditor.index.descriptionSaveFailed'), 'error');
-    } finally {
-      ruleDescriptionSaving.value = false;
-    }
+      const response = await modify(options.ruleId.value, { description: nextDescription });
+      if (response?.status !== 200) return false;
+      options.onRuleUpdated({ ...options.getRule(), ...(response?.result || {}), description: nextDescription });
+      return true;
+    } catch { return false; }
+    finally { ruleDescriptionSaving.value = false; }
+  };
+
+  const handleRuleIconChange = async (value: string): Promise<boolean> => {
+    const icon = value.trim();
+    if (!options.ruleId.value || !icon || ruleIconSaving.value) return false;
+    if (icon === options.getRule()?.metadata?.icon) return true;
+    ruleIconSaving.value = true;
+    try { await persistMetadata({ icon }); return true; }
+    catch { return false; }
+    finally { ruleIconSaving.value = false; }
   };
 
   onBeforeUnmount(clearEditorActionDone);
@@ -191,10 +175,12 @@ export const useRuleEditorActions = (options: RuleEditorActionsOptions) => {
     editorTransferActioning,
     ruleNameSaving,
     ruleDescriptionSaving,
+    ruleIconSaving,
     clearEditorActionDone,
     handleEditorAction,
     handleEditorTransfer,
     handleRuleRename,
     handleRuleDescriptionChange,
+    handleRuleIconChange,
   };
 };

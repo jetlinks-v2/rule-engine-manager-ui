@@ -1,165 +1,20 @@
 .rule-editor-shell__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 56px;
-  padding: 0 16px;
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  min-height:56px; flex:none; padding:8px 16px; background:#fff; border-bottom:1px solid #e8e8e8;
 }
-
-.rule-editor-shell__title {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-  gap: 12px;
-}
-
-.rule-editor-shell__icon {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 30px;
-  height: 30px;
-  overflow: hidden;
-  color: var(--ant-primary-color, #1677ff);
-  font-size: 16px;
-  border: 1px solid rgba(22, 119, 255, 0.14);
-  border-radius: 8px;
-  background: rgba(22, 119, 255, 0.04);
-}
-
-.rule-editor-shell__copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 2px;
-}
-
+.rule-editor-shell__title { display:flex; align-items:center; flex:1; min-width:0; gap:12px; }
+.rule-editor-shell__copy { display:flex; flex:1; flex-direction:column; min-width:0; gap:2px; }
 .rule-editor-shell__name {
-  display: inline-flex;
-  align-items: center;
-  max-width: 28rem;
-  gap: 6px;
-  padding: 0;
-  color: rgba(0, 0, 0, 0.88);
-  font: inherit;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-
-  span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .anticon {
-    flex: none;
-    color: rgba(0, 0, 0, 0.45);
-    font-size: 12px;
-    opacity: 0;
-    transition: opacity 0.16s ease;
-  }
-
-  &:hover .anticon,
-  &:focus-visible .anticon {
-    opacity: 1;
-  }
-
-  &:disabled {
-    cursor: default;
-
-    .anticon {
-      opacity: 1;
-    }
-  }
+  --inline-edit-max-width:min(100%,28rem);
+  min-width:0; color:var(--ink-1); font-size:16px; font-weight:600; line-height:22px;
 }
-
-.rule-editor-shell__name,
-.rule-editor-shell__name-input {
-  min-width: 12rem;
-  max-width: 28rem;
-}
-
-.rule-editor-shell__name span,
-.rule-editor-shell__name-input {
-  color: rgba(0, 0, 0, 0.88);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 22px;
-}
-
 .rule-editor-shell__meta {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  max-width: 42rem;
-  gap: 6px;
-  color: rgba(0, 0, 0, 0.42);
-  font-size: 12px;
-  line-height: 18px;
+  display:flex; align-items:baseline; min-width:0; max-width:42rem; gap:6px;
+  color:var(--ink-3); font-size:12px; line-height:18px;
 }
-
-.rule-editor-shell__description {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-  max-width: 30rem;
-  gap: 4px;
-  padding: 0;
-  overflow: hidden;
-  color: inherit;
-  font: inherit;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-
-  span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .anticon {
-    flex: none;
-    color: rgba(0, 0, 0, 0.34);
-    font-size: 12px;
-    opacity: 0;
-    transition: opacity 0.16s ease;
-  }
-
-  &:hover .anticon,
-  &:focus-visible .anticon {
-    opacity: 1;
-  }
-}
-
-.rule-editor-shell__description--empty {
-  color: rgba(0, 0, 0, 0.28);
-}
-
-.rule-editor-shell__meta-separator {
-  flex: none;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.24);
-}
-
-.rule-editor-shell__id {
-  flex: none;
-  overflow: hidden;
-  color: rgba(0, 0, 0, 0.36);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
+.rule-editor-shell__description { min-width:0; max-width:30rem; }
+.rule-editor-shell__meta-separator { flex:none; width:3px; height:3px; border-radius:50%; background:var(--ink-4); }
+.rule-editor-shell__id { flex:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .rule-editor-shell__status {
   display: inline-block;
   width: 8px;
