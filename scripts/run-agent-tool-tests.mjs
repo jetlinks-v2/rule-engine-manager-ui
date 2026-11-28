@@ -382,6 +382,7 @@ try {
     await build({
       entryPoints: [path.join(packageRoot, entryPoint)],
       outfile,
+      loader: { '.svg': 'text' },
       bundle: true,
       platform: 'node',
       format: 'esm',

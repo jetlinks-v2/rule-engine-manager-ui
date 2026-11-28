@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "moduleResolution": "Bundler", "types": ["vite/client"] },
+  "include": ["views/Instance/*.ts", "views/Instance/*.vue", "api/instanceObservation.ts", "../../jetlinks-web-core/src/env.d.ts", "../../jetlinks-web-core/src/auto-imports.d.ts"]
+}

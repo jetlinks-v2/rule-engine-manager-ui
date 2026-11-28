@@ -7,7 +7,7 @@ import {
 
 export const APPLY_CANVAS_TOOL_ID = 'rule_editor_apply_canvas_actions';
 export const PREPARE_CANVAS_TOOL_ID = 'rule_editor_prepare_canvas_actions';
-export const RULE_EDITOR_RESOURCE_VERSION = '2026093002';
+export { RULE_EDITOR_RESOURCE_VERSION } from './resourceVersion';
 export const RULE_EDITOR_ORCHESTRATION_CONTRACT_VERSION = 'rule-editor-orchestration/v3';
 
 // Kept for the optional explicit flowchart renderer. Default apply success must not
